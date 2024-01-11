@@ -1,0 +1,4 @@
+wheel>=0.22             # For wheel support
+numpy>=1.26.0           # Numerical functions
+SciPy>=1.11.4           # Scientific functions
+pandas>=2.1.4          # Data structures & analysis

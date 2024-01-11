@@ -1,6 +1,6 @@
 """
-This shows a complete least-mean-squares (LMS) adaptive network model, a
-generalization of the Rescorla-Wagner model.  It is a two-layer network with
+This shows a complete least-mean-squares (LMS) or delta-rule adaptive network model, a
+generalization of the Rescorla-Wagner learning rule.  It is a two-layer network with
 one input layer and one output layer.  The input layer has one unit for each
 stimulus, and the output layer has one unit for each response. The standard
 Rescorla-Wagner model is a special case of this model.
@@ -12,6 +12,7 @@ from .zoo.decision import softmax
 from .zoo.utils import embedding_nominal
 from .zoo.activation import linear
 
+# FIXME: there were a lot of changes and I'm not sure if this is still correct
 class RescorlaWagner():
     """
     Rescorla-Wagner model for learning in reinforcement learning tasks.
@@ -81,8 +82,7 @@ class RescorlaWagner():
             feedback = embedding_nominal(stimuli = [self.feedback[trial]], bits = self.outcomes)
             current = linear(active, self.weights)
             self.policies[trial, :] = softmax(self.temperature, current)
-            change = DeltaRule(self.alpha, current, feedback)
-            self.weights += change
+            self.weights = DeltaRule(self.alpha, current, feedback)
             self.error[:, :, trial] = change
         return None
 
@@ -142,4 +142,3 @@ class RescorlaWagner():
         self.training = new['trials']
         self.feedback = new['feedback']
         return None
-

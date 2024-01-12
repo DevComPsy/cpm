@@ -78,6 +78,7 @@ class RescorlaWagner():
             None
         """
         for trial in range(self.training.shape[0],):
+            # FIXME: legacy code that needs to be updated
             active = embedding_nominal(stimuli = self.training[trial], bits = self.bits)
             feedback = embedding_nominal(stimuli = [self.feedback[trial]], bits = self.outcomes)
             current = linear(active, self.weights)

@@ -1,15 +1,36 @@
-"""
-all sorts of activation functions
-"""
+import numpy as np
 import numpy as np
 
+__all__ = ['LinearActivation', 'SigmoidActivation']
 
-def linear(input, weights):
-    """ Linear activation function
-    """
-    return np.asarray(weights * input)
+class LinearActivation:
 
-def sigmoid(input, weights):
-    """ Sigmoid activation function
-    """
-    return np.asarray(1 / (1 + np.exp(-input * weights)))
+    def __init__(self, input, weights, **kwargs):
+        self.input = input
+        self.weights = weights
+    
+    def compute(self):
+        """ Linear activation function
+        """
+        return np.asarray(self.weights * self.input)
+
+    def config():
+        config = {
+            'name': 'Linear',
+            'type': 'activation',
+        }
+        return config
+
+class SigmoidActivation:
+
+    def compute(self, input, weights, **kwargs):
+        """ Sigmoid activation function
+        """
+        return np.asarray(1 / (1 + np.exp(-input * weights)))
+
+    def config():
+        config = {
+            'name': 'Sigmoid',
+            'type': 'activation',
+        }
+        return config

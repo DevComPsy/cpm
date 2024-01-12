@@ -1,14 +1,12 @@
-"""
-Model components
-"""
 import numpy as np
-from . import utils
 
 __all__ = ['DeltaRule', 'HebbRule', 'QLearningRule']
 
 class DeltaRule:
     """
-    DeltaRule class represents a learning algorithm based on the Delta rule.
+    DeltaRule class computes the prediction error for a given input and target value.
+    It is based on the Gluck and Bower's (1988) delta rule, an extension to Rescorla
+    and Wagner (1972), which was identical to that of Widrow and Hoff (1960).
 
     Attributes:
         alpha (float): The learning rate.
@@ -54,18 +52,22 @@ class DeltaRule:
         }
         return config
 
-# arguments = {
-#     'alpha' : 0.1,
-#     'weights' : np.array([[0.5, 0], [0, 0.5]]),
-#     'input' : np.array([1, 1]),
-#     'teacher' : np.array([1, 0]),
-#     'attention' : np.array([1, 0]),
-#     'misc' : np.array([1, 0])
-#     }
+arguments = {
+    'alpha' : 0.1,
+    'brutality' : 2,
+    'temperature': 1,
+    'weights' : np.array([[0.5, 0], [0, 0.5]]),
+    'input' : np.array([1, 1]),
+    'teacher' : np.array([1, 0]),
+    'attention' : np.array([1, 2]),
+    'misc' : np.array([1, 0])
+    }
 
 # input = arguments
 
 # arguments['weights']
+
+# input
 
 # x = DeltaRule(**input)
 # x.weights
@@ -109,3 +111,12 @@ class QLearningRule:
             for j in range(self.weights.shape[1]):
                 output[i] += self.alpha * (self.reward + self.gamma * np.max(self.weights[i, :]) - self.weights[i, j]) * active[j]
         return output
+
+class AttentionGateLearning:
+    
+    def __init__(self, theta, weights, input, teacher, attention, *args, **kwargs):
+        self.theta = theta
+        self.weights = weights
+        self.input = input
+        self.teacher = teacher
+        self.attention = attention

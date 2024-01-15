@@ -47,8 +47,7 @@ class DeltaRule:
             'weights': self.weights,
             'teacher': self.teacher,
             'name': self.__class__.__name__,
-            'bounds': self.bounds,
-            'type': 'learning'
+            'type': 'learning',
         }
         return config
 

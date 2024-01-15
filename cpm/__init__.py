@@ -11,5 +11,11 @@ Here, we will also define the main function of the package by importing it from 
 import os
 import sys
 import logging
+import warnings
 
+from . import models
+from . import applications
+from . import optimisation
+from . import evaluation
 
+del os, sys, warnings, logging

@@ -2,8 +2,10 @@
 Here we import all the modules that are needed for the project.
 """
 
-__all__ = ['RescorlaWagner', 'Simulator']
+__all__ = ['Model', 'Simulator', 'zoo']
 
 from . import zoo
-from .models_rw import RescorlaWagner
+from .model import Model
 from .simulator import Simulator
+
+del model, simulator

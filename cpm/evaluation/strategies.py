@@ -51,7 +51,7 @@ def normal(params, bounds, iterations=None):
         grid.append(row)
     return grid
 
-def priors(params, priors = None, bounds, generator = None, iterations=None):
+def priors(params, priors = None, bounds = None, generator = None, iterations=None):
     """
     Create a grid of parameters.
 

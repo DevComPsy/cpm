@@ -1,5 +1,5 @@
 =============================
-compact
+cpm - computational psychiatry modelling library
 =============================
 
 .. image:: https://badge.fury.io/py/compact.png
@@ -8,7 +8,7 @@ compact
 .. image:: https://travis-ci.org/lenarddome/compact.png?branch=master
     :target: https://travis-ci.org/lenarddome/compact
 
-compact
+cpm
 
 
 Features

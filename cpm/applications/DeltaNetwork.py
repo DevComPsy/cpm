@@ -7,13 +7,13 @@ Rescorla-Wagner model is a special case of this model.
 """
 import numpy as np
 import pandas as pd
-from .zoo.learning import DeltaRule
-from .zoo.decision import softmax
-from .zoo.utils import embedding_nominal
-from .zoo.activation import linear
+from ..models.zoo.learning import DeltaRule
+from ..models.zoo.decision import Softmax
+from ..models.zoo.utils import Nominal
+from ..models.zoo.activation import LinearActivation
 
 # FIXME: there were a lot of changes and I'm not sure if this is still correct
-class RescorlaWagner():
+class DeltaNetwork():
     """
     Rescorla-Wagner model for learning in reinforcement learning tasks.
     
@@ -79,10 +79,10 @@ class RescorlaWagner():
         """
         for trial in range(self.training.shape[0],):
             # FIXME: legacy code that needs to be updated
-            active = embedding_nominal(stimuli = self.training[trial], bits = self.bits)
-            feedback = embedding_nominal(stimuli = [self.feedback[trial]], bits = self.outcomes)
-            current = linear(active, self.weights)
-            self.policies[trial, :] = softmax(self.temperature, current)
+            active = Nominal(stimuli = self.training[trial], bits = self.bits)
+            feedback = Nominal(stimuli = [self.feedback[trial]], bits = self.outcomes)
+            current = LinearActivation(active, self.weights)
+            self.policies[trial, :] = Softmax(self.temperature, current)
             self.weights = DeltaRule(self.alpha, current, feedback)
             self.error[:, :, trial] = change
         return None

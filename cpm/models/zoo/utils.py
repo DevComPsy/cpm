@@ -1,18 +1,32 @@
 import numpy as np
 
-__all__ = ['embedding_nominal']
-
-def embedding_nominal(stimuli = None, bits = None):
+def Nominal(target = None, magnitude = None, bits = None):
     """
-    Converts a given array of stimuli into a binary representation.
-
+    Converts a target value to a binary representation using a specified number of bits.
+    
     Parameters:
-    stimuli (numpy.ndarray): The array of stimuli to be converted.
-
+    target (int or list): The target value(s) to be converted.
+    magnitude (float): The magnitude of the binary representation, usually reward magnitude for cases with multiple possible outcomes.
+    bits (int): The number of possible values to use for determining the length of the binary representation.
+    
     Returns:
-    numpy.ndarray: The binary representation of the stimuli.
+    numpy.ndarray: The binary representation of the target value(s).
+    
+    Raises:
+    ValueError: If the number of bits is less than the maximum stimulus value.
+    ValueError: If the number of bits is 0 and the target value is less than 1.
+    
     """
     output = np.zeros((bits))
-    for i in stimuli:
-        output[i - 1] = 1
-    return output
+    if np.max(target) > bits:
+        raise ValueError('The number of bits must be greater than or equal to the maximum stimulus value.')
+    if bits == 0 and target < 1:
+        raise ValueError('The number of bits must be greater than or equal to the maximum stimulus value.')
+    if target < 0 and bits == 1:
+        return target
+    elif target < 0 and bits > 1:
+        output[target - 1] = magnitude
+    else:
+        for i in target:
+            output[i - 1] = 1
+        return output

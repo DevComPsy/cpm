@@ -51,6 +51,13 @@ class Model:
         self.values = outputs
         return policy
 
+    # TODO: config export
+    # priors and bounds
+    # bits
+    # folder with data and model
+    # config file and export options of what you are doing
+    # TODO: reward magnitude (look at the two step task in brain explorer, the goblin heist task)
+    # TODO: decision making task brain explorer
 
 # arguments = {
 #     'alpha' : 0.1,

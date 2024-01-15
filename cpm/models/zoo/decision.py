@@ -1,8 +1,5 @@
 import numpy as np
 
-__all__ = ['Softmax', 'Sigmoid']
-
-
 class Softmax:
     """
     Softmax class represents a decision-making algorithm that is often called the softmax function.

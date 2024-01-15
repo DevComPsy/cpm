@@ -1,8 +1,6 @@
 import numpy as np
 import numpy as np
 
-__all__ = ['LinearActivation', 'SigmoidActivation']
-
 class LinearActivation:
 
     def __init__(self, input, weights, **kwargs):

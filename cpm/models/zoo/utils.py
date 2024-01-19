@@ -20,11 +20,13 @@ def Nominal(target = None, magnitude = None, bits = None):
     output = np.zeros((bits))
     if np.max(target) > bits:
         raise ValueError('The number of bits must be greater than or equal to the maximum stimulus value.')
-    if bits == 0 and target < 1:
+    if bits == 0 and np.any(target < 1):
         raise ValueError('The number of bits must be greater than or equal to the maximum stimulus value.')
-    if target < 0 and bits == 1:
+    if np.any(target < 0) and bits == 1:
+        # in case of negative values (negative reward magnitude)
         return target
-    elif target < 0 and bits > 1:
+    if np.any(target < 0) and bits > 1:
+        # in cas of negative values with multiple outcomes (negative reward magnitude)
         output[target - 1] = magnitude
     else:
         for i in target:

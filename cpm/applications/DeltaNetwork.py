@@ -13,6 +13,7 @@ from ..models.zoo.utils import Nominal
 from ..models.zoo.activation import LinearActivation
 
 # FIXME: there were a lot of changes and I'm not sure if this is still correct
+# NOTE: regardless of whether it works, this is representative of an implemented complete model
 class DeltaNetwork():
     """
     Rescorla-Wagner model for learning in reinforcement learning tasks.

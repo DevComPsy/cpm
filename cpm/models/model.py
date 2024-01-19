@@ -14,10 +14,16 @@ class Model:
         compute: Computes the model based on the provided arguments for one single trial.
     """
 
-    def __init__(self, functions=None):
+    def __init__(self, functions=None, name = None):
         self.functions = functions
-        self.values = []
+        self.values = None
+        self.weights = None
         self.policy = None
+        self.run = False
+        if name is not None:
+            self.name = name
+        else:
+            self.name = "Model_" + str(len(functions))
 
     def compute(self, **kwargs):
         """
@@ -31,25 +37,55 @@ class Model:
             str: The computed policy.
 
         """
+        input = kwargs.copy()
         outputs = {}
         x = None
-        policy = None
         for function in self.functions:
-            init = function(**kwargs)
+            init = function(**input)
             name = init.config()['name']
             type = init.config()['type']
             if type == 'decision':
                 init.compute()
                 outputs[name] = init.policies
-                policy = init.policies
-                print(policy)
-                print(init.policies)
+                self.policy = init.policies
+            elif type == 'activation':
+                init.compute()
+                outputs[name] = init.weights
+                input['activations'] = init.weights
             else:
                 init.compute()
-                x = init.weights
+                x = init.weights.copy()
                 outputs[name] = x
         self.values = outputs
-        return policy
+        self.weights = x
+        self.run = True
+        return None
+
+    def reset(self):
+        """
+        Resets the model to its initial state.
+
+        """
+        self.values = []
+        self.policy = None
+
+    def summary(self):
+        """
+        Prints a summary of the model.
+
+        """
+        if self.run == False:
+            raise ValueError('The model has not been run yet.')
+        else:
+            summary = {}
+            for function in self.functions:
+                init = function()
+                name = init.config()['name']
+                type = init.config()['type']
+                summary[type] = name
+            summary['shape'] = self.weights.shape
+            summary['variables'] = self.weights.shape[0] * self.weights.shape[1]
+        return summary
 
     # TODO: config export
     # priors and bounds
@@ -58,22 +94,3 @@ class Model:
     # config file and export options of what you are doing
     # TODO: reward magnitude (look at the two step task in brain explorer, the goblin heist task)
     # TODO: decision making task brain explorer
-
-# arguments = {
-#     'alpha' : 0.1,
-#     'temperature': 1,
-#     'weights' : np.array([[0.5, 0], [0, 0.5]]),
-#     'input' : np.array([1, 1]),
-#     'teacher' : np.array([1, 0]),
-#     'attention' : np.array([1, 0]),
-#     'misc' : np.array([1, 0])
-#     }
-
-# input = arguments
-
-
-# mine = Model(functions = [LinearActivation, Softmax, DeltaRule])
-# mine.compute(**input)
-
-    # def get_config(self):
-    #     return None

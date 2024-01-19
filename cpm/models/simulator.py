@@ -10,7 +10,7 @@ class Simulator():
     A class representing a simulator for running simulations.
     """
 
-    def __init__(self, function, data, params):
+    def __init__(self, model = None, data = None, parameters = None):
         """
         Initializes a Simulator object.
 
@@ -19,10 +19,13 @@ class Simulator():
         - data: The data required for the simulation.
         - params: The parameters required for the simulation.
         """
-        self.function = function
+        self.function = model
         self.data = data
-        self.parameters = params
-        self.simulation = []
+        self.parameters = parameters
+        if len(parameters) == 1:
+            self.parameters = [(i, parameters.copy()) for i in range(1, len(self.data)+1)]
+        self.simulation =[]
+        self.generated = []
 
     def run(self):
         """
@@ -32,21 +35,48 @@ class Simulator():
         - experiment: A list containing the results of the simulation.
         """
         for i in range(len(self.data)):
-            sprint = self.function(self.data[i], self.parameters[i])
-            sprint.run()
-            output = sprint.export()
+            evaluate = self.function
+            evaluate.reset(self.parameters[i])
+            evaluate.update_data(self.data[i])
+            evaluate.run()
+            output = evaluate.export()
             output['ppt'] = self.data[i]['ppt']
             self.simulation.append(output)
         return None
 
-    def probabilities(self):
+    def policies(self):
         """
-        Returns the probabilities from the simulation.
+        Returns the policies from the simulation.
 
         Returns:
-        - probabilities: A list containing the probabilities from the simulation.
+        - policies: A list containing the policies from the simulation.
         """
-        probabilities = []
+        policies = []
         for i in range(len(self.simulation)):
-            probabilities.append(np.asarray(self.simulation[i]['probabilities']))
-        return np.asarray(probabilities)
+            policies.append(np.asarray(self.simulation[i]['policies']))
+        return np.asarray(policies)
+
+    def update(self, parameters = None):
+        """
+        Updates the parameters of the simulation.
+
+        Parameters:
+        - params: The parameters to be updated.
+        """
+        self.parameters = parameters
+        ## if parameters is a single set of parameters, then repeat for each ppt
+        if isinstance(parameters, dict):
+            self.parameters = [(parameters.copy()) for i in range(1, len(self.data)+1)]
+        return None
+
+    def generate(self):
+        """
+        Exports the results of the simulation.
+
+        Returns:
+        - results: A list containing the results of the simulation.
+        """
+        for i in range(len(self.simulation)):
+            current = np.asarray(self.simulation[i]['policies'])
+            self.generated.append({'observed': current})
+        return None

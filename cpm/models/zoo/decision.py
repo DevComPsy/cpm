@@ -22,7 +22,7 @@ class Softmax:
 
     def __init__(self, temperature=None, weights=None, **kwargs):
         self.temperature = temperature
-        self.weights = weights
+        self.weights = weights.copy()
         self.bounds = [0, 1]
         self.policies = []
 

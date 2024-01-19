@@ -3,7 +3,7 @@ import numpy as np
 
 class LinearActivation:
 
-    def __init__(self, input, weights, **kwargs):
+    def __init__(self, input = None, weights = None, **kwargs):
         self.input = input
         self.weights = weights
     
@@ -12,7 +12,7 @@ class LinearActivation:
         """
         return np.asarray(self.weights * self.input)
 
-    def config():
+    def config(self):
         config = {
             'name': 'Linear',
             'type': 'activation',
@@ -26,7 +26,7 @@ class SigmoidActivation:
         """
         return np.asarray(1 / (1 + np.exp(-input * weights)))
 
-    def config():
+    def config(self):
         config = {
             'name': 'Sigmoid',
             'type': 'activation',

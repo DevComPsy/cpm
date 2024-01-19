@@ -1,7 +1,5 @@
 import numpy as np
 
-__all__ = ['DeltaRule', 'HebbRule', 'QLearningRule']
-
 class DeltaRule:
     """
     DeltaRule class computes the prediction error for a given input and target value.
@@ -22,10 +20,10 @@ class DeltaRule:
         config(): Returns a dictionary with the configuration of the DeltaRule object.
     """
 
-    def __init__(self, alpha=None, weights=None, teacher=None, input=None, **kwargs):
+    def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
         self.alpha = alpha
-        self.weights = weights
-        self.teacher = teacher
+        self.weights = weights.copy()
+        self.teacher = feedback
         self.input = input
         self.bounds = [0, 1]
 
@@ -51,16 +49,16 @@ class DeltaRule:
         }
         return config
 
-arguments = {
-    'alpha' : 0.1,
-    'brutality' : 2,
-    'temperature': 1,
-    'weights' : np.array([[0.5, 0], [0, 0.5]]),
-    'input' : np.array([1, 1]),
-    'teacher' : np.array([1, 0]),
-    'attention' : np.array([1, 2]),
-    'misc' : np.array([1, 0])
-    }
+# arguments = {
+#     'alpha' : 0.1,
+#     'brutality' : 2,
+#     'temperature': 1,
+#     'weights' : np.array([[0.5, 0], [0, 0.5]]),
+#     'input' : np.array([1, 1]),
+#     'teacher' : np.array([1, 0]),
+#     'attention' : np.array([1, 2]),
+#     'misc' : np.array([1, 0])
+#     }
 
 # input = arguments
 

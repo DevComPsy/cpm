@@ -2,9 +2,7 @@
 Here we import all.
 """
 
-__all__ = ['genetic', 'minimise', 'utils']
-
 import pandas as pd
-from .genetic import *
+from .genetic import DifferentialEvolution
 from .minimise import *
 from .utils import *

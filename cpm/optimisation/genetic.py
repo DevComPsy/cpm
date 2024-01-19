@@ -3,25 +3,32 @@ from . import minimise
 from . import utils
 
 class DifferentialEvolution:
-    def __init__(self, function, data, minimisation="LogLikelihood", **kwargs):
-        self.function = function
+    def __init__(self, model = None, bounds = None, data = None, minimisation="LogLikelihood", **kwargs):
+        self.function = model
         self.data = data
         self.loss = getattr(minimise, minimisation)
         self.kwargs = kwargs
         self.fit = []
         self.parameters = []
         self.participant = data[0]
-        self.bounds = self.function(data[0]).bounds
-        self.parameter_names = self.function(data[0]).parameter_names
+        self.parameter_names = self.function.parameter_names
+        if hasattr(self.function, 'bounds'):
+            self.bounds = self.function.bounds
+        else:
+            self.bounds = bounds
+            # raise ValueError("You must define the parameter bounds in the Model object.")
 
-    def minimise(self, parameters):
-        evaluate = self.function(data=self.participant)
-        evaluate.reset(parameters)
+    def minimise(self, parameters, **args):
+        evaluate = self.function
+        evaluate.reset(parameters.copy())
+        evaluate.update_data(self.participant)
         evaluate.run()
-        predicted = evaluate.probabilities
+        predicted = evaluate.policies
         observed = self.participant["observed"]
         metric = self.loss(predicted, observed)
-        return metric
+        out = metric.copy() # FIXME: testing weird memory pointer issue
+        del evaluate, predicted, observed, metric
+        return out
 
     def optimise(self):
         for i in range(len(self.data)):
@@ -32,7 +39,8 @@ class DifferentialEvolution:
             parameters = utils.ExtractParamsFromFit(
                 data=result["x"], keys=self.parameter_names
             )
-            self.parameters.append(parameters)
+            self.parameters.append(parameters.copy())
             # add the results to the list
-            self.fit.append(utils.ConvertToDict(result))
+            self.fit.append(utils.ConvertToDict(result.copy()))
+            del result, parameters
         return None

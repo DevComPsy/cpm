@@ -18,7 +18,7 @@ def LogLikelihood(predicted = None, observed = None, negative = True):
     """
     
     # Compute the negative log likelihood
-    ll = np.sum(np.log(norm.pdf(observed, predicted, scale = 1)))
+    ll = np.sum(np.log(norm.pdf(observed, predicted, scale = 0.1)))
     if negative:
         ll = -ll
     return ll

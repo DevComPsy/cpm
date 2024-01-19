@@ -22,15 +22,17 @@ class DeltaRule:
 
     def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
         self.alpha = alpha
-        self.weights = weights.copy()
+        self.weights = [[]]
+        if weights is not None:
+            self.weights = weights.copy()
         self.teacher = feedback
         self.input = input
-        self.bounds = [0, 1]
 
     def compute(self):
         for i in range(self.weights.shape[0]):
+            activations = np.sum(self.weights[i])
             for j in range(self.weights.shape[1]):
-                self.weights[i, j] += self.alpha * (self.teacher[i] - np.sum(self.weights[i])) * self.input[j]
+                self.weights[i, j] += self.alpha * (self.teacher[i] - activations) * self.input[j]
         return self.weights
 
     def reset(self):

@@ -10,7 +10,8 @@ class LinearActivation:
     def compute(self):
         """ Linear activation function
         """
-        return np.asarray(self.weights * self.input)
+        self.weights = np.asarray(self.weights * self.input)
+        return None
 
     def config(self):
         config = {

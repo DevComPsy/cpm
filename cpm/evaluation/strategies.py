@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.random import default_rng as rng
 
-def grid(params, bounds, iterations=None):
+def grid(template=None, bounds=None, population=None, **kwargs):
     """
     Create a grid of parameters.
 
@@ -12,15 +12,13 @@ def grid(params, bounds, iterations=None):
     Returns:
     list: The grid of parameters.
     """
-    counts = len(params)
-    if iterations is None:
-        iterations = 1000
-    else:
-        iterations = sets
+    counts = len(template)
+    if population is None:
+        population = 1000
     grid = []
-    for i in range(iterations):
+    for i in range(population):
         row = {}
-        for j, k in zip(range(counts), params.keys()):
+        for j, k in zip(range(counts), template.keys()):
             generation = rng().uniform(bounds[j][0], bounds[j][1])
             row[k] = generation
         grid.append(row)

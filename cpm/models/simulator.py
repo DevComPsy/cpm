@@ -4,6 +4,7 @@ Runs a simulation for each ppt in the data.
 
 import numpy as np
 import pandas as pd
+import copy
 
 class Simulator():
     """
@@ -24,6 +25,7 @@ class Simulator():
         self.parameters = parameters
         if len(parameters) == 1:
             self.parameters = [(i, parameters.copy()) for i in range(1, len(self.data)+1)]
+        self.parameter_names = self.function.parameter_names
         self.simulation =[]
         self.generated = []
 
@@ -35,13 +37,15 @@ class Simulator():
         - experiment: A list containing the results of the simulation.
         """
         for i in range(len(self.data)):
-            evaluate = self.function
+            self.function.reset()
+            evaluate = copy.deepcopy(self.function)
             evaluate.reset(self.parameters[i])
             evaluate.update_data(self.data[i])
             evaluate.run()
-            output = evaluate.export()
-            output['ppt'] = self.data[i]['ppt']
+            output = copy.deepcopy(evaluate.export())
+            output['ppt'] = copy.deepcopy(self.data[i]['ppt'])
             self.simulation.append(output)
+            del evaluate, output
         return None
 
     def policies(self):
@@ -79,4 +83,12 @@ class Simulator():
         for i in range(len(self.simulation)):
             current = np.asarray(self.simulation[i]['policies'])
             self.generated.append({'observed': current})
+        return None
+
+    def reset(self):
+        """
+        Resets the simulation.
+        """
+        self.simulation = []
+        self.generated = []
         return None

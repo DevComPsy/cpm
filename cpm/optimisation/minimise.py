@@ -18,10 +18,12 @@ def LogLikelihood(predicted = None, observed = None, negative = True):
     """
     
     # Compute the negative log likelihood
-    ll = np.sum(np.log(norm.pdf(observed, predicted, scale = 0.1)))
+    LL = np.sum(norm.logpdf(predicted, observed, 0.5))
+   # Calculate the negative log-likelihood
+    # ll = np.sum(np.log(norm.pdf(observed, predicted, scale = 0.1)))
     if negative:
-        ll = -ll
-    return ll
+        LL = -1*LL
+    return LL
 
 def BIC(predicted, observed, n, k):
     """

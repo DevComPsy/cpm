@@ -60,9 +60,10 @@ x = Wrapper(model = mine, data = data, params = params)
 x.run()
 pp(x.summary())
 pp(x.export())
-
-x.reset()
-pp(x.summary())
+x.reset(parameters = [0.1, 1])
+pp(x.export())
+x.run()
+x.policies
 ## set up multiple people
 experiment = []
 for i in range(100):
@@ -80,15 +81,15 @@ bounds = list(zip(lower, upper))
 
 # FIXME: this is not working, metric is always overwritten
 Fit = DifferentialEvolution(
-    model = x, bounds = bounds, data = experiment, minimisation="LogLikelihood", mutation = 0.5, recombination = 0.7, strategy = "best1bin", tol = 0.001
+    model = x, bounds = bounds, data = experiment, minimisation="LogLikelihood", mutation = 0.5, recombination = 0.7, strategy = "best1bin", tol = 0.1
 )  # initialize the optimisation
-Fit.minimise([0.60924690133760082, 5.6764639071806062])
+Fit.minimise([0.9919307, 50.29777595])
+Fit.minimise([0.08909028, 1.74894115])
+
 Fit.optimise()
 
 pp(Fit.fit)
 
-fittings = [item.get('fun') for item in Fit.fit]
-pp(fittings)
 pp(Fit.parameters)
 
 explore = Simulator(model = x, data = experiment, parameters = Fit.parameters)
@@ -97,17 +98,29 @@ explore.policies()
 explore.generate()
 pp(explore.generated)
 
-explore.update(parameters = Fit.parameters[0])
+explore.reset()
+
+explore.update(parameters = {'alpha': 0.7612766423298778,
+                             'temperature': 3.1675756810190765})
 
 explore.run()
 explore.policies()
 pp(explore.parameters)
 
+new = Simulator(model = x, data = experiment, parameters = Fit.parameters)
+
 recover = ParameterRecovery(
-    model = explore, optimiser = "DifferentialEvolution", strategy = "grid",
-    bounds = bounds, iteration = 2
+    model = new, strategy = "grid",
+    optimiser = "DifferentialEvolution", 
+    minimasation="LogLikelihood",
+    bounds = bounds, iteration = 1
     )
+
 recover.recover()
+
+updates = recover.output[0]
+pp(updates)
+
 # dimensions are: iteration, recovered/original, population (trial order)
 alpha = recover.extract(key = 'alpha')
 

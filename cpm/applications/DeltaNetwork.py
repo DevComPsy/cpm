@@ -32,7 +32,7 @@ class DeltaNetwork():
         lower (list): A named list. The lower bounds for the parameters.
         upper (list): A named list. The upper bounds for the parameters.
     """
-    
+
     def __init__(self, data = None, params = None):
         
         # initialize the model parameters (defaults)

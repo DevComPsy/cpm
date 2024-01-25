@@ -13,6 +13,7 @@ import sys
 import logging
 import warnings
 
+from .__version__ import __version__
 from . import models
 from . import applications
 from . import optimisation

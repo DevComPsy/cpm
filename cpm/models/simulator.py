@@ -8,18 +8,41 @@ import copy
 
 class Simulator():
     """
-    A class representing a simulator for running simulations.
+    Initializes a Simulator object.
+
+    Parameters
+    ----------
+    model : object
+        The simulation function to be used.
+    data : object
+        The data required for the simulation.
+    parameters : object
+        The parameters required for the simulation.
+
+    Attributes
+    ----------
+    function : object
+        The simulation function to be used.
+    data : object
+        The data required for the simulation.
+    parameters : object
+        The parameters required for the simulation.
+    parameter_names : object
+        The names of the parameters.
+    simulation : object
+        The results of the simulation, including the policies and the states.
+    generated : object
+        The results of the simulation, only including the policies.
+
+    Returns
+    -------
+    simulator : Simulator
+        A Simulator object.
+    
     """
 
     def __init__(self, model = None, data = None, parameters = None):
-        """
-        Initializes a Simulator object.
 
-        Parameters:
-        - function: The simulation function to be used.
-        - data: The data required for the simulation.
-        - params: The parameters required for the simulation.
-        """
         self.function = model
         self.data = data
         self.parameters = parameters
@@ -52,8 +75,10 @@ class Simulator():
         """
         Returns the policies from the simulation.
 
-        Returns:
-        - policies: A list containing the policies from the simulation.
+        Returns
+        ------
+        policies : array_like
+            A list containing the policies from the simulation.
         """
         policies = []
         for i in range(len(self.simulation)):
@@ -77,8 +102,10 @@ class Simulator():
         """
         Exports the results of the simulation.
 
-        Returns:
-        - results: A list containing the results of the simulation.
+        Returns
+        ------
+        results: array_like
+            An array of dictionaries containing the results of the simulation.
         """
         for i in range(len(self.simulation)):
             current = np.asarray(self.simulation[i]['policies'])

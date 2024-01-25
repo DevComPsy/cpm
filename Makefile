@@ -24,7 +24,7 @@ clean-pyc:
 	find . -name '*~' -exec rm -f {} +
 
 lint:
-	flake8 compact test
+	flake8 cpm test
 
 test:
 	py.test
@@ -33,15 +33,15 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source compact setup.py test
+	coverage run --source cpm setup.py test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/compact.rst
+	rm -f docs/cpm.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ compact
+	sphinx-apidoc -o docs/ cpm
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html

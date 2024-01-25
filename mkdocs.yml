@@ -1,0 +1,28 @@
+site_name: CPM library
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - python
+    - bash
+    - yaml
+    - json
+    - markdown
+    - makefile
+    
+plugins:
+  - search
+  - awesome-pages
+  - mkdocstrings:
+      enable_inventory: false
+      handlers:
+        # See: https://mkdocstrings.github.io/python/usage/
+        python:
+          options:
+            show_source: false
+            docstring_style: numpy
+            inheritance_diagram: True
+markdown_extensions:
+  # - markdown_include.include:
+  #     base_path: .
+  - admonition

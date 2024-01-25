@@ -1,0 +1,4 @@
+nav:
+    - Home: index.md
+    - User Guide: tutorials
+    - API reference: references

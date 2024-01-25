@@ -6,8 +6,41 @@ from ..models import Simulator
 from . import strategies
 import copy
 
+# The `ParameterRecovery` class is used to recover parameters of a model using
+# optimization and strategy techniques.
 
 class ParameterRecovery:
+    """
+    Class for performing parameter recovery analysis.
+
+    Args:
+        model: The model to be used for parameter recovery.
+        optimiser: The optimiser algorithm to be used for parameter optimisation.
+        minimasation: The type of minimisation to be used (e.g., "LogLikelihood").
+        strategy: The strategy for generating parameter values.
+        iteration: The number of iterations for the parameter recovery process.
+        **kwargs: Additional keyword arguments.
+
+    Attributes:
+        model: The model object.
+        function: The function associated with the model.
+        template: The template parameter.
+        optimisation: The optimisation algorithm.
+        loss: The type of loss function used for optimisation.
+        strategy: The strategy object for generating parameter values.
+        parameter_names: The names of the parameters.
+        data: The data used for parameter recovery.
+        iteration: The number of iterations.
+        population: The population size.
+        kwargs: Additional keyword arguments.
+        output: The output of the parameter recovery process.
+
+    Methods:
+        recover: Perform the parameter recovery process.
+        extract: Extract the recovered and original parameter values.
+
+    """
+
     def __init__(
         self,
         model=None,
@@ -31,6 +64,16 @@ class ParameterRecovery:
         self.output = []
 
     def recover(self):
+        """
+        Recovers parameters using an iterative process.
+
+        This method iteratively updates the parameters of a model, runs the model,
+        generates data, and performs optimization to recover the parameters. The
+        process is repeated for a specified number of iterations.
+
+        Returns:
+            None
+        """
         for step in range(self.iteration):
             parameters = self.strategy(
                 template=self.template, population=self.population, **self.kwargs
@@ -55,10 +98,18 @@ class ParameterRecovery:
             )
             del optim, data, recovered, fit
         return None
-        # for j in range(len(self.data)):
-        #     self.function.update()
 
     def extract(self, key=None):
+        """
+        Extract the recovered and original parameter values.
+
+        Args:
+            key: The key specifying the parameter value to extract.
+
+        Returns:
+            output: The extracted parameter values.
+
+        """
         if key is None:
             return self.output
         else:

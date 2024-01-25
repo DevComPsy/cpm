@@ -5,16 +5,52 @@ class Model:
     """
     A class representing a model.
 
-    Attributes:
-        functions (list): A list of functions used in the model.
-        values (dict): A dictionary containing the computed values of the model.
-        policy (str): The policy computed by the model.
+    Parameters
+    ----------
+    functions : list
+        A list of functions used in the model.
 
-    Methods:
-        compute: Computes the model based on the provided arguments for one single trial.
+    Attributes
+    ----------
+    values : dict
+        A dictionary containing the computed values of the model.
+    policy : str
+        The policy computed by the model.
+
+    Methods
+    -------
+    compute(**kwargs)
+        Computes the model based on the provided arguments for one single trial.
+
     """
 
-    def __init__(self, functions=None, name = None):
+    def __init__(self, functions=None, name=None):
+        """
+        Initialize a Model object.
+
+        Parameters
+        ----------
+        functions : list, optional
+            List of functions to be used in the model.
+        name : str, optional
+            Name of the model. If not provided, a default name will be assigned.
+
+        Attributes
+        ----------
+        functions : list
+            List of functions used in the model.
+        values : None
+            Placeholder for storing values.
+        weights : None
+            Placeholder for storing weights.
+        policy : None
+            Placeholder for storing policy.
+        run : bool
+            Flag indicating if the model has been run.
+        name : str
+            Name of the model.
+
+        """
         self.functions = functions
         self.values = None
         self.weights = None

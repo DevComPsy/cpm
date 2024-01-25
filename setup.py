@@ -33,11 +33,11 @@ setup(
     author_email='lenarddome@gmail.com',
     url='https://github.com/lenarddome/compact',
     packages=[
-        'compact',
+        'cpm',
     ],
     package_dir={'cpm': 'cpm'},
     include_package_data=True,
-    install_requires=[
+    install_requires=['numpy', 'scipy'
     ],
     license='AGPLv3',
     zip_safe=False,
@@ -45,7 +45,7 @@ setup(
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved ::'AGPLv3',
+        'License :: OSI Approved :: AGPLv3',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',

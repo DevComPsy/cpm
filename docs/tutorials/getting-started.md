@@ -1,7 +1,5 @@
 # Getting Started
 
-# Getting Started
-
 Welcome to the [Project Name] documentation! This guide will help you get started with [Project Name] and provide you with the necessary information to begin using it effectively.
 
 ## Prerequisites

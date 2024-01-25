@@ -8,13 +8,19 @@ def LogLikelihood(predicted = None, observed = None, negative = True):
     """
     Compute the log likelihood of the predicted values given the observed values.
 
-    Parameters:
-    predicted (array-like): The predicted values.
-    observed (array-like): The observed values.
-    negative (bool): Flag indicating whether to return the negative log likelihood.
+    Parameters
+    ----------
+    predicted : array-like
+        The predicted values.
+    observed : array-like
+        The observed values.
+    negative : bool, optional
+        Flag indicating whether to return the negative log likelihood.
 
-    Returns:
-    float: The log likelihood or negative log likelihood.
+    Returns
+    -------
+    float
+        The log likelihood or negative log likelihood.
     """
     
     # Compute the negative log likelihood
@@ -29,13 +35,21 @@ def BIC(predicted, observed, n, k):
     """
     Calculate the Bayesian Information Criterion (BIC).
 
-    Parameters:
-    ll (float): The log likelihood value.
-    n (int): The number of data points.
-    k (int): The number of parameters.
+    Parameters
+    ----------
+    predicted : array-like
+        The predicted values.
+    observed : array-like
+        The observed values.
+    n : int
+        The number of data points.
+    k : int
+        The number of parameters.
 
-    Returns:
-    float: The BIC value.
+    Returns
+    -------
+    float
+        The BIC value.
     """
     bic = -2 * LogLikelihood(predicted, observed, False) + k * np.log(n)
     return bic
@@ -44,12 +58,17 @@ def CrossEntropy(predicted, observed):
     """
     Calculate the cross entropy.
 
-    Parameters:
-    predicted (numpy.ndarray): The predicted values.
-    observed (numpy.ndarray): The observed values.
+    Parameters
+    ----------
+    predicted : numpy.ndarray
+        The predicted values.
+    observed : numpy.ndarray
+        The observed values.
 
-    Returns:
-    float: The cross entropy value.
+    Returns
+    -------
+    float
+        The cross entropy value.
     """
     ce = np.sum(-observed * np.log(predicted) - (1 - observed) * np.log(1 - predicted))
     return ce

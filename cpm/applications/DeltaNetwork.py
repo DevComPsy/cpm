@@ -7,10 +7,10 @@ Rescorla-Wagner model is a special case of this model.
 """
 import numpy as np
 import pandas as pd
-from ..models.zoo.learning import DeltaRule
-from ..models.zoo.decision import Softmax
-from ..models.zoo.utils import Nominal
-from ..models.zoo.activation import LinearActivation
+from ..components.learning import DeltaRule
+from ..components.decision import Softmax
+from ..components.utils import Nominal
+from ..components.activation import LinearActivation
 
 # FIXME: there were a lot of changes and I'm not sure if this is still correct
 # NOTE: regardless of whether it works, this is representative of an implemented complete model

@@ -14,6 +14,7 @@ import logging
 import warnings
 
 from .__version__ import __version__
+from .__priors__ import __uniform__, __normal__, __beta__, __gamma__, __exponential__
 from . import models
 from . import applications
 from . import optimisation

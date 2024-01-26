@@ -2,7 +2,6 @@ import numpy as np
 from .. import optimisation
 from ..optimisation import utils
 from ..optimisation import minimise
-from ..models import Simulator
 from . import strategies
 import copy
 

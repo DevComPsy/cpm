@@ -1,4 +1,5 @@
 nav:
+    - cpm.components: components.md
     - cpm.models: models.md
     - cpm.optimisation: optimisation.md
     - cpm.evaluation: evaluation.md

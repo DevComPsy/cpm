@@ -1,8 +1,8 @@
 """
-Tests for `compact` module.
+Tests for `cpm` module.
 """
 import pytest
-from compact import compact
+import cpm
 
 
 class TestCompact(object):

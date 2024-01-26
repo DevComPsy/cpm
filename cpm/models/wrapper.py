@@ -1,5 +1,5 @@
 import numpy as np
-from .zoo.utils import Nominal
+from ..components.utils import Nominal
 
 
 class Wrapper:

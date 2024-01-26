@@ -6,5 +6,6 @@ __all__ = ['Wrapper', 'Simulator']
 
 from .simulator import Simulator
 from .wrapper import Wrapper
+from .parameters import Parameters
 
-del simulator, wrapper
+del simulator, wrapper, parameters

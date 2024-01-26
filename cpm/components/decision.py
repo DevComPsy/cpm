@@ -1,47 +1,53 @@
 import numpy as np
 
+import numpy as np
+
 class Softmax:
     """
-    Softmax class represents a decision-making algorithm that is often called the softmax function.
-    It computes the probabilities of different choices based on the given activations and temperature.
-
-    Attributes:
-        temperature (float): The temperature parameter that controls the randomness of the decision-making process.
-        activations (ndarray): The activations assigned to each choice.
-        bounds (list): The lower and upper bounds of the decision probabilities.
-        policies (ndarray): The computed decision policies.
-
-    Methods:
-        compute(): Computes the decision probabilities using the softmax function.
-        config(): Returns the configuration of the Softmax algorithm.
-
-    References:
-        - Luce's choice axiom
-        - Gibbs, J. W. (1902). Elementary principles in statistical mechanics.
+    Softmax class for computing policies based on activations and temperature.
     """
 
     def __init__(self, temperature=None, activations=None, **kwargs):
+        """
+        Initialize the Softmax class.
+
+        Args:
+            temperature (float): The temperature parameter for softmax computation.
+            activations (numpy.ndarray): Array of activations.
+
+        Returns:
+            None
+        """
         self.temperature = temperature
         if activations is not None:
             self.activations = activations.copy()
         else:
             self.activations = np.zeros(1)
         self.policies = []
+        self.shape = self.activations.shape
+        if len(self.shape) == 1:
+            self.shape = (1, self.shape[0])
 
     def compute(self):
-            """
-            Compute the policies based on the activations and temperature.
+        """
+        Compute the policies based on the activations and temperature.
 
-            Returns:
-                output (numpy.ndarray): Array of computed policies.
-            """
-            output = np.zeros(self.activations.shape[0])
-            for i in range(self.activations.shape[0]):
-                output[i] = np.sum(np.exp(self.activations[i] * self.temperature)) / np.sum(np.exp(self.activations * self.temperature))
-            self.policies = output
-            return output
+        Returns:
+            output (numpy.ndarray): Array of computed policies.
+        """
+        output = np.zeros(self.shape[0])
+        for i in range(self.shape[0]):
+            output[i] = np.sum(np.exp(self.activations[i] * self.temperature)) / np.sum(np.exp(self.activations * self.temperature))
+        self.policies = output
+        return output
 
     def config(self):
+        """
+        Get the configuration of the Softmax class.
+
+        Returns:
+            config (dict): Dictionary containing the configuration parameters.
+        """
         config = {
             'temperature': self.temperature,
             'activations': self.activations,
@@ -53,39 +59,56 @@ class Softmax:
 
 class Sigmoid:
     """
-    A class representing a sigmoid function.
-
-    Attributes:
-        temperature (float): The temperature parameter for the sigmoid function.
-        activations (ndarray): An array of activations for the sigmoid function.
-        bounds (list): A list representing the lower and upper bounds of the temperature parameter.
-        policies (list): A list of output policies.
-
-    Methods:
-        compute(): Computes the sigmoid function.
-        config(): Returns the configuration of the sigmoid function.
-    """
-
-    def  __init__(self, temperature=None, activations=None, **kwargs):
-        self.temperature = temperature
-        self.activations = activations
-        self.bounds = [0, 1]
-        self.policies = []
-
-    def compute(self):
-        """
-        Sigmoid function that takes an n by m array of activations and returns an n
+    A class representing a sigmoid function that takes an n by m array of activations and returns an n
         array of outputs, where n is the number of output and m is the number of
         inputs.
 
         The sigmoid function is defined as: 1 / (1 + e^(-x * temperature)).
 
+    Parameters
+    ----------
+    temperature : float
+        The temperature parameter for the sigmoid function.
+    activations : ndarray
+        An array of activations for the sigmoid function.
+
+    Attributes
+    ----------
+    temperature : float
+        The temperature parameter for the sigmoid function.
+    activations : ndarray
+        An array of activations for the sigmoid function.
+    policies : ndarray
+        An array of outputs computed using the sigmoid function.
+    shape : tuple
+        The shape of the activations array.
+
+    Methods
+    -------
+    compute()
+        Computes the sigmoid function.
+    config()
+        Returns the configuration of the sigmoid function.
+    """
+
+    def  __init__(self, temperature=None, activations=None, **kwargs):
+        self.temperature = temperature
+        self.activations = np.asarray(activations.copy())
+        self.policies = []
+        self.shape = self.activations.shape
+        if len(self.shape) == 1:
+            self.shape = (1, self.shape[0])
+
+    def compute(self):
+        """
+        Computes the Sigmoid function.
+
         Returns:
             ndarray: An array of outputs computed using the sigmoid function.
         """
-        output = np.zeros(self.activations.shape[0])
-        for i in range(self.activations.shape[0]):
-            output[i] = 1 / (1 + np.exp(-self.activations[i] * self.temperature))
+        output = np.zeros(self.shape[0])
+        for i in range(self.shape[0]):
+            output[i] = 1 / (1 + np.exp(-np.sum(self.activations[i]) * self.temperature))
         self.policies = output
         return output
 

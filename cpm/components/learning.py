@@ -1,4 +1,5 @@
 import numpy as np
+from prettyformatter import pprint as pp
 
 class DeltaRule:
     """
@@ -26,17 +27,22 @@ class DeltaRule:
         if weights is not None:
             self.weights = weights.copy()
         self.teacher = feedback
-        self.input = input
+        self.input = np.asarray(input)
+        self.shape = self.weights.shape
+        if len(self.shape) == 1:
+            self.shape = (1, self.shape[0])
+            self.weights = np.array([self.weights])
 
     def compute(self):
-        for i in range(self.weights.shape[0]):
+        for i in range(self.shape[0]):
             activations = np.sum(self.weights[i])
-            for j in range(self.weights.shape[1]):
-                self.weights[i, j] += self.alpha * (self.teacher[i] - activations) * self.input[j]
+            for j in range(self.shape[1]):
+                # pp(self.alpha * (self.teacher[i] - activations) * self.input[j])
+                self.weights[i, j] = self.alpha * (self.teacher[i] - activations) * self.input[j]
         return self.weights
 
     def reset(self):
-        self.weights = np.zeros(self.weights.shape)
+        self.weights = np.zeros(self.shape)
 
     def __repr__(self):
         return f"DeltaRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
@@ -50,33 +56,6 @@ class DeltaRule:
             'type': 'learning',
         }
         return config
-
-# arguments = {
-#     'alpha' : 0.1,
-#     'brutality' : 2,
-#     'temperature': 1,
-#     'weights' : np.array([[0.5, 0], [0, 0.5]]),
-#     'input' : np.array([1, 1]),
-#     'teacher' : np.array([1, 0]),
-#     'attention' : np.array([1, 2]),
-#     'misc' : np.array([1, 0])
-#     }
-
-# input = arguments
-
-# arguments['weights']
-
-# input
-
-# x = DeltaRule(**input)
-# x.weights
-# x.teacher
-# x.input
-# x.compute()
-# x.compute()
-# x.reset()
-# x.weights
-# # pf.pprint(x.config())
 
 # NOTE: NOT TESTED
 class HebbRule:

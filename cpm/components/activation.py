@@ -96,7 +96,7 @@ class SigmoidActivation:
             The input values (default is None).
         weights : numpy.ndarray, optional
             The weights associated with the input values (default is None).
-        kwargs : dict
+        **kwargs : dict
             Additional keyword arguments.
         """
         self.input = input

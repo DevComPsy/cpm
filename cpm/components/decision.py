@@ -2,6 +2,7 @@ import numpy as np
 
 import numpy as np
 
+
 class Softmax:
     """
     Softmax class for computing policies based on activations and temperature.
@@ -11,12 +12,38 @@ class Softmax:
         """
         Initialize the Softmax class.
 
-        Args:
-            temperature (float): The temperature parameter for softmax computation.
-            activations (numpy.ndarray): Array of activations.
+        Parameters
+        ----------
+        temperature : float
+            The temperature parameter for softmax computation.
+        activations : numpy.ndarray
+            Array of activations.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> from cpm.components.decision import Softmax
+        >>> import numpy as np
+        >>> temperature = 1
+        >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+        >>> softmax = Softmax(temperature=temperature, activations=activations)
+        >>> softmax.compute()
+        array([0.45352133, 0.54647867])
+
+        >>> softmax.config()
+        {
+            "temperature"   : 1,
+            "activations":
+                array([[ 0.1,  0. ,  0.2],
+                [-0.6,  0. ,  0.9]]),
+            "name"  : "Softmax",
+            "type"  : "decision",
+        } 
+        >>> Softmax(temperature=temperature, activations=activations).compute()
+        array([0.45352133, 0.54647867])
         """
         self.temperature = temperature
         if activations is not None:
@@ -32,12 +59,15 @@ class Softmax:
         """
         Compute the policies based on the activations and temperature.
 
-        Returns:
-            output (numpy.ndarray): Array of computed policies.
+        Returns
+        -------
+        output (numpy.ndarray): Array of computed policies.
         """
         output = np.zeros(self.shape[0])
         for i in range(self.shape[0]):
-            output[i] = np.sum(np.exp(self.activations[i] * self.temperature)) / np.sum(np.exp(self.activations * self.temperature))
+            output[i] = np.sum(np.exp(self.activations[i] * self.temperature)) / np.sum(
+                np.exp(self.activations * self.temperature)
+            )
         self.policies = output
         return output
 
@@ -45,14 +75,15 @@ class Softmax:
         """
         Get the configuration of the Softmax class.
 
-        Returns:
-            config (dict): Dictionary containing the configuration parameters.
+        Returns
+        ------
+        config (dict): Dictionary containing the configuration parameters.
         """
         config = {
-            'temperature': self.temperature,
-            'activations': self.activations,
-            'name': self.__class__.__name__,
-            'type': 'decision'
+            "temperature": self.temperature,
+            "activations": self.activations,
+            "name": self.__class__.__name__,
+            "type": "decision",
         }
         return config
 
@@ -91,7 +122,7 @@ class Sigmoid:
         Returns the configuration of the sigmoid function.
     """
 
-    def  __init__(self, temperature=None, activations=None, **kwargs):
+    def __init__(self, temperature=None, activations=None, **kwargs):
         self.temperature = temperature
         self.activations = np.asarray(activations.copy())
         self.policies = []
@@ -108,7 +139,10 @@ class Sigmoid:
         """
         output = np.zeros(self.shape[0])
         for i in range(self.shape[0]):
-            output[i] = 1 / (1 + np.exp(-np.sum(self.activations[i]) * self.temperature))
+            print(self.activations[i])
+            output[i] = 1 / (
+                1 + np.exp(np.sum(self.activations[i]) * -self.temperature)
+            )
         self.policies = output
         return output
 
@@ -120,10 +154,10 @@ class Sigmoid:
             dict: A dictionary containing the configuration of the sigmoid function.
         """
         config = {
-            'temperature': self.temperature,
-            'activations': self.activations,
-            'name': self.__class__.__name__,
-            'bounds': self.bounds,
-            'type': 'decision'
+            "temperature": self.temperature,
+            "activations": self.activations,
+            "name": self.__class__.__name__,
+            "bounds": self.bounds,
+            "type": "decision",
         }
         return config

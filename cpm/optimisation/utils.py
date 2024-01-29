@@ -18,9 +18,3 @@ def ExtractParamsFromFit(data, keys = None):
     for i in range(len(data)):
         parameters[keys[i]] = data[i]
     return parameters
-
-def ConvertToPandas(a):
-    m, n, r = a.shape
-    out_arr = np.column_stack((np.repeat(np.arange(m), n), a.reshape(m*n, -1)))
-    out_df = pd.DataFrame(out_arr)
-    return out_df

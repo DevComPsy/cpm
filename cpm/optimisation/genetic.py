@@ -43,14 +43,6 @@ class DifferentialEvolution:
     bounds : object
         The parameter bounds for the optimization.
 
-    Methods
-    -------
-    minimise(pars, **args)
-        Minimizes the objective function.
-    optimise()
-        Performs the optimization process.
-    reset()
-        Resets the optimization results and fitted parameters.
     """
 
     def __init__(

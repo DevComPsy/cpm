@@ -3,3 +3,4 @@ nav:
     - cpm.models: models.md
     - cpm.optimisation: optimisation.md
     - cpm.evaluation: evaluation.md
+    - cpm.utils: utils.md

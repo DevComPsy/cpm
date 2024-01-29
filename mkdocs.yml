@@ -21,7 +21,12 @@ plugins:
           options:
             show_source: false
             docstring_style: numpy
-            inheritance_diagram: True
+            docstring_section_style: table
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+
+
 markdown_extensions:
   # - markdown_include.include:
   #     base_path: .

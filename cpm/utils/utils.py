@@ -45,5 +45,26 @@ def PandasToDict(
 
     return output
 
+def DictToPandas(dict):
+    # TODO: Add must handle multidimensional arrays per-column
+    """
+    Convert a dictionary to a pandas dataframe.
 
+    Parameters
+    ----------
+    dict : dict
+        The dictionary to convert.
 
+    Returns
+    -------
+    pandas: dataframe
+        The pandas dataframe converted from dict.
+    """
+    output = pd.DataFrame()
+    for key, value in dict.items():
+        if len(value.shape) > 1:
+            for i in range(value.shape[1]):
+                output[f"{key}_{i}"] = pd.Series(value[:, i].tolist())
+        else:
+            output[key] = pd.Series(value.tolist())
+    return output

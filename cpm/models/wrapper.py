@@ -4,9 +4,46 @@ from prettyformatter import pprint as pp
 
 
 class Wrapper:
+    """
+    A wrapper class for a model in the CPM toolbox.
+
+    Parameters
+    ----------
+    model : function
+        The model function that calculates the output(s) of the model for a single trial.
+    data : dict
+        A dictionary containing the data for the model. For the correct format of the dictionary, see the documentation of the TBA.
+    parameters : [Parameters][cpm.models.Parameters] object
+        The parameters object for the model that contains all parameters for the model.
+
+    Attributes
+    ----------
+    model : object
+        The model object.
+    data : dict
+        The data for the model.
+    parameters : object
+        The parameters object for the model.
+    values : ndarray
+        The values array.
+    simulation : list
+        The list of simulation results.
+    training : ndarray
+        The training data.
+    feedback : ndarray
+        The feedback data.
+    policies : ndarray
+        The policies array.
+    parameter_names : list
+        The list of parameter names.
+
+    Returns
+    -------
+    Wrapper : object
+        A Wrapper object.
+    """
+
     def __init__(self, model=None, data=None, parameters=None):
-        ## set up environment to run the model
-        ## FIXME: this is a hack, we need to find a better way to do this
         self.model = model
         self.data = data
         self.parameters = copy.deepcopy(parameters)
@@ -23,6 +60,14 @@ class Wrapper:
         self.parameter_names = list(parameters.__dict__.keys())
 
     def run(self):
+        """
+        Run the model.
+
+        Returns
+        -------
+        None
+
+        """
         for i in range(len(self.training)):
             trial = {
                 "input": np.asarray(self.training[i]),
@@ -31,12 +76,25 @@ class Wrapper:
             output = self.model(parameters=self.parameters, trial=trial)
             self.parameters.values = output.get("values")
             # output.compute(**trial)
-            self.values = output.get('values').copy()
+            self.values = output.get("values").copy()
             self.simulation.append(output.copy())
-            self.policies[i] = output.get('policy').copy()
+            self.policies[i] = output.get("policy").copy()
         return None
 
     def reset(self, parameters=None):
+        """
+        Reset the model.
+
+        Parameters
+        ----------
+        parameters : dict or list, optional
+            The parameters to reset the model with.
+
+        Returns
+        -------
+        None
+
+        """
         self.values.fill(0)
         self.policies.fill(0)
         self.values = []
@@ -52,28 +110,59 @@ class Wrapper:
         """
         Update the data in the model.
 
-        Args:
-            new (dict): A dictionary containing the new data.
-                The dictionary should have the following keys:
-                - 'trials': The updated trials data.
-                - 'feedback': The updated feedback data.
+        Parameters
+        ----------
+        new : dict
+            A dictionary containing the new data.
+            The dictionary should have the following keys:
+            
+            - 'trials': The updated trials data.
+            - 'feedback': The updated feedback data.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
         self.training = new["trials"]
         self.feedback = new["feedback"]
         return None
 
     def summary(self):
+        """
+        Get a summary of the model.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the model summary.
+
+            - 'values': The values array.
+            - 'policies': The policies array.
+            - 'model': The model summary.
+
+        """
         summary = {
             "values": self.values,
             "policies": self.policies,
-            "model": self.model.summary(),
         }
         return summary
 
     def export(self):
+        """
+        Export the model configurations.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the exported model configurations.
+
+            - 'values': The values array.
+            - 'policies': The policies array.
+            - 'name': The name of the model.
+            - 'parameters': The parameters of the model.
+
+        """
         return {
             "values": self.values,
             "policies": self.policies,

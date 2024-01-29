@@ -91,15 +91,18 @@ class Softmax:
 class Sigmoid:
     """
     A class representing a sigmoid function that takes an n by m array of activations and returns an n
-        array of outputs, where n is the number of output and m is the number of
-        inputs.
+    array of outputs, where n is the number of output and m is the number of
+    inputs.
 
-        The sigmoid function is defined as: 1 / (1 + e^(-x * temperature)).
+        The sigmoid function is defined as: 1 / (1 + e^(-temperature * (x - beta))).
 
     Parameters
     ----------
     temperature : float
         The temperature parameter for the sigmoid function.
+    beta : float
+        It is the value of the output activation that results in an output rating
+        of P = 0.5.
     activations : ndarray
         An array of activations for the sigmoid function.
 
@@ -107,6 +110,9 @@ class Sigmoid:
     ----------
     temperature : float
         The temperature parameter for the sigmoid function.
+    beta : float
+        The bias parameter for the sigmoid function. It is the value of the
+        output activation that results in an output rating of P = 0.5.
     activations : ndarray
         An array of activations for the sigmoid function.
     policies : ndarray
@@ -114,16 +120,11 @@ class Sigmoid:
     shape : tuple
         The shape of the activations array.
 
-    Methods
-    -------
-    compute()
-        Computes the sigmoid function.
-    config()
-        Returns the configuration of the sigmoid function.
     """
 
-    def __init__(self, temperature=None, activations=None, **kwargs):
+    def __init__(self, temperature=None, activations=None, beta=0, **kwargs):
         self.temperature = temperature
+        self.beta = beta
         self.activations = np.asarray(activations.copy())
         self.policies = []
         self.shape = self.activations.shape
@@ -134,14 +135,14 @@ class Sigmoid:
         """
         Computes the Sigmoid function.
 
-        Returns:
+        Returns
+        -------
             ndarray: An array of outputs computed using the sigmoid function.
         """
         output = np.zeros(self.shape[0])
         for i in range(self.shape[0]):
-            print(self.activations[i])
             output[i] = 1 / (
-                1 + np.exp(np.sum(self.activations[i]) * -self.temperature)
+                1 + np.exp((np.sum(self.activations[i]) - self.beta) * -self.temperature)
             )
         self.policies = output
         return output
@@ -150,8 +151,16 @@ class Sigmoid:
         """
         Returns the configuration of the sigmoid function.
 
-        Returns:
-            dict: A dictionary containing the configuration of the sigmoid function.
+        Returns
+        -------
+        config: dict
+            A dictionary containing the configuration of the sigmoid function.
+
+            - temperature (float): The temperature parameter for the sigmoid function.
+            - beta (float): The bias parameter for the sigmoid function.
+            - activations (ndarray): An array of activations for the sigmoid function.
+            - name (str): The name of the sigmoid function.
+            - type (str): The class of function it belongs.
         """
         config = {
             "temperature": self.temperature,

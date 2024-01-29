@@ -4,6 +4,7 @@ from . import minimise
 from . import utils
 from ..models import Simulator, Wrapper
 
+
 class DifferentialEvolution:
     """
     Class representing the Differential Evolution optimization algorithm.
@@ -51,8 +52,10 @@ class DifferentialEvolution:
     reset()
         Resets the optimization results and fitted parameters.
     """
-    
-    def __init__(self, model = None, bounds = None, data = None, minimisation="LogLikelihood", **kwargs):
+
+    def __init__(
+        self, model=None, bounds=None, data=None, minimisation="LogLikelihood", **kwargs
+    ):
         self.function = model
         self.data = data
         self.loss = getattr(minimise, minimisation)
@@ -64,7 +67,7 @@ class DifferentialEvolution:
             self.parameter_names = self.function.parameter_names
         if isinstance(model, Simulator):
             self.parameter_names = self.function.function.parameter_names
-        if hasattr(self.function, 'bounds'):
+        if hasattr(self.function, "bounds"):
             self.bounds = self.function.bounds
         else:
             self.bounds = bounds
@@ -74,20 +77,20 @@ class DifferentialEvolution:
         """
         The `minimise` function calculates a metric by comparing predicted values with
         observed values.
-        
+
         Parameters
         ----------
         pars
             The `pars` parameter is a dictionary that contains the parameters for the
             function that needs to be minimized.
-        
+
         Returns
         -------
             The metric value is being returned.
-        
+
         """
 
-        self.function.reset()  
+        self.function.reset()
         self.function.reset(pars)
         self.function.run()
         predicted = self.function.policies
@@ -113,8 +116,7 @@ class DifferentialEvolution:
             )
             self.parameters.append(fitted_parameters.copy())
             # add the results to the list
-            self.fit.append({"parameters": result.x,
-                             "fun": result.fun})
+            self.fit.append({"parameters": result.x, "fun": result.fun})
             del result, fitted_parameters, objective
         return None
 

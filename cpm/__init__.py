@@ -19,5 +19,6 @@ from . import models
 from . import applications
 from . import optimisation
 from . import evaluation
+from . import utils
 
 del os, sys, warnings, logging

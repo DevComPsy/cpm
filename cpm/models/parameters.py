@@ -2,6 +2,23 @@ from typing import Any
 
 
 class Parameters():
+    """
+    A class representing a set of parameters.
+    It takes keyword arguments representing the parameters with their values and wraps them into a python object.
+
+    Parameters
+    ----------
+    **kwargs : dict
+        Keyword arguments representing the parameters.
+
+    Returns
+    -------
+    Parameters
+        A Parameters object, where each attributes is one of the keyword arguments
+        provided for the function.
+
+    """
+
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 

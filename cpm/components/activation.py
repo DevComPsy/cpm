@@ -3,7 +3,9 @@ import numpy as np
 class LinearActivation:
     """
     Represents a linear activation function.
-
+    This function simply multiplies the stimulus (input) vector with the values (weights) vector
+    without any additional scaling.
+    
     Attributes
     ----------
     input : array_like
@@ -11,14 +13,6 @@ class LinearActivation:
     weights : array_like
         The weights value.
 
-    Methods
-    -------
-    __init__(self, input=None, weights=None, **kwargs)
-        Initialize the LinearActivation object.
-    compute(self)
-        Compute the linear activation function.
-    config(self)
-        Get the configuration of the linear activation function.
     """
 
     def __init__(self, input=None, weights=None, **kwargs):
@@ -71,6 +65,7 @@ class SigmoidActivation:
     """
     Represents a sigmoid activation function.
 
+
     Attributes
     ----------
     input : numpy.ndarray
@@ -78,12 +73,6 @@ class SigmoidActivation:
     weights : numpy.ndarray
         The weights associated with the input values.
 
-    Methods
-    -------
-    compute()
-        Compute the activation value using the sigmoid function.
-    config()
-        Get the configuration of the activation function.
     """
 
     def __init__(self, input=None, weights=None, **kwargs):

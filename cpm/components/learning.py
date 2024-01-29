@@ -8,8 +8,8 @@ class DeltaRule:
     and Wagner (1972), which was identical to that of Widrow and Hoff (1960).
 
     The delta-rule is a summed error term, which means that the error is defined as
-    the difference between the target value and the summed activation of all available
-    output units. For separable error term, see the Bush and Mosteller (1951) rule.
+    the difference between the target value and the summed activation of all values
+    for a given output unit. For separable error term, see the Bush and Mosteller (1951) rule.
 
     Attributes
     ----------
@@ -23,8 +23,34 @@ class DeltaRule:
         The input values.
     shape : tuple
         The shape of the weight matrix.
-    """
 
+    See Also
+    --------
+    [cpm.components.learning.SeparableRule][cpm.components.learning.SeparableRule] : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from cpm.components.learning import DeltaRule
+    >>> weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+    >>> teacher = np.array([1, 0])
+    >>> input = np.array([1, 1, 0])
+    >>> delta_rule = DeltaRule(alpha=0.1, weights=weights, feedback=teacher, input=input)
+    >>> delta_rule.compute()
+    array([[ 0.04,  0.04,  0.  ],
+           [-0.15, -0.15, -0.  ]])
+
+    This implementation generalises to n-dimensional weight matrices, which means
+    that it can be applied to both single- and multi-outcome learning paradigms.
+
+    >>> weights = np.array([0.1, 0.6, 0., 0.3])
+    >>> teacher = np.array([1])
+    >>> input = np.array([1, 1, 0, 0])
+    >>> delta_rule = DeltaRule(alpha=0.1, weights=weights, feedback=teacher, input=input)
+    >>> delta_rule.compute()
+    array([[0.03, 0.03, 0.  , 0.  ]])
+    """
+    
     def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
         """
         Initializes the DeltaRule object.
@@ -62,7 +88,7 @@ class DeltaRule:
             """
 
             for i in range(self.shape[0]):
-                activations = np.sum(self.weights[i])
+                activations = np.sum(self.weights[i] * self.input)
                 for j in range(self.shape[1]):
                     self.weights[i, j] = (
                         self.alpha * (self.teacher[i] - activations) * self.input[j]
@@ -82,13 +108,16 @@ class DeltaRule:
             """
             Get the configuration of the learning component.
 
-            Returns:
-                dict: A dictionary containing the configuration parameters of the learning component.
-                    - alpha (float): The learning rate.
-                    - weights (list): The weights used for learning.
-                    - teacher (str): The name of the teacher.
-                    - name (str): The name of the learning component class.
-                    - type (str): The type of the learning component.
+            Returns
+            -------
+            config: dict
+                A dictionary containing the configuration parameters of the learning component.
+
+                - alpha (float): The learning rate.
+                - weights (list): The weights used for learning.
+                - teacher (str): The name of the teacher.
+                - name (str): The name of the learning component class.
+                - type (str): The type of the learning component.
             """
             config = {
                 "alpha": self.alpha,
@@ -133,7 +162,7 @@ class SeparableRule:
 
     See Also
     --------
-    SeparableRule : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
+    [cpm.components.learning.DeltaRule][cpm.components.learning.DeltaRule] : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
     """
 
     def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):

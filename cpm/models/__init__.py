@@ -2,7 +2,7 @@
 Here we import all the modules that are needed for the project.
 """
 
-__all__ = ['Wrapper', 'Simulator']
+__all__ = ['Wrapper', 'Simulator', 'Parameters']
 
 from .simulator import Simulator
 from .wrapper import Wrapper

@@ -12,36 +12,39 @@ class ParameterRecovery:
     """
     Class for performing parameter recovery analysis.
 
-    Args:
-        model: The model to be used for parameter recovery.
-        optimiser: The optimiser algorithm to be used for parameter optimisation.
-        minimasation: The type of minimisation to be used (e.g., "LogLikelihood").
-        strategy: The strategy for generating parameter values.
-        iteration: The number of iterations for the parameter recovery process.
-        **kwargs: Additional keyword arguments.
+    Attributes
+    ----------
+    model : object
+        The model object.
+    function : object
+        The function associated with the model.
+    template : object
+        The template parameter.
+    optimisation : object
+        The optimisation algorithm.
+    loss : str
+        The type of loss function used for optimisation.
+    strategy : object
+        The strategy object for generating parameter values.
+    parameter_names : list
+        A list of parameter names.
+    data : list
+        A list of dictionaries containing the data.
+    iteration : int or float
+        The number of iterations for the parameter recovery process.
+    population : int
+        The number of individuals in the population (how many parameter
+        sets should we generate on each iteration).
+    kwargs : dict
+        Additional keyword arguments.
 
-    Attributes:
-        model: The model object.
-        function: The function associated with the model.
-        template: The template parameter.
-        optimisation: The optimisation algorithm.
-        loss: The type of loss function used for optimisation.
-        strategy: The strategy object for generating parameter values.
-        parameter_names: The names of the parameters.
-        data: The data used for parameter recovery.
-        iteration: The number of iterations.
-        population: The population size.
-        kwargs: Additional keyword arguments.
-        output: The output of the parameter recovery process.
-
-    Methods:
-        recover: Perform the parameter recovery process.
-        extract: Extract the recovered and original parameter values.
+    Examples
+    --------
+    >>> from cpm.evaluation import ParameterRecovery
 
     """
 
-    def __init__(
-        self,
+    def __init__(self,
         model=None,
         optimiser=None,
         minimasation="LogLikelihood",
@@ -49,6 +52,25 @@ class ParameterRecovery:
         iteration=1000,
         **kwargs
     ):
+        """
+        Initialize the ParameterRecovery class.
+
+        Parameters
+        ----------
+        model : object
+            The model object.
+        optimiser : object
+            The optimisation algorithm.
+        minimisation : str
+            The type of minimisation to be used (e.g., "LogLikelihood").
+        strategy : object
+            The strategy for generating parameter values.
+        iteration : int
+            The number of iterations for the parameter recovery process.
+        **kwargs : dict
+            Additional keyword arguments.
+
+        """
         self.model = copy.deepcopy(model)
         self.function = copy.deepcopy(model.function)
         self.template = self.model.parameters[0]
@@ -102,12 +124,16 @@ class ParameterRecovery:
         """
         Extract the recovered and original parameter values.
 
-        Args:
-            key: The key specifying the parameter value to extract.
+        Parameters
+        ----------
+        key: str, optional
+            The key specifying the parameter value to extract.
 
-        Returns:
-            output: The extracted parameter values.
-
+        Returns
+        -------
+        numpy.ndarray
+            The extracted parameter values.
+        
         """
         if key is None:
             return self.output

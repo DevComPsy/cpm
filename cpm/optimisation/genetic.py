@@ -35,7 +35,7 @@ class DifferentialEvolution:
     fit : list
         List to store the optimization results.
     parameters : list
-        List to store the fitted parameters.
+        List to store the best-fitting parameters as dictionaries.
     participant : object
         The current participant data.
     parameter_names : list
@@ -48,7 +48,7 @@ class DifferentialEvolution:
     def __init__(
         self, model=None, bounds=None, data=None, minimisation="LogLikelihood", **kwargs
     ):
-        self.function = model
+        self.function = copy.deepcopy(model)
         self.data = data
         self.loss = getattr(minimise, minimisation)
         self.kwargs = kwargs
@@ -66,8 +66,9 @@ class DifferentialEvolution:
             # raise ValueError("You must define the parameter bounds in the Model object.")
         self.auxilary = {
             "n": len(self.participant.get("observed")),
-            "k": len(self.parameter_names)
+            "k": len(self.parameter_names),
         }
+
     def minimise(self, pars, **args):
         """
         The `minimise` function calculates a metric by comparing predicted values with
@@ -84,13 +85,13 @@ class DifferentialEvolution:
             The metric value is being returned.
 
         """
-
-        self.function.reset()
-        self.function.reset(pars)
-        self.function.run()
-        predicted = self.function.policies
+        evaluated = copy.deepcopy(self.function)
+        evaluated.reset(pars)
+        evaluated.run()
+        predicted = evaluated.policies
         observed = self.participant.get("observed")
         metric = self.loss(predicted, observed, **self.auxilary)
+        del predicted, observed
         return metric
 
     def optimise(self):
@@ -103,16 +104,15 @@ class DifferentialEvolution:
         for i in range(len(self.data)):
             self.participant = self.data[i]
             self.function.update_data(self.participant)
-            objective = copy.deepcopy(self.minimise)
-            result = differential_evolution(objective, self.bounds, **self.kwargs)
+            # objective = copy.deepcopy(self.minimise)
+            result = differential_evolution(self.minimise, self.bounds, **self.kwargs)
             # add the parameters to the list
             fitted_parameters = utils.ExtractParamsFromFit(
                 data=result.x, keys=self.parameter_names
             )
             self.parameters.append(fitted_parameters.copy())
             # add the results to the list
-            self.fit.append({"parameters": result.x, "fun": result.fun})
-            del result, fitted_parameters, objective
+            self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result.fun)})
         return None
 
     def reset(self):

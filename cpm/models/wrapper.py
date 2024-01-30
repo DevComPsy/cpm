@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 from prettyformatter import pprint as pp
-
+from .parameters import Parameters
 
 class Wrapper:
     """
@@ -95,15 +95,17 @@ class Wrapper:
         None
 
         """
-        self.values.fill(0)
+        if len(self.values) > 1:
+            self.values.fill(0)
         self.policies.fill(0)
-        self.values = []
         if isinstance(parameters, dict):
+            updates = Parameters(**parameters)
             self.values = parameters.get("values", self.values)
             self.parameters = parameters
         if isinstance(parameters, list):
             for keys in self.parameter_names:
-                self.parameters[keys] = parameters[self.parameter_names.index(keys)]
+                value = parameters[self.parameter_names.index(keys)]
+                setattr(self.parameters, keys, value)
         return None
 
     def update_data(self, new=None):
@@ -169,14 +171,3 @@ class Wrapper:
             "name": self.model.name,
             **self.parameters,
         }
-
-
-# arguments = {
-#     "alpha": 0.1,
-#     "temperature": 1,
-#     "values": np.array([[0.5, 0], [0, 0.5]]),
-#     "input": np.array([1, 1]),
-#     "teacher": np.array([1, 0]),
-#     "attention": np.array([1, 0]),
-#     "misc": np.array([1, 0]),
-# }

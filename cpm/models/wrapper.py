@@ -1,6 +1,9 @@
 import numpy as np
 import copy
 from prettyformatter import pprint as pp
+import pickle as pkl
+
+## import local modules
 from .parameters import Parameters
 
 class Wrapper:
@@ -100,8 +103,8 @@ class Wrapper:
         self.policies.fill(0)
         if isinstance(parameters, dict):
             updates = Parameters(**parameters)
-            self.values = parameters.get("values", self.values)
-            self.parameters = parameters
+            self.values = copy.deepcopy(updates.values)
+            self.parameters = copy.deepcopy(updates)
         if isinstance(parameters, list):
             for keys in self.parameter_names:
                 value = parameters[self.parameter_names.index(keys)]
@@ -165,9 +168,38 @@ class Wrapper:
             - 'parameters': The parameters of the model.
 
         """
-        return {
+        export = {
             "values": self.values,
             "policies": self.policies,
-            "name": self.model.name,
-            **self.parameters,
+            **self.parameters.export(),
         }
+        return export
+
+    def save(self, filename=None):
+        """
+        Save the model.
+
+        Parameters
+        ----------
+        path : str
+            The name of the file to save the results to.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> x = Wrapper(model = mine, data = data, parameters = params)
+        >>> x.run()
+        >>> x.save('simulation')
+
+        If you wish to save a file in a specific folder, provide the relative path.
+
+        >>> x.save('results/simulation')
+        >>> x.save('../archives/results/simulation')
+        """
+        if filename is None:
+            filename = 'simulation'
+        pkl.dump(self, open(filename + '.pkl', 'wb'))
+        return None

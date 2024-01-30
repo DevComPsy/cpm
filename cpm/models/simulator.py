@@ -1,10 +1,13 @@
 """
 Runs a simulation for each ppt in the data.
 """
-
 import numpy as np
 import pandas as pd
 import copy
+import pickle as pkl
+
+from .parameters import Parameters
+
 
 class Simulator():
     """
@@ -45,9 +48,9 @@ class Simulator():
 
         self.function = model
         self.data = data
-        self.parameters = parameters
-        if len(parameters) == 1:
-            self.parameters = [(i, parameters.copy()) for i in range(1, len(self.data)+1)]
+        self.parameters = copy.deepcopy(parameters)
+        if isinstance(parameters, dict):
+            self.parameters = [(copy.deepcopy(parameters)) for i in range(1, len(self.data)+1)]
         self.parameter_names = self.function.parameter_names
         self.simulation =[]
         self.generated = []
@@ -62,7 +65,7 @@ class Simulator():
         for i in range(len(self.data)):
             self.function.reset()
             evaluate = copy.deepcopy(self.function)
-            evaluate.reset(self.parameters[i])
+            evaluate.reset(parameters=self.parameters[i])
             evaluate.update_data(self.data[i])
             evaluate.run()
             output = copy.deepcopy(evaluate.export())
@@ -77,13 +80,23 @@ class Simulator():
 
         Returns
         ------
-        policies : array_like
-            A list containing the policies from the simulation.
+        policies : pandas.DataFrame
+            A dataframe containing the policies from the simulation with the following columns:
+
+            - ppt: The participant number.
+            - policy_0, policy1, ...: The policy for each action, where each column is an action.
+            - stimulus_0, stimulus1, ...: The stimuli present, where each column is a stimulus dimension.
         """
-        policies = []
+        policies = pd.DataFrame()
         for i in range(len(self.simulation)):
-            policies.append(np.asarray(self.simulation[i]['policies']))
-        return np.asarray(policies)
+            policed = pd.DataFrame(self.simulation[i]['policies'])
+            policed.columns = ['policy_' + str(col) for col in policed.columns]
+            stimuli = pd.DataFrame(self.data[i].get('trials'))
+            stimuli.columns = ['stimulus_' + str(col) for col in stimuli.columns]
+            combined = pd.concat([policed, stimuli], axis = 1)
+            combined['ppt'] = self.simulation[i]['ppt']
+            policies = pd.concat([policies, combined], axis = 0, ignore_index = True)
+        return policies
 
     def update(self, parameters = None):
         """
@@ -92,15 +105,16 @@ class Simulator():
         Parameters:
         - params: The parameters to be updated.
         """
-        self.parameters = parameters
+        if isinstance(parameters, Parameters):
+            self.parameters = copy.deepcopy(parameters)
         ## if parameters is a single set of parameters, then repeat for each ppt
         if isinstance(parameters, dict):
-            self.parameters = [(parameters.copy()) for i in range(1, len(self.data)+1)]
+            self.parameters = [(copy.deepcopy(parameters)) for i in range(1, len(self.data)+1)]
         return None
 
     def generate(self):
         """
-        Exports the results of the simulation.
+        Generate data for parameter recovery, etc.
 
         Returns
         ------
@@ -118,4 +132,18 @@ class Simulator():
         """
         self.simulation = []
         self.generated = []
+        return None
+
+    def save(self, filename = None):
+        """
+        Saves the simulation results.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the file to save the results to.
+        """
+        if filename is None:
+            filename = 'simulation'
+        pkl.dump(self, open(filename + '.pkl', 'wb'))
         return None

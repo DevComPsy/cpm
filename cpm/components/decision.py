@@ -6,22 +6,18 @@ import numpy as np
 class Softmax:
     """
     Softmax class for computing policies based on activations and temperature.
+
+        The softmax function is defined as: e^(temperature * x) / sum(e^(temperature * x)).
     """
 
     def __init__(self, temperature=None, activations=None, **kwargs):
         """
-        Initialize the Softmax class.
-
         Parameters
         ----------
         temperature : float
             The temperature parameter for softmax computation.
         activations : numpy.ndarray
-            Array of activations.
-
-        Returns
-        -------
-        None
+            Array of activations for each possible outcome/action.
 
         Examples
         --------
@@ -41,7 +37,7 @@ class Softmax:
                 [-0.6,  0. ,  0.9]]),
             "name"  : "Softmax",
             "type"  : "decision",
-        } 
+        }
         >>> Softmax(temperature=temperature, activations=activations).compute()
         array([0.45352133, 0.54647867])
         """
@@ -142,7 +138,8 @@ class Sigmoid:
         output = np.zeros(self.shape[0])
         for i in range(self.shape[0]):
             output[i] = 1 / (
-                1 + np.exp((np.sum(self.activations[i]) - self.beta) * -self.temperature)
+                1
+                + np.exp((np.sum(self.activations[i]) - self.beta) * -self.temperature)
             )
         self.policies = output
         return output

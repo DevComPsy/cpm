@@ -24,6 +24,19 @@ class DeltaRule:
     shape : tuple
         The shape of the weight matrix.
 
+    Parameters
+    ----------
+    alpha : float
+        The learning rate.
+    weights : ndarray
+        The weight matrix.
+    feedback : ndarray
+        The target values.
+    input : ndarray
+        The input values.
+    **kwargs : dict
+        Additional keyword arguments.
+
     See Also
     --------
     [cpm.components.learning.SeparableRule][cpm.components.learning.SeparableRule] : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
@@ -50,24 +63,9 @@ class DeltaRule:
     >>> delta_rule.compute()
     array([[0.03, 0.03, 0.  , 0.  ]])
     """
-    
-    def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
-        """
-        Initializes the DeltaRule object.
 
-        Parameters
-        ----------
-        alpha : float
-            The learning rate.
-        weights : ndarray
-            The weight matrix.
-        feedback : ndarray
-            The target values.
-        input : ndarray
-            The input values.
-        **kwargs : dict
-            Additional keyword arguments.
-        """
+    def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
+        """ """
         self.alpha = alpha
         self.weights = [[]]
         if weights is not None:
@@ -80,20 +78,22 @@ class DeltaRule:
             self.weights = np.array([self.weights])
 
     def compute(self):
-            """
-            Compute the weights using the CPM learning rule.
+        """
+        Compute the weights using the CPM learning rule.
 
-            Returns:
-                numpy.ndarray: The updated weights matrix.
-            """
+        Returns
+        -------
+        weights: numpy.ndarray
+            The updated weights matrix.
+        """
 
-            for i in range(self.shape[0]):
-                activations = np.sum(self.weights[i] * self.input)
-                for j in range(self.shape[1]):
-                    self.weights[i, j] = (
-                        self.alpha * (self.teacher[i] - activations) * self.input[j]
-                    )
-            return self.weights
+        for i in range(self.shape[0]):
+            activations = np.sum(self.weights[i] * self.input)
+            for j in range(self.shape[1]):
+                self.weights[i, j] = (
+                    self.alpha * (self.teacher[i] - activations) * self.input[j]
+                )
+        return self.weights
 
     def reset(self):
         """
@@ -105,28 +105,28 @@ class DeltaRule:
         return f"DeltaRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
 
     def config(self):
-            """
-            Get the configuration of the learning component.
+        """
+        Get the configuration of the learning component.
 
-            Returns
-            -------
-            config: dict
-                A dictionary containing the configuration parameters of the learning component.
+        Returns
+        -------
+        config: dict
+            A dictionary containing the configuration parameters of the learning component.
 
-                - alpha (float): The learning rate.
-                - weights (list): The weights used for learning.
-                - teacher (str): The name of the teacher.
-                - name (str): The name of the learning component class.
-                - type (str): The type of the learning component.
-            """
-            config = {
-                "alpha": self.alpha,
-                "weights": self.weights,
-                "teacher": self.teacher,
-                "name": self.__class__.__name__,
-                "type": "learning",
-            }
-            return config
+            - alpha (float): The learning rate.
+            - weights (list): The weights used for learning.
+            - teacher (str): The name of the teacher.
+            - name (str): The name of the learning component class.
+            - type (str): The type of the learning component.
+        """
+        config = {
+            "alpha": self.alpha,
+            "weights": self.weights,
+            "teacher": self.teacher,
+            "name": self.__class__.__name__,
+            "type": "learning",
+        }
+        return config
 
 
 class SeparableRule:
@@ -258,7 +258,46 @@ class HebbRule:
 
 # NOTE: NOT TESTED
 class QLearningRule:
-    def __init__(self, alpha, gamma, weights, reward, *args, **kwargs):
+    """
+    Q-learning rule for reinforcement learning.
+
+    Parameters
+    ----------
+    alpha : float
+        The learning rate. Default is 0.5.
+    gamma : float
+        The discount factor. Default is 0.1.
+    weights : ndarray
+        The weight matrix. Default is None.
+    reward : ndarray
+        The reward matrix. Default is None.
+    maximum : ndarray
+        The maximum matrix. Default is None.
+
+    Attributes
+    ----------
+    alpha : float
+        The learning rate.
+    gamma : float
+        The discount factor.
+    weights : ndarray
+        The weight matrix.
+    reward : ndarray
+        The reward matrix.
+    maximum : ndarray
+        The maximum matrix.
+    """
+
+    def __init__(
+        self,
+        alpha=0.5,
+        gamma=0.1,
+        weights=None,
+        reward=None,
+        maximum=None,
+        *args,
+        **kwargs,
+    ):
         self.alpha = alpha
         self.gamma = gamma
         self.weights = weights

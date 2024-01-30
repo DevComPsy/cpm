@@ -91,13 +91,24 @@ class Wrapper:
 
         Parameters
         ----------
-        parameters : dict or list, optional
+        parameters : dict or array_like, optional
             The parameters to reset the model with.
 
         Notes
         -----
         When resetting the model, the values and policies arrays are reset to zero.
         If values are provided by the user, the values array is updated with the new values.
+
+        Examples
+        --------
+        >>> x = Wrapper(model = mine, data = data, parameters = params)
+        >>> x.run()
+        >>> x.reset(parameters = [0.1, 1])
+        >>> x.run()
+        >>> x.reset(parameters = {'alpha': 0.1, 'temperature': 1})
+        >>> x.run()
+        >>> x.reset(parameters = np.array([0.1, 1, 0.5]))
+        >>> x.run()
 
         Returns
         -------

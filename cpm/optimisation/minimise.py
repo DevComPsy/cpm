@@ -1,10 +1,11 @@
 from scipy.stats import norm
 import numpy as np
 
-__all__ = ['LogLikelihood', 'BIC', 'CrossEntropy']
+__all__ = ["LogLikelihood", "BIC", "CrossEntropy"]
+
 
 # Define your custom objective function
-def LogLikelihood(predicted = None, observed = None, negative = True):
+def LogLikelihood(predicted=None, observed=None, negative=True, **kwargs):
     """
     Compute the log likelihood of the predicted values given the observed values.
 
@@ -22,14 +23,15 @@ def LogLikelihood(predicted = None, observed = None, negative = True):
     float
         The log likelihood or negative log likelihood.
     """
-    
+
     # Compute the negative log likelihood
     LL = np.sum(norm.logpdf(predicted, observed, 0.5))
     if negative:
-        LL = -1*LL
+        LL = -1 * LL
     return LL
 
-def BIC(predicted, observed, n, k):
+
+def BIC(predicted, observed, n, k, **kwargs):
     """
     Calculate the Bayesian Information Criterion (BIC).
 
@@ -52,7 +54,8 @@ def BIC(predicted, observed, n, k):
     bic = -2 * LogLikelihood(predicted, observed, False) + k * np.log(n)
     return bic
 
-def CrossEntropy(predicted, observed):
+
+def CrossEntropy(predicted, observed, **kwargs):
     """
     Calculate the cross entropy.
 
@@ -70,6 +73,7 @@ def CrossEntropy(predicted, observed):
     """
     ce = np.sum(-observed * np.log(predicted) - (1 - observed) * np.log(1 - predicted))
     return ce
+
 
 # # Example data
 # x = np.array([1, 2, 3, 4, 5])

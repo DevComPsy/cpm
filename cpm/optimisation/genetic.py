@@ -64,7 +64,10 @@ class DifferentialEvolution:
         else:
             self.bounds = bounds
             # raise ValueError("You must define the parameter bounds in the Model object.")
-
+        self.auxilary = {
+            "n": len(self.participant.get("observed")),
+            "k": len(self.parameter_names)
+        }
     def minimise(self, pars, **args):
         """
         The `minimise` function calculates a metric by comparing predicted values with
@@ -87,7 +90,7 @@ class DifferentialEvolution:
         self.function.run()
         predicted = self.function.policies
         observed = self.participant.get("observed")
-        metric = self.loss(predicted, observed)
+        metric = self.loss(predicted, observed, **self.auxilary)
         return metric
 
     def optimise(self):

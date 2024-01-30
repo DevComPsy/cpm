@@ -6,6 +6,7 @@ import pickle as pkl
 ## import local modules
 from .parameters import Parameters
 
+
 class Wrapper:
     """
     A wrapper class for a model in the CPM toolbox.
@@ -93,20 +94,28 @@ class Wrapper:
         parameters : dict or list, optional
             The parameters to reset the model with.
 
+        Notes
+        -----
+        When resetting the model, the values and policies arrays are reset to zero.
+        If values are provided by the user, the values array is updated with the new values.
+
         Returns
         -------
         None
 
         """
-        if len(self.values) > 1:
-            self.values.fill(0)
+
+        self.values.fill(0)
         self.policies.fill(0)
+        self.parameters.values = self.values
         if isinstance(parameters, dict):
-            updates = Parameters(**parameters)
-            self.values = copy.deepcopy(updates.values)
+            if "values" not in parameters.keys():
+                updates = Parameters(**parameters, values=self.values)
+            else:
+                updates = Parameters(**parameters)
             self.parameters = copy.deepcopy(updates)
-        if isinstance(parameters, list):
-            for keys in self.parameter_names:
+        if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
+            for keys in self.parameter_names[0 : len(parameters)]:
                 value = parameters[self.parameter_names.index(keys)]
                 setattr(self.parameters, keys, value)
         return None
@@ -120,7 +129,7 @@ class Wrapper:
         new : dict
             A dictionary containing the new data.
             The dictionary should have the following keys:
-            
+
             - 'trials': The updated trials data.
             - 'feedback': The updated feedback data.
 
@@ -200,6 +209,6 @@ class Wrapper:
         >>> x.save('../archives/results/simulation')
         """
         if filename is None:
-            filename = 'simulation'
-        pkl.dump(self, open(filename + '.pkl', 'wb'))
+            filename = "simulation"
+        pkl.dump(self, open(filename + ".pkl", "wb"))
         return None

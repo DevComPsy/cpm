@@ -9,7 +9,7 @@ import pickle as pkl
 from .parameters import Parameters
 
 
-class Simulator():
+class Simulator:
     """
     Initializes a Simulator object.
 
@@ -41,18 +41,19 @@ class Simulator():
     -------
     simulator : Simulator
         A Simulator object.
-    
+
     """
 
-    def __init__(self, model = None, data = None, parameters = None):
-
+    def __init__(self, model=None, data=None, parameters=None):
         self.function = model
         self.data = data
         self.parameters = copy.deepcopy(parameters)
         if isinstance(parameters, dict):
-            self.parameters = [(copy.deepcopy(parameters)) for i in range(1, len(self.data)+1)]
+            self.parameters = [
+                (copy.deepcopy(parameters)) for i in range(1, len(self.data) + 1)
+            ]
         self.parameter_names = self.function.parameter_names
-        self.simulation =[]
+        self.simulation = []
         self.generated = []
 
     def run(self):
@@ -69,7 +70,7 @@ class Simulator():
             evaluate.update_data(self.data[i])
             evaluate.run()
             output = copy.deepcopy(evaluate.export())
-            output['ppt'] = copy.deepcopy(self.data[i]['ppt'])
+            output["ppt"] = copy.deepcopy(self.data[i]["ppt"])
             self.simulation.append(output)
             del evaluate, output
         return None
@@ -89,16 +90,16 @@ class Simulator():
         """
         policies = pd.DataFrame()
         for i in range(len(self.simulation)):
-            policed = pd.DataFrame(self.simulation[i]['policies'])
-            policed.columns = ['policy_' + str(col) for col in policed.columns]
-            stimuli = pd.DataFrame(self.data[i].get('trials'))
-            stimuli.columns = ['stimulus_' + str(col) for col in stimuli.columns]
-            combined = pd.concat([policed, stimuli], axis = 1)
-            combined['ppt'] = self.simulation[i]['ppt']
-            policies = pd.concat([policies, combined], axis = 0, ignore_index = True)
+            policed = pd.DataFrame(self.simulation[i]["policies"])
+            policed.columns = ["policy_" + str(col) for col in policed.columns]
+            stimuli = pd.DataFrame(self.data[i].get("trials"))
+            stimuli.columns = ["stimulus_" + str(col) for col in stimuli.columns]
+            combined = pd.concat([policed, stimuli], axis=1)
+            combined["ppt"] = self.simulation[i]["ppt"]
+            policies = pd.concat([policies, combined], axis=0, ignore_index=True)
         return policies
 
-    def update(self, parameters = None):
+    def update(self, parameters=None):
         """
         Updates the parameters of the simulation.
 
@@ -106,10 +107,12 @@ class Simulator():
         - params: The parameters to be updated.
         """
         if isinstance(parameters, Parameters):
-            self.parameters = copy.deepcopy(parameters)
+            TypeError("Parameters must be a dictionary or list.")
         ## if parameters is a single set of parameters, then repeat for each ppt
         if isinstance(parameters, dict):
-            self.parameters = [(copy.deepcopy(parameters)) for i in range(1, len(self.data)+1)]
+            self.parameters = [
+                (copy.deepcopy(parameters)) for i in range(1, len(self.data) + 1)
+            ]
         return None
 
     def generate(self):
@@ -122,8 +125,8 @@ class Simulator():
             An array of dictionaries containing the results of the simulation.
         """
         for i in range(len(self.simulation)):
-            current = np.asarray(self.simulation[i]['policies'])
-            self.generated.append({'observed': current})
+            current = np.asarray(self.simulation[i]["policies"])
+            self.generated.append({"observed": current})
         return None
 
     def reset(self):
@@ -134,7 +137,7 @@ class Simulator():
         self.generated = []
         return None
 
-    def save(self, filename = None):
+    def save(self, filename=None):
         """
         Saves the simulation results.
 
@@ -144,6 +147,6 @@ class Simulator():
             The name of the file to save the results to.
         """
         if filename is None:
-            filename = 'simulation'
-        pkl.dump(self, open(filename + '.pkl', 'wb'))
+            filename = "simulation"
+        pkl.dump(self, open(filename + ".pkl", "wb"))
         return None

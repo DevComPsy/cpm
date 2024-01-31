@@ -1,12 +1,14 @@
-import numpy as np
+# import modules from the cpm package
 from .. import optimisation
 from ..optimisation import utils
 from ..optimisation import minimise
 from . import strategies
-import copy
 
-# The `ParameterRecovery` class is used to recover parameters of a model using
-# optimization and strategy techniques.
+# import dependencies
+import numpy as np
+import copy
+import pickle as pkl
+
 
 class ParameterRecovery:
     """
@@ -38,13 +40,44 @@ class ParameterRecovery:
     kwargs : dict
         Additional keyword arguments.
 
+    Parameters
+    ----------
+    model : object
+        The model object.
+    optimiser : object
+        The optimisation algorithm.
+    minimisation : str
+        The type of minimisation to be used (e.g., "LogLikelihood").
+    strategy : object
+        The strategy for generating parameter values.
+    iteration : int
+        The number of iterations for the parameter recovery process.
+    **kwargs : dict
+        Additional keyword arguments.
+
     Examples
     --------
     >>> from cpm.evaluation import ParameterRecovery
+    >>> from cpm.applications import DeltaRule
+    >>> from cpm.optimisation import minimise
+    >>> from cpm.optimisation import DifferentialEvolution
+    >>> model = DeltaRule(parameters, data)
+    >>> recover = ParameterRecovery(
+            model=model,
+            optimiser=DifferentialEvolution,
+            minimisation="LogLikelihood",
+            strategy="grid",
+            iteration=1000
+            )
+    >>> recover.recover()
+    >>> output = recover.extract(key="alpha")
+    >>> recover.save(filename="parameter_recovery.pkl")
+    >>> del model, recover, output
 
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         model=None,
         optimiser=None,
         minimasation="LogLikelihood",
@@ -52,25 +85,7 @@ class ParameterRecovery:
         iteration=1000,
         **kwargs
     ):
-        """
-        Initialize the ParameterRecovery class.
-
-        Parameters
-        ----------
-        model : object
-            The model object.
-        optimiser : object
-            The optimisation algorithm.
-        minimisation : str
-            The type of minimisation to be used (e.g., "LogLikelihood").
-        strategy : object
-            The strategy for generating parameter values.
-        iteration : int
-            The number of iterations for the parameter recovery process.
-        **kwargs : dict
-            Additional keyword arguments.
-
-        """
+        """ """
         self.model = copy.deepcopy(model)
         self.function = copy.deepcopy(model.function)
         self.template = self.model.parameters[0]
@@ -133,7 +148,7 @@ class ParameterRecovery:
         -------
         numpy.ndarray
             The extracted parameter values.
-        
+
         """
         if key is None:
             return self.output
@@ -146,3 +161,23 @@ class ParameterRecovery:
                 output[step, 1, :] = original.copy()
             del recovered, original
             return output
+
+    def save(self, filename=None):
+        """
+        Save the output of the parameter recovery process.
+
+        Parameters
+        ----------
+        filename : str, optional
+            The filename to save the output to, which includes the path.
+
+        Returns
+        -------
+        None
+
+        """
+        if filename is None:
+            filename = "parameter_recovery.pkl"
+        with open(filename, "wb") as f:
+            pkl.dump(self.output, f)
+        return None

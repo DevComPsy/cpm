@@ -1,9 +1,10 @@
-from cpm.models import Parameters, Wrapper
+from cpm.models import Parameters, Wrapper, Simulator
+from cpm.optimisation import DifferentialEvolution, minimise
+from cpm.evaluation import strategies, ParameterRecovery
 
 # import components we want to use
 from cpm.components.utils import Nominal
 from cpm.components.activation import LinearActivation
-from cpm.components.decision import Softmax, Sigmoid
 from cpm.components.learning import DeltaRule
 
 # import some useful stuff
@@ -11,6 +12,8 @@ from prettyformatter import pprint as pp  ## pretty print
 import numpy as np
 import pandas as pd
 
+# plotting
+import matplotlib.pyplot as plt
 
 # data = pd.read_csv("~/Downloads/participant1.csv")
 
@@ -32,7 +35,8 @@ pp(parameters)
 #     "misc": np.array([1, 0]),
 # }
 
-activations = np.array([[0.7, 0, -0.1], [-0.3, 0, 0.3]])
+# activations = np.array([[0.7, 0, -0.1], [-0.3, 0, 0.3]])
+
 
 def model(parameters, trial):
     ## import parameters
@@ -51,7 +55,7 @@ def model(parameters, trial):
     active.compute()
     ## because you only have one outcome, you don't need softmax
     ## but only IF YOU USE THE DELTA LEARNING RULE WITH THE OUTCOME IN THE RANGE OF 0 AND 1.
-    policy = np.sum(active.weights)
+    policy = np.sum(active.weights) * temperature
     ## learning
     learning = DeltaRule(
         weights=active.weights, feedback=feedback, alpha=alpha, input=stimulus
@@ -66,6 +70,7 @@ def model(parameters, trial):
 
     return output
 
+
 # model(parameters, trial)
 
 data = {
@@ -75,24 +80,90 @@ data = {
     "feedback": np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1]),
 }
 
-parameters = {
+params = {
     "alpha": 0.4,
-    "temperature": 5,
+    "temperature": 1,
     "values": np.zeros((1, 4)),
+}
+
+params = Parameters(**params)
+
+print(params)
+params.export()
+
+wrap = Wrapper(model=model, parameters=params, data=data)
+
+wrap.reset([0.5, 1])
+
+wrap.run()
+wrap.policies
+
+wrap.reset(parameters={"alpha": 0.5, "temperature": 1, "values": np.zeros((1, 4))})
+wrap.parameters
+
+experiment = []
+for i in range(100):
+    ppt = {
+        "ppt": i,
+        "trials": np.array(
+            [
+                [2, 3],
+                [1, 4],
+                [3, 2],
+                [4, 1],
+                [2, 3],
+                [2, 3],
+                [1, 4],
+                [3, 2],
+                [4, 1],
+                [2, 3],
+            ]
+        ),
+        "feedback": np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1]),
+        "observed": np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
     }
+    experiment.append(ppt)
 
-parameters = Parameters(**parameters)
 
-print(parameters)
-parameters.export()
+generator = Simulator(model=wrap, parameters=params.export(), data=experiment)
+pp(generator.parameters)
+generator.run()
+pp(generator.simulation)
 
-x = Wrapper(model=model, parameters=parameters, data=data)
+generator.policies()
 
-x.values
-x.policies
-x.model
-x.feedback
-x.training
+policies = generator.policies()
 
-x.run()
-x.policies
+policies
+
+lower = [1e-10, 1e-10]
+upper = [1, 1]
+bounds = list(zip(lower, upper))
+
+# FIXME: this is not working, metric is always overwritten
+Fit = DifferentialEvolution(
+    model=wrap,
+    bounds=bounds,
+    data=experiment,
+    minimisation="LogLikelihood",
+    mutation=0.5,
+    recombination=0.7,
+    strategy="best1bin",
+    tol=0.1,
+    maxiter=200,
+    disp=True,
+)  # initialize the optimisation
+
+Fit.minimise(np.array([0.1398096, 0.16551498]))
+Fit.minimise([0.23360573, 0.81339223])
+
+Fit.optimise()
+
+pp(Fit.fit)
+pp(Fit.parameters)
+
+
+sims = Simulator(model=wrap, data=experiment, parameters=Fit.parameters)
+
+sims.run()
+sims.policies()

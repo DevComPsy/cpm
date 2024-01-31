@@ -107,12 +107,14 @@ class Simulator:
         - params: The parameters to be updated.
         """
         if isinstance(parameters, Parameters):
-            TypeError("Parameters must be a dictionary or list.")
+            TypeError("Parameters must be a dictionary or array_like.")
         ## if parameters is a single set of parameters, then repeat for each ppt
         if isinstance(parameters, dict):
             self.parameters = [
                 (copy.deepcopy(parameters)) for i in range(1, len(self.data) + 1)
             ]
+        if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
+            self.parameters = parameters
         return None
 
     def generate(self):

@@ -51,10 +51,10 @@ def model(parameters, trial):
     feedback = trial.get("feedback")
 
     ## specify the computations for a given trial
+    ## multiply weights with stimulis vector
     active = LinearActivation(input=stimulus, weights=weights)
     active.compute()
-    ## because you only have one outcome, you don't need softmax
-    ## but only IF YOU USE THE DELTA LEARNING RULE WITH THE OUTCOME IN THE RANGE OF 0 AND 1.
+    ## this is a mock-up policy
     policy = np.sum(active.weights) * temperature
     ## learning
     learning = DeltaRule(
@@ -151,7 +151,6 @@ Fit = DifferentialEvolution(
     strategy="best1bin",
     tol=0.1,
     maxiter=200,
-    disp=True,
 )  # initialize the optimisation
 
 Fit.minimise(np.array([0.1398096, 0.16551498]))
@@ -167,3 +166,28 @@ sims = Simulator(model=wrap, data=experiment, parameters=Fit.parameters)
 
 sims.run()
 sims.policies()
+
+new = Simulator(model=wrap, data=experiment, parameters=Fit.parameters)
+
+recover = ParameterRecovery(
+    model=new,
+    strategy="grid",
+    optimiser="DifferentialEvolution",
+    minimasation="LogLikelihood",
+    bounds=bounds,
+    iteration=1,
+)
+
+recover.recover()
+
+import matplotlib.pyplot as plt
+
+alpha = recover.extract(key="alpha")
+
+recovered = np.asarray(alpha[:, 0, :]).flatten()
+original = np.asarray(alpha[:, 1, :]).flatten()
+
+plt.scatter(recovered, original)
+plt.show()
+
+pp(recover.output[0].get("original"))

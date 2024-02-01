@@ -17,7 +17,9 @@ class Softmax:
         temperature : float
             The temperature parameter for softmax computation.
         activations : numpy.ndarray
-            Array of activations for each possible outcome/action.
+            Array of activations for each possible outcome/action. It should be
+            a 2D ndarray, where each row represents an outcome and each column
+            represents a single stimulus.
 
         Examples
         --------

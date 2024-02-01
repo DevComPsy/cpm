@@ -1,17 +1,18 @@
 import numpy as np
 
+
 class LinearActivation:
     """
     Represents a linear activation function.
     This function simply multiplies the stimulus (input) vector with the values (weights) vector
     without any additional scaling.
-    
+
     Attributes
     ----------
     input : array_like
-        The input value.
+        The input value. The stimulus representation (vector).
     weights : array_like
-        The weights value.
+        The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
 
     """
 
@@ -22,10 +23,10 @@ class LinearActivation:
         Parameters
         ----------
         input : array_like
-            The input value.
+            The input value. The stimulus representation (vector).
         weights : array_like
-            The weights value.
-        **kwargs : 
+            The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
+        **kwargs :
             Additional keyword arguments.
 
         Returns
@@ -34,7 +35,7 @@ class LinearActivation:
         """
         self.input = input
         self.weights = weights
-    
+
     def compute(self):
         """
         Compute the linear activation function.
@@ -54,10 +55,11 @@ class LinearActivation:
         dict: The configuration dictionary.
         """
         config = {
-            'name': 'Linear',
-            'type': 'activation',
+            "name": "Linear",
+            "type": "activation",
         }
         return config
+
 
 # The SigmoidActivation class implements the sigmoid activation function for
 # neural networks.
@@ -68,10 +70,10 @@ class SigmoidActivation:
 
     Attributes
     ----------
-    input : numpy.ndarray
-        The input values.
-    weights : numpy.ndarray
-        The weights associated with the input values.
+        input : array_like
+            The input value. The stimulus representation (vector).
+        weights : array_like
+            The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
 
     """
 
@@ -81,16 +83,16 @@ class SigmoidActivation:
 
         Parameters
         ----------
-        input : numpy.ndarray, optional
-            The input values (default is None).
-        weights : numpy.ndarray, optional
-            The weights associated with the input values (default is None).
+        input : array_like
+            The input value. The stimulus representation (vector).
+        weights : array_like
+            The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
         **kwargs : dict
             Additional keyword arguments.
         """
         self.input = input
         self.weights = weights
-    
+
     def compute(self):
         """
         Compute the activation value using the sigmoid function.
@@ -117,7 +119,7 @@ class SigmoidActivation:
             The configuration of the activation function.
         """
         config = {
-            'name': 'Sigmoid',
-            'type': 'activation',
+            "name": "Sigmoid",
+            "type": "activation",
         }
         return config

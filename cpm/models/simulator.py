@@ -77,7 +77,7 @@ class Simulator:
 
     def policies(self):
         """
-        Returns the policies from the simulation.
+        Return the trial- and participant-level information about the simulation.
 
         Returns
         ------

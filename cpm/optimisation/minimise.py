@@ -73,22 +73,3 @@ def CrossEntropy(predicted, observed, **kwargs):
     """
     ce = np.sum(-observed * np.log(predicted) - (1 - observed) * np.log(1 - predicted))
     return ce
-
-
-# # Example data
-# x = np.array([1, 2, 3, 4, 5])
-# y_obs = np.array([2, 4, 6, 8, 10])
-
-# # Initial guess for the parameters
-# initial_params = np.array([1, 1])
-
-# # Compute the predicted values
-# y_pred = initial_params[0] * x + initial_params[1]
-
-# log_likelihood(y_pred, y_obs)
-# bic(log_likelihood(y_pred, y_obs), len(x), len(initial_params))
-
-# # Extract the optimized parameters
-# optimized_params = result.x
-
-# print("Optimized parameters:", optimized_params)

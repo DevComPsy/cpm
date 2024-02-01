@@ -15,12 +15,12 @@ class DeltaRule:
     ----------
     alpha : float
         The learning rate.
+    input : ndarray or array_like
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     weights : ndarray
-        The weight matrix.
+        The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
     teacher : ndarray
-        The target values.
-    input : ndarray
-        The input values.
+        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
     shape : tuple
         The shape of the weight matrix.
 
@@ -28,13 +28,13 @@ class DeltaRule:
     ----------
     alpha : float
         The learning rate.
-    weights : ndarray
-        The weight matrix.
-    feedback : ndarray
-        The target values.
-    input : ndarray
-        The input values.
-    **kwargs : dict
+    weights : array-like
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+    feedback : array-like
+        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
+    input : array-like
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+    **kwargs : dict, optional
         Additional keyword arguments.
 
     See Also
@@ -69,7 +69,7 @@ class DeltaRule:
         self.alpha = alpha
         self.weights = [[]]
         if weights is not None:
-            self.weights = weights.copy()
+            self.weights = np.asarray(weights.copy())
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
@@ -137,13 +137,13 @@ class SeparableRule:
     Parameters
     -----------
     alpha : float, optional
-        The learning rate. Default is None.
+        The learning rate.
     weights : array-like, optional
-        The initial weights. Default is None.
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     feedback : array-like, optional
-        The teacher feedback. Default is None.
+        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
     input : array-like, optional
-        The input values. Default is None.
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -151,12 +151,12 @@ class SeparableRule:
     -----------
     alpha : float
         The learning rate.
-    weights : ndarray
-        The weights.
-    teacher : array-like
-        The teacher feedback.
     input : ndarray
-        The input values.
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+    weights : ndarray
+        The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
+    teacher : ndarray
+        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
     shape : tuple
         The shape of the weights array.
 

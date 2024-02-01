@@ -1,7 +1,4 @@
-from typing import Any
-
-
-class Parameters():
+class Parameters:
     """
     A class representing a set of parameters.
     It takes keyword arguments representing the parameters with their values and wraps them into a python object.

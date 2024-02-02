@@ -135,7 +135,8 @@ class Sigmoid:
 
         Returns
         -------
-            ndarray: An array of outputs computed using the sigmoid function.
+        output: ndarray
+            A 2D array of outputs computed using the sigmoid function.
         """
         output = np.zeros(self.shape[0])
         for i in range(self.shape[0]):

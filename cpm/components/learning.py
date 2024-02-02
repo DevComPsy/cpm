@@ -7,10 +7,6 @@ class DeltaRule:
     It is based on the Gluck and Bower's (1988) delta rule, an extension to Rescorla
     and Wagner (1972), which was identical to that of Widrow and Hoff (1960).
 
-    The delta-rule is a summed error term, which means that the error is defined as
-    the difference between the target value and the summed activation of all values
-    for a given output unit. For separable error term, see the Bush and Mosteller (1951) rule.
-
     Attributes
     ----------
     alpha : float
@@ -40,6 +36,16 @@ class DeltaRule:
     See Also
     --------
     [cpm.components.learning.SeparableRule][cpm.components.learning.SeparableRule] : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
+
+    Notes
+    -----
+
+    The delta-rule is a summed error term, which means that the error is defined as
+    the difference between the target value and the summed activation of all values
+    for a given output unit. For separable error term, see the Bush and Mosteller (1951) rule.
+
+    The current implementation is based on the Gluck and Bower's (1988) delta rule, an
+    extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning.
 
     Examples
     --------
@@ -163,25 +169,24 @@ class SeparableRule:
     See Also
     --------
     [cpm.components.learning.DeltaRule][cpm.components.learning.DeltaRule] : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
+
+    Notes
+    -----
+    This type of learning rule was among the earliest formal models of associative learning (Le Pelley, 2004), which were based on standard linear operators (Bush & Mosteller, 1951; Estes, 1950; Kendler, 1971).
+
+    References
+    ----------
+    Bush, R. R., & Mosteller, F. (1951). A mathematical model for simple learning. Psychological Review, 58, 313–323
+
+    Estes, W. K. (1950). Toward a statistical theory of learning. Psychological Review, 57, 94–107
+
+    Kendler, T. S. (1971). Continuity theory and cue dominance. In J. T. Spence (Ed.), Essays in neobehaviorism: A memorial volume to Kenneth W. Spence. New York: Appleton-Century-Crofts.
+
+    Le Pelley, M. E. (2004). The role of associative history in models of associative learning: A selective review and a hybrid model. Quarterly Journal of Experimental Psychology Section B, 57(3), 193-243.
+
     """
 
     def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
-        """
-        Initializes the SeparableRule object.
-
-        Parameters
-        ----------
-        alpha : float
-            The learning rate.
-        weights : ndarray
-            The weight matrix.
-        feedback : ndarray
-            The target values.
-        input : ndarray
-            The input values.
-        **kwargs : dict
-            Additional keyword arguments.
-        """
         self.alpha = alpha
         self.weights = [[]]
         if weights is not None:
@@ -219,7 +224,7 @@ class SeparableRule:
         """
         Returns a string representation of the object.
         """
-        return f"DeltaRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
+        return f"SeparableRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
 
     def config(self):
         """
@@ -240,26 +245,9 @@ class SeparableRule:
         return config
 
 
-# NOTE: NOT TESTED
-class HebbRule:
-    def __init__(self, alphas, weights, *args, **kwargs):
-        self.weights = weights
-        self.alpha = alpha
-
-    def call(self):
-        active = self.weights
-        active[active > 0] = 1
-
-        for i in range(self.weights.shape[0]):
-            for j in range(self.weights.shape[1]):
-                self.weights[i, j] += self.alpha * active[i] * active[j]
-        return self.weights
-
-
-# NOTE: NOT TESTED
 class QLearningRule:
     """
-    Q-learning rule for reinforcement learning.
+    Q-learning rule for reinforcement learning rule for a one-dimensional array of Q-values.
 
     Parameters
     ----------
@@ -267,12 +255,12 @@ class QLearningRule:
         The learning rate. Default is 0.5.
     gamma : float
         The discount factor. Default is 0.1.
-    weights : ndarray
-        The weight matrix. Default is None.
-    reward : ndarray
-        The reward matrix. Default is None.
-    maximum : ndarray
-        The maximum matrix. Default is None.
+    values : ndarray
+        The values matrix.  It is a 1D array of Q-values active for the current state, where each element corresponds to an action.
+    reward : float
+        The reward received on the current state.
+    maximum : float
+        The maximum estimated reward for the next state.
 
     Attributes
     ----------
@@ -280,19 +268,34 @@ class QLearningRule:
         The learning rate.
     gamma : float
         The discount factor.
-    weights : ndarray
-        The weight matrix.
-    reward : ndarray
-        The reward matrix.
-    maximum : ndarray
-        The maximum matrix.
+    values : ndarray
+        The values matrix. It is a 1D array of Q-values, where each element corresponds to an action.
+    reward : float
+        The reward received on the current state.
+    maximum : float
+        The maximum estimated reward for the next state.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from cpm.components.learning import QLearningRule
+    >>> values = np.array([1, 0.5, 0.99])
+    >>> component = QLearningRule(alpha=0.1, gamma=0.8, values=values, reward=1, maximum=10)
+    >>> component.compute()
+    array([1.8  , 1.35 , 1.791])
+
+    References
+    ----------
+    Watkins, C. J. C. H. (1989). Learning from delayed rewards.
+
+    Watkins, C. J., & Dayan, P. (1992). Q-learning. Machine learning, 8, 279-292.
     """
 
     def __init__(
         self,
         alpha=0.5,
         gamma=0.1,
-        weights=None,
+        values=None,
         reward=None,
         maximum=None,
         *args,
@@ -300,32 +303,110 @@ class QLearningRule:
     ):
         self.alpha = alpha
         self.gamma = gamma
-        self.weights = weights
+        self.values = values.copy()
         self.reward = reward
+        self.maximum = maximum
 
-    def activate(self):
-        active = self.weights
+    def compute(self):
+        """
+        Compute the change in values based on the given values, reward, and parameters, and return the updated values.
+
+        Returns
+        -------
+        output: numpy.ndarray:
+            The computed output values.
+        """
+
+        active = self.values.copy()
         active[active > 0] = 1
-        output = np.zeros(self.weights.shape[0])
+        output = np.zeros(self.values.shape[0])
 
-        for i in range(self.weights.shape[0]):
-            for j in range(self.weights.shape[1]):
-                output[i] += (
-                    self.alpha
-                    * (
-                        self.reward
-                        + self.gamma * np.max(self.weights[i, :])
-                        - self.weights[i, j]
-                    )
-                    * active[j]
-                )
+        for i in range(self.values.shape[0]):
+            output[i] += (1 - self.alpha) * self.values[i] + (
+                self.alpha * (self.reward + self.gamma * self.maximum)
+            ) * active[i]
+
         return output
 
+    def __repr__(self):
+        return f"QLearningRule(alpha={self.alpha},\n gamma={self.gamma},\n values={self.values},\n reward={self.reward},\n maximum={self.maximum})"
 
-class AttentionGateLearning:
-    def __init__(self, theta, weights, input, teacher, attention, *args, **kwargs):
-        self.theta = theta
-        self.weights = weights
-        self.input = input
-        self.teacher = teacher
-        self.attention = attention
+    def config(self):
+        """
+        Get the configuration of the q-learning component.
+
+        Returns
+        -------
+        config: dict
+            A dictionary containing the configuration parameters of the learning component.
+
+            - alpha (float): The learning rate.
+            - gamma (float): The discount factor.
+            - values (list): The values used for learning.
+            - reward (str): The name of the reward.
+            - maximum (str): The name of the maximum reward.
+            - name (str): The name of the learning component class.
+            - type (str): The type of the learning component.
+        """
+        config = {
+            "alpha": self.alpha,
+            "gamma": self.gamma,
+            "values": self.values,
+            "reward": self.reward,
+            "maximum": self.maximum,
+            "name": self.__class__.__name__,
+            "type": "learning",
+        }
+        return config
+
+
+# class HumbleTeacher:
+#     """
+#     A humbe teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
+#
+#     Notes
+#     -----
+#     The humble teacher learning rule is a learning rule that is based on the ide that if output node activations increase the teaching signals, it should not be counted as error, but should be rewarded. So teaching signals are discrete (nominal) values and do not indicate the degree of membership between stimuli and outcome label, the degree of causality between stimuli and outcome, or the degree of correctness of the output.
+#     """
+#     def __init__(
+#         self,
+#     ):
+#         pass
+
+
+# class AttentionGateLearning:
+#     """
+#     A learning rule to update attentional values (salience of stimuli) as a function of gradient descent on error.
+#     """
+#     def __init__(self, theta, weights, input, teacher, attention, *args, **kwargs):
+#         self.theta = theta
+#         self.weights = weights
+#         self.input = input
+#         self.teacher = teacher
+#         self.attention = attention
+
+
+# class MackintoshUpdate:
+#     """
+#     A learning rule to update attentional values (salience of stimuli) in the spirit of Mackintosh (1975) as a function of the prediction error.
+#     The current implementation follows the Equation X from Le Pelley et al. (200X).
+#     """
+
+#     def __init__(self) -> None:
+#         pass
+
+
+# NOTE: NOT TESTED
+# class HebbRule:
+#     def __init__(self, alphas, weights, *args, **kwargs):
+#         self.weights = weights
+#         self.alpha = alpha
+
+#     def call(self):
+#         active = self.weights
+#         active[active > 0] = 1
+
+#         for i in range(self.weights.shape[0]):
+#             for j in range(self.weights.shape[1]):
+#                 self.weights[i, j] += self.alpha * active[i] * active[j]
+#         return self.weights

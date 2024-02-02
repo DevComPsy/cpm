@@ -365,6 +365,10 @@ class QLearningRule:
 #     A humbe teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
 #
 #     Notes
+# The above code is a Python class definition for a humble teacher learning rule.
+# It is used for multi-dimensional outcome learning. The class has an empty
+# `__init__` method, indicating that it does not have any specific initialization
+# code.
 #     -----
 #     The humble teacher learning rule is a learning rule that is based on the ide that if output node activations increase the teaching signals, it should not be counted as error, but should be rewarded. So teaching signals are discrete (nominal) values and do not indicate the degree of membership between stimuli and outcome label, the degree of causality between stimuli and outcome, or the degree of correctness of the output.
 #     """

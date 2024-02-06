@@ -20,7 +20,9 @@ class Parameters:
     """
 
     def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, ParameterContainer(value))
+        # self.__dict__.update(kwargs)
 
     def __repr__(self):
         return str(self.__dict__)
@@ -72,7 +74,7 @@ class ParameterContainer:
     Returns
     -------
     ParameterContainer
-        A ParameterContainer object, where each attribute is one of the arguments provided for the function. It support all basic operations and can be used as a regular float.
+        A ParameterContainer object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float.
     """
 
     # TODO: Add support for different types of priors
@@ -160,3 +162,11 @@ class ParameterContainer:
 # temperature = ParameterContainer(value=1, prior="uniform", lower=0.1, upper=5)
 
 # params = Parameters(alpha=alpha, temperature=temperature)
+
+# import numpy as np
+
+# params = Parameters(alpha=0.5, temperature=1)
+# params.alpha.prior
+
+# params.alpha = 0
+# params.alpha * np.random.rand(10)

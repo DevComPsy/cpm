@@ -123,4 +123,3 @@ class SigmoidActivation:
             "type": "activation",
         }
         return config
-

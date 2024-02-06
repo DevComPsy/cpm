@@ -28,7 +28,7 @@ class Parameters:
     def __setitem__(self, key, value):
         self.__dict__[key] = value
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self):
         return self.__dict__
 
     def export(self):

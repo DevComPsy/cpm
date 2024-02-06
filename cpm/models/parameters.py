@@ -41,8 +41,7 @@ class Parameters:
 class ParameterContainer:
     """
 
-    A class representing a parameter with additional details.
-    It takes keyword arguments representing the parameters with their values and wraps them into a python object.
+    A class representing a parameter with additional details in a hierarchical structure.
 
     Parameters
     ----------
@@ -51,6 +50,29 @@ class ParameterContainer:
     prior : string or dict, optional
         The prior distribution of the parameter. If a string, it should be one of the following: 'uniform', 'normal', 'beta', 'gamma', 'exponential'.
         If a dictionary, it should contain the following keys: 'type', 'min', 'max', 'mean', 'sd', 'a', 'b', 'shape', 'rate'.
+        The default is 'normal'.
+    lower : float, optional
+        The lower bound of the parameter.
+    upper : float, optional
+        The upper bound of the parameter.
+
+    Attributes
+    ----------
+    value : float
+        The value of the parameter.
+    prior : string or dict, optional
+        The prior distribution of the parameter. If a string, it should be one of the following: 'uniform', 'normal', 'beta', 'gamma', 'exponential'.
+        If a dictionary, it should contain the following keys: 'type', 'min', 'max', 'mean', 'sd', 'a', 'b', 'shape', 'rate'.
+        The default is 'normal'.
+    lower : float, optional
+        The lower bound of the parameter.
+    upper : float, optional
+        The upper bound of the parameter.
+
+    Returns
+    -------
+    ParameterContainer
+        A ParameterContainer object, where each attribute is one of the arguments provided for the function. It support all basic operations and can be used as a regular float.
     """
 
     # TODO: Add support for different types of priors

@@ -42,7 +42,8 @@ class DeltaRule:
 
     The delta-rule is a summed error term, which means that the error is defined as
     the difference between the target value and the summed activation of all values
-    for a given output unit. For separable error term, see the Bush and Mosteller (1951) rule.
+    for a given output unit available on the current trial/state. For separable
+    error term, see the Bush and Mosteller (1951) rule.
 
     The current implementation is based on the Gluck and Bower's (1988) delta rule, an
     extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning.
@@ -71,7 +72,6 @@ class DeltaRule:
     """
 
     def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
-        """ """
         self.alpha = alpha
         self.weights = [[]]
         if weights is not None:
@@ -247,7 +247,7 @@ class SeparableRule:
 
 class QLearningRule:
     """
-    Q-learning rule for reinforcement learning rule for a one-dimensional array of Q-values.
+    Q-learning rule (Watkins, 1989) for a one-dimensional array of Q-values.
 
     Parameters
     ----------
@@ -274,6 +274,15 @@ class QLearningRule:
         The reward received on the current state.
     maximum : float
         The maximum estimated reward for the next state.
+
+    Notes
+    -----
+    The Q-learning rule is a model-free reinforcement learning algorithm that is used to learn the value of an action in a given state.
+    It is defined as
+
+        Q(s, a) = Q(s, a) + alpha * (r + gamma * max(Q(s', a')) - Q(s, a)),
+
+    where `Q(s, a)` is the value of action `a` in state `s`, `r` is the reward received on the current state, `gamma` is the discount factor, and `max(Q(s', a'))` is the maximum estimated reward for the next state.
 
     Examples
     --------
@@ -322,9 +331,14 @@ class QLearningRule:
         output = np.zeros(self.values.shape[0])
 
         for i in range(self.values.shape[0]):
-            output[i] += (1 - self.alpha) * self.values[i] + (
-                self.alpha * (self.reward + self.gamma * self.maximum)
-            ) * active[i]
+            output[i] += (
+                self.values[i]
+                + (
+                    self.alpha
+                    * (self.reward + self.gamma * self.maximum - self.values[i])
+                )
+                * active[i]
+            )
 
         return output
 
@@ -358,6 +372,75 @@ class QLearningRule:
             "type": "learning",
         }
         return config
+
+
+# class QHybridLearning:
+
+#     def __init__(
+#         self,
+#         alpha=0.5,
+#         gamma=0.1,
+#         values=None,
+#         reward=None,
+#         maximum=None,
+#         *args,
+#         **kwargs,
+#     ):
+#         self.alpha = alpha
+#         self.gamma = gamma
+#         self.values = values.copy()
+#         self.reward = reward
+#         self.maximum = maximum
+
+#     def compute(self):
+#         """
+#         Compute the change in values based on the given values, reward, and parameters, and return the updated values.
+
+#         Returns
+#         -------
+#         output: numpy.ndarray:
+#             The computed output values.
+#         """
+
+#         active = self.values.copy()
+#         active[active > 0] = 1
+#         output = np.zeros(self.values.shape[0])
+
+#         for i in range(self.values.shape[0]):
+#             output[i] += self.values[i] + () * active[i]
+
+#         return output
+
+#     def __repr__(self):
+#         return f"QLearningRule(alpha={self.alpha},\n gamma={self.gamma},\n values={self.values},\n reward={self.reward},\n maximum={self.maximum})"
+
+#     def config(self):
+#         """
+#         Get the configuration of the q-learning component.
+
+#         Returns
+#         -------
+#         config: dict
+#             A dictionary containing the configuration parameters of the learning component.
+
+#             - alpha (float): The learning rate.
+#             - gamma (float): The discount factor.
+#             - values (list): The values used for learning.
+#             - reward (str): The name of the reward.
+#             - maximum (str): The name of the maximum reward.
+#             - name (str): The name of the learning component class.
+#             - type (str): The type of the learning component.
+#         """
+#         config = {
+#             "alpha": self.alpha,
+#             "gamma": self.gamma,
+#             "values": self.values,
+#             "reward": self.reward,
+#             "maximum": self.maximum,
+#             "name": self.__class__.__name__,
+#             "type": "learning",
+#         }
+#         return config
 
 
 # class HumbleTeacher:

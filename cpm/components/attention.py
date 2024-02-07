@@ -1,6 +1,6 @@
 class CompetitiveGating:
     """
-    An activation function that incorporates stimulus salience in addition to the stimulus vector to modulate the weights.
+    A competitive attentional gating function, an attentional activation function, that incorporates stimulus salience in addition to the stimulus vector to modulate the weights.
     It formalises the hypothesis that each stimulus has an underlying salience that competes to captures attentional focus (Paskewitz and Jones, 2020; Kruschke, 2001).
 
     Parameters
@@ -32,10 +32,16 @@ class CompetitiveGating:
     >>> input = np.array([1, 1, 0])
     >>> values = np.array([[0.1, 0.9, 0.8], [0.6, 0.2, 0.1]])
     >>> salience = np.array([0.1, 0.2, 0.3])
-    >>> att = AttentionalActivation(input, values, salience, P = 1)
+    >>> att = CompetitiveGating(input, values, salience, P = 1)
     >>> att.compute()
     array([[0.03333333, 0.6       , 0.        ],
            [0.2       , 0.13333333, 0.        ]])
+
+    References
+    ----------
+    Kruschke, J. K. (2001). Toward a unified model of attention in associative learning. Journal of Mathematical Psychology, 45(6), 812-863.
+
+    Paskewitz, S., & Jones, M. (2020). Dissecting exit. Journal of mathematical psychology, 97, 102371.
     """
 
     def __init__(self, input=None, values=None, salience=None, P=1, **kwargs):
@@ -47,7 +53,7 @@ class CompetitiveGating:
 
     def compute(self):
         """
-        Compute the attentional activation function.
+        Compute the activations mediated by underlying salience.
 
         Returns
         -------

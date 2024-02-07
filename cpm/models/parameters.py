@@ -162,7 +162,7 @@ class Value:
         return other * self.value**-1
 
     def __copy__(self):
-        return ParameterContainer(**self.__dict__)
+        return Value(**self.__dict__)
 
     def __array__(self) -> np.ndarray:
         return np.array(self.value)

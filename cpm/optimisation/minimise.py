@@ -6,7 +6,6 @@ __all__ = ["LogLikelihood", "BIC", "CrossEntropy"]
 
 # Define your custom objective function
 def LogLikelihood(predicted=None, observed=None, negative=True, **kwargs):
-    # FIXME: log likelihood sigma is not correct
     """
     Compute the log likelihood of the predicted values given the observed values.
 
@@ -26,7 +25,7 @@ def LogLikelihood(predicted=None, observed=None, negative=True, **kwargs):
     """
 
     # Compute the negative log likelihood
-    LL = np.sum(norm.logpdf(predicted, observed, 0.5))
+    LL = np.sum(norm.logpdf(predicted, observed, 1))
     if negative:
         LL = -1 * LL
     return LL

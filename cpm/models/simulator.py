@@ -1,12 +1,13 @@
 """
 Runs a simulation for each ppt in the data.
 """
+
 import numpy as np
 import pandas as pd
 import copy
 import pickle as pkl
 
-from .parameters import Parameters
+from .parameters import Parameters, Value
 
 
 class Simulator:
@@ -75,7 +76,7 @@ class Simulator:
             del evaluate, output
         return None
 
-    def policies(self):
+    def export(self):
         """
         Return the trial- and participant-level information about the simulation.
 

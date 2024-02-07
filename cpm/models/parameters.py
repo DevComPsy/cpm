@@ -1,4 +1,5 @@
 from typing import Any
+import numpy as np
 
 
 class Parameters:
@@ -21,7 +22,7 @@ class Parameters:
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
-            setattr(self, key, ParameterContainer(value))
+            setattr(self, key, Value(value))
         # self.__dict__.update(kwargs)
 
     def __repr__(self):
@@ -39,8 +40,11 @@ class Parameters:
     def export(self):
         return self.__dict__
 
+    def __copy__(self):
+        return Parameters(**self.__dict__)
 
-class ParameterContainer:
+
+class Value:
     """
 
     A class representing a parameter with additional details in a hierarchical structure.
@@ -157,16 +161,28 @@ class ParameterContainer:
     def __rtruediv__(self, other):  # other / self
         return other * self.value**-1
 
+    def __copy__(self):
+        return ParameterContainer(**self.__dict__)
 
-# alpha = ParameterContainer(value=0.5, prior="uniform", lower=0.1, upper=1)
-# temperature = ParameterContainer(value=1, prior="uniform", lower=0.1, upper=5)
+    def __array__(self) -> np.ndarray:
+        return np.array(self.value)
 
-# params = Parameters(alpha=alpha, temperature=temperature)
+    def __float__(self) -> float:
+        return float(self.value)
 
-# import numpy as np
+    def __int__(self) -> int:
+        return int(self.value)
 
-# params = Parameters(alpha=0.5, temperature=1)
-# params.alpha.prior
+    def fill(self, value):
+        if hasattr(value, "__iter__"):
+            self.value = np.array(value)
+        elif hasattr(self.value, "__iter__"):
+            self.value.fill(value)
+        else:
+            self.value = value
 
-# params.alpha = 0
-# params.alpha * np.random.rand(10)
+    def __len__(self):
+        return len(self.value)
+
+    def __shape__(self):
+        return np.shape(self.value)

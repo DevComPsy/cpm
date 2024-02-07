@@ -1,10 +1,10 @@
 import numpy as np
+import pandas as pd
 import copy
-from prettyformatter import pprint as pp
 import pickle as pkl
 
 ## import local modules
-from .parameters import Parameters
+from .parameters import Parameters, Value
 
 
 class Wrapper:
@@ -63,6 +63,8 @@ class Wrapper:
         )
         self.parameter_names = list(parameters.__dict__.keys())
 
+        self.__run__ = False
+
     def run(self):
         """
         Run the model.
@@ -82,7 +84,8 @@ class Wrapper:
             # output.compute(**trial)
             self.values = output.get("values").copy()
             self.simulation.append(output.copy())
-            self.policies[i] = output.get("policy").copy()
+            self.policies[i] = np.asarray(output.get("policy")).copy()
+        self.__run__ = True
         return None
 
     def reset(self, parameters=None):
@@ -115,10 +118,11 @@ class Wrapper:
         None
 
         """
-
-        self.values.fill(0)
-        self.policies.fill(0)
-        self.parameters.values = self.values
+        if self.__run__:
+            self.values.fill(0)
+            self.policies.fill(0)
+            self.parameters.values = self.values
+            self.__run__ = False
         if isinstance(parameters, dict):
             if "values" not in parameters.keys():
                 updates = Parameters(**parameters, values=self.values)
@@ -201,7 +205,7 @@ class Wrapper:
 
         Parameters
         ----------
-        path : str
+        filename : str
             The name of the file to save the results to.
 
         Returns

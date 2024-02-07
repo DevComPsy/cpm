@@ -43,6 +43,20 @@ class Parameters:
     def __copy__(self):
         return Parameters(**self.__dict__)
 
+    def __keys__(self):
+        return self.__dict__.keys()
+
+    def keys(self):
+        """
+        Return a list of all the keys in the parameters dictionary.
+
+        Returns
+        -------
+        keys : list
+            A list of all the keys in the parameters dictionary.
+        """
+        return self.__dict__.keys()
+
 
 class Value:
     """

@@ -61,7 +61,7 @@ class Wrapper:
         self.policies = np.zeros(
             (self.data["trials"].shape[0], np.max(self.data["feedback"]))
         )
-        self.parameter_names = list(parameters.__dict__.keys())
+        self.parameter_names = list(parameters.keys())
 
         self.__run__ = False
 

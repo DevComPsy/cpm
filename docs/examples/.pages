@@ -1,2 +1,3 @@
 nav:
-    - compiling-your-model.md
+    - example1.ipynb
+    - example2.ipynb

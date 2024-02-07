@@ -44,6 +44,8 @@ mkdocstrings[python]==0.19.0
     #   mkdocstrings-python
 mkdocstrings-python==0.7.1
     # via mkdocstrings
+mkdocs-jupyter==0.6.0
+    # via -r docs/requirements.in
 packaging==21.3
     # via mkdocs
 pymdown-extensions==9.5

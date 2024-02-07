@@ -170,3 +170,88 @@ class Sigmoid:
             "type": "decision",
         }
         return config
+
+
+class GreedyRule:
+    """
+    A class representing an ε-greedy rule based on Daw et al. (2006).
+
+    Parameters
+    ----------
+    activations : ndarray
+        An array of activations for the greedy rule.
+    epsilon : float
+        Exploration parameter. The probability of selecting a random action.
+
+    Attributes
+    ----------
+    activations : ndarray
+        An array of activations for the greedy rule.
+    epsilon : float
+        Exploration parameter. The probability of selecting a random action.
+    policies : ndarray
+        An array of outputs computed using the greedy rule.
+    shape : tuple
+        The shape of the activations array.
+
+    References
+    ----------
+    Daw, N. D., O’Doherty, J. P., Dayan, P., Seymour, B., & Dolan, R. J. (2006). Cortical substrates for exploratory decisions in humans. Nature, 441(7095), Article 7095. https://doi.org/10.1038/nature04766
+    """
+
+    def __init__(self, activations=None, epsilon=0, **kwargs):
+        self.activations = np.asarray(activations.copy())
+        self.epsilon = epsilon
+        self.policies = []
+        self.shape = self.activations.shape
+        if len(self.shape) == 1:
+            self.shape = (1, self.shape[0])
+
+    def compute(self):
+        """
+        Computes the greedy rule.
+
+        Returns
+        -------
+        output: ndarray
+            A 2D array of outputs computed using the greedy rule.
+        """
+        output = self.activations.sum(axis=1)
+        maximum = np.max(output)
+        output[output == maximum] = 1 - (output.shape[0] - 1) * self.epsilon
+        output[output < 0] = 0
+        output[output != maximum] = self.epsilon
+        output = output / output.sum()  # normalise
+        self.policies = output
+        return self.policies
+
+    def choice(self):
+        """
+        Chooses the action based on the greedy rule.
+
+        Returns
+        -------
+        action: int
+            The chosen action based on the greedy rule.
+        """
+        return np.random.choice(self.shape[0], p=self.policies)
+
+    def config(self):
+        """
+        Returns the configuration of the greedy rule.
+
+        Returns
+        -------
+        config: dict
+            A dictionary containing the configuration of the greedy rule.
+
+            - activations (ndarray): An array of activations for the greedy rule.
+            - name (str): The name of the greedy rule.
+            - type (str): The class of function it belongs.
+        """
+        config = {
+            "activations": self.activations,
+            "name": self.__class__.__name__,
+            "type": "decision",
+        }
+        return config

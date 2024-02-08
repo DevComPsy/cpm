@@ -1,4 +1,5 @@
 from scipy.optimize import differential_evolution
+import pandas as pd
 import copy
 from . import minimise
 from . import utils
@@ -53,6 +54,7 @@ class DifferentialEvolution:
         self.loss = getattr(minimise, minimisation)
         self.kwargs = kwargs
         self.fit = []
+        self.details = []
         self.parameters = []
         self.participant = data[0]
         if isinstance(model, Wrapper):
@@ -107,6 +109,7 @@ class DifferentialEvolution:
             # objective = copy.deepcopy(self.minimise)
             result = differential_evolution(self.minimise, self.bounds, **self.kwargs)
             # add the parameters to the list
+            self.details.append(result.copy())
             fitted_parameters = utils.ExtractParamsFromFit(
                 data=result.x, keys=self.parameter_names
             )
@@ -125,3 +128,21 @@ class DifferentialEvolution:
         self.fit = []
         self.parameters = []
         return None
+
+    def export(self):
+        """
+        Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas DataFrame containing the optimization results and fitted parameters.
+        """
+        ranged = len(self.parameter_names)
+        output = pd.DataFrame()
+        for i in range(len(self.fit)):
+            current = pd.DataFrame(self.fit[i]["parameters"]).T
+            current.columns = self.parameter_names[0 : len(current.columns)]
+            current["fun"] = self.fit[i]["fun"]
+            output = pd.concat([output, current], axis=0)
+        return output

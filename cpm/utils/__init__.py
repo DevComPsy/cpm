@@ -1,2 +1,1 @@
-from .utils import PandasToDict
-from .utils import DictToPandas
+from .utils import pandas_to_dict, dict_to_pandas

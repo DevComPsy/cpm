@@ -97,7 +97,7 @@ class Value:
 
     # TODO: Add support for different types of priors
 
-    def __init__(self, value=None, prior="normal", lower=None, upper=None):
+    def __init__(self, value=None, prior="normal", lower=0, upper=1):
         self.value = value
         self.prior = prior
         self.lower = lower

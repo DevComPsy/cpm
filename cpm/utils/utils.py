@@ -1,15 +1,16 @@
 import pandas as pd
+import pickle as pkl
 
 
-def PandasToDict(
+def pandas_to_dict(
     df, participant="ppt", stimuli="stimulus", feedback="feedback", **kwargs
 ):
     """
     Convert a pandas dataframe to a dictionary suitable for use with the CPM wrappers.
 
     The pandas dataframe should have a column for each stimulus, and a column for
-    each feedback. Each row should be a single trial, and each participant should
-    have a unique number in the participant column.
+    each feedback, and a column for a participant identifier. Each row should be
+    a single trial, and each participant should have a unique number in the participant column.
 
     Parameters
     ----------
@@ -46,7 +47,7 @@ def PandasToDict(
     return output
 
 
-def DictToPandas(dict):
+def dict_to_pandas(dict):
     # TODO: Add must handle multidimensional arrays per-column
     # TODO: You need to test it
     """
@@ -70,3 +71,21 @@ def DictToPandas(dict):
         else:
             output[key] = pd.Series(value.tolist())
     return output
+
+
+def load(file):
+    """
+    Load a file from disk.
+
+    Parameters
+    ----------
+    file : str
+        The file to load.
+
+    Returns
+    -------
+    object
+        The object loaded from the file.
+    """
+    with open(file, "rb") as f:
+        return pkl.load(f)

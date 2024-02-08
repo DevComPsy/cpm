@@ -27,7 +27,7 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.1.0",
+    version="0.2.0",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     author="Lenard Dome",
@@ -36,7 +36,11 @@ setup(
     packages=find_packages(),
     # package_dir={"cpm": "cpm"},
     include_package_data=True,
-    install_requires=["numpy", "scipy", "pandas", "copy", "pickle"],
+    install_requires=[
+        "numpy>=1.26.0",  # Numerical functions
+        "SciPy>=1.11.4",  # Scientific functions
+        "pandas>=2.1.4",  # Data structures & analysis
+    ],
     license="AGPLv3",
     zip_safe=False,
     keywords="cpm",

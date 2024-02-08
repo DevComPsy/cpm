@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class CompetitiveGating:
     """
     A competitive attentional gating function, an attentional activation function, that incorporates stimulus salience in addition to the stimulus vector to modulate the weights.

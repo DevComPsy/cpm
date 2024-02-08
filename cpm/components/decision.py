@@ -8,6 +8,19 @@ class Softmax:
     Softmax class for computing policies based on activations and temperature.
 
         The softmax function is defined as: e^(temperature * x) / sum(e^(temperature * x)).
+
+    Attributes
+    ----------
+    temperature : float
+        The inverse temperature parameter for the softmax computation.
+    activations : numpy.ndarray
+        Array of activations for each possible outcome/action. It should be
+        a 2D ndarray, where each row represents an outcome and each column
+        represents a single stimulus.
+    policies : numpy.ndarray
+        Array of computed policies.
+    shape : tuple
+        The shape of the activations array.
     """
 
     def __init__(self, temperature=None, activations=None, **kwargs):
@@ -15,7 +28,7 @@ class Softmax:
         Parameters
         ----------
         temperature : float
-            The temperature parameter for softmax computation.
+            The inverse temperature parameter for the softmax computation.
         activations : numpy.ndarray
             Array of activations for each possible outcome/action. It should be
             a 2D ndarray, where each row represents an outcome and each column
@@ -97,7 +110,7 @@ class Sigmoid:
     Parameters
     ----------
     temperature : float
-        The temperature parameter for the sigmoid function.
+        The inverse temperature parameter for the sigmoid function.
     beta : float
         It is the value of the output activation that results in an output rating
         of P = 0.5.
@@ -107,7 +120,7 @@ class Sigmoid:
     Attributes
     ----------
     temperature : float
-        The temperature parameter for the sigmoid function.
+        The inverse temperature parameter for the sigmoid function.
     beta : float
         The bias parameter for the sigmoid function. It is the value of the
         output activation that results in an output rating of P = 0.5.
@@ -166,7 +179,6 @@ class Sigmoid:
             "temperature": self.temperature,
             "activations": self.activations,
             "name": self.__class__.__name__,
-            "bounds": self.bounds,
             "type": "decision",
         }
         return config

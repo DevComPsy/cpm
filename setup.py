@@ -2,6 +2,7 @@
 
 import os
 import sys
+from setuptools import setup, find_packages
 
 try:
     from setuptools import setup
@@ -16,13 +17,13 @@ if sys.argv[-1] == "publish":
     os.system("python setup.py sdist upload")
     sys.exit()
 
-readme = open("README.rst").read()
+readme = open("README.md").read()
 doclink = """
 Documentation
 -------------
 
 The full documentation is at http://cpm.rtfd.org."""
-history = open("HISTORY.rst").read().replace(".. :changelog:", "")
+history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
@@ -32,10 +33,8 @@ setup(
     author="Lenard Dome",
     author_email="lenarddome@gmail.com",
     url="https://github.com/DevComPsy/cpm",
-    packages=[
-        "cpm",
-    ],
-    package_dir={"cpm": "cpm"},
+    packages=find_packages(),
+    # package_dir={"cpm": "cpm"},
     include_package_data=True,
     install_requires=["numpy", "scipy", "pandas", "copy", "pickle"],
     license="AGPLv3",

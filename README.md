@@ -23,3 +23,11 @@ mkdocs serve
 ```
 
 Then open a browser and go to http://127.0.0.1:8000/
+
+# Compiling the package
+
+To compile the package, run the following command in the root directory:
+
+```bash
+python setup.py sdist bdist_wheel
+```

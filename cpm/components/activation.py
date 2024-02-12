@@ -59,7 +59,6 @@ class LinearActivation:
         }
         return config
 
-# The SigmoidActivation class implements the sigmoid activation function
 class SigmoidActivation:
     """
     Represents a sigmoid activation function.

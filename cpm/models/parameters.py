@@ -91,8 +91,8 @@ class Value:
 
     Returns
     -------
-    ParameterContainer
-        A ParameterContainer object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float.
+    Value
+        A Value object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float with the parameter value as operand.
     """
 
     # TODO: Add support for different types of priors
@@ -188,6 +188,18 @@ class Value:
         return int(self.value)
 
     def fill(self, value):
+        """
+        Replace the value of the parameter with a new value.
+
+        Parameters
+        ----------
+        value : float
+            The new value of the parameter.
+
+        Notes
+        -----
+        If the parameter is an array, it should be a list of values. If the parameter is an array, and the new value is a single value, it will be broadcasted to the shape of the array.
+        """
         if hasattr(value, "__iter__"):
             self.value = np.array(value)
         elif hasattr(self.value, "__iter__"):

@@ -94,6 +94,8 @@ class DifferentialEvolution:
         observed = self.participant.get("observed")
         metric = self.loss(predicted, observed, **self.auxilary)
         del predicted, observed
+        if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+            metric = 1e10
         return metric
 
     def optimise(self):

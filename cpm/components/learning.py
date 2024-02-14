@@ -374,6 +374,93 @@ class QLearningRule:
         return config
 
 
+# # The KernelUpdate class is used to update the kernel of a system.
+class KernelUpdate:
+    """
+    A class representing a learning rule for updating the choice kernel as specified by Equation 5 in Wilson and Collins (2019).
+
+    Parameters
+    ----------
+    response : ndarray
+        The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as `[0, 1, 0, 0]`.
+    rate : float
+        The kernel learning rate.
+    kernel : ndarray
+        The kernel used for learning. It is a 1D array of kernel values, where each element corresponds to a response option. Each element must correspond to the same response option in the `response` vector.
+
+    Attributes
+    ----------
+    response : ndarray
+        The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as `[0, 1, 0, 0]`.
+    rate : float
+        The kernel learning rate.
+    kernel : ndarray
+        The kernel used for learning. It is a 1D array of kernel values, where each element corresponds to a response option. Each element must correspond to the same response option in the `response` vector.
+
+    Notes
+    -----
+    The kernel update component is used to represent how likely a given response is to be chosen based on the frequency it was chosen in the past.
+    This can then be integrated into a choice kernel decision policy.
+
+    See Also
+    --------
+    [cpm.components.decision.ChoiceKernel][cpm.components.decision.ChoiceKernel] : A class representing a choice kernel decision policy.
+
+    References
+    ----------
+    Wilson, Robert C., and Anne GE Collins. Ten simple rules for the computational modeling of behavioral data. Elife 8 (2019): e49547.
+
+    """
+
+    def __init__(self, response, alpha, kernel, input, **kwargs):
+        if len(response) != len(kernel):
+            raise ValueError(
+                "The response and kernel must have the same number of elements."
+            )
+        self.response = response
+        self.alpha = alpha
+        self.kernel = kernel.copy()
+        self.input = input
+
+    def compute(self):
+        """
+        Compute the change in the kernel based on the given response, rate, and kernel, and return the updated kernel.
+
+        Returns
+        -------
+        output: numpy.ndarray:
+            The computed change of the kernel.
+        """
+        out = self.alpha * (self.response - self.kernel) * self.input
+        return out
+
+    def config(self):
+        """
+        Get the configuration of the kernel update component.
+
+        Returns
+        -------
+        config: dict
+            A dictionary containing the configuration parameters of the kernel update component.
+
+            - response (float): The response of the system.
+            - rate (float): The learning rate.
+            - kernel (list): The kernel used for learning.
+            - input (str): The name of the input.
+            - name (str): The name of the kernel update component class.
+            - type (str): The type of the kernel update component.
+        """
+        config = {
+            "response": self.response,
+            "rate": self.rate,
+            "kernel": self.kernel,
+            "input": self.input,
+            "name": self.__class__.__name__,
+            "type": "learning",
+        }
+        return config
+
+
 # class QHybridLearning:
 
 #     def __init__(

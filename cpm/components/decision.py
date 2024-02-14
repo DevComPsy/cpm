@@ -265,3 +265,63 @@ class GreedyRule:
             "type": "decision",
         }
         return config
+
+
+class ChoiceKernel:
+    """
+    A class representing a choice kernel based on a softmax function that incorporates the frequency of choosing an action.
+    It is based on Equation 7 in Wilson and Collins (2019).
+
+    Notes
+    -----
+
+    In order to get Equation 6 from Wilson and Collins (2019), either set `activations` to None (default) or set it to 0.
+
+    See Also
+    --------
+    [cpm.components.learning.KernelUpdate](cpm.components.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
+
+    References
+    ----------
+    Wilson, R. C., & Collins, A. G. E. (2019). Ten simple rules for the computational modeling of behavioral data. eLife, 8, Article e49547.
+
+    """
+
+    def __init__(
+        self,
+        temperature_activations=0.5,
+        temperature_kernel=0.5,
+        activations=None,
+        kernel=None,
+        **kwargs
+    ):
+        self.temperature_a = temperature_activations
+        self.temperature_k = temperature_kernel
+        self.activations = activations.copy()
+        self.kernel = kernel.copy()
+        self.policies = []
+        if activations is None:
+            self.activations = np.zeros(1)
+
+    def compute(self):
+        output = np.zeros(self.shape[0])
+        values = self.activations * self.temperature_a
+        kernels = self.kernel * self.temperature_k
+        # activation of output unit for action/outcome
+        nominator = np.exp(np.sum(values, axis=1) * kernels)
+        # denominator term for scaling
+        denominator = np.sum(np.exp(np.sum(values, axis=1) * kernels))
+        output = nominator / denominator
+        self.policies = output
+        return output
+
+    def choice(self):
+        return np.random.choice(self.shape[0], p=self.policies)
+
+
+# ChoiceKernel(
+#     temperature_activations=1,
+#     temperature_kernel=1,
+#     activations=np.array([[0.1, 0, 0.2], [-0.6, 0, -0.9]]),
+#     kernel=np.array([0.1, 0.9]),
+# ).compute()

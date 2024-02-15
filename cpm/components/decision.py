@@ -216,6 +216,7 @@ class GreedyRule:
         self.shape = self.activations.shape
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
+        self.run = False
 
     def compute(self):
         """
@@ -227,12 +228,14 @@ class GreedyRule:
             A 2D array of outputs computed using the greedy rule.
         """
         output = self.activations.sum(axis=1)
+        policies = np.zeros(output.shape)
         maximum = np.max(output)
-        output[output == maximum] = 1 - (output.shape[0] - 1) * self.epsilon
-        output[output < 0] = 0
-        output[output != maximum] = self.epsilon
-        output = output / output.sum()  # normalise
-        self.policies = output
+        policies[output != maximum] = self.epsilon * 1
+        policies[output == maximum] = 1 - (output.shape[0] - 1) * self.epsilon
+        policies[output <= 0] = 0
+        policies = policies / policies.sum()  # normalise
+        self.policies = policies
+        self.run = True
         return self.policies
 
     def choice(self):
@@ -244,7 +247,10 @@ class GreedyRule:
         action: int
             The chosen action based on the greedy rule.
         """
-        return np.random.choice(self.shape[0], p=self.policies)
+        if not self.run:
+            self.compute()
+        out = np.random.choice(self.shape[0], p=self.policies)
+        return out
 
     def config(self):
         """
@@ -271,6 +277,32 @@ class ChoiceKernel:
     """
     A class representing a choice kernel based on a softmax function that incorporates the frequency of choosing an action.
     It is based on Equation 7 in Wilson and Collins (2019).
+
+    Parameters
+    ----------
+    temperature_activations : float
+        The inverse temperature parameter for the softmax computation.
+    temperature_kernel : float
+        The inverse temperature parameter for the kernel computation.
+    activations : ndarray, optional
+        An array of activations for the softmax function.
+    kernel : ndarray, optional
+        An array of kernel values for the softmax function.
+
+    Attributes
+    ----------
+    temperature_a : float
+        The inverse temperature parameter for the softmax computation.
+    temperature_k : float
+        The inverse temperature parameter for the kernel computation.
+    activations : ndarray
+        An array of activations for the softmax function.
+    kernel : ndarray
+        An array of kernel values for the softmax function.
+    policies : ndarray
+        An array of outputs computed using the softmax function.
+    shape : tuple
+        The shape of the activations array.
 
     Notes
     -----
@@ -302,6 +334,7 @@ class ChoiceKernel:
         self.policies = []
         if activations is None:
             self.activations = np.zeros(1)
+        self.shape = self.kernel.shape
 
     def compute(self):
         output = np.zeros(self.shape[0])
@@ -322,6 +355,6 @@ class ChoiceKernel:
 # ChoiceKernel(
 #     temperature_activations=1,
 #     temperature_kernel=1,
-#     activations=np.array([[0.1, 0, 0.2], [-0.6, 0, -0.9]]),
-#     kernel=np.array([0.1, 0.9]),
+#     activations=np.array([[0.1], [0], [0.2]]),
+#     kernel=np.array([0.1, 0.9, 0.1]),
 # ).compute()

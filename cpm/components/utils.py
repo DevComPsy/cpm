@@ -7,7 +7,7 @@ def Nominal(target=None, magnitude=None, bits=None):
 
     Parameters
     ----------
-    target : int or list
+    target : int or numpy.ndarray
         The target value(s) to be converted.
     magnitude : float
         The magnitude of the binary representation, usually reward magnitude for cases with multiple possible outcomes.
@@ -40,7 +40,7 @@ def Nominal(target=None, magnitude=None, bits=None):
         # in case of negative values (negative reward magnitude)
         return target
     if np.any(target < 0) and bits > 1:
-        # in cas of negative values with multiple outcomes (negative reward magnitude)
+        # in case of negative values with multiple outcomes (negative reward magnitude)
         output[target - 1] = magnitude
     else:
         for i in target:

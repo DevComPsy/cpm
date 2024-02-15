@@ -16,7 +16,7 @@ class Wrapper:
     model : function
         The model function that calculates the output(s) of the model for a single trial.
     data : dict
-        A dictionary containing the data for the model. For the correct format of the dictionary, see the documentation of the TBA.
+        A dictionary containing the data for the model. The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.
     parameters : [Parameters][cpm.models.Parameters] object
         The parameters object for the model that contains all parameters for the model.
 
@@ -32,10 +32,8 @@ class Wrapper:
         The values array.
     simulation : list
         The list of simulation results.
-    training : ndarray
-        The training data.
-    feedback : ndarray
-        The feedback data.
+    data : dict
+        The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.
     policies : ndarray
         The policies array.
     parameter_names : list
@@ -51,16 +49,15 @@ class Wrapper:
         self.model = model
         self.data = data
         self.parameters = copy.deepcopy(parameters)
-        self.values = np.zeros((np.max(data["feedback"]), np.max(data["trials"])))
+        self.values = np.zeros(1)
         if "values" in self.parameters.__dict__.keys():
             self.values = self.parameters.values
         self.simulation = []
-        self.training = self.data["trials"]
-        self.feedback = self.data["feedback"]
+        self.data = data
 
-        self.policies = np.zeros(
-            (self.data["trials"].shape[0], np.max(self.data["feedback"]))
-        )
+        self.shape = [np.asarray(v).shape[0] for k, v in self.data.items()]
+        self.__len__ = np.max(self.shape)
+        self.policies = []
         self.parameter_names = list(parameters.keys())
 
         self.__run__ = False
@@ -74,17 +71,19 @@ class Wrapper:
         None
 
         """
-        for i in range(len(self.training)):
-            trial = {
-                "input": np.asarray(self.training[i]),
-                "feedback": np.asarray([self.feedback[i]]),
-            }
+        for i in range(self.__len__):
+            ## create input for the model
+            trial = {k: self.data[k][i] for k in self.data.keys()}
+            ## run the model
             output = self.model(parameters=self.parameters, trial=trial)
-            self.parameters.values = output.get("values")
-            # output.compute(**trial)
-            self.values = output.get("values").copy()
+            self.parameters.values.fill(output.get("values"))
             self.simulation.append(output.copy())
+
+            if i == 0:
+                self.policies = np.zeros((self.__len__, output.get("policy").shape[0]))
+
             self.policies[i] = np.asarray(output.get("policy")).copy()
+        self.values = output.get("values").copy()
         self.__run__ = True
         return None
 
@@ -133,28 +132,6 @@ class Wrapper:
             for keys in self.parameter_names[0 : len(parameters)]:
                 value = parameters[self.parameter_names.index(keys)]
                 setattr(self.parameters, keys, value)
-        return None
-
-    def update_data(self, new=None):
-        """
-        Update the data in the model.
-
-        Parameters
-        ----------
-        new : dict
-            A dictionary containing the new data.
-            The dictionary should have the following keys:
-
-            - 'trials': The updated trials data.
-            - 'feedback': The updated feedback data.
-
-        Returns
-        -------
-        None
-
-        """
-        self.training = new["trials"]
-        self.feedback = new["feedback"]
         return None
 
     def summary(self):

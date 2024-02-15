@@ -3,7 +3,7 @@ import pickle as pkl
 
 
 def pandas_to_dict(
-    df, participant="ppt", stimuli="stimulus", feedback="feedback", **kwargs
+    df=None, participant="ppt", stimuli="stimulus", feedback="feedback", **kwargs
 ):
     """
     Convert a pandas dataframe to a dictionary suitable for use with the CPM wrappers.
@@ -31,14 +31,15 @@ def pandas_to_dict(
     """
     names = df.columns.to_series()
     stimuli_indices = names[names.str.contains(stimuli)]
+    feedback_indices = names[names.str.contains(feedback)]
     length = df[participant].max()
     output = []
 
     for i in range(length):
         out = {}
         single = df[df[participant] == i + 1]
-        out["stimuli"] = single[stimuli_indices].to_numpy()
-        out["feedback"] = single.feedback.to_numpy()
+        out["trials"] = single[stimuli_indices].to_numpy()
+        out["feedback"] = single[feedback_indices].to_numpy()
         if kwargs is not None:
             for key, value in kwargs.items():
                 out[key] = single[value].to_numpy()

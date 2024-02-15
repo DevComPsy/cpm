@@ -66,7 +66,7 @@ class DifferentialEvolution:
         else:
             self.bounds = bounds
             # raise ValueError("You must define the parameter bounds in the Model object.")
-        self.auxilary = {
+        self.auxiliary = {
             "n": len(self.participant.get("observed")),
             "k": len(self.parameter_names),
         }
@@ -92,7 +92,7 @@ class DifferentialEvolution:
         evaluated.run()
         predicted = evaluated.policies
         observed = self.participant.get("observed")
-        metric = self.loss(predicted, observed, **self.auxilary)
+        metric = self.loss(predicted, observed, **self.auxiliary)
         del predicted, observed
         if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
             metric = 1e10

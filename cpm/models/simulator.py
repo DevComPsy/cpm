@@ -61,8 +61,9 @@ class Simulator:
         """
         Runs the simulation.
 
-        Returns:
-        - experiment: A list containing the results of the simulation.
+        Returns
+        -------
+        experiment: A list containing the results of the simulation.
         """
         for i in range(len(self.data)):
             self.function.reset()
@@ -104,8 +105,10 @@ class Simulator:
         """
         Updates the parameters of the simulation.
 
-        Parameters:
-        - params: The parameters to be updated.
+        Parameters
+        ----------
+        parameters : object
+            The parameters to be updated.
         """
         if isinstance(parameters, Parameters):
             TypeError("Parameters must be a dictionary or array_like.")

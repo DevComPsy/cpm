@@ -42,7 +42,9 @@ See this [link](https://dev.to/couchcamote/git-branching-name-convention-cch) fo
 
 ## Commit message conventions
 
-We use gitmoji for commit messages. See this [link](https://gitmoji.dev/) for more information.
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) guidelines for commit messages.
+Feel free to use gitmoji for commit messages, but insert them at the end of the problem description.
+See this [link](https://gitmoji.dev/) for more information.
 
 ## Pull request conventions
     

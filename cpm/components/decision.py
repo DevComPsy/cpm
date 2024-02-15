@@ -233,7 +233,10 @@ class GreedyRule:
         policies[output != maximum] = self.epsilon * 1
         policies[output == maximum] = 1 - (output.shape[0] - 1) * self.epsilon
         policies[output <= 0] = 0
-        policies = policies / policies.sum()  # normalise
+        if np.all(policies == 0):
+            policies.fill(1 / policies.shape[0])
+        else:
+            policies = policies / policies.sum()  # normalise
         self.policies = policies
         self.run = True
         return self.policies

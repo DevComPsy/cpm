@@ -1,5 +1,5 @@
-from typing import Any
 import numpy as np
+import copy
 
 
 class Parameters:
@@ -94,8 +94,6 @@ class Value:
     Value
         A Value object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float with the parameter value as operand.
     """
-
-    # TODO: Add support for different types of priors
 
     def __init__(self, value=None, prior="normal", lower=0, upper=1):
         self.value = value
@@ -212,3 +210,12 @@ class Value:
 
     def __shape__(self):
         return np.shape(self.value)
+
+    def __hash__(self):
+        return hash(self.value)
+
+    def __copy__(self):
+        return Value(**self.__dict__)
+
+    def __deepcopy__(self, memo):
+        return Value(**copy.deepcopy(self.__dict__, memo))

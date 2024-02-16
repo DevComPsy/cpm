@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ["DeltaRule", "SeparableRule", "QLearningRule", "KernelUpdate"]
+
 
 class DeltaRule:
     """
@@ -109,6 +111,12 @@ class DeltaRule:
 
     def __repr__(self):
         return f"DeltaRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
+
+    def __str__(self):
+        return f"DeltaRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
+
+    def __call__(self):
+        return self.compute()
 
     def config(self):
         """
@@ -221,10 +229,13 @@ class SeparableRule:
         self.weights = np.zeros(self.shape)
 
     def __repr__(self):
-        """
-        Returns a string representation of the object.
-        """
         return f"SeparableRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
+
+    def __str__(self):
+        return f"SeparableRule(alpha={self.alpha},\n weights={self.weights},\n teacher={self.teacher})"
+
+    def __call__(self):
+        return self.compute()
 
     def config(self):
         """
@@ -345,6 +356,12 @@ class QLearningRule:
     def __repr__(self):
         return f"QLearningRule(alpha={self.alpha},\n gamma={self.gamma},\n values={self.values},\n reward={self.reward},\n maximum={self.maximum})"
 
+    def __str__(self):
+        return f"QLearningRule(alpha={self.alpha},\n gamma={self.gamma},\n values={self.values},\n reward={self.reward},\n maximum={self.maximum})"
+
+    def __call__(self):
+        return self.compute()
+
     def config(self):
         """
         Get the configuration of the q-learning component.
@@ -374,7 +391,6 @@ class QLearningRule:
         return config
 
 
-# # The KernelUpdate class is used to update the kernel of a system.
 class KernelUpdate:
     """
     A class representing a learning rule for updating the choice kernel as specified by Equation 5 in Wilson and Collins (2019).
@@ -460,74 +476,14 @@ class KernelUpdate:
         }
         return config
 
+    def __repr__(self):
+        return f"KernelUpdate(response={self.response},\n rate={self.rate},\n kernel={self.kernel},\n input={self.input})"
 
-# class QHybridLearning:
+    def __str__(self):
+        return f"KernelUpdate(response={self.response},\n rate={self.rate},\n kernel={self.kernel},\n input={self.input})"
 
-#     def __init__(
-#         self,
-#         alpha=0.5,
-#         gamma=0.1,
-#         values=None,
-#         reward=None,
-#         maximum=None,
-#         *args,
-#         **kwargs,
-#     ):
-#         self.alpha = alpha
-#         self.gamma = gamma
-#         self.values = values.copy()
-#         self.reward = reward
-#         self.maximum = maximum
-
-#     def compute(self):
-#         """
-#         Compute the change in values based on the given values, reward, and parameters, and return the updated values.
-
-#         Returns
-#         -------
-#         output: numpy.ndarray:
-#             The computed output values.
-#         """
-
-#         active = self.values.copy()
-#         active[active > 0] = 1
-#         output = np.zeros(self.values.shape[0])
-
-#         for i in range(self.values.shape[0]):
-#             output[i] += self.values[i] + () * active[i]
-
-#         return output
-
-#     def __repr__(self):
-#         return f"QLearningRule(alpha={self.alpha},\n gamma={self.gamma},\n values={self.values},\n reward={self.reward},\n maximum={self.maximum})"
-
-#     def config(self):
-#         """
-#         Get the configuration of the q-learning component.
-
-#         Returns
-#         -------
-#         config: dict
-#             A dictionary containing the configuration parameters of the learning component.
-
-#             - alpha (float): The learning rate.
-#             - gamma (float): The discount factor.
-#             - values (list): The values used for learning.
-#             - reward (str): The name of the reward.
-#             - maximum (str): The name of the maximum reward.
-#             - name (str): The name of the learning component class.
-#             - type (str): The type of the learning component.
-#         """
-#         config = {
-#             "alpha": self.alpha,
-#             "gamma": self.gamma,
-#             "values": self.values,
-#             "reward": self.reward,
-#             "maximum": self.maximum,
-#             "name": self.__class__.__name__,
-#             "type": "learning",
-#         }
-#         return config
+    def __call__(self):
+        return self.compute()
 
 
 # class HumbleTeacher:
@@ -545,28 +501,6 @@ class KernelUpdate:
 #     def __init__(
 #         self,
 #     ):
-#         pass
-
-
-# class AttentionGateLearning:
-#     """
-#     A learning rule to update attentional values (salience of stimuli) as a function of gradient descent on error.
-#     """
-#     def __init__(self, theta, weights, input, teacher, salience, *args, **kwargs):
-#         self.theta = theta
-#         self.weights = weights
-#         self.input = input
-#         self.teacher = teacher
-#         self.salience = salience
-
-
-# class MackintoshUpdate:
-#     """
-#     A learning rule to update attentional values (salience of stimuli) in the spirit of Mackintosh (1975) as a function of the prediction error.
-#     The current implementation follows the Equation X from Le Pelley et al. (200X).
-#     """
-
-#     def __init__(self) -> None:
 #         pass
 
 

@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ["Softmax", "Sigmoid", "GreedyRule", "ChoiceKernel"]
+
 
 class Softmax:
     """
@@ -96,6 +98,15 @@ class Softmax:
         }
         return config
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations})"
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations})"
+
+    def __call__(self):
+        return self.compute()
+
 
 class Sigmoid:
     """
@@ -180,6 +191,15 @@ class Sigmoid:
             "type": "decision",
         }
         return config
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations}, beta={self.beta})"
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations}, beta={self.beta})"
+
+    def __call__(self):
+        return self.compute()
 
 
 class GreedyRule:
@@ -275,6 +295,15 @@ class GreedyRule:
         }
         return config
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(activations={self.activations}, epsilon={self.epsilon})"
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(activations={self.activations}, epsilon={self.epsilon})"
+
+    def __call__(self):
+        return self.compute()
+
 
 class ChoiceKernel:
     """
@@ -328,7 +357,7 @@ class ChoiceKernel:
         temperature_kernel=0.5,
         activations=None,
         kernel=None,
-        **kwargs
+        **kwargs,
     ):
         self.temperature_a = temperature_activations
         self.temperature_k = temperature_kernel
@@ -353,6 +382,26 @@ class ChoiceKernel:
 
     def choice(self):
         return np.random.choice(self.shape[0], p=self.policies)
+
+    def config(self):
+        config = {
+            "temperature_activations": self.temperature_a,
+            "temperature_kernel": self.temperature_k,
+            "activations": self.activations,
+            "kernel": self.kernel,
+            "name": self.__class__.__name__,
+            "type": "decision",
+        }
+        return config
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(temperature_activations={self.temperature_a}, temperature_kernel={self.temperature_k}, activations={self.activations}, kernel={self.kernel})"
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(temperature_activations={self.temperature_a}, temperature_kernel={self.temperature_k}, activations={self.activations}, kernel={self.kernel})"
+
+    def __call__(self):
+        return self.compute()
 
 
 # ChoiceKernel(

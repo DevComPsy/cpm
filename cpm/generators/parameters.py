@@ -46,6 +46,19 @@ class Parameters:
     def __len__(self):
         return 0
 
+    def update(self, **kwargs):
+        """
+        Update the parameters with new values.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments representing the parameters.
+
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, Value(value))
+
     def keys(self):
         """
         Return a list of all the keys in the parameters dictionary.

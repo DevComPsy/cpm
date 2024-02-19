@@ -122,12 +122,10 @@ class Wrapper:
             self.policies.fill(0)
             self.parameters.values = self.values
             self.__run__ = False
+        # if dict, update using parameters update method
         if isinstance(parameters, dict):
-            if "values" not in parameters.keys():
-                updates = Parameters(**parameters, values=self.values)
-            else:
-                updates = Parameters(**parameters)
-            self.parameters = copy.deepcopy(updates)
+            self.parameters.update(**parameters)
+        # if list, update the parameters in for keys in range of 0:len(parameters)
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
             for keys in self.parameter_names[0 : len(parameters)]:
                 value = parameters[self.parameter_names.index(keys)]

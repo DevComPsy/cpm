@@ -2,10 +2,9 @@
 Here we import all the modules that are needed for the project.
 """
 
-__all__ = ["Wrapper", "Simulator", "Parameters", "Value"]
+__all__ = ["activation", "decision", "learning", "utils"]
 
-from .simulator import Simulator
-from .wrapper import Wrapper
-from .parameters import Parameters, Value
-
-del simulator, wrapper, parameters
+from .activation import *
+from .decision import *
+from .learning import *
+from .utils import *

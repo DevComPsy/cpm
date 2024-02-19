@@ -1,6 +1,6 @@
-__author__ = 'Lenard Dome'
-__email__ = 'lenarddome@gmail.com'
-__version__ = '0.1.0'
+__author__ = "Lenard Dome"
+__email__ = "lenarddome@gmail.com"
+__version__ = "0.1.0"
 
 """
 This is the main module of the package.
@@ -15,6 +15,7 @@ import warnings
 
 from .__version__ import __version__
 from .__priors__ import __uniform__, __normal__, __beta__, __gamma__, __exponential__
+from . import generators
 from . import models
 from . import applications
 from . import optimisation

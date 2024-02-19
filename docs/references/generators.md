@@ -1,21 +1,21 @@
-# cpm.components
+# cpm.generators
 
-::: cpm.components.activation
+::: cpm.generators.Value
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.components.decision
+::: cpm.generators.Parameters
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.components.learning
+::: cpm.generators.Wrapper
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.components.attention
+::: cpm.generators.Simulator
     options:
         show_root_heading: true
         heading_level: 2

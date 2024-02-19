@@ -1,21 +1,21 @@
 # cpm.models
 
-::: cpm.models.Value
+::: cpm.models.activation
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.models.Parameters
+::: cpm.models.decision
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.models.Wrapper
+::: cpm.models.learning
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.models.Simulator
+::: cpm.models.attention
     options:
         show_root_heading: true
         heading_level: 2

@@ -131,6 +131,9 @@ class Value:
     def __radd__(self, other):  # other + self
         return self.value + other
 
+    def __iadd__(self, other):
+        return self.value + other
+
     def __sub__(self, other):  # self - other
         return self.value + (-other)
 
@@ -210,9 +213,6 @@ class Value:
 
     def __shape__(self):
         return np.shape(self.value)
-
-    def __hash__(self):
-        return hash(self.value)
 
     def __copy__(self):
         return Value(**self.__dict__)

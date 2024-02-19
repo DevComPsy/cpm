@@ -3,7 +3,7 @@ import pandas as pd
 import copy
 from . import minimise
 from . import utils
-from ..models import Simulator, Wrapper
+from ..generators import Simulator, Wrapper
 
 
 class DifferentialEvolution:

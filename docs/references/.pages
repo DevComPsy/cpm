@@ -1,6 +1,6 @@
 nav:
-    - cpm.components: components.md
     - cpm.models: models.md
+    - cpm.generators: generators.md
     - cpm.optimisation: optimisation.md
     - cpm.evaluation: evaluation.md
     - cpm.utils: utils.md

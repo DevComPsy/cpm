@@ -37,7 +37,7 @@ class DeltaRule:
 
     See Also
     --------
-    [cpm.components.learning.SeparableRule][cpm.components.learning.SeparableRule] : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
+    [cpm.models.learning.SeparableRule][cpm.models.learning.SeparableRule] : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
 
     Notes
     -----
@@ -176,7 +176,7 @@ class SeparableRule:
 
     See Also
     --------
-    [cpm.components.learning.DeltaRule][cpm.components.learning.DeltaRule] : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
+    [cpm.models.learning.DeltaRule][cpm.models.learning.DeltaRule] : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
 
     Notes
     -----

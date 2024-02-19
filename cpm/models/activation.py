@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ["LinearActivation", "SigmoidActivation", "CompetitiveGating"]
+__all__ = ["SigmoidActivation", "CompetitiveGating"]
 
 
 class SigmoidActivation:

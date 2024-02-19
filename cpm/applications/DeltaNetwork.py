@@ -5,23 +5,27 @@ one input layer and one output layer.  The input layer has one unit for each
 stimulus, and the output layer has one unit for each response. The standard
 Rescorla-Wagner model is a special case of this model.
 """
+
 import numpy as np
 import pandas as pd
-from ..components.learning import DeltaRule
-from ..components.decision import Softmax
-from ..components.utils import Nominal
-from ..components.activation import LinearActivation
+from ..models.learning import DeltaRule
+from ..models.decision import Softmax
+from ..models.utils import Nominal
+
 
 # FIXME: there were a lot of changes and I'm not sure if this is still correct
 # NOTE: regardless of whether it works, this is representative of an implemented complete model
-class DeltaNetwork():
+class DeltaNetwork:
     """
     Rescorla-Wagner model for learning in reinforcement learning tasks.
-    
-    Args:
-        data (numpy.ndarray): The input data for the model.
-        params (object): The parameters for the model.
-        
+
+    Parameters
+    ---------
+    data : dict
+        The input data for the model.
+    params : dict
+        The parameters for the model.
+
     Attributes:
         data (numpy.ndarray): The input data for the model.
         alpha (float): The learning rate parameter.
@@ -33,39 +37,41 @@ class DeltaNetwork():
         upper (list): A named list. The upper bounds for the parameters.
     """
 
-    def __init__(self, data = None, params = None):
-        
+    def __init__(self, data=None, params=None):
+
         # initialize the model parameters (defaults)
-        self.weights = np.zeros((np.max(data['feedback']), np.max(data['trials'])))
+        self.weights = np.zeros((np.max(data["feedback"]), np.max(data["trials"])))
         self.alpha = 0.1
         self.temperature = 1
-        
+
         # define the bounds for the parameters
         self.lower = [1e-10, 1e-10]
         self.upper = [1, 5]
         self.bounds = list(zip(self.lower, self.upper))
-        self.priors = 'normal'
-        
+        self.priors = "normal"
+
         if params is not None:
-            self.alpha = params['alpha']
-            self.temperature = params['temperature']
-            if 'weights' in params.keys():
-                self.weights = np.asarray(params['weights'])
-            if 'priors' in params.keys():
-                self.priors = params['priors']
+            self.alpha = params["alpha"]
+            self.temperature = params["temperature"]
+            if "weights" in params.keys():
+                self.weights = np.asarray(params["weights"])
+            if "priors" in params.keys():
+                self.priors = params["priors"]
 
         # initialize the data for the simulation
-        self.training = data['trials']
-        self.feedback = data['feedback']
+        self.training = data["trials"]
+        self.feedback = data["feedback"]
 
         # initialize the output
-        self.policies = np.zeros((data['trials'].shape[0], np.max(data['feedback'])))
-        self.error = np.zeros((self.weights.shape[0], self.weights.shape[1], data['trials'].shape[0]))
+        self.policies = np.zeros((data["trials"].shape[0], np.max(data["feedback"])))
+        self.error = np.zeros(
+            (self.weights.shape[0], self.weights.shape[1], data["trials"].shape[0])
+        )
 
         # initialize some variables used in the implementation
-        self.bits = np.max(data['trials']) # the number of stimuli
-        self.outcomes = np.max(self.feedback) # the number of outcomes
-        self.parameter_names = ['alpha', 'temperature'] # the names of the parameters
+        self.bits = np.max(data["trials"])  # the number of stimuli
+        self.outcomes = np.max(self.feedback)  # the number of outcomes
+        self.parameter_names = ["alpha", "temperature"]  # the names of the parameters
 
     def run(self):
         """
@@ -78,11 +84,13 @@ class DeltaNetwork():
         Returns:
             None
         """
-        for trial in range(self.training.shape[0],):
+        for trial in range(
+            self.training.shape[0],
+        ):
             # FIXME: legacy code that needs to be updated
-            active = Nominal(stimuli = self.training[trial], bits = self.bits)
-            feedback = Nominal(stimuli = [self.feedback[trial]], bits = self.outcomes)
-            current = LinearActivation(active, self.weights)
+            active = Nominal(stimuli=self.training[trial], bits=self.bits)
+            feedback = Nominal(stimuli=[self.feedback[trial]], bits=self.outcomes)
+            current = active * self.weights
             self.policies[trial, :] = Softmax(self.temperature, current)
             self.weights = DeltaRule(self.alpha, current, feedback)
             self.error[:, :, trial] = change
@@ -96,14 +104,14 @@ class DeltaNetwork():
             dict: A dictionary containing the model results.
         """
         return {
-            'name': 'Rescorla-Wagner',
-            'alpha': self.alpha,
-            'temperature': self.temperature,
-            'stimuli': self.training,
-            'feedback': self.feedback,
-            'policies': self.policies,
-            'error': self.error,
-            'weights': self.weights
+            "name": "Rescorla-Wagner",
+            "alpha": self.alpha,
+            "temperature": self.temperature,
+            "stimuli": self.training,
+            "feedback": self.feedback,
+            "policies": self.policies,
+            "error": self.error,
+            "weights": self.weights,
         }
 
     def reset(self, parameters):
@@ -120,7 +128,7 @@ class DeltaNetwork():
         """
         self.weights.fill(0)
         if isinstance(parameters, dict):
-            self.weights = parameters.get('weights', self.weights)
+            self.weights = parameters.get("weights", self.weights)
             parameters_vector = [parameters.get(key) for key in self.parameter_names]
         else:
             parameters_vector = parameters
@@ -141,6 +149,6 @@ class DeltaNetwork():
         Returns:
             None
         """
-        self.training = new['trials']
-        self.feedback = new['feedback']
+        self.training = new["trials"]
+        self.feedback = new["feedback"]
         return None

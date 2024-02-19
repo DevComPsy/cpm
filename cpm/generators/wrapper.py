@@ -55,7 +55,7 @@ class Wrapper:
         self.simulation = []
         self.data = data
 
-        self.shape = [np.asarray(v).shape[0] for k, v in self.data.items()]
+        self.shape = [(np.array(v).shape) for k, v in self.data.items() if k != "ppt"]
         self.__len__ = np.max(self.shape)
         self.policies = []
         self.parameter_names = list(parameters.keys())
@@ -73,11 +73,11 @@ class Wrapper:
         """
         for i in range(self.__len__):
             ## create input for the model
-            trial = {k: self.data[k][i] for k in self.data.keys()}
+            trial = {k: self.data[k][i] for k in self.data.keys() if k != "ppt"}
             ## run the model
             output = self.model(parameters=self.parameters, trial=trial)
-            self.parameters.values.fill(output.get("values"))
             self.simulation.append(output.copy())
+            self.parameters.values = Value(output.get("values"))
 
             if i == 0:
                 self.policies = np.zeros((self.__len__, output.get("policy").shape[0]))
@@ -151,6 +151,7 @@ class Wrapper:
         summary = {
             "values": self.values,
             "policies": self.policies,
+            **self.parameters.export(),
         }
         return summary
 
@@ -160,21 +161,11 @@ class Wrapper:
 
         Returns
         -------
-        dict
-            A dictionary containing the exported model configurations.
-
-            - 'values': The values array.
-            - 'policies': The policies array.
-            - 'name': The name of the model.
-            - 'parameters': The parameters of the model.
+        list
+            A list containing model output for each trial.
 
         """
-        export = {
-            "values": self.values,
-            "policies": self.policies,
-            **self.parameters.export(),
-        }
-        return export
+        return self.simulation
 
     def save(self, filename=None):
         """

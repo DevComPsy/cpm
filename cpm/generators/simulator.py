@@ -4,6 +4,7 @@ Runs a simulation for each ppt in the data.
 
 import numpy as np
 import pandas as pd
+import warnings
 import copy
 import pickle as pkl
 
@@ -49,9 +50,18 @@ class Simulator:
         self.function = model
         self.data = data
         self.parameters = copy.deepcopy(parameters)
+        if len(self.data) != len(self.parameters):
+            self.parameters = []
+            self.parameters = [
+                copy.deepcopy(parameters) for i in range(1, len(self.data) + 1)
+            ]
+            warnings.warn(
+                "The number of parameter sets and number of participants in data do not match.\nUsing the same parameters for all participants."
+            )
         if isinstance(parameters, dict):
             self.parameters = [
-                (copy.deepcopy(parameters)) for i in range(1, len(self.data) + 1)
+                (copy.deepcopy(Parameters(**parameters)))
+                for i in range(1, len(self.data) + 1)
             ]
         self.parameter_names = self.function.parameter_names
         self.simulation = []
@@ -69,10 +79,9 @@ class Simulator:
             self.function.reset()
             evaluate = copy.deepcopy(self.function)
             evaluate.reset(parameters=self.parameters[i])
-            evaluate.update_data(self.data[i])
+            evaluate.data = self.data[i]
             evaluate.run()
             output = copy.deepcopy(evaluate.export())
-            output["ppt"] = copy.deepcopy(self.data[i]["ppt"])
             self.simulation.append(output)
             del evaluate, output
         return None
@@ -92,12 +101,14 @@ class Simulator:
         """
         policies = pd.DataFrame()
         for i in range(len(self.simulation)):
+            response = pd.DataFrame(self.simulation[i]["response"])
+            response.columns = ["response_" + str(col) for col in response.columns]
             policed = pd.DataFrame(self.simulation[i]["policies"])
             policed.columns = ["policy_" + str(col) for col in policed.columns]
             stimuli = pd.DataFrame(self.data[i].get("trials"))
             stimuli.columns = ["stimulus_" + str(col) for col in stimuli.columns]
-            combined = pd.concat([policed, stimuli], axis=1)
-            combined["ppt"] = self.simulation[i]["ppt"]
+            combined = pd.concat([response, policed, stimuli], axis=1)
+            combined["ppt"] = self.data[i]["ppt"]
             policies = pd.concat([policies, combined], axis=0, ignore_index=True)
         return policies
 

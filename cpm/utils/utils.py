@@ -40,6 +40,7 @@ def pandas_to_dict(
         single = df[df[participant] == i + 1]
         out["trials"] = single[stimuli_indices].to_numpy()
         out["feedback"] = single[feedback_indices].to_numpy()
+        out["ppt"] = pd.unique(single[participant])[0]
         if kwargs is not None:
             for key, value in kwargs.items():
                 out[key] = single[value].to_numpy()

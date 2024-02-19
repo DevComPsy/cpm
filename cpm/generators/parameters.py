@@ -25,9 +25,6 @@ class Parameters:
             setattr(self, key, Value(value))
         # self.__dict__.update(kwargs)
 
-    def __repr__(self):
-        return str(self.__dict__)
-
     def __getitem__(self, key):
         return self.__dict__.get(key)
 
@@ -45,6 +42,9 @@ class Parameters:
 
     def __keys__(self):
         return self.__dict__.keys()
+
+    def __len__(self):
+        return 0
 
     def keys(self):
         """
@@ -194,19 +194,14 @@ class Value:
 
         Parameters
         ----------
-        value : float
+        value : float or array_like
             The new value of the parameter.
 
         Notes
         -----
         If the parameter is an array, it should be a list of values. If the parameter is an array, and the new value is a single value, it will be broadcasted to the shape of the array.
         """
-        if hasattr(value, "__iter__"):
-            self.value = np.array(value)
-        elif hasattr(self.value, "__iter__"):
-            self.value.fill(value)
-        else:
-            self.value = value
+        self = Value(value)
 
     def __len__(self):
         return len(self.value)

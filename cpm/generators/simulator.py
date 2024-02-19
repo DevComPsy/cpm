@@ -93,23 +93,30 @@ class Simulator:
         Returns
         ------
         policies : pandas.DataFrame
-            A dataframe containing the policies from the simulation with the following columns:
-
-            - ppt: The participant number.
-            - policy_0, policy1, ...: The policy for each action, where each column is an action.
-            - stimulus_0, stimulus1, ...: The stimuli present, where each column is a stimulus dimension.
+            A dataframe containing the the model output for each participant and trial.
+            If the output variable is organised as an array with more than one dimension, the output will be flattened.
         """
         policies = pd.DataFrame()
-        for i in range(len(self.simulation)):
-            response = pd.DataFrame(self.simulation[i]["response"])
-            response.columns = ["response_" + str(col) for col in response.columns]
-            policed = pd.DataFrame(self.simulation[i]["policies"])
-            policed.columns = ["policy_" + str(col) for col in policed.columns]
-            stimuli = pd.DataFrame(self.data[i].get("trials"))
-            stimuli.columns = ["stimulus_" + str(col) for col in stimuli.columns]
-            combined = pd.concat([response, policed, stimuli], axis=1)
-            combined["ppt"] = self.data[i]["ppt"]
-            policies = pd.concat([policies, combined], axis=0, ignore_index=True)
+        id = 0
+        for i in self.simulation:
+            ppt = pd.DataFrame()
+            for k in i:
+                row = pd.DataFrame()
+                for key, value in k.items():
+                    if len(list(np.array(value).shape)) > 1:
+                        Warning(
+                            f"Value of {key} is of shape {value.shape}. It should be 1D."
+                        )
+                    if isinstance(value, int) or isinstance(value, float):
+                        value = np.array([value])
+                    current = pd.DataFrame(value.flatten()).T
+                    current.columns = [f"{key}_{i}" for i in range(current.shape[1])]
+                    row = pd.concat([row, current], axis=1)
+                ppt = pd.concat([ppt, row], axis=0)
+            ppt["ppt"] = id
+            id += 1
+            print(id)
+            policies = pd.concat([policies, ppt], axis=0)
         return policies
 
     def update(self, parameters=None):

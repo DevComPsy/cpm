@@ -115,8 +115,8 @@ class Simulator:
                 ppt = pd.concat([ppt, row], axis=0)
             ppt["ppt"] = id
             id += 1
-            print(id)
             policies = pd.concat([policies, ppt], axis=0)
+        policies.reset_index()
         return policies
 
     def update(self, parameters=None):

@@ -16,18 +16,16 @@ class ParameterRecovery:
 
     Attributes
     ----------
-    model : object
-        The model object.
-    function : object
-        The function associated with the model.
+    model : [cpm.generators.Simulator][cpm.generators.Simulator]
+        The simulator object.
     template : object
         The template parameter.
     optimisation : object
         The optimisation algorithm.
-    loss : str
-        The type of loss function used for optimisation.
+    loss : function
+        The loss function used for optimisation. It usually takes in the model prediction (output) and the observed data (human responses).
     strategy : object
-        The strategy object for generating parameter values.
+        The function used for generating parameter values.
     parameter_names : list
         A list of parameter names.
     data : list
@@ -42,12 +40,12 @@ class ParameterRecovery:
 
     Parameters
     ----------
-    model : object
-        The model object.
+    model : [cpm.generators.Simulator][cpm.generators.Simulator]
+        The simulator object.
     optimiser : object
         The optimisation algorithm.
-    minimisation : str
-        The type of minimisation to be used (e.g., "LogLikelihood").
+    loss : function
+        The loss function used for optimisation. It usually takes in the model prediction (output) and the observed data (human responses). We only support minimisation functions.
     strategy : object
         The strategy for generating parameter values.
     iteration : int
@@ -57,7 +55,7 @@ class ParameterRecovery:
 
     Examples
     --------
-    >>> from cpm.evaluation import ParameterRecovery
+    >>> from cpm.evaluation import ParameterRecovery, strategies
     >>> from cpm.applications import DeltaRule
     >>> from cpm.optimisation import minimise
     >>> from cpm.optimisation import DifferentialEvolution
@@ -65,8 +63,8 @@ class ParameterRecovery:
     >>> recover = ParameterRecovery(
             model=model,
             optimiser=DifferentialEvolution,
-            minimisation="LogLikelihood",
-            strategy="grid",
+            loss=minimise.LogLikelihood,
+            strategy=strategies.grid,
             iteration=1000
             )
     >>> recover.recover()
@@ -80,8 +78,8 @@ class ParameterRecovery:
         self,
         model=None,
         optimiser=None,
-        minimasation="LogLikelihood",
-        strategy=None,
+        loss=minimise.LogLikelihood,
+        strategy=strategies.grid,
         iteration=1000,
         **kwargs
     ):
@@ -89,9 +87,9 @@ class ParameterRecovery:
         self.model = copy.deepcopy(model)
         self.function = copy.deepcopy(model.function)
         self.template = self.model.parameters[0]
-        self.optimisation = getattr(optimisation, optimiser)
-        self.loss = minimasation
-        self.strategy = getattr(strategies, strategy)
+        self.optimisation = optimiser
+        self.loss = loss
+        self.strategy = strategy
         self.parameter_names = self.function.parameter_names
         self.data = self.model.data
         self.iteration = iteration

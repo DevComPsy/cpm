@@ -17,20 +17,20 @@ class DifferentialEvolution:
     bounds : object
         The parameter bounds for the optimization.
     data : object
-        The data used for optimization.
-    minimisation : str
-        The type of minimization to be performed.
+        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
+    loss : function
+        The loss function for the objective minimization function.
     **kwargs : dict
         Additional keyword arguments.
 
     Attributes
     ----------
-    function : object
-        The model function.
+    function : [cpm.generators.Wrapper][cpm.generators.Wrapper]
+        The model object.
     data : object
-        The data used for optimization.
+        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
     loss : function
-        The loss function for minimization.
+        The loss function for the objective minimization function.
     kwargs : dict
         Additional keyword arguments.
     fit : list
@@ -47,11 +47,11 @@ class DifferentialEvolution:
     """
 
     def __init__(
-        self, model=None, bounds=None, data=None, minimisation="LogLikelihood", **kwargs
+        self, model=None, bounds=None, data=None, minimisation=LogLikelihood, **kwargs
     ):
         self.function = copy.deepcopy(model)
         self.data = data
-        self.loss = getattr(minimise, minimisation)
+        self.loss = minimisation
         self.kwargs = kwargs
         self.fit = []
         self.details = []

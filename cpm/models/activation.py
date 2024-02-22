@@ -170,11 +170,11 @@ class ProspectUtility:
 
     Parameters
     ----------
-    outcomes : array_like
+    outcomes : numpy.ndarray
         The values of potential outcomes for each choice option.
         Should be a nested array where the outer dimension represents trials,
         followed by options within each trial, followed by potential outcomes within each option.
-    probabilities : array_like
+    probabilities : numpy.ndarray
         The probabilities of potential outcomes for each choice option.
         Should be a nested array where the outer dimension represents trials,
         followed by options within each trial, followed by potential outcomes within each option.
@@ -196,11 +196,11 @@ class ProspectUtility:
 
     Attributes
     ----------
-    outcomes : ndarray
+    outcomes : numpy.ndarray
         The values of potential outcomes for each choice option, for each trial.
         Should be a nested array where the outer dimension represents trials,
         followed by options within each trial, followed by potential outcomes within each option.
-    probabilities : ndarray
+    probabilities : numpy.ndarray
         The probabilities of potential outcomes for each choice option, for each trial.
         Should be a nested array where the outer dimension represents trials,
         followed by options within each trial, followed by potential outcomes within each option.
@@ -241,7 +241,9 @@ class ProspectUtility:
     and u is the utility function of the value x of a potential outcome.
     These functions are defined as follows (equations 6 and 5 respectively in Tversky & Kahneman, 1992, pp. 309):
 
-        w(p) = p^beta / (p^beta + (1 - p)^beta)^(1/beta),\n
+        w(p) = p^beta / (p^beta + (1 - p)^beta)^(1/beta),
+
+
         u(x) = ifelse(x >= 0, x^alpha_pos, -lambda * (-x)^alpha_neg),
 
     where beta is the discriminability parameter of the weighting function;
@@ -298,6 +300,7 @@ class ProspectUtility:
             ],
             dtype=object,
         )
+
         self.probabilities = np.asarray(probabilities.copy())
         self.probabilities = np.array(
             [
@@ -306,11 +309,13 @@ class ProspectUtility:
             ],
             dtype=object,
         )
+
         self.alpha_pos = alpha_pos
         if alpha_neg is None:
             self.alpha_neg = alpha_pos
         else:
             self.alpha_neg = alpha_neg
+
         self.lambda_loss = lambda_loss
         self.beta = beta
         self.delta = delta
@@ -318,50 +323,58 @@ class ProspectUtility:
         self.shape = self.outcomes.shape
         if self.shape != self.probabilities.shape:
             raise ValueError("outcomes and probabilities do not have the same shape.")
+
+        if weighting == "tk":
+            self.__weighting_fun = self.__weighting_tk
+        elif weighting == "pd":
+            self.__weighting_fun = self.__weighting_p
+        elif weighting == "gw":
+            self.__weighting_fun = self.__weighting_gw
+        else:
+            raise ValueError("Invalid weighting type.")
+
         self.utilities = []
         self.weights = []
         self.expected_utility = []
+        self.weighting = weighting
 
-        # Select the appropriate weighting function.
-        match weighting:
-            case "tk":
-                self.weighting_fun = self.weighting_tk
-            case "pd":
-                self.weighting_fun = self.weighting_p
-            case "gw":
-                self.weighting_fun = self.weighting_gw
-            case _:
-                raise ValueError("Invalid weighting type.")
-
-    def utility(self, x=None):
+    def __utility(self, x=None):
         return np.where(
             x >= 0,
             np.power(x, self.alpha_pos),
             -self.lambda_loss * np.power(-x, self.alpha_neg),
         )
 
-    def weighting_tk(self, x=None):
+    def __weighting_tk(self, x=None):
         numerator = np.power(x, self.beta)
         denominator = np.power((numerator + np.power(1 - x, self.beta)), 1 / self.beta)
         return numerator / denominator
 
-    def weighting_p(self, x=None):
+    def __weighting_p(self, x=None):
         return np.exp(-self.delta * np.power(-np.log(x), self.beta))
 
-    def weighting_gw(self, x=None):
+    def __weighting_gw(self, x=None):
         numerator = self.delta * np.power(x, self.beta)
         denominator = numerator + np.power(1 - x, self.beta)
         return numerator / denominator
 
     def compute(self):
+        """
+        Compute the expected utility of each choice option.
+
+        Returns
+        -------
+        numpy.ndarray
+            The computed expected utility of each choice option.
+        """
         # Determine the utilities of the potential outcomes, for each choice option and each trial.
         self.utilities = np.array(
-            [self.utility(x=self.outcomes[j]) for j in range(self.shape[0])],
+            [self.__utility(x=self.outcomes[j]) for j in range(self.shape[0])],
             dtype=object,
         )
         # Determine the weights of the potential outcomes, for each choice option and each trial.
         self.weights = np.array(
-            [self.weighting_fun(self.probabilities[j]) for j in range(self.shape[0])],
+            [self.__weighting_fun(self.probabilities[j]) for j in range(self.shape[0])],
             dtype=object,
         )
         # Determine the expected utility of each choice option for each trial.

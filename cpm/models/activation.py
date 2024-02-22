@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ["SigmoidActivation", "CompetitiveGating"]
+__all__ = ["SigmoidActivation", "CompetitiveGating", "ProspectUtility"]
 
 
 class SigmoidActivation:
@@ -162,3 +162,234 @@ class CompetitiveGating:
             "type": "Activation",
             "name": self.__class__.__name__,
         }
+
+
+class ProspectUtility:
+    """
+    A class for computing choice utilities based on prospect theory.
+
+    Parameters
+    ----------
+    outcomes : array_like
+        The values of potential outcomes for each choice option.
+        Should be a nested array where the outer dimension represents trials,
+        followed by options within each trial, followed by potential outcomes within each option.
+    probabilities : array_like
+        The probabilities of potential outcomes for each choice option.
+        Should be a nested array where the outer dimension represents trials,
+        followed by options within each trial, followed by potential outcomes within each option.
+    alpha_pos : float
+        The risk attitude parameter for non-negative outcomes, which determines the curvature of the utility function in the gain domain.
+        If alpha_neg is undefined, alpha_pos will be used for both the gain and loss domains.
+    alpha_neg : float
+        The risk attitude parameter for negative outcomes, which determines the curvature of the utility function in the loss domain.
+    lambda_loss : float
+        The loss aversion parameter, which scales the utility of negative outcomes relative to non-negative outcomes.
+    beta : float
+        The discriminability parameter, which determines the curvature of the weighting function.
+    delta : float
+        The attractiveness parameter, which determines the elevation of the weighting function.
+    weigting : str
+        The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'.
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    outcomes : ndarray
+        The values of potential outcomes for each choice option, for each trial.
+        Should be a nested array where the outer dimension represents trials,
+        followed by options within each trial, followed by potential outcomes within each option.
+    probabilities : ndarray
+        The probabilities of potential outcomes for each choice option, for each trial.
+        Should be a nested array where the outer dimension represents trials,
+        followed by options within each trial, followed by potential outcomes within each option.
+    alpha_pos : float
+        The risk attitude parameter for non-negative outcomes, which determines the curvature of the utility function in the gain domain.
+        If alpha_neg is undefined, alpha_pos will be used for both the gain and loss domains.
+    alpha_neg : float
+        The risk attitude parameter for negative outcomes, which determines the curvature of the utility function in the loss domain.
+    lambda_loss : float
+        The loss aversion parameter, which scales the utility of negative outcomes relative to non-negative outcomes.
+    beta : float
+        The discriminability parameter, which determines the curvature of the weighting function.
+    delta : float
+        The attractiveness parameter, which determines the elevation of the weighting function.
+    weighting : str
+        The definition of the weighting function. One of 'tk', 'pd', or 'gw'. See Notes for details on each definition.
+    utilities : ndarray
+        The computed utilities of potential outcomes for each choice option, for each trial.
+    weights : ndarray
+        The computed weights of potential outcomes for each choice option, for each trial.
+    expected_utility : ndarray
+        The computed expected utility of each choice option for each trial.
+
+    Notes
+    -----
+
+    The different weighting functions currently implemented are:
+
+        - `tk`: Tversky & Kahneman (1992).
+        - `pd`: Prelec (1998).
+        - `gw`: Gonzalez & Wu (1999).
+
+    Following Tversky & Kahneman (1992), the expected utility U of a choice option is defined as:
+
+        U = sum(w(p) * u(x)),
+
+    where w is a weighting function of the probability p of a potential outcome,
+    and u is the utility function of the value x of a potential outcome.
+    These functions are defined as follows (equations 6 and 5 respectively in Tversky & Kahneman, 1992, pp. 309):
+
+        w(p) = p^beta / (p^beta + (1 - p)^beta)^(1/beta),\n
+        u(x) = ifelse(x >= 0, x^alpha_pos, -lambda * (-x)^alpha_neg),
+
+    where beta is the discriminability parameter of the weighting function;
+    alpha_pos and alpha_neg are the risk attitude parameters in the gain and loss domains respectively,
+    and lambda is the loss aversion parameter.
+
+    Several other definitions of the weighting function have been proposed in the literature,
+    most notably in Prelec (1998) and Gonzalez & Wu (1999).
+    Prelec (equation 3.2, 1999, pp. 503) proposed the following definition:
+
+        w(p) = exp(-delta * (-log(p))^beta),
+
+    where delta and beta are the attractiveness and discriminability parameters of the weighting function.
+    Gonzalez & Wu (equation 3, 1999, pp. 139) proposed the following definition:
+
+        w(p) = (delta * p^beta) / ((delta * p^beta) + (1-p)^beta).
+
+    Examples
+    --------
+    >>> vals = np.array([np.array([1, 40]), np.array([10])], dtype=object)
+    >>> probs = np.array([np.array([0.95, 0.05]), np.array([1])], dtype=object)
+    >>> prospect = ProspectUtility(
+            outcomes=vals, probabilities=probs, alpha_pos = 0.85, beta = 0.9
+        )
+    >>> prospect.compute()
+    array([2.44583162, 7.07945784])
+
+    References
+    ----------
+    Gonzalez, R., & Wu, G. (1999). On the shape of the probability weighting function. Cognitive psychology, 38(1), 129-166.
+
+    Prelec, D. (1998). The probability weighting function. Econometrica, 497-527.
+
+    Tversky, A., & Kahneman, D. (1992). Advances in prospect theory: Cumulative representation of uncertainty. Journal of Risk and uncertainty, 5, 297-323.
+    """
+
+    def __init__(
+        self,
+        outcomes=None,
+        probabilities=None,
+        alpha_pos=1,
+        alpha_neg=None,
+        _lambda=1,
+        beta=1,
+        delta=1,
+        weighting="tk",
+        **kwargs,
+    ):
+        self.outcomes = np.asarray(outcomes.copy())
+        self.outcomes = np.array(
+            [
+                np.array(self.outcomes[i], dtype=float)
+                for i in range(self.outcomes.shape[0])
+            ],
+            dtype=object,
+        )
+        self.probabilities = np.asarray(probabilities.copy())
+        self.probabilities = np.array(
+            [
+                np.array(self.probabilities[i], dtype=float)
+                for i in range(self.probabilities.shape[0])
+            ],
+            dtype=object,
+        )
+        self.alpha_pos = alpha_pos
+        if alpha_neg is None:
+            self.alpha_neg = alpha_pos
+        else:
+            self.alpha_neg = alpha_neg
+        self._lambda = _lambda
+        self.beta = beta
+        self.delta = delta
+
+        self.shape = self.outcomes.shape
+        if self.shape != self.probabilities.shape:
+            raise ValueError("outcomes and probabilities do not have the same shape.")
+        self.utilities = []
+        self.weights = []
+        self.expected_utility = []
+
+        # Select the appropriate weighting function.
+        match weighting:
+            case "tk":
+                self.weighting_fun = self.weighting_tk
+            case "pd":
+                self.weighting_fun = self.weighting_p
+            case "gw":
+                self.weighting_fun = self.weighting_gw
+            case _:
+                raise ValueError("Invalid weighting type.")
+
+    def utility(self, x=None):
+        return np.where(
+            x >= 0,
+            np.power(x, self.alpha_pos),
+            -self._lambda * np.power(-x, self.alpha_neg),
+        )
+
+    def weighting_tk(self, x=None):
+        numerator = np.power(x, self.beta)
+        denominator = np.power((numerator + np.power(1 - x, self.beta)), 1 / self.beta)
+        return numerator / denominator
+
+    def weighting_p(self, x=None):
+        return np.exp(-self.delta * np.power(-np.log(x), self.beta))
+
+    def weighting_gw(self, x=None):
+        numerator = self.delta * np.power(x, self.beta)
+        denominator = numerator + np.power(1 - x, self.beta)
+        return numerator / denominator
+
+    def compute(self):
+        # Determine the utilities of the potential outcomes, for each choice option and each trial.
+        self.utilities = np.array(
+            [self.utility(x=self.outcomes[j]) for j in range(self.shape[0])],
+            dtype=object,
+        )
+        # Determine the weights of the potential outcomes, for each choice option and each trial.
+        self.weights = np.array(
+            [self.weighting_fun(self.probabilities[j]) for j in range(self.shape[0])],
+            dtype=object,
+        )
+        # Determine the expected utility of each choice option for each trial.
+        self.expected_utility = np.array(
+            [np.sum(self.weights[j] * self.utilities[j]) for j in range(self.shape[0])],
+        )
+        return self.expected_utility
+
+    def __call__(self):
+        return self.compute()
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, _lambda={self._lambda}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, _lambda={self._lambda}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+
+    def config(self):
+        config = {
+            "outcomes": self.outcomes,
+            "probabilities": self.probabilities,
+            "alpha_pos": self.alpha_pos,
+            "alpha_neg": self.alpha_neg,
+            "_lambda": self._lambda,
+            "beta": self.beta,
+            "delta": self.delta,
+            "weighting": self.weighting,
+            "type": "Activation",
+            "name": self.__class__.__name__,
+        }
+        return config

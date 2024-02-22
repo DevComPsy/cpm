@@ -21,11 +21,11 @@ class DifferentialEvolution:
     loss : function
         The loss function for the objective minimization function.
     **kwargs : dict
-        Additional keyword arguments.
+        Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
 
     Attributes
     ----------
-    function : [cpm.generators.Wrapper][cpm.generators.Wrapper]
+    function : Wrapper
         The model object.
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
@@ -47,7 +47,12 @@ class DifferentialEvolution:
     """
 
     def __init__(
-        self, model=None, bounds=None, data=None, minimisation=LogLikelihood, **kwargs
+        self,
+        model=None,
+        bounds=None,
+        data=None,
+        minimisation=minimise.LogLikelihood,
+        **kwargs
     ):
         self.function = copy.deepcopy(model)
         self.data = data
@@ -107,7 +112,7 @@ class DifferentialEvolution:
         """
         for i in range(len(self.data)):
             self.participant = self.data[i]
-            self.function.update_data(self.participant)
+            self.function.data = self.participant
             # objective = copy.deepcopy(self.minimise)
             result = differential_evolution(self.minimise, self.bounds, **self.kwargs)
             # add the parameters to the list

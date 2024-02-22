@@ -34,7 +34,7 @@ class Simulator:
         The parameters required for the simulation.
     parameter_names : object
         The names of the parameters.
-    simulation : object
+    simulation : numpy.ndarray
         The results of the simulation, including the policies and the states.
     generated : object
         The results of the simulation, only including the policies.
@@ -66,6 +66,7 @@ class Simulator:
         self.parameter_names = self.function.parameter_names
         self.simulation = []
         self.generated = []
+        self.__run__ = False
 
     def run(self):
         """
@@ -78,12 +79,15 @@ class Simulator:
         for i in range(len(self.data)):
             self.function.reset()
             evaluate = copy.deepcopy(self.function)
-            evaluate.reset(parameters=self.parameters[i])
             evaluate.data = self.data[i]
+            evaluate.reset(parameters=self.parameters[i])
             evaluate.run()
             output = copy.deepcopy(evaluate.export())
-            self.simulation.append(output)
+            self.simulation.append(output.copy())
             del evaluate, output
+
+        self.simulation = np.array(self.simulation)
+        self.__run__ = True
         return None
 
     def export(self):
@@ -115,7 +119,8 @@ class Simulator:
                 ppt = pd.concat([ppt, row], axis=0)
             ppt["ppt"] = id
             id += 1
-            policies = pd.concat([policies, ppt], axis=0)
+            policies = pd.concat([policies, ppt.copy()], axis=0)
+            del ppt
         policies.reset_index()
         return policies
 
@@ -145,12 +150,15 @@ class Simulator:
 
         Returns
         ------
-        results: array_like
+        results: numpy.ndarray
             An array of dictionaries containing the results of the simulation.
         """
-        for i in range(len(self.simulation)):
-            current = np.asarray(self.simulation[i]["dependent"])
-            self.generated.append({"observed": current})
+        for i in self.simulation:
+            current = []
+            for j in i:
+                current.append(j.get("dependent"))
+            self.generated.append({"observed": np.asarray(current)})
+        self.generated = np.array(self.generated)
         return None
 
     def reset(self):

@@ -341,7 +341,7 @@ class ProspectUtility:
     def __utility(self, x=None):
         return np.where(
             x >= 0,
-            np.power(x, self.alpha_pos),
+            np.power(x, np.array(self.alpha_pos)),
             -self.lambda_loss * np.power(-x, self.alpha_neg),
         )
 

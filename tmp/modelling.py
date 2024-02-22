@@ -1,11 +1,11 @@
-from cpm.models import Parameters, Wrapper, Simulator
+from cpm.generators import Parameters, Wrapper, Simulator
 from cpm.optimisation import DifferentialEvolution, minimise
 from cpm.evaluation import strategies, ParameterRecovery
 
 # import components we want to use
-from cpm.components.utils import Nominal
-from cpm.components.activation import LinearActivation
-from cpm.components.learning import DeltaRule
+from cpm.models.utils import Nominal
+from cpm.models.activation import LinearActivation
+from cpm.models.learning import DeltaRule
 
 # import some useful stuff
 from prettyformatter import pprint as pp  ## pretty print
@@ -27,6 +27,13 @@ import matplotlib.pyplot as plt
 
 parameters = Parameters(alpha=0.1, temperature=1, values=np.array([-0.5, 0.7, 0.9]))
 pp(parameters)
+
+parameters.alpha.fill(0.5)
+parameters
+
+parameters.values.fill(0)
+parameters
+parameters.values
 
 # trial = {
 #     "input": np.array([1, 2]),
@@ -70,8 +77,6 @@ def model(parameters, trial):
 
     return output
 
-
-# model(parameters, trial)
 
 data = {
     "trials": np.array(
@@ -130,9 +135,9 @@ pp(generator.parameters)
 generator.run()
 pp(generator.simulation)
 
-generator.policies()
+generator.export()
 
-policies = generator.policies()
+policies = generator.export()
 
 policies
 
@@ -160,12 +165,14 @@ Fit.optimise()
 
 pp(Fit.fit)
 pp(Fit.parameters)
-
+Fit.export()
 
 sims = Simulator(model=wrap, data=experiment, parameters=Fit.parameters)
 
 sims.run()
-sims.policies()
+sims.export()
+
+pp(sims.simulation)
 
 new = Simulator(model=wrap, data=experiment, parameters=Fit.parameters)
 

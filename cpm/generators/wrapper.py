@@ -94,6 +94,7 @@ class Wrapper:
                 )
 
             self.dependent[i] = np.asarray(output.get("dependent")).copy()
+
         self.values = output.get("values").copy()
         self.__run__ = True
         return None
@@ -131,6 +132,7 @@ class Wrapper:
         if self.__run__:
             self.values.fill(0)
             self.dependent.fill(0)
+            self.simulation = []
             self.parameters.values = self.values
             self.__run__ = False
         # if dict, update using parameters update method

@@ -149,7 +149,7 @@ class Simulator:
             An array of dictionaries containing the results of the simulation.
         """
         for i in range(len(self.simulation)):
-            current = np.asarray(self.simulation[i]["policies"])
+            current = np.asarray(self.simulation[i]["dependent"])
             self.generated.append({"observed": current})
         return None
 

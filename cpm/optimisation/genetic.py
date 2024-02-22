@@ -95,7 +95,7 @@ class DifferentialEvolution:
         evaluated = copy.deepcopy(self.function)
         evaluated.reset(pars)
         evaluated.run()
-        predicted = evaluated.policies
+        predicted = evaluated.dependent
         observed = self.participant.get("observed")
         metric = self.loss(predicted, observed, **self.auxiliary)
         del predicted, observed
@@ -152,4 +152,24 @@ class DifferentialEvolution:
             current.columns = self.parameter_names[0 : len(current.columns)]
             current["fun"] = self.fit[i]["fun"]
             output = pd.concat([output, current], axis=0)
+        return output
+
+    def details(self):
+        """
+        Exports the optimization details.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas DataFrame containing the optimization details.
+        """
+        output = pd.DataFrame()
+        for i in self.details:
+            for key, value in i.items():
+                if isinstance(value, list):
+                    value = pd.DataFrame(value).T
+                else:
+                    value = pd.DataFrame([value]).T
+                value.columns = [key]
+                output = pd.concat([output, value], axis=1)
         return output

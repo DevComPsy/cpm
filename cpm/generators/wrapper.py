@@ -14,7 +14,7 @@ class Wrapper:
     Parameters
     ----------
     model : function
-        The model function that calculates the output(s) of the model for a single trial.
+        The model function that calculates the output(s) of the model for a single trial. See Notes for more information.
     data : dict
         A dictionary containing the data for the model. The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.
     parameters : [Parameters][cpm.models.Parameters] object
@@ -43,6 +43,15 @@ class Wrapper:
     -------
     Wrapper : object
         A Wrapper object.
+
+    Notes
+    -----
+    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. The model output should contain the following keys:
+
+    - 'values': The values array.
+    - 'policy': The policies array.
+    - 'dependent': Any dependent variables calculated by the model that will be used for the loss function.
+    - 'other': Any other output from the model.
     """
 
     def __init__(self, model=None, data=None, parameters=None):
@@ -57,7 +66,7 @@ class Wrapper:
 
         self.shape = [(np.array(v).shape) for k, v in self.data.items() if k != "ppt"]
         self.__len__ = np.max(self.shape)
-        self.policies = []
+        self.dependent = []
         self.parameter_names = list(parameters.keys())
 
         self.__run__ = False
@@ -80,9 +89,11 @@ class Wrapper:
             self.parameters.values = Value(output.get("values"))
 
             if i == 0:
-                self.policies = np.zeros((self.__len__, output.get("policy").shape[0]))
+                self.dependent = np.zeros(
+                    (self.__len__, output.get("dependent").shape[0])
+                )
 
-            self.policies[i] = np.asarray(output.get("policy")).copy()
+            self.dependent[i] = np.asarray(output.get("dependent")).copy()
         self.values = output.get("values").copy()
         self.__run__ = True
         return None
@@ -119,7 +130,7 @@ class Wrapper:
         """
         if self.__run__:
             self.values.fill(0)
-            self.policies.fill(0)
+            self.dependent.fill(0)
             self.parameters.values = self.values
             self.__run__ = False
         # if dict, update using parameters update method

@@ -284,7 +284,7 @@ class ProspectUtility:
         probabilities=None,
         alpha_pos=1,
         alpha_neg=None,
-        _lambda=1,
+        lambda_loss=1,
         beta=1,
         delta=1,
         weighting="tk",
@@ -311,7 +311,7 @@ class ProspectUtility:
             self.alpha_neg = alpha_pos
         else:
             self.alpha_neg = alpha_neg
-        self._lambda = _lambda
+        self.lambda_loss = lambda_loss
         self.beta = beta
         self.delta = delta
 
@@ -337,7 +337,7 @@ class ProspectUtility:
         return np.where(
             x >= 0,
             np.power(x, self.alpha_pos),
-            -self._lambda * np.power(-x, self.alpha_neg),
+            -self.lambda_loss * np.power(-x, self.alpha_neg),
         )
 
     def weighting_tk(self, x=None):
@@ -374,10 +374,10 @@ class ProspectUtility:
         return self.compute()
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, _lambda={self._lambda}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
 
     def __str__(self):
-        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, _lambda={self._lambda}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
 
     def config(self):
         config = {
@@ -385,7 +385,7 @@ class ProspectUtility:
             "probabilities": self.probabilities,
             "alpha_pos": self.alpha_pos,
             "alpha_neg": self.alpha_neg,
-            "_lambda": self._lambda,
+            "lambda_loss": self.lambda_loss,
             "beta": self.beta,
             "delta": self.delta,
             "weighting": self.weighting,

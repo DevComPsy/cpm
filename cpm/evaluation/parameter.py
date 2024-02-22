@@ -6,6 +6,7 @@ from . import strategies
 
 # import dependencies
 import numpy as np
+import pandas as pd
 import copy
 import pickle as pkl
 
@@ -81,6 +82,7 @@ class ParameterRecovery:
         loss=minimise.LogLikelihood,
         strategy=strategies.grid,
         iteration=1000,
+        bounds=None,
         **kwargs
     ):
         """ """
@@ -94,6 +96,7 @@ class ParameterRecovery:
         self.data = self.model.data
         self.iteration = iteration
         self.population = len(self.data)
+        self.bounds = bounds
         self.kwargs = kwargs
         self.output = []
 
@@ -110,9 +113,10 @@ class ParameterRecovery:
         """
         for step in range(self.iteration):
             parameters = self.strategy(
-                template=self.template, population=self.population, **self.kwargs
+                template=self.template, population=self.population, bounds=self.bounds
             )
             self.model.update(parameters=parameters)
+            self.model.reset()
             self.model.run()
             self.model.generate()
             data = self.model.generated.copy()
@@ -122,6 +126,7 @@ class ParameterRecovery:
                 model=self.function,
                 data=self.data,
                 minimisation=self.loss,
+                bounds=self.bounds,
                 **self.kwargs
             )
             optim.optimise()
@@ -151,13 +156,25 @@ class ParameterRecovery:
         if key is None:
             return self.output
         else:
-            output = np.zeros((self.iteration, 2, self.population))
+            output = pd.DataFrame()
             for step in range(self.iteration):
                 recovered = [item.get(key) for item in self.output[step].get("recover")]
                 original = [item.get(key) for item in self.output[step].get("original")]
-                output[step, 0, :] = recovered.copy()
-                output[step, 1, :] = original.copy()
-            del recovered, original
+                fit = self.output[step].get("fit")
+
+                stepstone = pd.concat(
+                    [
+                        pd.DataFrame(recovered.copy()),
+                        pd.DataFrame(original.copy()),
+                        pd.DataFrame(fit.copy()),
+                    ],
+                    axis=1,
+                )
+
+                stepstone.columns = ["recovered", "original", "fit"]
+                stepstone["iteration"] = step
+                output = pd.concat([output, stepstone], axis=0)
+            del recovered, original, stepstone, fit
             return output
 
     def save(self, filename=None):

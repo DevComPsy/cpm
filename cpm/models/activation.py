@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ["SigmoidActivation", "CompetitiveGating", "ProspectUtility"]
+__all__ = ["SigmoidActivation", "CompetitiveGating", "ProspectUtility", "Offset"]
 
 
 class SigmoidActivation:
@@ -402,6 +402,77 @@ class ProspectUtility:
             "beta": self.beta,
             "delta": self.delta,
             "weighting": self.weighting,
+            "type": "Activation",
+            "name": self.__class__.__name__,
+        }
+        return config
+
+class Offset:
+    """
+    A class for adding a scalar to one element of an input array.
+    In practice, this can be used to "shift" or "offset" the "value" of one particular stimulus, for example to represent a consistent bias for (or against) that stimulus.
+
+    Parameters
+    ----------
+    input : array_like
+        The input value. The stimulus representation (vector).
+    offset : float
+        The value to be added to one element of the input.
+    index : int
+        The index of the element of the input vector to which the offset should be added.
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    input : ndarray
+        The input value. The stimulus representation (vector).
+    offset : float
+        The value to be added to one element of the input.
+    index : int
+        The index of the element of the input vector to which the offset should be added.
+    output : ndarray
+        The stimulus representation (vector) with offset added to the requested element.
+
+    Examples
+    --------
+    >>> vals = np.array([2.1, 1.1])
+    >>> offsetter = Offset(input = vals, offset = 1.33, index = 0)
+    >>> offsetter.compute()
+    array([3.43, 1.1])
+    """
+    def __init__(self, input=None, offset=0, index=0, **kwargs):
+        self.input = np.asarray(input.copy())
+        self.offset = offset
+        self.index = index
+        self.output = self.input.copy()
+
+    def compute(self):
+        """
+        Add the offset to the requested input element.
+
+        Returns
+        -------
+        numpy.ndarray
+            The stimulus representation (vector) with offset added to the requested element.
+        """
+        self.output[self.index] += self.offset
+        return self.output
+    
+    def __call__(self):
+        return self.compute()
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(input={self.input}, offset={self.offset}, index={self.index})"
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(input={self.input}, offset={self.offset}, index={self.index})"
+
+    def config(self):
+        config = {
+            "input": self.input,
+            "offset": self.offset,
+            "index": self.index,
             "type": "Activation",
             "name": self.__class__.__name__,
         }

@@ -407,6 +407,7 @@ class ProspectUtility:
         }
         return config
 
+
 class Offset:
     """
     A class for adding a scalar to one element of an input array.
@@ -427,11 +428,11 @@ class Offset:
     ----------
     input : ndarray
         The input value. The stimulus representation (vector).
-    offset : float
-        The value to be added to one element of the input.
-    index : int
-        The index of the element of the input vector to which the offset should be added.
-    output : ndarray
+    offset : float or array_like
+        The value(s) to be added to the element(s) of the input. If an array, it should be the same shape as the input, where elements correspond to elements of the input.
+    index : int or array_like
+        The index of the element of the input vector to which the offset should be added. If an array, it should be a vector of integers, denoted indices in input.
+    output : numpy.ndarray
         The stimulus representation (vector) with offset added to the requested element.
 
     Examples
@@ -441,6 +442,7 @@ class Offset:
     >>> offsetter.compute()
     array([3.43, 1.1])
     """
+
     def __init__(self, input=None, offset=0, index=0, **kwargs):
         self.input = np.asarray(input.copy())
         self.offset = offset
@@ -458,7 +460,7 @@ class Offset:
         """
         self.output[self.index] += self.offset
         return self.output
-    
+
     def __call__(self):
         return self.compute()
 

@@ -7,7 +7,9 @@ __all__ = ["LogLikelihood", "BIC", "CrossEntropy"]
 # Define your custom objective function
 def LogLikelihood(predicted=None, observed=None, negative=True, **kwargs):
     """
-    Compute the log likelihood of the predicted values given the observed values.
+    Compute the log likelihood of the predicted values given the observed values for categorical data.
+
+        Categorical(y|p) = p^y * p_y
 
     Parameters
     ----------
@@ -23,9 +25,10 @@ def LogLikelihood(predicted=None, observed=None, negative=True, **kwargs):
     float
         The log likelihood or negative log likelihood.
     """
-
+    values = np.array(predicted * observed).flatten()
+    values = values[values != 0]
     # Compute the negative log likelihood
-    LL = np.sum(norm.logpdf(predicted, observed, 1))
+    LL = np.sum(np.log(values))
     if negative:
         LL = -1 * LL
     return LL
@@ -51,7 +54,7 @@ def BIC(predicted, observed, n, k, **kwargs):
     float
         The BIC value.
     """
-    bic = -2 * LogLikelihood(predicted, observed, False) + k * np.log(n)
+    bic = -2 * LogLikelihood(predicted, observed, negative=False) + k * np.log(n)
     return bic
 
 

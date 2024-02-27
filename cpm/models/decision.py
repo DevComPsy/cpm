@@ -166,7 +166,7 @@ class SoftmaxIrreducibleNoise:
     >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
     >>> noisy_softmax = SoftmaxIrreducibleNoise(beta=1.5, xi=0.1, activations=activations)
     >>> noisy_softmax.compute()
-
+    array([0.4101454, 0.5898546])
     """
 
     def __init__(self, beta=None, xi=None, activations=None, **kwargs):

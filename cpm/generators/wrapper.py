@@ -5,6 +5,7 @@ import pickle as pkl
 
 ## import local modules
 from .parameters import Parameters, Value
+from .utils import simulation_export
 
 
 class Wrapper:
@@ -168,15 +169,16 @@ class Wrapper:
 
     def export(self):
         """
-        Export the model configurations.
+        Export the trial-level simulation details.
 
         Returns
         -------
-        list
-            A list containing model output for each trial.
+        pandas.DataFrame
+            A dataframe containing the model output for each participant and trial.
+            If the output variable is organised as an array with more than one dimension, the output will be flattened.
 
         """
-        return self.simulation
+        return simulation_export([self.simulation])
 
     def save(self, filename=None):
         """

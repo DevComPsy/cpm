@@ -399,7 +399,7 @@ class KernelUpdate:
     ----------
     response : ndarray
         The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as `[0, 1, 0, 0]`.
-    rate : float
+    alpha : float
         The kernel learning rate.
     kernel : ndarray
         The kernel used for learning. It is a 1D array of kernel values, where each element corresponds to a response option. Each element must correspond to the same response option in the `response` vector.
@@ -408,7 +408,7 @@ class KernelUpdate:
     ----------
     response : ndarray
         The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as `[0, 1, 0, 0]`.
-    rate : float
+    alpha : float
         The kernel learning rate.
     kernel : ndarray
         The kernel used for learning. It is a 1D array of kernel values, where each element corresponds to a response option. Each element must correspond to the same response option in the `response` vector.
@@ -420,7 +420,7 @@ class KernelUpdate:
 
     See Also
     --------
-    [cpm.components.decision.ChoiceKernel][cpm.components.decision.ChoiceKernel] : A class representing a choice kernel decision policy.
+    [cpm.models.decision.ChoiceKernel][cpm.components.decision.ChoiceKernel] : A class representing a choice kernel decision policy.
 
     References
     ----------

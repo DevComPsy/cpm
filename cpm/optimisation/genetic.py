@@ -73,7 +73,7 @@ class DifferentialEvolution:
             # raise ValueError("You must define the parameter bounds in the Model object.")
         self.auxiliary = {
             "n": len(self.participant.get("observed")),
-            "k": len(self.parameter_names),
+            "k": len(self.bounds[0]),
         }
 
     def minimise(self, pars, **args):

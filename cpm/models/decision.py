@@ -1,6 +1,12 @@
 import numpy as np
 
-__all__ = ["Softmax", "Sigmoid", "GreedyRule", "ChoiceKernel"]
+__all__ = [
+    "Softmax",
+    "SoftmaxIrreducibleNoise",
+    "Sigmoid",
+    "GreedyRule",
+    "ChoiceKernel",
+]
 
 
 class Softmax:
@@ -103,6 +109,117 @@ class Softmax:
 
     def __str__(self):
         return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations})"
+
+    def __call__(self):
+        return self.compute()
+
+
+class SoftmaxIrreducibleNoise:
+    """
+    Extended softmax class for computing policies based on activations, with parameters inverse temperature and irreducible noise.
+
+    The softmax function with irreducible noise is defined as:
+
+        (e^(beta * x) / sum(e^(beta * x))) * (1 - xi) + (xi / length(x)),
+
+    where x is the input array of activations, beta is the inverse temperature parameter, and xi is the irreducible noise parameter.
+
+    Parameters
+    ----------
+    temperature : float
+        The inverse temperature parameter for the softmax computation.
+    activations : numpy.ndarray
+        Array of activations for each possible outcome/action. It should be
+        a 2D ndarray, where each row represents an outcome and each column
+        represents a single stimulus.
+
+    Attributes
+    ----------
+    beta : float
+        The inverse temperature parameter for the softmax computation.
+    xi : float
+        The irreducible noise parameter for the softmax computation.
+    activations : numpy.ndarray
+        Array of activations for each possible outcome/action. It should be
+        a 2D ndarray, where each row represents an outcome and each column
+        represents a single stimulus.
+    policies : numpy.ndarray
+        Array of computed policies.
+    shape : tuple
+        The shape of the activations array.
+
+    Notes
+    -----
+    The inverse temperature parameter beta represents the degree of randomness in the choice process.
+    As beta approaches positive infinity, choices becomes more deterministic,
+    such that the choice option with the greatest activation is more likely to be chosen.
+    By contrast, as beta approaches zero, choices becomes random (i.e., the probabilities the choice options are approximately equal)
+    and therefore independent of the options' activations.
+
+    The irreducible noise parameter xi accounts for attentional lapses in the choice process.
+    Specifically, the terms (1-xi) + (xi/length(x)) cause the choice probabilities to be proportionally scaled towards 1/length(x).
+    Relatively speaking, this increases the probability that an option is selected if its activation is exceptionally low.
+    This may seem counterintuitive in theory, but in practice it enables the model to capture highly surprising responses that can occur during attentional lapses.
+
+    Examples
+    --------
+    >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    >>> noisy_softmax = SoftmaxIrreducibleNoise(beta=1.5, xi=0.1, activations=activations)
+    >>> noisy_softmax.compute()
+    array([0.4101454, 0.5898546])
+    """
+
+    def __init__(self, beta=None, xi=None, activations=None, **kwargs):
+        self.beta = beta
+        self.xi = xi
+        if activations is not None:
+            self.activations = activations.copy()
+        else:
+            self.activations = np.zeros(1)
+        self.policies = []
+        self.shape = self.activations.shape
+        if len(self.shape) == 1:
+            self.shape = (1, self.shape[0])
+
+    def compute(self):
+        """
+        Compute the policies based on the activations, with parameters temperature and irreducible noise.
+
+        Returns
+        -------
+        output (numpy.ndarray): Array of computed policies.
+        """
+        output = np.zeros(self.shape[0])
+        for i in range(self.shape[0]):
+            output[i] = np.sum(np.exp(self.activations[i] * self.beta)) / np.sum(
+                np.exp(self.activations * self.beta)
+            )
+        output = output * (1 - self.xi) + (self.xi / self.shape[0])
+        self.policies = output
+        return output
+
+    def config(self):
+        """
+        Get the configuration of the Softmax class.
+
+        Returns
+        ------
+        config (dict): Dictionary containing the configuration parameters.
+        """
+        config = {
+            "beta": self.beta,
+            "xi": self.xi,
+            "activations": self.activations,
+            "name": self.__class__.__name__,
+            "type": "decision",
+        }
+        return config
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(beta={self.beta}, xi={self.xi}, activations={self.activations})"
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(beta={self.beta}, xi={self.xi}, activations={self.activations})"
 
     def __call__(self):
         return self.compute()
@@ -348,6 +465,14 @@ class ChoiceKernel:
     References
     ----------
     Wilson, R. C., & Collins, A. G. E. (2019). Ten simple rules for the computational modeling of behavioral data. eLife, 8, Article e49547.
+
+    Examples
+    --------
+    >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    >>> kernel = np.array([0.1, 0.9])
+    >>> choice_kernel = ChoiceKernel(temperature_activations=1, temperature_kernel=1, activations=activations, kernel=kernel)
+    >>> choice_kernel.compute()
+    array([0.44028635, 0.55971365])
 
     """
 

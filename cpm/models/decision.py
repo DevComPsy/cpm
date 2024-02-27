@@ -1,6 +1,12 @@
 import numpy as np
 
-__all__ = ["Softmax", "SoftmaxXi", "Sigmoid", "GreedyRule", "ChoiceKernel"]
+__all__ = [
+    "Softmax",
+    "SoftmaxIrreducibleNoise",
+    "Sigmoid",
+    "GreedyRule",
+    "ChoiceKernel",
+]
 
 
 class Softmax:
@@ -107,7 +113,8 @@ class Softmax:
     def __call__(self):
         return self.compute()
 
-class SoftmaxXi:
+
+class SoftmaxIrreducibleNoise:
     """
     Extended softmax class for computing policies based on activations, with parameters inverse temperature and irreducible noise.
 
@@ -157,7 +164,7 @@ class SoftmaxXi:
     Examples
     --------
     >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
-    >>> noisy_softmax = SoftmaxXi(beta=1.5, xi=0.1, activations=activations)
+    >>> noisy_softmax = SoftmaxIrreducibleNoise(beta=1.5, xi=0.1, activations=activations)
     >>> noisy_softmax.compute()
 
     """
@@ -216,6 +223,7 @@ class SoftmaxXi:
 
     def __call__(self):
         return self.compute()
+
 
 class Sigmoid:
     """
@@ -457,6 +465,14 @@ class ChoiceKernel:
     References
     ----------
     Wilson, R. C., & Collins, A. G. E. (2019). Ten simple rules for the computational modeling of behavioral data. eLife, 8, Article e49547.
+
+    Examples
+    --------
+    >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    >>> kernel = np.array([0.1, 0.9])
+    >>> choice_kernel = ChoiceKernel(temperature_activations=1, temperature_kernel=1, activations=activations, kernel=kernel)
+    >>> choice_kernel.compute()
+    array([0.44028635, 0.55971365])
 
     """
 

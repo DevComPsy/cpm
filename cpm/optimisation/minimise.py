@@ -9,14 +9,14 @@ def LogLikelihood(predicted=None, observed=None, negative=True, **kwargs):
     """
     Compute the log likelihood of the predicted values given the observed values for categorical data.
 
-        Categorical(y|p) = p^y * p_y
+        Categorical(y|r) = r_y
 
     Parameters
     ----------
     predicted : array-like
-        The predicted values.
+        The predicted values. It must have the same shape as `observed`. See Notes for more details.
     observed : array-like
-        The observed values.
+        The observed values. It must have the same shape as `predicted`. See Notes for more details.
     negative : bool, optional
         Flag indicating whether to return the negative log likelihood.
 
@@ -24,6 +24,22 @@ def LogLikelihood(predicted=None, observed=None, negative=True, **kwargs):
     -------
     float
         The log likelihood or negative log likelihood.
+
+    Notes
+    -----
+
+    `predicted` and `observed` must have the same shape.
+    `observed` is a binary variable, so it can only take the values 0 or 1.
+    If there are two choice options, then observed would have a shape of (n, 2) and predicted would have a shape of (n, 2).
+    On each row of `observed`, the array would have a 1 in the column corresponding to the observed value and a 0 in the other column.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> observed = np.array([[1, 0], [0, 1], [1, 0], [0, 1]])
+    >>> predicted = np.array([[0.7, 0.3], [0.3, 0.7], [0.6, 0.4], [0.4, 0.6]])
+    >>> LogLikelihood(predicted, observed)
+    1.7350011354094463
     """
     values = np.array(predicted * observed).flatten()
     values = values[values != 0]

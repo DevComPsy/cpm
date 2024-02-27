@@ -49,6 +49,12 @@ class Softmax:
     By contrast, as beta approaches zero, choices becomes random (i.e., the probabilities the choice options are approximately equal)
     and therefore independent of the options' activations.
 
+    Note that if you have one value for each outcome (i.e. a classical bandit-like problem), and you represent it as a 1D
+    array, you must reshape it in the format specified for activations. So that if you have 3 stimuli
+    which all are actionable, `[0.1, 0.5, 0.22]`, you should have a 2D array of shape (3, 1), `[[0.1], [0.5], [0.22]]`.
+    You can see [Example 2]("./examples/examples2") for a demonstration.
+
+
     Examples
     --------
     >>> from cpm.components.decision import Softmax
@@ -401,7 +407,7 @@ class ChoiceKernel:
 
     See Also
     --------
-    [cpm.components.learning.KernelUpdate](cpm.components.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
+    [cpm.models.learning.KernelUpdate](cpm.components.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
 
     References
     ----------

@@ -9,13 +9,14 @@ rewards = np.zeros((4, 30))
 rewards[0, 0:24] = 1
 rewards[1, 0:6] = 1
 rewards[2, 0:15] = 1
-rewards[3, 27] = 1
+rewards[3, 0:3] = 1
 
 indexing = repeated_permute.flatten()
 actual_rewards = np.zeros(indexing.shape)
 
 for i in np.unique(indexing):
-    actual_rewards[indexing == i] = rewards[i - 1, np.where(repeated_permute == i)[1]]
+    np.random.shuffle(rewards[i - 1])
+    actual_rewards[indexing == i] = rewards[i - 1]
 
 actual_rewards = actual_rewards.reshape(repeated_permute.shape)
 experiment = pd.concat(
@@ -29,6 +30,8 @@ for i in range(100):
     current = experiment.sample(frac=1)
     current["ppt"] = i + 1
     big = pd.concat([big, current], axis=0)
+
+big.groupby(["stimulus_left", "stimulus_right"]).mean()
 
 big.reset_index(drop=True, inplace=True)
 big.to_csv("bandit.csv", index=False)

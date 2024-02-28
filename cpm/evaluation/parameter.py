@@ -99,7 +99,7 @@ class ParameterRecovery:
         self.kwargs = kwargs
         self.output = []
 
-        parameters = self.model.parameters[0].export()
+        parameters = self.model.parameters[0]
         self.template = {
             k: parameters[k] for k in self.parameter_names[0 : len(bounds[0])]
         }

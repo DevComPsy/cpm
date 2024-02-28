@@ -58,11 +58,6 @@ class Simulator:
             warnings.warn(
                 "The number of parameter sets and number of participants in data do not match.\nUsing the same parameters for all participants."
             )
-        if isinstance(parameters, dict):
-            self.parameters = [
-                (copy.deepcopy(Parameters(**parameters)))
-                for i in range(1, len(self.data) + 1)
-            ]
         self.parameter_names = self.function.parameter_names
         self.simulation = []
         self.generated = []
@@ -138,7 +133,7 @@ class Simulator:
         ## if parameters is a single set of parameters, then repeat for each ppt
         if isinstance(parameters, dict):
             self.parameters = [
-                (copy.deepcopy(parameters)) for i in range(1, len(self.data) + 1)
+                (Parameters(**parameters)) for i in range(1, len(self.data) + 1)
             ]
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
             self.parameters = parameters

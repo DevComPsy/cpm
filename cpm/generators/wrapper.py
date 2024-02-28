@@ -111,7 +111,8 @@ class Wrapper:
         Notes
         -----
         When resetting the model, the values and policies arrays are reset to zero.
-        If values are provided by the user, the values array is updated with the new values.
+        If values are provided by the user, the values array is updated with the new values,
+        otherwise the values array is reset to 1/len(values).
 
         Examples
         --------
@@ -130,7 +131,7 @@ class Wrapper:
 
         """
         if self.__run__:
-            self.values.fill(0)
+            self.values.fill(1 / np.sum(self.values.shape))
             self.dependent.fill(0)
             self.simulation = []
             self.parameters.values = self.values

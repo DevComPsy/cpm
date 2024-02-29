@@ -1,6 +1,11 @@
 import numpy as np
 
-__all__ = ["Softmax", "Sigmoid", "GreedyRule", "ChoiceKernel"]
+__all__ = [
+    "Softmax",
+    "Sigmoid",
+    "GreedyRule",
+    "ChoiceKernel",
+]
 
 
 class Softmax:
@@ -13,6 +18,8 @@ class Softmax:
     ----------
     temperature : float
         The inverse temperature parameter for the softmax computation.
+    xi : float
+        The irreducible noise parameter for the softmax computation.
     activations : numpy.ndarray
         Array of activations for each possible outcome/action. It should be
         a 2D ndarray, where each row represents an outcome and each column
@@ -21,42 +28,60 @@ class Softmax:
         Array of computed policies.
     shape : tuple
         The shape of the activations array.
+
+    Parameters
+    ----------
+    temperature : float
+        The inverse temperature parameter for the softmax computation.
+    xi : float
+        The irreducible noise parameter for the softmax computation.
+    activations : numpy.ndarray
+        Array of activations for each possible outcome/action. It should be
+        a 2D ndarray, where each row represents an outcome and each column
+        represents a single stimulus.
+
+    Notes
+    -----
+
+    The inverse temperature parameter beta represents the degree of randomness in the choice process.
+    As beta approaches positive infinity, choices becomes more deterministic,
+    such that the choice option with the greatest activation is more likely to be chosen - it approximates a step function.
+    By contrast, as beta approaches zero, choices becomes random (i.e., the probabilities the choice options are approximately equal)
+    and therefore independent of the options' activations.
+
+    Note that if you have one value for each outcome (i.e. a classical bandit-like problem), and you represent it as a 1D
+    array, you must reshape it in the format specified for activations. So that if you have 3 stimuli
+    which all are actionable, `[0.1, 0.5, 0.22]`, you should have a 2D array of shape (3, 1), `[[0.1], [0.5], [0.22]]`.
+    You can see [Example 2]("./examples/examples2") for a demonstration.
+
+
+    Examples
+    --------
+    >>> from cpm.components.decision import Softmax
+    >>> import numpy as np
+    >>> temperature = 1
+    >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    >>> softmax = Softmax(temperature=temperature, activations=activations)
+    >>> softmax.compute()
+    array([0.45352133, 0.54647867])
+
+    >>> softmax.config()
+    {
+        "temperature"   : 1,
+        "activations":
+            array([[ 0.1,  0. ,  0.2],
+            [-0.6,  0. ,  0.9]]),
+        "name"  : "Softmax",
+        "type"  : "decision",
+    }
+    >>> Softmax(temperature=temperature, activations=activations).compute()
+    array([0.45352133, 0.54647867])
     """
 
-    def __init__(self, temperature=None, activations=None, **kwargs):
-        """
-        Parameters
-        ----------
-        temperature : float
-            The inverse temperature parameter for the softmax computation.
-        activations : numpy.ndarray
-            Array of activations for each possible outcome/action. It should be
-            a 2D ndarray, where each row represents an outcome and each column
-            represents a single stimulus.
-
-        Examples
-        --------
-        >>> from cpm.components.decision import Softmax
-        >>> import numpy as np
-        >>> temperature = 1
-        >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
-        >>> softmax = Softmax(temperature=temperature, activations=activations)
-        >>> softmax.compute()
-        array([0.45352133, 0.54647867])
-
-        >>> softmax.config()
-        {
-            "temperature"   : 1,
-            "activations":
-                array([[ 0.1,  0. ,  0.2],
-                [-0.6,  0. ,  0.9]]),
-            "name"  : "Softmax",
-            "type"  : "decision",
-        }
-        >>> Softmax(temperature=temperature, activations=activations).compute()
-        array([0.45352133, 0.54647867])
-        """
+    def __init__(self, temperature=None, xi=None, activations=None, **kwargs):
+        """ """
         self.temperature = temperature
+        self.xi = xi
         if activations is not None:
             self.activations = activations.copy()
         else:
@@ -66,13 +91,15 @@ class Softmax:
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
 
+        self.__run__ = False
+
     def compute(self):
         """
         Compute the policies based on the activations and temperature.
 
         Returns
         -------
-        output (numpy.ndarray): Array of computed policies.
+        numpy.ndarray: Array of computed policies.
         """
         output = np.zeros(self.shape[0])
         for i in range(self.shape[0]):
@@ -80,7 +107,45 @@ class Softmax:
                 np.exp(self.activations * self.temperature)
             )
         self.policies = output
+        self.__run__ = True
         return output
+
+    def irreducible_noise(self):
+        """
+        Extended softmax class for computing policies based on activations, with parameters inverse temperature and irreducible noise.
+
+        The softmax function with irreducible noise is defined as:
+
+            (e^(beta * x) / sum(e^(beta * x))) * (1 - xi) + (xi / length(x)),
+
+        where x is the input array of activations, beta is the inverse temperature parameter, and xi is the irreducible noise parameter.
+
+        Notes
+        -----
+
+        The irreducible noise parameter xi accounts for attentional lapses in the choice process.
+        Specifically, the terms (1-xi) + (xi/length(x)) cause the choice probabilities to be proportionally scaled towards 1/length(x).
+        Relatively speaking, this increases the probability that an option is selected if its activation is exceptionally low.
+        This may seem counterintuitive in theory, but in practice it enables the model to capture highly surprising responses that can occur during attentional lapses.
+
+        Returns
+        -------
+        numpy.ndarray: Array of computed policies with irreducible noise.
+
+        Examples
+        --------
+        >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+        >>> noisy_softmax = Softmax(temperature=1.5, xi=0.1, activations=activations)
+        >>> noisy_softmax.irreducible_noise()
+        array([0.4101454, 0.5898546])
+        """
+        if self.__run__:
+            policies = self.policies
+        else:
+            policies = self.compute()
+        policies = policies * (1 - self.xi) + (self.xi / self.shape[0])
+        self.policies = policies
+        return policies
 
     def config(self):
         """
@@ -91,8 +156,7 @@ class Softmax:
         config (dict): Dictionary containing the configuration parameters.
         """
         config = {
-            "temperature": self.temperature,
-            "activations": self.activations,
+            **self.__dict__,
             "name": self.__class__.__name__,
             "type": "decision",
         }
@@ -343,11 +407,19 @@ class ChoiceKernel:
 
     See Also
     --------
-    [cpm.components.learning.KernelUpdate](cpm.components.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
+    [cpm.models.learning.KernelUpdate](cpm.components.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
 
     References
     ----------
     Wilson, R. C., & Collins, A. G. E. (2019). Ten simple rules for the computational modeling of behavioral data. eLife, 8, Article e49547.
+
+    Examples
+    --------
+    >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    >>> kernel = np.array([0.1, 0.9])
+    >>> choice_kernel = ChoiceKernel(temperature_activations=1, temperature_kernel=1, activations=activations, kernel=kernel)
+    >>> choice_kernel.compute()
+    array([0.44028635, 0.55971365])
 
     """
 

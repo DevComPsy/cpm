@@ -112,7 +112,7 @@ class Simulator:
         ## if parameters is a single set of parameters, then repeat for each ppt
         if isinstance(parameters, dict):
             self.parameters = [
-                (Parameters(**parameters)) for i in range(1, len(self.data) + 1)
+                (copy.deepcopy(parameters)) for i in range(1, len(self.data) + 1)
             ]
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
             self.parameters = parameters

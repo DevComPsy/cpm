@@ -91,7 +91,7 @@ class LogLikelihood:
         >>> observed = np.array([1, 0, 1, 0])
         >>> predicted = np.array([0.7, 0.3, 0.6, 0.4])
         >>> LogLikelihood.bernoulli(predicted, observed)
-
+        1.7350011354094463
 
         """
         values = np.abs(np.array(predicted - (1 - observed)).flatten())

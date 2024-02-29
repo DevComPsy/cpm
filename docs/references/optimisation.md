@@ -12,7 +12,7 @@
         show_root_heading: true
         heading_level: 4
 
-::: cpm.optimisation.minimise.BIC
+::: cpm.optimisation.minimise.Bayesian
     options:
         show_root_heading: true
         heading_level: 4

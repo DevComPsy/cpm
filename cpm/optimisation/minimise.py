@@ -100,6 +100,37 @@ class LogLikelihood:
             LL = -1 * LL
         return LL
 
+    def continuous(predicted, observed, negative=True, **kwargs):
+        """
+        Compute the log likelihood of the predicted values given the observed values for continuous data.
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+        negative : bool, optional
+            Flag indicating whether to return the negative log likelihood.
+
+        Returns
+        -------
+        float
+            The log likelihood or negative log likelihood.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> observed = np.array([1, 0, 1, 0])
+        >>> predicted = np.array([0.7, 0.3, 0.6, 0.4])
+        >>> LogLikelihood.continuous(predicted, observed)
+        1.7350011354094463
+        """
+        LL = np.sum(norm.logpdf(predicted, observed, 1))
+        if negative:
+            LL = -1 * LL
+        return LL
+
 
 class Bayesian:
 

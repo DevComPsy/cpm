@@ -88,7 +88,6 @@ class ParameterRecovery:
         """ """
         self.model = copy.deepcopy(model)
         self.function = copy.deepcopy(model.function)
-        self.template = self.model.parameters[0]
         self.optimisation = optimiser
         self.loss = loss
         self.strategy = strategy
@@ -99,6 +98,11 @@ class ParameterRecovery:
         self.bounds = bounds
         self.kwargs = kwargs
         self.output = []
+
+        parameters = self.model.parameters[0]
+        self.template = {
+            k: parameters[k] for k in self.parameter_names[0 : len(bounds[0])]
+        }
 
     def recover(self):
         """

@@ -22,19 +22,14 @@ class Parameters:
     Examples
     --------
     >>> from cpm.generators import Parameters
-    >>> parameters = Parameters(a=1, b=2, c=3)
+    >>> parameters = Parameters(a=0.5, b=0.5, c=0.5)
     >>> parameters['a']
-    1
+    0.1
     >>> parameters.a
-    1
+    0.1
     >>> parameters()
-    {'a': 1, 'b': 2, 'c': 3}
+    {'a': 0.1, 'b': 0.2, 'c': 0.5}
     >>> parameters.prior()
-    1.0
-    >>> parameters.update(a=2, b=3, c=4)
-    >>> parameters()
-    {'a': 2, 'b': 3, 'c': 4}
-
     """
 
     def __init__(self, **kwargs):
@@ -98,6 +93,7 @@ class Parameters:
         """
         prior = 1
         for key, value in self.__dict__.items():
+            print(value.prior())
             prior *= value.prior()
         if log:
             prior = np.log(prior)

@@ -486,22 +486,88 @@ class KernelUpdate:
         return self.compute()
 
 
-# class HumbleTeacher:
-#     """
-#     A humbe teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
-#
-#     Notes
-# The above code is a Python class definition for a humble teacher learning rule.
-# It is used for multi-dimensional outcome learning. The class has an empty
-# `__init__` method, indicating that it does not have any specific initialization
-# code.
-#     -----
-#     The humble teacher learning rule is a learning rule that is based on the ide that if output node activations increase the teaching signals, it should not be counted as error, but should be rewarded. So teaching signals are discrete (nominal) values and do not indicate the degree of membership between stimuli and outcome label, the degree of causality between stimuli and outcome, or the degree of correctness of the output.
-#     """
-#     def __init__(
-#         self,
-#     ):
-#         pass
+class HumbleTeacher:
+    """
+    A humbe teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
+
+    Attributes
+    ----------
+    alpha : float
+        The learning rate.
+    input : ndarray or array_like
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+    weights : ndarray
+        The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
+    teacher : ndarray
+        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
+    shape : tuple
+        The shape of the weight matrix.
+
+    Parameters
+    ----------
+    alpha : float
+        The learning rate.
+    weights : array-like
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+    feedback : array-like
+        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
+    input : array-like
+        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
+    Notes
+    -----
+    The humble teacher learning rule is a learning rule that is based on the idea that if output node activations large than the teaching signals should not be counted as error, but should be rewarded. So the humble teacher turns teaching signals into discrete (nominal) values, where they do not indicate the degree of membership between stimuli and outcome label, the degree of causality between stimuli and outcome, or the degree of correctness of the output.
+
+    References
+    ----------
+    Kruschke, J. K. (1992). ALCOVE: An exemplar-based connectionist model of category learning. Psychological Review, 99, 22–44.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from cpm.components.learning import HumbleTeacher
+    >>> weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+    >>> teacher = np.array([0, 1])
+    >>> input = np.array([1, 1, 1])
+    >>> humble_teacher = HumbleTeacher(alpha=0.1, weights=weights, feedback=teacher, input=input)
+    >>> humble_teacher.compute()
+    array([[-0.06, -0.06, -0.06],
+       [ 0.  ,  0.  ,  0.  ]])
+
+    """
+
+    def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
+        self.alpha = alpha
+        self.weights = [[]]
+        if weights is not None:
+            self.weights = weights.copy()
+        self.teacher = feedback
+        self.input = np.asarray(input)
+        self.shape = self.weights.shape
+        if len(self.shape) == 1:
+            self.shape = (1, self.shape[0])
+            self.weights = np.array([self.weights])
+
+    def compute(self):
+        """
+        Compute the weights using the CPM learning rule.
+
+        Returns
+        -------
+        weights: numpy.ndarray
+            The updated weights matrix.
+        """
+
+        for i in range(self.shape[0]):
+            activations = np.sum(self.weights[i] * self.input)
+            for j in range(self.shape[1]):
+                activations = np.clip(activations, 0, 1)
+                self.weights[i, j] = (
+                    self.alpha * (self.teacher[i] - activations) * self.input[j]
+                )
+        return self.weights
 
 
 # NOTE: NOT TESTED

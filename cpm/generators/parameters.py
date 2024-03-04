@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+from scipy.stats import truncnorm, truncexpon, uniform, beta, gamma
 
 
 class Parameters:
@@ -70,20 +71,39 @@ class Parameters:
         """
         return self.__dict__.keys()
 
+    def prior(self, log=False):
+        """
+        Return the prior distribution of the parameters.
+
+        Returns
+        -------
+        The probability of the parameter set under the prior distribution for each parameter.
+        If `log` is True, the log probability is returned.
+        """
+        prior = 1
+        for key, value in self.__dict__.items():
+            prior *= value.prior()
+        if log:
+            prior = np.log(prior)
+        return prior
+
 
 class Value:
     """
 
-    A class representing a parameter with additional details in a hierarchical structure.
+    The `Value` class is a wrapper around a float value, with additional details such as the prior distribution, lower and upper bounds. It supports all basic mathematical operations and can be used as a regular float with the parameter value as operand.
+
 
     Parameters
     ----------
     value : float
         The value of the parameter.
-    prior : string or dict, optional
-        The prior distribution of the parameter. If a string, it should be one of the following: 'uniform', 'normal', 'beta', 'gamma', 'exponential'.
-        If a dictionary, it should contain the following keys: 'type', 'min', 'max', 'mean', 'sd', 'a', 'b', 'shape', 'rate'.
+    prior : string or object, optional
+        If a string, it should be one of continuous distributions from `scipy.stats`.
+        See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details.
         The default is 'normal'.
+        If an object, it should be or contain a callable function representing the prior distribution of the parameter.
+        See Notes for more details.
     lower : float, optional
         The lower bound of the parameter.
     upper : float, optional
@@ -93,14 +113,22 @@ class Value:
     ----------
     value : float
         The value of the parameter.
-    prior : string or dict, optional
-        The prior distribution of the parameter. If a string, it should be one of the following: 'uniform', 'normal', 'beta', 'gamma', 'exponential'.
-        If a dictionary, it should contain the following keys: 'type', 'min', 'max', 'mean', 'sd', 'a', 'b', 'shape', 'rate'.
-        The default is 'normal'.
+    prior : function, optional
+
     lower : float, optional
         The lower bound of the parameter.
     upper : float, optional
         The upper bound of the parameter.
+
+    Notes
+    -----
+    We currently implement the following continuous distributions from `scipy.stats`:
+
+    - 'uniform'
+    - 'normal'
+    - 'beta'
+    - 'gamma'
+    - 'exponential'
 
     Returns
     -------
@@ -110,9 +138,28 @@ class Value:
 
     def __init__(self, value=None, prior="normal", lower=0, upper=1):
         self.value = value
-        self.prior = prior
+
         self.lower = lower
         self.upper = upper
+
+        __sd__ = np.mean([upper, lower]) / 2
+
+        self.__builtin__ = True
+        if prior == "uniform":
+            self.priorf = uniform(loc=lower, scale=upper)
+        elif prior == "normal":
+            self.priorf = truncnorm(
+                loc=np.mean([lower, upper]), scale=__sd__, a=lower, b=upper
+            )
+        elif prior == "beta":
+            self.priorf = beta(a=1, b=1, loc=lower, scale=upper - lower)
+        elif prior == "gamma":
+            self.priorf = gamma(a=1, loc=lower, scale=upper - lower)
+        elif prior == "exponential":
+            self.priorf = truncexpon(b=upper - lower, loc=lower, scale=__sd__)
+        elif isinstance(prior, function):
+            self.__builtin__ = False
+            self.priorf = prior
 
     def __repr__(self):
         return str(self.value)
@@ -201,21 +248,6 @@ class Value:
     def __int__(self) -> int:
         return int(self.value)
 
-    def fill(self, value):
-        """
-        Replace the value of the parameter with a new value.
-
-        Parameters
-        ----------
-        value : float or array_like
-            The new value of the parameter.
-
-        Notes
-        -----
-        If the parameter is an array, it should be a list of values. If the parameter is an array, and the new value is a single value, it will be broadcasted to the shape of the array.
-        """
-        self = Value(value)
-
     def __len__(self):
         return len(self.value)
 
@@ -238,3 +270,63 @@ class Value:
             A copy of the parameter.
         """
         return Value(**self.__dict__)
+
+    def fill(self, value):
+        """
+        Replace the value of the parameter with a new value.
+
+        Parameters
+        ----------
+        value : float or array_like
+            The new value of the parameter.
+
+        Notes
+        -----
+        If the parameter is an array, it should be a list of values. If the parameter is an array, and the new value is a single value, it will be broadcasted to the shape of the array.
+        """
+        self = Value(value)
+
+    def prior(self, log=False):
+        """
+        Return the prior distribution of the parameter.
+
+        Returns
+        -------
+        The probability of the parameter value under the prior distribution.
+        If `log` is True, the log probability is returned.
+        """
+        if log:
+            return self.priorf.logpdf(self.value)
+        else:
+            return self.priorf.pdf(self.value)
+
+    def prior_update(self, **kwargs):
+        """
+        Set the prior distribution of the parameter.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments representing the prior distribution of the parameter.
+            It should contain the necessary arguments for the prior distribution function.
+            See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on what is allowed for each option with the built-in priors.
+
+        Raises
+        ------
+        ValueError
+            If the prior distribution of this parameter is a user-supplied function, it cannot be modified with the `prior` method.
+
+        """
+        if self.__builtin__ and kwargs is not None:
+            self.priorf.kws.update(**kwargs)
+        if not self.__builtin__ and kwargs is not None:
+            raise ValueError(
+                "The prior distribution of this parameter is a user-supplied function. It cannot be modified with the `prior` method."
+            )
+
+
+x = Value(value=0.5, prior="normal", lower=0, upper=1)
+
+x.prior(log=True)
+
+x.prior(log=False)

@@ -19,6 +19,22 @@ class Parameters:
         A Parameters object, where each attributes is one of the keyword arguments
         provided for the function.
 
+    Examples
+    --------
+    >>> from cpm.generators import Parameters
+    >>> parameters = Parameters(a=1, b=2, c=3)
+    >>> parameters['a']
+    1
+    >>> parameters.a
+    1
+    >>> parameters()
+    {'a': 1, 'b': 2, 'c': 3}
+    >>> parameters.prior()
+    1.0
+    >>> parameters.update(a=2, b=3, c=4)
+    >>> parameters()
+    {'a': 2, 'b': 3, 'c': 4}
+
     """
 
     def __init__(self, **kwargs):
@@ -323,10 +339,3 @@ class Value:
             raise ValueError(
                 "The prior distribution of this parameter is a user-supplied function. It cannot be modified with the `prior` method."
             )
-
-
-x = Value(value=0.5, prior="normal", lower=0, upper=1)
-
-x.prior(log=True)
-
-x.prior(log=False)

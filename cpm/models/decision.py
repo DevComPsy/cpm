@@ -147,6 +147,18 @@ class Softmax:
         self.policies = policies
         return policies
 
+    def choice(self):
+        """
+        Choose an action based on the computed policies.
+
+        Returns
+        -------
+        int: The chosen action based on the computed policies.
+        """
+        if not self.__run__:
+            self.compute()
+        return np.random.choice(self.shape[0], p=self.policies)
+
     def config(self):
         """
         Get the configuration of the Softmax class.

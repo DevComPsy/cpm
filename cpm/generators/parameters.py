@@ -227,3 +227,14 @@ class Value:
 
     def __deepcopy__(self, memo):
         return Value(**copy.deepcopy(self.__dict__, memo))
+
+    def copy(self):
+        """
+        Return a copy of the parameter.
+
+        Returns
+        -------
+        Value
+            A copy of the parameter.
+        """
+        return Value(**self.__dict__)

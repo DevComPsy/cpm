@@ -33,11 +33,13 @@ def pandas_to_dict(
     stimuli_indices = names[names.str.contains(stimuli)]
     feedback_indices = names[names.str.contains(feedback)]
     length = df[participant].max()
+    participants = pd.unique(df[participant])
     output = []
 
     for i in range(length):
         out = {}
-        single = df[df[participant] == i + 1]
+        current = participants[i]
+        single = df[df[participant] == current]
         out["trials"] = single[stimuli_indices].to_numpy()
         out["feedback"] = single[feedback_indices].to_numpy()
         out["ppt"] = pd.unique(single[participant])[0]

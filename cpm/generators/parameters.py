@@ -18,6 +18,17 @@ class Parameters:
         A Parameters object, where each attributes is one of the keyword arguments
         provided for the function.
 
+    Examples
+    --------
+    >>> parameters = Parameters(a=1, b=2, c=3)
+    >>> parameters.a
+    1
+    >>> parameters.b
+    2
+    >>> parameters.update(a=4)
+    >>> parameters.a
+    4
+
     """
 
     def __init__(self, **kwargs):

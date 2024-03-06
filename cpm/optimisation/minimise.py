@@ -10,7 +10,9 @@ class LogLikelihood:
     def __init__(self) -> None:
         pass
 
-    def categorical(predicted=None, observed=None, negative=True, **kwargs):
+    def categorical(
+        predicted=None, observed=None, negative=True, scale=1e-10, **kwargs
+    ):
         """
         Compute the log likelihood of the predicted values given the observed values for categorical data.
 
@@ -49,12 +51,12 @@ class LogLikelihood:
         values = np.array(predicted * observed).flatten()
         values = values[values != 0]
         # Compute the negative log likelihood
-        LL = np.sum(np.log(values))
+        LL = np.sum(np.log(values + scale))
         if negative:
             LL = -1 * LL
         return LL
 
-    def bernoulli(predicted=None, observed=None, negative=True, **kwargs):
+    def bernoulli(predicted=None, observed=None, negative=True, scale=1e-10, **kwargs):
         """
         Compute the log likelihood of the predicted values given the observed values for Bernoulli data.
 
@@ -94,8 +96,10 @@ class LogLikelihood:
         1.7350011354094463
 
         """
+        if len(predicted.shape) > 1 or len(observed.shape) > 1:
+            raise ValueError("Both predicted and observed must be 1D arrays.")
         values = np.abs(np.array(predicted - (1 - observed)).flatten())
-        LL = np.sum(np.log(values))
+        LL = np.sum(np.log(values + scale))
         if negative:
             LL = -1 * LL
         return LL

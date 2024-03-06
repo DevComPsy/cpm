@@ -96,8 +96,6 @@ class LogLikelihood:
         1.7350011354094463
 
         """
-        if len(predicted.shape) > 1 or len(observed.shape) > 1:
-            raise ValueError("Both predicted and observed must be 1D arrays.")
         values = np.abs(np.array(predicted - (1 - observed)).flatten())
         LL = np.sum(np.log(values + scale))
         if negative:

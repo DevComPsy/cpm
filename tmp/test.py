@@ -86,10 +86,6 @@ wrap = Wrapper(model=model, parameters=params, data=data)
 wrap.run()
 wrap.dependent
 
-# %% [markdown]
-# Awesome.
-# We can also use the export function to export the model output with the parameters to a dictionary.
-# The main difference between `export()` and `summary()` is that in the long run `export()` will contain more metadata and will allow to export to a JSON file.
 
 # %%
 pp(wrap.export())
@@ -133,12 +129,24 @@ for i in range(100):
 
 
 # %%
-from cpm.optimisation import DifferentialEvolution, minimise
+from cpm.optimisation import DifferentialEvolution, minimise, Fmin
 
 lower = [1e-10, 1e-10]
 upper = [1, 1]
 bounds = list(zip(lower, upper))
 
+# %%
+
+Fit = Fmin(
+    model=wrap,
+    data=experiment,
+    initial_guess=[0.5, 1],
+    minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
+)
+
+Fit.optimise()
+# %%
+quali
 Fit = DifferentialEvolution(
     model=wrap,
     bounds=bounds,

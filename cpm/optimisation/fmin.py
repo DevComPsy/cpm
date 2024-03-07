@@ -1,5 +1,6 @@
 from scipy.optimize import fmin
 import numpy as np
+import pandas as pd
 import copy
 from . import minimise
 from . import utils
@@ -14,8 +15,6 @@ class Fmin:
     ----------
     model : object
         The model to be optimized.
-    bounds : object
-        The parameter bounds for the optimization. The bounds should be a list of tuples, where each tuple contains the lower and upper bounds for a parameter. Elements of a tuple must corespond to the parameters in Parameters. If less bounds are provided than parameters, the algorithm will only fit those.
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     loss : function
@@ -43,8 +42,7 @@ class Fmin:
         The current participant data.
     parameter_names : list
         The names of the model parameters.
-    bounds : object
-        The parameter bounds for the optimization.
+
 
     Notes
     -----
@@ -55,12 +53,14 @@ class Fmin:
         self,
         model=None,
         data=None,
+        initial_guess=None,
         minimisation=minimise.LogLikelihood.continuous,
         **kwargs
     ):
         self.function = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
+        self.initial_guess = initial_guess
         self.kwargs = kwargs
         self.fit = []
         self.details = []
@@ -72,14 +72,9 @@ class Fmin:
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
-        if hasattr(self.function, "bounds"):
-            self.bounds = self.function.bounds
-        else:
-            self.bounds = bounds
-            # raise ValueError("You must define the parameter bounds in the Model object.")
         self.auxiliary = {
             "n": len(self.participant.get("observed")),
-            "k": len(self.bounds[0]),
+            "k": len(self.initial_guess),
         }
 
     def minimise(self, pars, **args):
@@ -128,15 +123,17 @@ class Fmin:
             self.participant = self.data[i]
             self.function.data = self.participant
             # objective = copy.deepcopy(self.minimise)
-            result = fmin(self.minimise, **self.kwargs, full_output=True)
-            # add the parameters to the list
-            self.details.append(__unpack(result.copy()))
-            fitted_parameters = utils.extract_params_from_fit(
-                data=result[0], keys=self.parameter_names
+            result = fmin(
+                self.minimise, x0=self.initial_guess, **self.kwargs, full_output=True
             )
-            self.parameters.append(fitted_parameters.copy())
+            # add the parameters to the list
+            self.details.append(__unpack(copy.deepcopy(result)))
+            parameters = {}
+            for i in range(len(self.initial_guess)):
+                parameters[self.parameter_names[i]] = result[0][i]
+            self.parameters.append(parameters)
             # add the results to the list
-            self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result[1])})
+            self.fit.append({"parameters": result[0], "fun": copy.deepcopy(result[1])})
         return None
 
     def reset(self):
@@ -150,31 +147,15 @@ class Fmin:
         self.parameters = []
         return None
 
-    def export(self, details=False):
+    def export(self):
         """
         Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
-
-        Parameters
-        ----------
-        details : bool
-            Whether to include the optimization details in the output.
 
         Returns
         -------
         pandas.DataFrame
-            A pandas DataFrame containing the optimization results and fitted parameters. If `details` is `True`, the DataFrame will also include the optimization details.
+            A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        ranged = len(self.parameter_names)
-        output = pd.DataFrame()
-        for i in range(len(self.fit)):
-            current = pd.DataFrame(self.fit[i]["xopt"]).T
-            current.columns = self.parameter_names[0 : len(current.columns)]
-            current["fun"] = self.fit[i]["fopt"]
-            output = pd.concat([output, current], axis=0)
-
-        if details:
-            metrics = utils.detailed_pandas_compiler(self.details)
-            output.reset_index(drop=True, inplace=True)
-            metrics.reset_index(drop=True, inplace=True)
-            output = pd.concat([output, metrics], axis=1)
+        output = utils.detailed_pandas_compiler(self.details)
+        output.reset_index(drop=True, inplace=True)
         return output

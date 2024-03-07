@@ -1,4 +1,7 @@
 import numpy as np
+import pandas as pd
+
+__all__ = ["extract_params_from_fit", "detailed_pandas_compiler"]
 
 
 def extract_params_from_fit(data, keys=None):

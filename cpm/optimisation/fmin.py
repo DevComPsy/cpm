@@ -124,7 +124,11 @@ class Fmin:
             self.function.data = self.participant
             # objective = copy.deepcopy(self.minimise)
             result = fmin(
-                self.minimise, x0=self.initial_guess, **self.kwargs, full_output=True
+                self.minimise,
+                x0=self.initial_guess,
+                disp=False,
+                **self.kwargs,
+                full_output=True
             )
             # add the parameters to the list
             self.details.append(__unpack(copy.deepcopy(result)))

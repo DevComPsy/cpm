@@ -141,6 +141,8 @@ class Value:
     - 'gamma'
     - 'exponential'
 
+    Because these distributions are inherited from `scipy.stats`, see the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on how to update variables of the distribution.
+
     Returns
     -------
     Value
@@ -155,6 +157,7 @@ class Value:
 
         __sd__ = np.mean([upper, lower]) / 2
 
+        # set the prior distribution
         self.__builtin__ = True
         if prior == "uniform":
             self.priorf = uniform(loc=lower, scale=upper)

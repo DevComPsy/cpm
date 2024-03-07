@@ -15,11 +15,11 @@ class Fmin:
     model : object
         The model to be optimized.
     bounds : object
-        The parameter bounds for the optimization.
+        The parameter bounds for the optimization. The bounds should be a list of tuples, where each tuple contains the lower and upper bounds for a parameter. Elements of a tuple must corespond to the parameters in Parameters. If less bounds are provided than parameters, the algorithm will only fit those.
     data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
+        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     loss : function
-        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`.
+        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
 
@@ -46,6 +46,9 @@ class Fmin:
     bounds : object
         The parameter bounds for the optimization.
 
+    Notes
+    -----
+    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary should also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
     """
 
     def __init__(
@@ -128,7 +131,7 @@ class Fmin:
             result = fmin(self.minimise, **self.kwargs, full_output=True)
             # add the parameters to the list
             self.details.append(__unpack(result.copy()))
-            fitted_parameters = utils.ExtractParamsFromFit(
+            fitted_parameters = utils.extract_params_from_fit(
                 data=result[0], keys=self.parameter_names
             )
             self.parameters.append(fitted_parameters.copy())
@@ -146,28 +149,6 @@ class Fmin:
         self.fit = []
         self.parameters = []
         return None
-
-    def _detailed(self):
-        """
-        Exports the optimization details.
-
-        Returns
-        -------
-        pandas.DataFrame
-            A pandas DataFrame containing the optimization details.
-        """
-        output = pd.DataFrame()
-        for i in self.details:
-            row = pd.DataFrame()
-            for key, value in i.items():
-                if isinstance(value, list) or isinstance(value, np.ndarray):
-                    value = pd.DataFrame(np.asarray(value)).T
-                else:
-                    value = pd.DataFrame([value]).T
-                value.columns = [key + "_" + str(x) for x in value.columns]
-                row = pd.concat([row, value], axis=1)
-            output = pd.concat([output, row], axis=0)
-        return output
 
     def export(self, details=False):
         """
@@ -192,7 +173,7 @@ class Fmin:
             output = pd.concat([output, current], axis=0)
 
         if details:
-            metrics = self._detailed()
+            metrics = utils.detailed(self.details)
             output.reset_index(drop=True, inplace=True)
             metrics.reset_index(drop=True, inplace=True)
             output = pd.concat([output, metrics], axis=1)

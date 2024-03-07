@@ -1,0 +1,199 @@
+from scipy.optimize import fmin
+import numpy as np
+import copy
+from . import minimise
+from . import utils
+from ..generators import Simulator, Wrapper
+
+
+class Fmin:
+    """
+    Class representing the Fmin search optimization algorithm.
+
+    Parameters
+    ----------
+    model : object
+        The model to be optimized.
+    bounds : object
+        The parameter bounds for the optimization.
+    data : object
+        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
+    loss : function
+        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`.
+    **kwargs : dict
+        Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
+
+    Attributes
+    ----------
+    function : Wrapper
+        The model object.
+    data : object
+        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
+    loss : function
+        The loss function for the objective minimization function.
+    kwargs : dict
+        Additional keyword arguments.
+    fit : list
+        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
+    details : list
+        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
+    parameters : list
+        List to store the best-fitting parameters as dictionaries.
+    participant : object
+        The current participant data.
+    parameter_names : list
+        The names of the model parameters.
+    bounds : object
+        The parameter bounds for the optimization.
+
+    """
+
+    def __init__(
+        self,
+        model=None,
+        data=None,
+        minimisation=minimise.LogLikelihood.continuous,
+        **kwargs
+    ):
+        self.function = copy.deepcopy(model)
+        self.data = data
+        self.loss = minimisation
+        self.kwargs = kwargs
+        self.fit = []
+        self.details = []
+        self.parameters = []
+        self.participant = data[0]
+        if isinstance(model, Wrapper):
+            self.parameter_names = self.function.parameter_names
+        if isinstance(model, Simulator):
+            raise ValueError(
+                "The Fmin algorithm is not compatible with the Simulator object."
+            )
+        if hasattr(self.function, "bounds"):
+            self.bounds = self.function.bounds
+        else:
+            self.bounds = bounds
+            # raise ValueError("You must define the parameter bounds in the Model object.")
+        self.auxiliary = {
+            "n": len(self.participant.get("observed")),
+            "k": len(self.bounds[0]),
+        }
+
+    def minimise(self, pars, **args):
+        """
+        The `minimise` function calculates a metric by comparing predicted values with
+        observed values.
+
+        Parameters
+        ----------
+        pars
+            The `pars` parameter is a dictionary that contains the parameters for the
+            function that needs to be minimized.
+
+        Returns
+        -------
+            The metric value is being returned.
+
+        """
+        evaluated = copy.deepcopy(self.function)
+        evaluated.reset(pars)
+        evaluated.run()
+        predicted = evaluated.dependent
+        observed = self.participant.get("observed")
+        metric = self.loss(predicted, observed, **self.auxiliary)
+        del predicted, observed
+        if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+            metric = 1e10
+        return metric
+
+    def optimise(self):
+        """
+        Performs the optimization process.
+
+        Returns:
+        - None
+        """
+
+        def __unpack(x):
+            keys = ["xopt", "fopt", "iter", "funcalls", "warnflag"]
+            out = {}
+            for i in range(len(keys)):
+                out[keys[i]] = x[i]
+            return out
+
+        for i in range(len(self.data)):
+            self.participant = self.data[i]
+            self.function.data = self.participant
+            # objective = copy.deepcopy(self.minimise)
+            result = fmin(self.minimise, **self.kwargs, full_output=True)
+            # add the parameters to the list
+            self.details.append(__unpack(result.copy()))
+            fitted_parameters = utils.ExtractParamsFromFit(
+                data=result[0], keys=self.parameter_names
+            )
+            self.parameters.append(fitted_parameters.copy())
+            # add the results to the list
+            self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result[1])})
+        return None
+
+    def reset(self):
+        """
+        Resets the optimization results and fitted parameters.
+
+        Returns:
+        - None
+        """
+        self.fit = []
+        self.parameters = []
+        return None
+
+    def _detailed(self):
+        """
+        Exports the optimization details.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas DataFrame containing the optimization details.
+        """
+        output = pd.DataFrame()
+        for i in self.details:
+            row = pd.DataFrame()
+            for key, value in i.items():
+                if isinstance(value, list) or isinstance(value, np.ndarray):
+                    value = pd.DataFrame(np.asarray(value)).T
+                else:
+                    value = pd.DataFrame([value]).T
+                value.columns = [key + "_" + str(x) for x in value.columns]
+                row = pd.concat([row, value], axis=1)
+            output = pd.concat([output, row], axis=0)
+        return output
+
+    def export(self, details=False):
+        """
+        Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
+
+        Parameters
+        ----------
+        details : bool
+            Whether to include the optimization details in the output.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas DataFrame containing the optimization results and fitted parameters. If `details` is `True`, the DataFrame will also include the optimization details.
+        """
+        ranged = len(self.parameter_names)
+        output = pd.DataFrame()
+        for i in range(len(self.fit)):
+            current = pd.DataFrame(self.fit[i]["xopt"]).T
+            current.columns = self.parameter_names[0 : len(current.columns)]
+            current["fun"] = self.fit[i]["fopt"]
+            output = pd.concat([output, current], axis=0)
+
+        if details:
+            metrics = self._detailed()
+            output.reset_index(drop=True, inplace=True)
+            metrics.reset_index(drop=True, inplace=True)
+            output = pd.concat([output, metrics], axis=1)
+        return output

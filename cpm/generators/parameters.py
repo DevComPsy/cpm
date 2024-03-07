@@ -93,7 +93,6 @@ class Parameters:
         """
         prior = 1
         for key, value in self.__dict__.items():
-            print(value.prior())
             prior *= value.prior()
         if log:
             prior = np.log(prior)

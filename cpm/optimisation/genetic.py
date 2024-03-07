@@ -1,5 +1,6 @@
 from scipy.optimize import differential_evolution
 import pandas as pd
+import numpy as np
 import copy
 from . import minimise
 from . import utils
@@ -34,7 +35,9 @@ class DifferentialEvolution:
     kwargs : dict
         Additional keyword arguments.
     fit : list
-        List to store the optimization results.
+        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
+    details : list
+        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
     parameters : list
         List to store the best-fitting parameters as dictionaries.
     participant : object
@@ -136,25 +139,7 @@ class DifferentialEvolution:
         self.parameters = []
         return None
 
-    def export(self):
-        """
-        Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
-
-        Returns
-        -------
-        pandas.DataFrame
-            A pandas DataFrame containing the optimization results and fitted parameters.
-        """
-        ranged = len(self.parameter_names)
-        output = pd.DataFrame()
-        for i in range(len(self.fit)):
-            current = pd.DataFrame(self.fit[i]["parameters"]).T
-            current.columns = self.parameter_names[0 : len(current.columns)]
-            current["fun"] = self.fit[i]["fun"]
-            output = pd.concat([output, current], axis=0)
-        return output
-
-    def details(self):
+    def _detailed(self):
         """
         Exports the optimization details.
 
@@ -165,11 +150,42 @@ class DifferentialEvolution:
         """
         output = pd.DataFrame()
         for i in self.details:
+            row = pd.DataFrame()
             for key, value in i.items():
-                if isinstance(value, list):
-                    value = pd.DataFrame(value).T
+                if isinstance(value, list) or isinstance(value, np.ndarray):
+                    value = pd.DataFrame(np.asarray(value)).T
                 else:
                     value = pd.DataFrame([value]).T
-                value.columns = [key]
-                output = pd.concat([output, value], axis=1)
+                value.columns = [key + "_" + str(x) for x in value.columns]
+                row = pd.concat([row, value], axis=1)
+            output = pd.concat([output, row], axis=0)
+        return output
+
+    def export(self, details=False):
+        """
+        Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
+
+        Parameters
+        ----------
+        details : bool
+            Whether to include the optimization details in the output.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas DataFrame containing the optimization results and fitted parameters. If `details` is `True`, the DataFrame will also include the optimization details.
+        """
+        ranged = len(self.parameter_names)
+        output = pd.DataFrame()
+        for i in range(len(self.fit)):
+            current = pd.DataFrame(self.fit[i]["parameters"]).T
+            current.columns = self.parameter_names[0 : len(current.columns)]
+            current["fun"] = self.fit[i]["fun"]
+            output = pd.concat([output, current], axis=0)
+
+        if details:
+            metrics = self._detailed()
+            output.reset_index(drop=True, inplace=True)
+            metrics.reset_index(drop=True, inplace=True)
+            output = pd.concat([output, metrics], axis=1)
         return output

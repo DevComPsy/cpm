@@ -78,7 +78,7 @@ class Softmax:
     array([0.45352133, 0.54647867])
     """
 
-    def __init__(self, temperature=None, xi=None, activations=None, **kwargs):
+    def __init__(self, temperature=0.5, xi=0, activations=None, **kwargs):
         """ """
         self.temperature = temperature
         self.xi = xi

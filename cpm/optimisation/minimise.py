@@ -1,4 +1,4 @@
-from scipy.stats import norm
+from scipy.stats import norm, bernoulli
 import numpy as np
 
 __all__ = ["LogLikelihood", "Bayesian", "CrossEntropy"]
@@ -58,10 +58,6 @@ class LogLikelihood:
         """
         Compute the log likelihood of the predicted values given the observed values for Bernoulli data.
 
-            Bernoulli(y|p) = |p * (1 - y)|
-
-        Or alternatively,
-
             Bernoulli(y|p) = p if y = 1 and 1 - p if y = 0
 
         Parameters
@@ -95,7 +91,7 @@ class LogLikelihood:
 
         """
         values = np.abs(np.array(predicted - (1 - observed)).flatten())
-        LL = np.sum(np.log(values))
+        LL = bernoulli.logpmf(k=observed, p=predicted).sum()
         if negative:
             LL = -1 * LL
         return LL

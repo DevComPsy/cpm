@@ -11,7 +11,7 @@ def extract_params_from_fit(data, keys=None):
     return parameters
 
 
-def detailed(details):
+def detailed_pandas_compiler(details):
     """
     Exports a list of dictionaries as a pandas dataframe.
     Optimised for the output of the routines implemented.

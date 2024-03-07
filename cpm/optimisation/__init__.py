@@ -1,6 +1,6 @@
-__all__ = ["DifferentialEvolution", "minimise"]
+__all__ = ["DifferentialEvolution", "Fmin", "minimise"]
 
-import pandas as pd
+
 from .genetic import DifferentialEvolution
 from .fmin import Fmin
 from .minimise import *

@@ -90,7 +90,7 @@ twine upload dist/*
 
 ## Development tools we use
 
-* Black linter for python code formatting
-* Numpy-style docstrings for documentation
-* mkdocs for documentation generation
-* pytest for testing
+* `black linter` for python code formatting
+* `numpy`-style docstrings for documentation
+* `mkdocs` for documentation generation
+* `pytest` for testing

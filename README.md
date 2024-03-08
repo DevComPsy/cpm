@@ -10,6 +10,14 @@ pip install git+https://github.com/DevComPsy/modelling-toolbox.git
 
 ## Documentation
 
+The documentation can be viewed here: [link](https://devcompsy.github.io/modelling-toolbox/).
+
+### Development of documentation
+
+The documentation is written in docstrings and markdown files. The markdown files are located in the `docs` directory. The documentation is built using mkdocs.
+
+### Vieweing developmental versions of the documentation
+
 First, install all requirements:
 
 ```bash
@@ -24,6 +32,20 @@ mkdocs serve
 ```
 
 Then open a browser and go to http://127.0.0.1:8000/
+
+### Building the documentation
+
+To build the documentation, run the following command in the root directory:
+
+```bash
+mkdocs build
+```
+
+To deploy the documentation to GitHub pages, run the following command in the root directory:
+
+```bash
+mkdocs gh-deploy
+```
 
 # Development process
 

@@ -139,10 +139,8 @@ class Bayesian:
 
         Parameters
         ----------
-        predicted : array-like
-            The predicted values.
-        observed : array-like
-            The observed values.
+        likelihood : float
+            The likelihood value.
         n : int
             The number of data points.
         k : int
@@ -162,10 +160,8 @@ class Bayesian:
 
         Parameters
         ----------
-        predicted : array-like
-            The predicted values.
-        observed : array-like
-            The observed values.
+        likelihood : float
+            The likelihood value.
         n : int
             The number of data points.
         k : int

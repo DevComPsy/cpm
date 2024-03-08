@@ -1,6 +1,8 @@
 import pandas as pd
 import pickle as pkl
 
+__all__ = ["pandas_to_dict", "dict_to_pandas", "load"]
+
 
 def pandas_to_dict(
     df=None, participant="ppt", stimuli="stimulus", feedback="feedback", **kwargs

@@ -298,7 +298,7 @@ class QLearningRule:
     Examples
     --------
     >>> import numpy as np
-    >>> from cpm.components.learning import QLearningRule
+    >>> from cpm.models.learning import QLearningRule
     >>> values = np.array([1, 0.5, 0.99])
     >>> component = QLearningRule(alpha=0.1, gamma=0.8, values=values, reward=1, maximum=10)
     >>> component.compute()
@@ -420,7 +420,7 @@ class KernelUpdate:
 
     See Also
     --------
-    [cpm.models.decision.ChoiceKernel][cpm.components.decision.ChoiceKernel] : A class representing a choice kernel decision policy.
+    [cpm.models.decision.ChoiceKernel][cpm.models.decision.ChoiceKernel] : A class representing a choice kernel decision policy.
 
     References
     ----------

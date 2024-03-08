@@ -77,10 +77,6 @@ class DifferentialEvolution:
         else:
             self.bounds = bounds
             # raise ValueError("You must define the parameter bounds in the Model object.")
-        self.auxiliary = {
-            "n": len(self.participant.get("observed")),
-            "k": len(self.bounds[0]),
-        }
 
     def minimise(self, pars, **args):
         """
@@ -103,7 +99,7 @@ class DifferentialEvolution:
         evaluated.run()
         predicted = evaluated.dependent
         observed = self.participant.get("observed")
-        metric = self.loss(predicted, observed, **self.auxiliary)
+        metric = self.loss(predicted, observed, **args)
         del predicted, observed
         if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
             metric = 1e10

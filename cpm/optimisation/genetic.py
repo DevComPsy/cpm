@@ -149,12 +149,17 @@ class DifferentialEvolution:
         Parameters
         ----------
         details : bool
-            Whether to include the optimization details in the output.
+            Whether to include the various metrics related to the optimisation routine in the output.
 
         Returns
         -------
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters. If `details` is `True`, the DataFrame will also include the optimization details.
+
+        Notes
+        -----
+        The DataFrame will not contain the population and population_energies keys from the optimization details.
+        If you want to investigate it, please use the `details` attribute.
         """
         ranged = len(self.parameter_names)
         output = pd.DataFrame()
@@ -165,7 +170,9 @@ class DifferentialEvolution:
             output = pd.concat([output, current], axis=0)
 
         if details:
-            metrics = utils.detailed_pandas_compiler(self.details)
+            metrics = utils.detailed_pandas_compiler(
+                self.details, method="differential_evolution"
+            )
             output.reset_index(drop=True, inplace=True)
             metrics.reset_index(drop=True, inplace=True)
             output = pd.concat([output, metrics], axis=1)

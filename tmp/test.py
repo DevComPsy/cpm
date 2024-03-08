@@ -146,7 +146,9 @@ Fit = Fmin(
 
 Fit.optimise()
 # %%
-quali
+pp(Fit.parameters)
+Fit.export()
+# %%
 Fit = DifferentialEvolution(
     model=wrap,
     bounds=bounds,

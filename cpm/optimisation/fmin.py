@@ -1,12 +1,12 @@
-from scipy.optimize import fmin
 from . import minimise
 from . import utils
 from ..generators import Simulator, Wrapper
 
+from scipy.optimize import fmin
 import numpy as np
 import pandas as pd
 import copy
-import dask
+import multiprocess as mp
 
 
 def minimum(pars, function, data, loss, **args):
@@ -39,7 +39,7 @@ def minimum(pars, function, data, loss, **args):
     function.reset(pars)
     function.run()
     predicted = function.dependent
-    observed = data
+    observed = copy.deepcopy(data)
     metric = loss(predicted, observed, **args)
     del predicted, observed
     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
@@ -95,7 +95,9 @@ class Fmin:
         data=None,
         initial_guess=None,
         minimisation=minimise.LogLikelihood.continuous,
-        **kwargs
+        cl=None,
+        parallel=False,
+        **kwargs,
     ):
         self.model = copy.deepcopy(model)
         self.data = data
@@ -116,6 +118,12 @@ class Fmin:
             "n": len(self.participant.get("observed")),
             "k": len(self.initial_guess),
         }
+        if cl is not None:
+            self.cl = cl
+        if cl is None and parallel:
+            self.cl = mp.cpu_count()
+        if cl is None and not parallel:
+            self.cl = 2
 
     # def minimise(self, pars, **args):
     #     """
@@ -144,10 +152,6 @@ class Fmin:
     #         metric = 1e10
     #     return metric
 
-    def __single(self, do):
-
-        return None
-
     def optimise(self):
         """
         Performs the optimization process.
@@ -163,53 +167,32 @@ class Fmin:
                 out[keys[i]] = x[i]
             return out
 
-        def __task(model, participant, loss, **args):
+        def __task(participant, **args):
             result = fmin(
                 minimum,
                 x0=self.initial_guess,
                 args=(model, participant.get("observed"), loss),
                 disp=False,
                 **self.kwargs,
-                full_output=True
+                full_output=True,
             )
             return result
 
-        from dask.distributed import Client, progress
+        loss = self.loss
+        model = self.model
+        pool = mp.Pool(self.cl)
+        results = pool.map(__task, self.data)
+        pool.close()
+        del pool
+        self.details = results
 
-        client = Client(threads_per_worker=4, n_workers=1)
+        parameters = {}
+        for result in results:
+            for i in range(len(self.initial_guess)):
+                parameters[self.parameter_names[i]] = result[0][i]
+            self.parameters.append(parameters)
+            self.fit.append(__unpack(result))
 
-        # # Submit work to happen in parallel
-        # results = []
-        # for filename in filenames:
-        #     data = client.submit(load, filename)
-        #     result = client.submit(process, data)
-        #     results.append(result)
-
-        # # Gather results back to local computer
-        # results = client.gather(results)
-        distribution = []
-        for i in range(len(self.data)):
-            self.participant = self.data[i]
-            self.model.data = self.participant
-            tt = client.submit(__task)(
-                self.model,
-                self.participant,
-                self.loss,
-            )
-            distribution.append(tt)
-        self.details = distribution
-        # self.details = client.gather(distribution)
-        # self.details = dask.compute(*distribution)
-
-        # add the parameters to the list
-        # result = __task(self.model, self.participant, self.loss, **self.auxiliary)
-        # self.details.append(__unpack(copy.deepcopy(result)))
-        # parameters = {}
-        # for i in range(len(self.initial_guess)):
-        #     parameters[self.parameter_names[i]] = result[0][i]
-        # self.parameters.append(parameters)
-        # # add the results to the list
-        # self.fit.append({"parameters": result[0], "fun": copy.deepcopy(result[1])})
         return None
 
     def reset(self):

@@ -40,6 +40,7 @@ setup(
         "numpy>=1.26.0",  # Numerical functions
         "SciPy>=1.11.4",  # Scientific functions
         "pandas>=2.1.4",  # Data structures & analysis
+        "multiprocess>=0.70.16",  # Multiprocessing
     ],
     license="AGPLv3",
     zip_safe=False,

@@ -149,7 +149,7 @@ class Value:
         A Value object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float with the parameter value as operand.
     """
 
-    def __init__(self, value=None, prior="normal", lower=0, upper=1):
+    def __init__(self, value=None, prior="normal", lower=0, upper=1, **kwargs):
         self.value = value
 
         self.lower = lower

@@ -94,6 +94,7 @@ class LogLikelihood:
         bound = np.finfo(np.float64).min
         LL = bernoulli.logpmf(k=observed, p=predicted)
         LL[LL < bound] = 0
+        LL = np.sum(LL)
         if negative:
             LL = -1 * LL
         return LL

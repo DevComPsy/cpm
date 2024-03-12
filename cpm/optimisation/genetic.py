@@ -19,8 +19,8 @@ class DifferentialEvolution:
             The parameter bounds for the optimization. The bounds should be a list of tuples, where each tuple contains the lower and upper bounds for a parameter. Elements of a tuple must corespond to the parameters in Parameters. If less bounds are provided than parameters, the algorithm will only fit those.
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
-    loss : function
-        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
+    minimisation : function
+        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.bernoulli`. See the `minimise` module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
 
@@ -57,7 +57,7 @@ class DifferentialEvolution:
         model=None,
         bounds=None,
         data=None,
-        minimisation=minimise.LogLikelihood,
+        minimisation=minimise.LogLikelihood.bernoulli,
         **kwargs
     ):
         self.function = copy.deepcopy(model)

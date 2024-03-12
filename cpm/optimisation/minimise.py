@@ -90,8 +90,10 @@ class LogLikelihood:
         1.7350011354094463
 
         """
-        values = np.abs(np.array(predicted - (1 - observed)).flatten())
-        LL = bernoulli.logpmf(k=observed, p=predicted).sum()
+        # values = np.abs(np.array(predicted - (1 - observed)).flatten())
+        bound = np.finfo(np.float64).min
+        LL = bernoulli.logpmf(k=observed, p=predicted)
+        LL[LL < bound] = 0
         if negative:
             LL = -1 * LL
         return LL

@@ -93,6 +93,18 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.optimisation.Fmin">Fmin</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Fmin--notes">Notes</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.fmin.Fmin.export">export()</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.fmin.Fmin.optimise">optimise()</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.fmin.Fmin.reset">reset()</a>
+    </li>
+        </ul>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpmoptimisationminimise">cpm.optimisation.minimise</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood">LogLikelihood</a>
@@ -154,7 +166,7 @@
 
 
 <h3 id="cpm.optimisation.DifferentialEvolution" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">DifferentialEvolution</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">DifferentialEvolution</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -206,13 +218,13 @@
           </td>
         </tr>
         <tr>
-          <td><code>loss</code></td>
+          <td><code>minimisation</code></td>
           <td>
                 <code><span title="cpm.optimisation.genetic.DifferentialEvolution.function">function</span></code>
           </td>
-          <td><p>The loss function for the objective minimization function. Default is <code>minimise.LogLikelihood.continuous</code>. See the <code>minimise</code> module for more information. User-defined loss functions are also supported.</p></td>
+          <td><p>The loss function for the objective minimization function. Default is <code>minimise.LogLikelihood.bernoulli</code>. See the <code>minimise</code> module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.</p></td>
           <td>
-              <em>required</em>
+                <code>minimise.LogLikelihood.bernoulli</code>
           </td>
         </tr>
         <tr>
@@ -486,6 +498,272 @@ function that needs to be minimized.</p></td>
       <p>Resets the optimization results and fitted parameters.</p>
 <p>Returns:
 - None</p>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.optimisation.Fmin" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Fmin</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">continuous</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>Class representing the Fmin search optimization algorithm.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+                <code>object</code>
+          </td>
+          <td><p>The model to be optimized.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>data</code></td>
+          <td>
+                <code>object</code>
+          </td>
+          <td><p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>minimisation</code></td>
+          <td>
+                <code>function</code>
+          </td>
+          <td><p>The loss function for the objective minimization function. Default is <code>minimise.LogLikelihood.continuous</code>. See the <code>minimise</code> module for more information. User-defined loss functions are also supported.</p></td>
+          <td>
+                <code>minimise.LogLikelihood.continuous</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>parallel</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td><p>Whether to use parallel processing. Default is <code>False</code>.</p></td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>cl</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td><p>The number of cores to use for parallel processing. Default is <code>None</code>. If <code>None</code>, the number of cores is set to 2.
+If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>Additional keyword arguments. See the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html"><code>scipy.optimize.differential_evolution</code></a> documentation for what is supported.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Attributes:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>function</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code>
+          </td>
+          <td><p>The model object.</p></td>
+        </tr>
+        <tr>
+          <td><code>data</code></td>
+          <td>
+                <code>object</code>
+          </td>
+          <td><p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.</p></td>
+        </tr>
+        <tr>
+          <td><code>loss</code></td>
+          <td>
+                <code>function</code>
+          </td>
+          <td><p>The loss function for the objective minimization function.</p></td>
+        </tr>
+        <tr>
+          <td><code>kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>Additional keyword arguments.</p></td>
+        </tr>
+        <tr>
+          <td><code>fit</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td><p>List to store the optimization results. It includes the best-fitting parameters and the objective function value.</p></td>
+        </tr>
+        <tr>
+          <td><code>details</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td><p>List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in <code>fit</code>.</p></td>
+        </tr>
+        <tr>
+          <td><code>parameters</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td><p>List to store the best-fitting parameters as dictionaries.</p></td>
+        </tr>
+        <tr>
+          <td><code>participant</code></td>
+          <td>
+                <code>object</code>
+          </td>
+          <td><p>The current participant data.</p></td>
+        </tr>
+        <tr>
+          <td><code>parameter_names</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td><p>The names of the model parameters.</p></td>
+        </tr>
+    </tbody>
+  </table>
+      <h5 id="cpm.optimisation.Fmin--notes">Notes</h5>
+<p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary <strong>MUST</strong> also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model <code>Wrapper</code>.</p>
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.fmin.Fmin.export" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Exports the optimization results and fitted parameters as a <code>pandas.DataFrame</code>.</p>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
+          </td>
+          <td><p>A pandas DataFrame containing the optimization results and fitted parameters.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.fmin.Fmin.optimise" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Performs the optimization process.</p>
+<p>Returns:
+- None</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.fmin.Fmin.reset" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">reset</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Resets the optimization results and fitted parameters.</p>
+<p>Returns:
+    None</p>
 
   </div>
 
@@ -865,21 +1143,11 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
     </thead>
     <tbody>
         <tr>
-          <td><code>predicted</code></td>
+          <td><code>likelihood</code></td>
           <td>
-                <code>array-like</code>
+                <code>float</code>
           </td>
-          <td><p>The predicted values.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>observed</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The observed values.</p></td>
+          <td><p>The likelihood value.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -955,21 +1223,11 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
     </thead>
     <tbody>
         <tr>
-          <td><code>predicted</code></td>
+          <td><code>likelihood</code></td>
           <td>
-                <code>array-like</code>
+                <code>float</code>
           </td>
-          <td><p>The predicted values.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>observed</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The observed values.</p></td>
+          <td><p>The likelihood value.</p></td>
           <td>
               <em>required</em>
           </td>

@@ -178,7 +178,7 @@
 
 
 <h2 id="cpm.generators.Value" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -737,7 +737,7 @@ provided for the function.</p></td>
   <div class="doc doc-contents first">
 
   
-      <p>A wrapper class for a model in the CPM toolbox.</p>
+      <p>A <code>Wrapper</code> class for a model function in the CPM toolbox. It is designed to run a model for a <strong>single</strong> experiment (participant) and store the output in a format that can be used for further analysis.</p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1172,7 +1172,7 @@ otherwise the values array is reset to 1/len(values).</p>
   <div class="doc doc-contents first">
 
   
-      <p>Initializes a Simulator object.</p>
+      <p>A <code>Simulator</code> class for a model in the CPM toolbox. It is designed to run a model for <strong>multiple</strong> participants and store the output in a format that can be used for further analysis.</p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1188,9 +1188,9 @@ otherwise the values array is reset to 1/len(values).</p>
         <tr>
           <td><code>model</code></td>
           <td>
-                <code>object</code>
+                <code><a class="autorefs autorefs-internal" title="cpm.generators.wrapper.Wrapper" href="#cpm.generators.Wrapper">Wrapper</a></code>
           </td>
-          <td><p>The simulation function to be used.</p></td>
+          <td><p>An initialised Wrapper object for the model.</p></td>
           <td>
                 <code>None</code>
           </td>

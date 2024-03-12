@@ -5,6 +5,11 @@
         show_root_heading: true
         heading_level: 3
 
+::: cpm.optimisation.Fmin
+    options:
+        show_root_heading: true
+        heading_level: 3
+
 ### cpm.optimisation.minimise
 
 ::: cpm.optimisation.minimise.LogLikelihood

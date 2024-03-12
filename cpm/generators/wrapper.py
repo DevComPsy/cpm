@@ -10,7 +10,7 @@ from .utils import simulation_export
 
 class Wrapper:
     """
-    A wrapper class for a model in the CPM toolbox.
+    A `Wrapper` class for a model function in the CPM toolbox. It is designed to run a model for a **single** experiment (participant) and store the output in a format that can be used for further analysis.
 
     Parameters
     ----------

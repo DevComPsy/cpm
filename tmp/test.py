@@ -140,8 +140,9 @@ bounds = list(zip(lower, upper))
 Fit = Fmin(
     model=wrap,
     data=experiment,
-    initial_guess=[0.5, 1],
+    initial_guess=[0.32, 0.788],
     minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
+    parallel=True
 )
 
 Fit.optimise()
@@ -153,11 +154,7 @@ Fit = DifferentialEvolution(
     model=wrap,
     bounds=bounds,
     data=experiment,
-    minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
-    mutation=0.5,  # kwargs
-    recombination=0.7,  # kwargs
-    strategy="best1bin",  # kwargs
-    tol=0.1,  # kwargs
+    minimisation=minimise.LogLikelihood.bernoulli,  # currently, this is the only working metric
     maxiter=200,  # kwargs
 )  # initialize the optimisation
 

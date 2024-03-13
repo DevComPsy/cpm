@@ -81,6 +81,8 @@ class LogLikelihood:
         `observed` is a binary variable, so it can only take the values 0 or 1.
         Both `predicted` and `observed` must be 1D arrays.
 
+        `log(0)` is undefined, so the log likelihood is set to the minimum value of the float64 data type to avoid overflow.
+
         Examples
         --------
         >>> import numpy as np
@@ -92,7 +94,7 @@ class LogLikelihood:
         """
         bound = np.finfo(np.float64).min
         LL = bernoulli.logpmf(k=observed, p=predicted)
-        LL[LL < bound] = bound / 2  # Set the lower bound to avoid overflow
+        LL[LL < bound] = bound  # Set the lower bound to avoid overflow
         LL = np.sum(LL)
         if negative:
             LL = -1 * LL

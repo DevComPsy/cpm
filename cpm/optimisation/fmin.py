@@ -212,6 +212,6 @@ class Fmin:
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        output = utils.detailed_pandas_compiler(self.details)
+        output = utils.detailed_pandas_compiler(self.fit, method="fmin")
         output.reset_index(drop=True, inplace=True)
         return output

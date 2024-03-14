@@ -90,10 +90,6 @@ class Wrapper:
             output = self.model(parameters=self.parameters, trial=trial)
             self.simulation.append(output.copy())
 
-            self.parameters.update(
-                {key: value for key, value in output.items() if key in self.parameters}
-            )
-
             ## update your dependent variables
             ## create dependent output on first iteration
             if i == 0:
@@ -106,7 +102,11 @@ class Wrapper:
 
             ## update variables present in both parameters and model output
             self.parameters.update(
-                {key: value for key, value in output.items() if key in self.parameters}
+                **{
+                    key: value
+                    for key, value in output.items()
+                    if key in self.parameters.keys()
+                }
             )
 
         self.__run__ = True

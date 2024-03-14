@@ -10,7 +10,7 @@ from .utils import simulation_export
 
 class Wrapper:
     """
-    A wrapper class for a model in the CPM toolbox.
+    A `Wrapper` class for a model function in the CPM toolbox. It is designed to run a model for a **single** experiment (participant) and store the output in a format that can be used for further analysis.
 
     Parameters
     ----------
@@ -65,12 +65,13 @@ class Wrapper:
         self.simulation = []
         self.data = data
 
-        self.shape = [(np.array(v).shape) for k, v in self.data.items() if k != "ppt"]
-        self.__len__ = np.max(self.shape)
+        self.shape = self.data.get("trials").shape
+        self.__len__ = self.shape[0]
         self.dependent = []
         self.parameter_names = list(parameters.keys())
 
         self.__run__ = False
+        self.__init_parameters__ = copy.deepcopy(parameters)
 
     def run(self):
         """
@@ -132,10 +133,12 @@ class Wrapper:
 
         """
         if self.__run__:
-            self.values.fill(1 / np.sum(self.values.shape))
             self.dependent.fill(0)
             self.simulation = []
-            self.parameters.values = self.values
+            self.parameters = copy.deepcopy(self.__init_parameters__)
+            self.values = 1 / len(self.parameters.values)
+            if "values" in self.parameters.__dict__.keys():
+                self.values = self.parameters.values
             self.__run__ = False
         # if dict, update using parameters update method
         if isinstance(parameters, dict):

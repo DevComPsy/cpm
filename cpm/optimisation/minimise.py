@@ -1,4 +1,4 @@
-from scipy.stats import norm
+from scipy.stats import norm, bernoulli
 import numpy as np
 
 __all__ = ["LogLikelihood", "Bayesian", "CrossEntropy"]
@@ -58,10 +58,6 @@ class LogLikelihood:
         """
         Compute the log likelihood of the predicted values given the observed values for Bernoulli data.
 
-            Bernoulli(y|p) = |p * (1 - y)|
-
-        Or alternatively,
-
             Bernoulli(y|p) = p if y = 1 and 1 - p if y = 0
 
         Parameters
@@ -85,6 +81,8 @@ class LogLikelihood:
         `observed` is a binary variable, so it can only take the values 0 or 1.
         Both `predicted` and `observed` must be 1D arrays.
 
+        `log(0)` is undefined, so the log likelihood is set to the minimum value of the float64 data type to avoid overflow.
+
         Examples
         --------
         >>> import numpy as np
@@ -94,8 +92,10 @@ class LogLikelihood:
         1.7350011354094463
 
         """
-        values = np.abs(np.array(predicted - (1 - observed)).flatten())
-        LL = np.sum(np.log(values))
+        bound = np.finfo(np.float64).min
+        LL = bernoulli.logpmf(k=observed, p=predicted)
+        LL[LL < bound] = bound  # Set the lower bound to avoid overflow
+        LL = np.sum(LL)
         if negative:
             LL = -1 * LL
         return LL
@@ -143,10 +143,8 @@ class Bayesian:
 
         Parameters
         ----------
-        predicted : array-like
-            The predicted values.
-        observed : array-like
-            The observed values.
+        likelihood : float
+            The likelihood value.
         n : int
             The number of data points.
         k : int
@@ -166,10 +164,8 @@ class Bayesian:
 
         Parameters
         ----------
-        predicted : array-like
-            The predicted values.
-        observed : array-like
-            The observed values.
+        likelihood : float
+            The likelihood value.
         n : int
             The number of data points.
         k : int

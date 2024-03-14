@@ -78,7 +78,7 @@ class Softmax:
     array([0.45352133, 0.54647867])
     """
 
-    def __init__(self, temperature=None, xi=None, activations=None, **kwargs):
+    def __init__(self, temperature=0.5, xi=0, activations=None, **kwargs):
         """ """
         self.temperature = temperature
         self.xi = xi
@@ -226,6 +226,7 @@ class Sigmoid:
         self.shape = self.activations.shape
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
+        self.__run__ = False
 
     def compute(self):
         """
@@ -243,7 +244,27 @@ class Sigmoid:
                 + np.exp((np.sum(self.activations[i]) - self.beta) * -self.temperature)
             )
         self.policies = output
+        self.__run__ = True
         return output
+
+    def choice(self):
+        """
+        Chooses the action based on the sigmoid function.
+
+        Returns
+        -------
+        action: int
+            The chosen action based on the sigmoid function.
+
+        Notes
+        -----
+        The choice is based on the probabilities of the sigmoid function, but it is not
+        guaranteed that the policy values will sum to 1. Therefore, the policies
+        are normalised to sum to 1 when generating a discrete choice.
+        """
+        if not self.__run__:
+            self.compute()
+        return np.random.choice(self.shape[0], p=self.policies / self.policies.sum())
 
     def config(self):
         """

@@ -14,12 +14,12 @@ from .utils import simulation_export
 
 class Simulator:
     """
-    Initializes a Simulator object.
+    A `Simulator` class for a model in the CPM toolbox. It is designed to run a model for **multiple** participants and store the output in a format that can be used for further analysis.
 
     Parameters
     ----------
-    model : object
-        The simulation function to be used.
+    model : Wrapper
+        An initialised Wrapper object for the model.
     data : object
         The data required for the simulation.
     parameters : object

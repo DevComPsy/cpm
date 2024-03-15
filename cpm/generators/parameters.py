@@ -93,7 +93,8 @@ class Parameters:
         """
         prior = 1
         for key, value in self.__dict__.items():
-            prior *= value.prior()
+            if value.priorf is not None:
+                prior *= value.prior(log=log)
         if log:
             prior = np.log(prior)
         return prior
@@ -149,7 +150,7 @@ class Value:
         A Value object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float with the parameter value as operand.
     """
 
-    def __init__(self, value=None, prior="normal", lower=0, upper=1, **kwargs):
+    def __init__(self, value=None, prior=None, lower=0, upper=1, **kwargs):
         self.value = value
 
         self.lower = lower
@@ -159,6 +160,8 @@ class Value:
 
         # set the prior distribution
         self.__builtin__ = True
+        self.priorf = None
+
         if prior == "uniform":
             self.priorf = uniform(loc=lower, scale=upper)
         elif prior == "normal":

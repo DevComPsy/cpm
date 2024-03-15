@@ -27,8 +27,8 @@ class Simulator:
 
     Attributes
     ----------
-    function : object
-        The simulation function to be used.
+    wrapper : Wrapper
+        The simulation wrapper to be used.
     data : object
         The data required for the simulation.
     parameters : object
@@ -47,8 +47,8 @@ class Simulator:
 
     """
 
-    def __init__(self, model=None, data=None, parameters=None):
-        self.function = model
+    def __init__(self, wrapper=None, data=None, parameters=None):
+        self.wrapper = wrapper
         self.data = data
         self.parameters = copy.deepcopy(parameters)
         if len(self.data) != len(self.parameters):
@@ -59,7 +59,7 @@ class Simulator:
             warnings.warn(
                 "The number of parameter sets and number of participants in data do not match.\nUsing the same parameters for all participants."
             )
-        self.parameter_names = self.function.parameter_names
+        self.parameter_names = self.wrapper.parameter_names
         self.simulation = []
         self.generated = []
         self.__run__ = False
@@ -73,8 +73,8 @@ class Simulator:
         experiment: A list containing the results of the simulation.
         """
         for i in range(len(self.data)):
-            self.function.reset()
-            evaluate = copy.deepcopy(self.function)
+            self.wrapper.reset()
+            evaluate = copy.deepcopy(self.wrapper)
             evaluate.data = self.data[i]
             evaluate.reset(parameters=self.parameters[i])
             evaluate.run()
@@ -127,6 +127,8 @@ class Simulator:
         results: numpy.ndarray
             An array of dictionaries containing the results of the simulation.
         """
+        if self.__run__ == False:
+            self.run()
         for i in self.simulation:
             current = []
             for j in i:

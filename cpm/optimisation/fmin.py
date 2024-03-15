@@ -9,6 +9,7 @@ import copy
 import multiprocess as mp
 
 
+# this should not be available to users
 def minimum(pars, function, data, loss, **args):
     """
     The `minimise` function calculates a metric by comparing predicted values with
@@ -150,7 +151,6 @@ class Fmin:
                 minimum,
                 x0=self.initial_guess,
                 args=(model, participant.get("observed"), loss),
-                disp=False,
                 **self.kwargs,
                 full_output=True,
             )

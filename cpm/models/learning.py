@@ -6,13 +6,13 @@ __all__ = ["DeltaRule", "SeparableRule", "QLearningRule", "KernelUpdate"]
 class DeltaRule:
     """
     DeltaRule class computes the prediction error for a given input and target value.
-    It is based on the Gluck and Bower's (1988) delta rule, an extension to Rescorla
-    and Wagner (1972), which was identical to that of Widrow and Hoff (1960).
 
     Attributes
     ----------
     alpha : float
         The learning rate.
+    zeta  : float
+        The constant fraction of the magnitude of the prediction error, also called Weber's scaling. Only used when adding noise to the prediction errors.
     input : ndarray or array_like
         The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     weights : ndarray
@@ -26,6 +26,8 @@ class DeltaRule:
     ----------
     alpha : float
         The learning rate.
+    zeta  : float
+        The constant fraction of the magnitude of the prediction error.
     weights : array-like
         The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     feedback : array-like
@@ -71,10 +73,28 @@ class DeltaRule:
     >>> delta_rule = DeltaRule(alpha=0.1, weights=weights, feedback=teacher, input=input)
     >>> delta_rule.compute()
     array([[0.03, 0.03, 0.  , 0.  ]])
+
+    References
+    ---------
+    Gluck, M. A., & Bower, G. H. (1988). From conditioning to category learning: An adaptive network model. Journal of Experimental Psychology: General, 117(3), 227–247.
+
+    Rescorla, R. A., & Wagner, A. R. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and nonreinforcement. In A. H. Black & W. F. Prokasy (Eds.), Classical conditioning II: Current research and theory (pp. 64-99). New York:Appleton-Century-Crofts.
+
+    Widrow, B., & Hoff, M. E. (1960, August). Adaptive switching circuits. In IRE WESCON convention record (Vol. 4, No. 1, pp. 96-104).
     """
 
-    def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
+    def __init__(
+        self,
+        alpha=None,
+        zeta=None,
+        weights=None,
+        feedback=None,
+        input=None,
+        **kwargs,
+    ):
         self.alpha = alpha
+        self.zeta = zeta
+
         self.weights = [[]]
         if weights is not None:
             self.weights = np.asarray(weights.copy())
@@ -84,10 +104,13 @@ class DeltaRule:
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.__run__ = False
 
     def compute(self):
         """
-        Compute the weights using the CPM learning rule.
+        Compute the weights using the delta learning rule. It is based on the
+        Gluck and Bower's (1988) delta rule, an extension to Rescorla and Wagner
+        (1972), which was identical to that of Widrow and Hoff (1960).
 
         Returns
         -------
@@ -101,6 +124,30 @@ class DeltaRule:
                 self.weights[i, j] = (
                     self.alpha * (self.teacher[i] - activations) * self.input[j]
                 )
+        self.__run__ = True
+        return self.weights
+
+    def noisy_learning_rule(self):
+        """
+        Add random noise to the weights computed from the delta learning rule as specified
+        Findling et al. (2019). It is inspired by Weber's law of intensity
+        sensation.
+
+        Returns
+        -------
+        weights: numpy.ndarray
+            The updated weights matrix.
+
+        References
+        ----------
+
+        Findling, C., Skvortsova, V., Dromnelle, R., Palminteri, S., and Wyart, V. (2019). Computational noise in reward-guided learning drives behavioral variability in volatile environments. Nature Neuroscience 22, 2066–2077
+        """
+        if not self.__run__:
+            self.compute()
+        omega = self.zeta * self.weights
+        epsilon = np.random.normal(0, omega)
+        self.weights = self.weights + epsilon
         return self.weights
 
     def reset(self):
@@ -150,8 +197,10 @@ class SeparableRule:
 
     Parameters
     -----------
-    alpha : float, optional
+    alpha : float
         The learning rate.
+    zeta : float, optional
+        The constant fraction of the magnitude of the prediction error, also called Weber's scaling.
     weights : array-like, optional
         The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     feedback : array-like, optional
@@ -165,6 +214,8 @@ class SeparableRule:
     -----------
     alpha : float
         The learning rate.
+    zeta  : float
+        The constant fraction of the magnitude of the prediction error, also called Weber's scaling.
     input : ndarray
         The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     weights : ndarray
@@ -194,8 +245,12 @@ class SeparableRule:
 
     """
 
-    def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
+    def __init__(
+        self, alpha=None, zeta=None, weights=None, feedback=None, input=None, **kwargs
+    ):
         self.alpha = alpha
+        self.zeta = zeta
+
         self.weights = [[]]
         if weights is not None:
             self.weights = weights.copy()
@@ -205,6 +260,7 @@ class SeparableRule:
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.__run__ = False
 
     def compute(self):
         """
@@ -220,6 +276,30 @@ class SeparableRule:
                 self.weights[i, j] = (
                     self.alpha * (self.teacher[i] - self.weights[i, j]) * self.input[j]
                 )
+        self.__run__ = True
+        return self.weights
+
+    def noisy_learning_rule(self):
+        """
+        Add random noise to the weights computed from the delta learning rule as specified
+        Findling et al. (2019). It is inspired by Weber's law of intensity
+        sensation.
+
+        Returns
+        -------
+        weights: numpy.ndarray
+            The updated weights matrix.
+
+        References
+        ----------
+
+        Findling, C., Skvortsova, V., Dromnelle, R., Palminteri, S., and Wyart, V. (2019). Computational noise in reward-guided learning drives behavioral variability in volatile environments. Nature Neuroscience 22, 2066–2077
+        """
+        if not self.__run__:
+            self.compute()
+        omega = self.zeta * self.weights
+        epsilon = np.random.normal(0, omega)
+        self.weights = self.weights + epsilon
         return self.weights
 
     def reset(self):

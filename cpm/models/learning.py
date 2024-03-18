@@ -55,14 +55,17 @@ class DeltaRule:
     Examples
     --------
     >>> import numpy as np
-    >>> from cpm.components.learning import DeltaRule
+    >>> from cpm.models.learning import DeltaRule
     >>> weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     >>> teacher = np.array([1, 0])
     >>> input = np.array([1, 1, 0])
-    >>> delta_rule = DeltaRule(alpha=0.1, weights=weights, feedback=teacher, input=input)
+    >>> delta_rule = DeltaRule(alpha=0.1, zeta=0.5, weights=weights, feedback=teacher, input=input)
     >>> delta_rule.compute()
-    array([[ 0.04,  0.04,  0.  ],
-           [-0.15, -0.15, -0.  ]])
+    array([[ 0.07,  0.07,  0.  ],
+           [-0.09, -0.09, -0.  ]])
+    >>> delta_rule.noisy_learning()
+    array([[ 0.05755793,  0.09214091,  0.],
+           [-0.08837513, -0.1304325 ,  0.]])
 
     This implementation generalises to n-dimensional weight matrices, which means
     that it can be applied to both single- and multi-outcome learning paradigms.
@@ -145,7 +148,7 @@ class DeltaRule:
         """
         if not self.__run__:
             self.compute()
-        omega = self.zeta * self.weights
+        omega = np.abs(self.zeta * self.weights)
         epsilon = np.random.normal(0, omega)
         self.weights = self.weights + epsilon
         return self.weights
@@ -297,7 +300,7 @@ class SeparableRule:
         """
         if not self.__run__:
             self.compute()
-        omega = self.zeta * self.weights
+        omega = np.abs(self.zeta * self.weights)
         epsilon = np.random.normal(0, omega)
         self.weights = self.weights + epsilon
         return self.weights

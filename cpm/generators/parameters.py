@@ -1,6 +1,15 @@
 import numpy as np
 import copy
-from scipy.stats import truncnorm, truncexpon, uniform, beta, gamma
+from scipy.stats import (
+    truncnorm,
+    truncexpon,
+    uniform,
+    beta,
+    gamma,
+    lognorm,
+    loggamma,
+    loguniform,
+)
 
 
 class Parameters:
@@ -399,3 +408,32 @@ def _logtransform(value, lower, upper):
 
 def _logexptransform(value, lower, upper):
     return lower + (upper - lower) / (1 + np.exp(-value))
+
+
+#########################################
+# FIXME: This is not exactly what we want
+class LogParameters(Parameters):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.log_transform()
+
+    def log_transform(self):
+        for _, value in self.__dict__.items():
+            if value.priorf is not None and isinstance(value, Value):
+                value.value = _logtransform(value.value, value.lower, value.upper)
+                if value.priorf.dist.name == "truncnorm":
+                    value.priorf = truncnorm(
+                        s=value.priorf.std(), scale=np.exp(value.priorf.mean())
+                    )
+                elif value.priorf.dist.name == "beta":
+                    value.priorf = beta(a=value.priorf.args[0], b=value.priorf.args[1])
+                elif value.priorf.dist.name == "gamma":
+                    value.priorf = loggamma(a=value.priorf.args[0])
+                elif value.priorf.dist.name == "uniform":
+                    value.priorf = loguniform(a=value.upper, b=value.lower)
+
+    def log_exp_transform(self):
+        for _, value in self.__dict__.items():
+            if isinstance(value, Value):
+                value.value = _logexptransform(value.value, value.lower, value.upper)
+        return self.__dict__

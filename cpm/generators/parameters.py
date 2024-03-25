@@ -402,37 +402,63 @@ class Value:
         self.fill(new)
 
 
-def _logtransform(value, lower, upper):
-    return np.log((value - lower) / (upper - value))
-
-
-def _logexptransform(value, lower, upper):
-    return lower + (upper - lower) / (1 + np.exp(-value))
-
-
-#########################################
-# FIXME: This is not exactly what we want
 class LogParameters(Parameters):
+    """
+    A class that represents parameters with logarithmic transformations.
+
+    This class inherits from the `Parameters` class and provides methods to apply logarithmic transformations to the values of the parameters.
+
+    Attributes
+    ----------
+    ...
+
+    Methods
+    -------
+    log_transform()
+        Apply a logarithmic transformation to the values of the parameters.
+    log_exp_transform()
+        Apply a logarithmic exponential transformation to the values of the parameters.
+
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.log_transform()
 
+    def _logtransform(value, lower, upper):
+        return np.log((value - lower) / (upper - value))
+
+    def _logexptransform(value, lower, upper):
+        return lower + (upper - lower) / (1 + np.exp(-value))
+
     def log_transform(self):
+        """
+        Apply a logarithmic transformation to the values of the parameters.
+
+        This method iterates over the attributes of the object and checks if the attribute has a prior function and is an instance of the Value class. If both conditions are met, the value of the attribute is transformed using the logarithmic transformation function.
+
+        """
+
         for _, value in self.__dict__.items():
             if value.priorf is not None and isinstance(value, Value):
                 value.value = _logtransform(value.value, value.lower, value.upper)
-                if value.priorf.dist.name == "truncnorm":
-                    value.priorf = truncnorm(
-                        s=value.priorf.std(), scale=np.exp(value.priorf.mean())
-                    )
-                elif value.priorf.dist.name == "beta":
-                    value.priorf = beta(a=value.priorf.args[0], b=value.priorf.args[1])
-                elif value.priorf.dist.name == "gamma":
-                    value.priorf = loggamma(a=value.priorf.args[0])
-                elif value.priorf.dist.name == "uniform":
-                    value.priorf = loguniform(a=value.upper, b=value.lower)
 
     def log_exp_transform(self):
+        """
+        Apply a logarithmic exponential transformation to the values of the parameters.
+
+        This method iterates over the attributes of the object and checks if they are instances of the `Value` class.
+        If an attribute is an instance of `Value`, the `value` attribute of that instance is transformed using the
+        logarithmic exponential transformation function. The transformed value is then assigned
+        back to the `value` attribute.
+
+        Returns
+        -------
+        dict:
+            A dictionary containing the updated attributes of the object.
+
+        """
+
         for _, value in self.__dict__.items():
             if isinstance(value, Value):
                 value.value = _logexptransform(value.value, value.lower, value.upper)

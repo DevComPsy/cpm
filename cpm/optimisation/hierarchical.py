@@ -25,6 +25,7 @@ class Hierarchical:
         self.simulator = copy.deepcopy(simulator)
         self.data = data
         self.parameters = parameters
+        # bounds here should include mean and std for all parameters
         self.bounds = bounds
         self.loss = loss
         self.iteration = iteration
@@ -39,6 +40,7 @@ class Hierarchical:
             self.bounds = bounds
 
     def minimise(self, pars, **args):
+        # TODO: update means and stds for each parameters
         parameters = []
         observations = []
         for i in len(self.data):
@@ -61,4 +63,23 @@ class Hierarchical:
 
     def optimise(self):
         for i in self.chain:
+            # NOTE: palceholders
+            self.optimise(
+                minimise, self.bounds, self.iteration, self.tolerance, **self.kwargs
+            )
+            self.fit.append([])
+            self.details.append([])
             pass
+
+    def export(self):
+        """
+        Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas DataFrame containing the optimization results and fitted parameters.
+        """
+        output = utils.detailed_pandas_compiler(self.details)
+        output.reset_index(drop=True, inplace=True)
+        return output

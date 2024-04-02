@@ -1,10 +1,50 @@
+from . import minimise
+from . import utils
+from ..generators import Simulator, Wrapper
+
 from scipy.optimize import fmin
 import numpy as np
 import pandas as pd
 import copy
-from . import minimise
-from . import utils
-from ..generators import Simulator, Wrapper
+import multiprocess as mp
+
+
+def minimum(pars, function, data, loss, **args):
+    """
+    The `minimise` function calculates a metric by comparing predicted values with
+    observed values.
+
+    Parameters
+    ----------
+    pars
+        The `pars` parameter is a dictionary that contains the parameters for the
+        function that needs to be minimized.
+    function
+        The `function` parameter is the function that needs to be minimized.
+    data
+        The `data` parameter is the data that is used to compare the predicted values
+        with the observed values.
+    loss
+        The `loss` parameter is the loss function that is used to calculate the metric
+        value.
+    args
+        The `args` parameter is a dictionary that contains additional parameters that
+        are used in the loss function.
+
+    Returns
+    -------
+        The metric value is being returned.
+
+    """
+    function.reset(pars)
+    function.run()
+    predicted = function.dependent
+    observed = copy.deepcopy(data)
+    metric = loss(predicted, observed, **args)
+    del predicted, observed
+    if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+        metric = 1e10
+    return metric
 
 
 class Fmin:
@@ -17,8 +57,13 @@ class Fmin:
         The model to be optimized.
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
-    loss : function
+    minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
+    parallel : bool
+        Whether to use parallel processing. Default is `False`.
+    cl : int
+        The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
+        If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
 
@@ -46,7 +91,7 @@ class Fmin:
 
     Notes
     -----
-    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary should also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
+    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
     """
 
     def __init__(
@@ -55,9 +100,11 @@ class Fmin:
         data=None,
         initial_guess=None,
         minimisation=minimise.LogLikelihood.continuous,
-        **kwargs
+        cl=None,
+        parallel=False,
+        **kwargs,
     ):
-        self.function = copy.deepcopy(model)
+        self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
         self.initial_guess = initial_guess
@@ -67,7 +114,7 @@ class Fmin:
         self.parameters = []
         self.participant = data[0]
         if isinstance(model, Wrapper):
-            self.parameter_names = self.function.parameter_names
+            self.parameter_names = self.model.parameter_names
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."
@@ -76,33 +123,39 @@ class Fmin:
             "n": len(self.participant.get("observed")),
             "k": len(self.initial_guess),
         }
+        if cl is not None:
+            self.cl = cl
+        if cl is None and parallel:
+            self.cl = mp.cpu_count()
+        if cl is None and not parallel:
+            self.cl = 2
 
-    def minimise(self, pars, **args):
-        """
-        The `minimise` function calculates a metric by comparing predicted values with
-        observed values.
+    # def minimise(self, pars, **args):
+    #     """
+    #     The `minimise` function calculates a metric by comparing predicted values with
+    #     observed values.
 
-        Parameters
-        ----------
-        pars
-            The `pars` parameter is a dictionary that contains the parameters for the
-            function that needs to be minimized.
+    #     Parameters
+    #     ----------
+    #     pars
+    #         The `pars` parameter is a dictionary that contains the parameters for the
+    #         function that needs to be minimized.
 
-        Returns
-        -------
-            The metric value is being returned.
+    #     Returns
+    #     -------
+    #         The metric value is being returned.
 
-        """
-        evaluated = copy.deepcopy(self.function)
-        evaluated.reset(pars)
-        evaluated.run()
-        predicted = evaluated.dependent
-        observed = self.participant.get("observed")
-        metric = self.loss(predicted, observed, **self.auxiliary)
-        del predicted, observed
-        if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
-            metric = 1e10
-        return metric
+    #     """
+    #     evaluated = copy.deepcopy(self.function)
+    #     evaluated.reset(pars)
+    #     evaluated.run()
+    #     predicted = evaluated.dependent
+    #     observed = self.participant.get("observed")
+    #     metric = self.loss(predicted, observed, **self.auxiliary)
+    #     del predicted, observed
+    #     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+    #         metric = 1e10
+    #     return metric
 
     def optimise(self):
         """
@@ -119,25 +172,32 @@ class Fmin:
                 out[keys[i]] = x[i]
             return out
 
-        for i in range(len(self.data)):
-            self.participant = self.data[i]
-            self.function.data = self.participant
-            # objective = copy.deepcopy(self.minimise)
+        def __task(participant, **args):
             result = fmin(
-                self.minimise,
+                minimum,
                 x0=self.initial_guess,
+                args=(model, participant.get("observed"), loss),
                 disp=False,
                 **self.kwargs,
-                full_output=True
+                full_output=True,
             )
-            # add the parameters to the list
-            self.details.append(__unpack(copy.deepcopy(result)))
-            parameters = {}
+            return result
+
+        loss = self.loss
+        model = self.model
+        pool = mp.Pool(self.cl)
+        results = pool.map(__task, self.data)
+        pool.close()
+        del pool
+        self.details = results
+
+        parameters = {}
+        for result in results:
             for i in range(len(self.initial_guess)):
                 parameters[self.parameter_names[i]] = result[0][i]
             self.parameters.append(parameters)
-            # add the results to the list
-            self.fit.append({"parameters": result[0], "fun": copy.deepcopy(result[1])})
+            self.fit.append(__unpack(result))
+
         return None
 
     def reset(self):
@@ -145,7 +205,7 @@ class Fmin:
         Resets the optimization results and fitted parameters.
 
         Returns:
-        - None
+            None
         """
         self.fit = []
         self.parameters = []

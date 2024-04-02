@@ -10,7 +10,7 @@ from .utils import simulation_export
 
 class Wrapper:
     """
-    A wrapper class for a model in the CPM toolbox.
+    A `Wrapper` class for a model function in the CPM toolbox. It is designed to run a model for a **single** experiment (participant) and store the output in a format that can be used for further analysis.
 
     Parameters
     ----------
@@ -65,8 +65,8 @@ class Wrapper:
         self.simulation = []
         self.data = data
 
-        self.shape = [(np.array(v).shape) for k, v in self.data.items() if k != "ppt"]
-        self.__len__ = np.max(self.shape)
+        self.shape = self.data.get("trials").shape
+        self.__len__ = self.shape[0]
         self.dependent = []
         self.parameter_names = list(parameters.keys())
 

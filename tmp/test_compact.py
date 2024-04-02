@@ -2,6 +2,7 @@
 Tests for `cpm` module.
 """
 
+# %%
 import numpy as np
 import pandas as pd
 import time
@@ -10,14 +11,18 @@ from dask import dataframe as dd
 from dask import array as da
 from dask import delayed
 
-x = da.from_array(np.random.uniform(0, 1, (100, 5)))
+# %%
+x = dd.from_array(np.random.uniform(0, 1, (100, 5)))
 
 x.compute()
+
+# %%
 
 y = dd.from_array(np.random.uniform(0, 1, (100, 5)))
 
 y.compute()
 
+# %%
 
 one = dd.concat([y, x])
 
@@ -32,6 +37,7 @@ for k in range(100):
     big.append(ppt)
 
 ###############################################################################
+# %%
 
 
 @delayed
@@ -60,6 +66,8 @@ def convert(session):
     return delayed(dd.concat)(jobs, axis=0)
 
 
+# %%
+
 start = time.time()
 tracking = 0
 for k in big:
@@ -73,12 +81,49 @@ for k in big:
         all = single.compute()
     tracking += 1
 
+# %%
+
 all.compute()
 
 end = time.time()
 print(f"{np.round((end - start)/60, 2)} minutes")
 
-output = all.compute()
-output
+# %%
 
-all.head(100, 15)
+import dask
+
+
+# %%
+def ros(fun, pars):
+    return fun(pars)
+
+
+def inin(pars):
+    return pars**2
+
+
+out = []
+for i in range(10):
+    # pp = dask.delayed(float)(i)
+    # tt = dask.delayed(inin)(i)
+    ff = dask.delayed(ros)(inin, i)
+    out.append(ff)
+
+# %%
+total = dask.delayed()(dask.compute)(out)
+total.compute()
+
+# %%
+
+from multiprocess import Pool
+import numpy as np
+
+
+def f(x):
+    return x * x * x**x
+
+
+input = Pool(8).map(f, np.random.uniform(0, 10, (2000000, 10)))
+
+
+# %%

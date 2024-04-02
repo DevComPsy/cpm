@@ -170,8 +170,8 @@ class ProspectUtility:
 
     Parameters
     ----------
-    outcomes : numpy.ndarray
-        The values of potential outcomes for each choice option.
+    magnitude : numpy.ndarray
+        The magnitudes of potential outcomes for each choice option.
         Should be a nested array where the outer dimension represents trials,
         followed by options within each trial, followed by potential outcomes within each option.
     probabilities : numpy.ndarray
@@ -196,8 +196,8 @@ class ProspectUtility:
 
     Attributes
     ----------
-    outcomes : numpy.ndarray
-        The values of potential outcomes for each choice option, for each trial.
+    magnitudes : numpy.ndarray
+        The magnitudes of potential outcomes for each choice option, for each trial.
         Should be a nested array where the outer dimension represents trials,
         followed by options within each trial, followed by potential outcomes within each option.
     probabilities : numpy.ndarray
@@ -238,7 +238,7 @@ class ProspectUtility:
         U = sum(w(p) * u(x)),
 
     where w is a weighting function of the probability p of a potential outcome,
-    and u is the utility function of the value x of a potential outcome.
+    and u is the utility function of the magnitude x of a potential outcome.
     These functions are defined as follows (equations 6 and 5 respectively in Tversky & Kahneman, 1992, pp. 309):
 
         w(p) = p^beta / (p^beta + (1 - p)^beta)^(1/beta),
@@ -252,7 +252,7 @@ class ProspectUtility:
 
     Several other definitions of the weighting function have been proposed in the literature,
     most notably in Prelec (1998) and Gonzalez & Wu (1999).
-    Prelec (equation 3.2, 1999, pp. 503) proposed the following definition:
+    Prelec (equation 3.2, 1998, pp. 503) proposed the following definition:
 
         w(p) = exp(-delta * (-log(p))^beta),
 
@@ -266,7 +266,7 @@ class ProspectUtility:
     >>> vals = np.array([np.array([1, 40]), np.array([10])], dtype=object)
     >>> probs = np.array([np.array([0.95, 0.05]), np.array([1])], dtype=object)
     >>> prospect = ProspectUtility(
-            outcomes=vals, probabilities=probs, alpha_pos = 0.85, beta = 0.9
+            magnitudes=vals, probabilities=probs, alpha_pos = 0.85, beta = 0.9
         )
     >>> prospect.compute()
     array([2.44583162, 7.07945784])
@@ -282,7 +282,7 @@ class ProspectUtility:
 
     def __init__(
         self,
-        outcomes=None,
+        magnitudes=None,
         probabilities=None,
         alpha_pos=1,
         alpha_neg=None,
@@ -292,11 +292,11 @@ class ProspectUtility:
         weighting="tk",
         **kwargs,
     ):
-        self.outcomes = np.asarray(outcomes.copy())
-        self.outcomes = np.array(
+        self.magnitudes = np.asarray(magnitudes.copy())
+        self.magnitudes = np.array(
             [
-                np.array(self.outcomes[i], dtype=float)
-                for i in range(self.outcomes.shape[0])
+                np.array(self.magnitudes[i], dtype=float)
+                for i in range(self.magnitudes.shape[0])
             ],
             dtype=object,
         )
@@ -320,7 +320,7 @@ class ProspectUtility:
         self.beta = beta
         self.delta = delta
 
-        self.shape = self.outcomes.shape
+        self.shape = self.magnitudes.shape
         if self.shape != self.probabilities.shape:
             raise ValueError("outcomes and probabilities do not have the same shape.")
 
@@ -369,7 +369,7 @@ class ProspectUtility:
         """
         # Determine the utilities of the potential outcomes, for each choice option and each trial.
         self.utilities = np.array(
-            [self.__utility(x=self.outcomes[j]) for j in range(self.shape[0])],
+            [self.__utility(x=self.magnitudes[j]) for j in range(self.shape[0])],
             dtype=object,
         )
         # Determine the weights of the potential outcomes, for each choice option and each trial.
@@ -387,14 +387,14 @@ class ProspectUtility:
         return self.compute()
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+        return f"{self.__class__.__name__}(magnitudes={self.magnitudes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
 
     def __str__(self):
-        return f"{self.__class__.__name__}(outcomes={self.outcomes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+        return f"{self.__class__.__name__}(magnitudes={self.magnitudes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
 
     def config(self):
         config = {
-            "outcomes": self.outcomes,
+            "magnitudes": self.magnitudes,
             "probabilities": self.probabilities,
             "alpha_pos": self.alpha_pos,
             "alpha_neg": self.alpha_neg,

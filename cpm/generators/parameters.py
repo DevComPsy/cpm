@@ -206,7 +206,6 @@ class Value:
         **kwargs,
     ):
         self.value = value
-
         self.lower = lower
         self.upper = upper
 

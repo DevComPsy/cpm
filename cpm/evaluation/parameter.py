@@ -17,7 +17,7 @@ class ParameterRecovery:
 
     Attributes
     ----------
-    model : [cpm.generators.Simulator][cpm.generators.Simulator]
+    model : Simulator
         The simulator object.
     template : object
         The template parameter.
@@ -41,7 +41,7 @@ class ParameterRecovery:
 
     Parameters
     ----------
-    model : [cpm.generators.Simulator][cpm.generators.Simulator]
+    model : Simulator
         The simulator object.
     optimiser : object
         The optimisation algorithm.

@@ -33,7 +33,7 @@ class Hierarchical(Simulator):
     Returns
     -------
     simulator : Simulator
-        A Simulator object.
+        A Simulator object with the specified model converted into a hierarchical one.
 
     """
 
@@ -41,6 +41,7 @@ class Hierarchical(Simulator):
         super().__init__(model=model, data=data, parameters=parameters)
 
         # TODO: create parameters for each ppt sampled from Parameters
+        # TODO: this should be ideally trigerred at each run of the model?
         if isinstance(parameters, Parameters):
             self.parameters = [parameters.sample() for _ in range(len(data))]
         else:

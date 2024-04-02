@@ -425,12 +425,6 @@ class LogParameters(Parameters):
         super().__init__(**kwargs)
         self.log_transform()
 
-    def _logtransform(value, lower, upper):
-        return np.log((value - lower) / (upper - value))
-
-    def _logexptransform(value, lower, upper):
-        return lower + (upper - lower) / (1 + np.exp(-value))
-
     def log_transform(self):
         """
         Apply a logarithmic transformation to the values of the parameters.
@@ -438,6 +432,16 @@ class LogParameters(Parameters):
         This method iterates over the attributes of the object and checks if the attribute has a prior function and is an instance of the Value class. If both conditions are met, the value of the attribute is transformed using the logarithmic transformation function.
 
         """
+
+        def _logtransform(value, lower, upper):
+            if value < lower or value > upper:
+                raise ValueError("Value out of bounds.")
+            elif value == lower:
+                return -np.inf
+            elif value == upper:
+                return np.inf
+            else:
+                return np.log(value / (1 - value))
 
         for _, value in self.__dict__.items():
             if value.priorf is not None and isinstance(value, Value):
@@ -459,7 +463,43 @@ class LogParameters(Parameters):
 
         """
 
-        for _, value in self.__dict__.items():
-            if isinstance(value, Value):
-                value.value = _logexptransform(value.value, value.lower, value.upper)
-        return self.__dict__
+        output = []
+
+        def _logexptransform(value):
+            return 1 / (1 + np.exp(-value))
+
+        out = {}
+
+        for key, value in self.__dict__.items():
+            if isinstance(value, Value) and value.priorf is not None:
+                out[key] = _logexptransform(value.value)
+        return out
+
+    def update(self, **kwargs):
+        """
+        Update the parameters with new values.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments representing the parameters.
+
+        """
+
+        def _logtransform(value, lower, upper):
+            if value < lower or value > upper:
+                raise ValueError("Value out of bounds.")
+            elif value == lower:
+                return -np.inf
+            elif value == upper:
+                return np.inf
+            else:
+                return np.log(value / (1 - value))
+
+        for key, value in kwargs.items():
+            if key in self.__dict__:
+                self.__dict__[key].fill(
+                    _logtransform(
+                        value, self.__dict__[key].lower, self.__dict__[key].upper
+                    )
+                )

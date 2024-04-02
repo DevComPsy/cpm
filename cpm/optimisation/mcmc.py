@@ -48,7 +48,9 @@ def minimum(pars, function, data, loss, **args):
 
 
 class ExpectationMaximisation:
-    """ """
+    """
+    Implements an Expectation-Maximisation algorithm for the subject-level parameter estimation.
+    """
 
     def __init__(
         self,
@@ -59,6 +61,7 @@ class ExpectationMaximisation:
         chain=4,
         iteration=1000,
         tolerance=1e-6,
+        population=100,
         **kwargs
     ):
         self.function = copy.deepcopy(model)
@@ -67,29 +70,37 @@ class ExpectationMaximisation:
         self.chain = chain
         self.tolerance = tolerance
         self.iteration = iteration
+        self.population = population
         self.kwargs = kwargs
         self.fit = []
         self.details = []
 
     def run(self):
-        for i in self.chain:
-            tolerate = True
+        for ppt in self.data:
 
-            while tolerate:
-                # NOTE: placeholders
-                proposal = self.function.parameters.sample()
-                proposal = np.array(list(proposal))
-                result = minimise(
-                    minimum, proposal, self.function, self.data, self.loss
-                )
-                ll = self.function.parameters.prior() + result
+            for i in self.chain:
+                tolerate = True
+                old = 0
+
+                while tolerate:
+
+                    # NOTE: placeholders
+                    proposal = self.function.parameters.sample()
+                    proposal = np.array(list(proposal))
+                    result = minimum(proposal, self.function, ppt, self.loss)
+                    ll = self.function.parameters.prior() + result
+                    tolerate = abs(ll - old) > self.tolerance
+                    old = ll
+                pass
             pass
+
+    def burnin(self):
         pass
 
 
 class EmpiricalBayes:
     """
-    Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model.
+    Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations.
     """
 
     def __init__(

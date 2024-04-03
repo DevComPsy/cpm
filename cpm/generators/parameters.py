@@ -126,7 +126,7 @@ class Parameters:
             prior = np.log(prior)
         return prior
 
-    def sample(self):
+    def sample(self, size=1, jump=False):
         """
         Sample and update parameter valuesthe parameters from their prior distribution.
 
@@ -135,12 +135,17 @@ class Parameters:
         sample : dict
             A dictionary of the sampled parameters.
         """
-        sample = {}
-        for key, value in self.__dict__.items():
-            if value.priorf is not None:
-                sample[key] = value.priorf.rvs()
-        self.update(**sample)
-        return sample
+        output = []
+        for i in range(size):
+            sample = {}
+            for key, value in self.__dict__.items():
+                if value.priorf is not None:
+                    if jump:
+                        sample[key] = value.priorf.rvs(loc=value.value)
+                    else:
+                        sample[key] = value.priorf.rvs()
+            output.append(sample)
+        return output
 
 
 class Value:
@@ -388,7 +393,7 @@ class Value:
         else:
             return self.priorf.pdf(self.value)
 
-    def sample(self):
+    def sample(self, size=1, jump=False):
         """
         Sample and update the parameter value from its prior distribution.
 
@@ -397,8 +402,12 @@ class Value:
         sample : float
             A sample from the prior distribution of the parameter.
         """
-        new = self.priorf.rvs()
-        self.fill(new)
+        if jump:
+            new = self.priorf.rvs(loc=self.value)
+            self.fill(new)
+        else:
+            new = self.priorf.rvs()
+            self.fill(new)
 
 
 class LogParameters(Parameters):

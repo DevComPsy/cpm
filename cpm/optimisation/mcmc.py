@@ -1,14 +1,11 @@
 import numpy as np
-import copy
 import pandas as pd
-import numpy as np
 import copy
 from . import minimise
 from . import utils
-from ..generators import Simulator, Wrapper
 
 
-def minimum(pars, function, data, loss, **args):
+def minimum(pars, function, data, loss, prior=True, **args):
     """
     The `minimise` function calculates a metric by comparing predicted values with
     observed values.
@@ -43,11 +40,13 @@ def minimum(pars, function, data, loss, **args):
     del predicted, observed
     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
         metric = 1e10
-    prior = function.parameters.prior()
-    return metric + prior
+    llprior = 0
+    if prior:
+        llprior = function.parameters.prior()
+    return metric + llprior
 
 
-class ExpectationMaximisation:
+class MCMC:
     """
     Implements an Expectation-Maximisation algorithm for the subject-level parameter estimation.
     """
@@ -81,77 +80,39 @@ class ExpectationMaximisation:
             for i in self.chain:
                 tolerate = True
                 old = 0
-
+                iteration = 0
                 while tolerate:
 
-                    # NOTE: placeholders
-                    proposal = self.function.parameters.sample()
-                    proposal = np.array(list(proposal))
-                    result = minimum(proposal, self.function, ppt, self.loss)
-                    ll = self.function.parameters.prior() + result
-                    tolerate = abs(ll - old) > self.tolerance
-                    old = ll
+                    # Generate a proposal distribution and evaluate the likelihood
+                    while True:
+                        # initialise the parameters
+                        proposal = self.function.parameters.sample(
+                            size=self.population, jump=True
+                        )
+                        results = []
+                        for pars in proposal:
+                            result = minimum(pars, self.function, ppt, self.loss)
+                            results.append(result)
+                            pass
+                        argmax = np.argmax(results)
+                        if proposal[argmax] > old:
+                            break
+
+                    # Check for convergence
+                    if np.abs(proposal[argmax] - old) < self.tolerance:
+                        tolerate = False
+
+                    ## update variables
+                    old = proposal[argmax]
+                    self.fit.append(proposal[argmax], results[argmax])
+                    self.function.parameters.update(**proposal[argmax])
+
+                    if not tolerate or iteration == self.iteration:
+                        self.maxiter = iteration
+                        break
+
                 pass
             pass
 
     def burnin(self):
         pass
-
-
-class EmpiricalBayes:
-    """
-    Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations.
-    """
-
-    def __init__(
-        self,
-        optimiser=None,
-        parameters=None,
-        data=None,
-        bounds=None,
-        loss=None,
-        iteration=1000,
-        tolerance=1e-6,
-        chain=4,
-        **kwargs
-    ):
-        self.function = copy.deepcopy(optimiser.function)
-        self.optimiser = copy.deepcopy(optimiser)
-        self.data = data
-        self.parameters = parameters
-        # bounds here should include mean and std for all parameters
-        self.bounds = bounds
-        self.loss = loss
-        self.iteration = iteration
-        self.tolerance = tolerance
-        self.chain = chain
-        self.kwargs = kwargs
-        self.fit = []
-        self.details = []
-        if hasattr(simulator, "bounds"):
-            self.bounds = simulator.bounds
-        else:
-            self.bounds = bounds
-
-    def optimise(self):
-        for i in self.chain:
-            # NOTE: palceholders
-            self.optimise(
-                minimise, self.bounds, self.iteration, self.tolerance, **self.kwargs
-            )
-            self.fit.append([])
-            self.details.append([])
-            pass
-
-    def export(self):
-        """
-        Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
-
-        Returns
-        -------
-        pandas.DataFrame
-            A pandas DataFrame containing the optimization results and fitted parameters.
-        """
-        output = utils.detailed_pandas_compiler(self.details)
-        output.reset_index(drop=True, inplace=True)
-        return output

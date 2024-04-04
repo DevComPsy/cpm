@@ -5,47 +5,6 @@ from . import minimise
 from . import utils
 
 
-def minimum(pars, function, data, loss, prior=True, **args):
-    """
-    The `minimise` function calculates a metric by comparing predicted values with
-    observed values.
-
-    Parameters
-    ----------
-    pars
-        The `pars` parameter is a dictionary that contains the parameters for the
-        function that needs to be minimized.
-    function
-        The `function` parameter is the function that needs to be minimized.
-    data
-        The `data` parameter is the data that is used to compare the predicted values
-        with the observed values.
-    loss
-        The `loss` parameter is the loss function that is used to calculate the metric
-        value.
-    args
-        The `args` parameter is a dictionary that contains additional parameters that
-        are used in the loss function.
-
-    Returns
-    -------
-        The metric value is being returned.
-
-    """
-    function.reset(pars)
-    function.run()
-    predicted = function.dependent
-    observed = copy.deepcopy(data)
-    metric = loss(predicted, observed, negative=False, **args)
-    del predicted, observed
-    if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
-        metric = 1e10
-    llprior = 0
-    if prior:
-        llprior = function.parameters.prior()
-    return metric + llprior
-
-
 class EmpiricalBayes:
     """
     Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations.
@@ -83,13 +42,18 @@ class EmpiricalBayes:
             self.bounds = bounds
         self.prior = prior
 
+    def step(self):
+        self.optimiser.run()
+
     def optimise(self):
-        for i in self.chain:
-            self.optimise(
-                minimise, self.bounds, self.iteration, prior=self.prior, **self.kwargs
-            )
-            self.fit.append([])
-            self.details.append([])
+        for chain in self.chain:
+            # TODO: prior setups
+            for iteration in range(self.iteration):
+                parameters, hessian, details = self.step()
+                self.fit.append(parameters)
+                self.details.append(details)
+
+            # TODO: update group-level means and stds
             pass
 
     def export(self):

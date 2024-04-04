@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
+import numdifftools as nd
 
 
 def minimum(pars, function, data, loss, **args):
@@ -154,6 +155,10 @@ class Fmin:
                 **self.kwargs,
                 full_output=True,
             )
+            hessian = nd.Hessian(minimum)(
+                result["xopt"], model, participant.get("observed"), loss
+            )
+            result["hessian"] = hessian
             return result
 
         loss = self.loss

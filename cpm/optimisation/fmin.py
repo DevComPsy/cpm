@@ -130,33 +130,6 @@ class Fmin:
         if cl is None and not parallel:
             self.cl = 2
 
-    # def minimise(self, pars, **args):
-    #     """
-    #     The `minimise` function calculates a metric by comparing predicted values with
-    #     observed values.
-
-    #     Parameters
-    #     ----------
-    #     pars
-    #         The `pars` parameter is a dictionary that contains the parameters for the
-    #         function that needs to be minimized.
-
-    #     Returns
-    #     -------
-    #         The metric value is being returned.
-
-    #     """
-    #     evaluated = copy.deepcopy(self.function)
-    #     evaluated.reset(pars)
-    #     evaluated.run()
-    #     predicted = evaluated.dependent
-    #     observed = self.participant.get("observed")
-    #     metric = self.loss(predicted, observed, **self.auxiliary)
-    #     del predicted, observed
-    #     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
-    #         metric = 1e10
-    #     return metric
-
     def optimise(self):
         """
         Performs the optimization process.

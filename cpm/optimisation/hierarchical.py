@@ -8,15 +8,22 @@ from . import utils
 class EmpiricalBayes:
     """
     Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations.
+
+    Parameters
+    ----------
+    optimiser : object
+        The initialized Optimiser object.
+    population_parameters : list
+        A list of the group-level parameters that will be optimised.
+
     """
 
     def __init__(
         self,
         optimiser=None,
-        parameters=None,
+        population_parameters=None,
         data=None,
         bounds=None,
-        loss=None,
         iteration=1000,
         tolerance=1e-6,
         chain=4,
@@ -26,13 +33,11 @@ class EmpiricalBayes:
         self.function = copy.deepcopy(optimiser.function)
         self.optimiser = copy.deepcopy(optimiser)
         self.data = data
-        self.parameters = parameters
+        self.pop_parameters = population_parameters
         # bounds here should include mean and std for all parameters
-        self.bounds = bounds
-        self.loss = loss
-        self.iteration = iteration
-        self.tolerance = tolerance
-        self.chain = chain
+        self.iteration = iteration  # maximum number of iterations
+        self.tolerance = tolerance  # tolerance for convergence
+        self.chain = chain  # number of random parameter initialisations
         self.kwargs = kwargs
         self.fit = []
         self.details = []
@@ -44,6 +49,7 @@ class EmpiricalBayes:
 
     def step(self):
         self.optimiser.run()
+        # TODO: get parameters, hessian, and details
 
     def optimise(self):
         for chain in self.chain:

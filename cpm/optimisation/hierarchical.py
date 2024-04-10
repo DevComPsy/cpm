@@ -3,6 +3,7 @@ import pandas as pd
 import copy
 from . import minimise
 from . import utils
+from ..generators import Parameters, LogParameters
 
 
 class EmpiricalBayes:
@@ -12,7 +13,7 @@ class EmpiricalBayes:
     Parameters
     ----------
     optimiser : object
-        The initialized Optimiser object.
+        The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.
     population_parameters : list
         A list of the group-level parameters that will be optimised.
 
@@ -49,15 +50,20 @@ class EmpiricalBayes:
 
     def step(self):
         self.optimiser.run()
-        # TODO: get parameters, hessian, and details
+        hessian = []
+        for n in self.optimiser.details:
+            hessian.append(n.get("hessian"))
+        hessian = np.array(hessian)
+        return self.optimiser.parameters, hessian, self.optimiser.details
 
     def optimise(self):
         for chain in self.chain:
-            # TODO: prior setups
+            # TODO: prior setups, calculate group-level means and stds
             for iteration in range(self.iteration):
                 parameters, hessian, details = self.step()
-                self.fit.append(parameters)
-                self.details.append(details)
+                self.fit.append(copy.deepcopy(parameters))
+                self.details.append(copy.deepcopy(details))
+                self.optimiser.reset()
 
             # TODO: update group-level means and stds
             pass

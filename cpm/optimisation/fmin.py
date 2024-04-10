@@ -10,7 +10,7 @@ import multiprocess as mp
 import numdifftools as nd
 
 
-def minimum(pars, function, data, loss, **args):
+def minimum(pars, function, data, loss, prior=False, **args):
     """
     The `minimise` function calculates a metric by comparing predicted values with
     observed values.
@@ -45,6 +45,9 @@ def minimum(pars, function, data, loss, **args):
     del predicted, observed
     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
         metric = 1e10
+    if prior:
+        prior_pars = function.parameters.prior(log=True)
+        metric += prior_pars
     return metric
 
 
@@ -103,12 +106,14 @@ class Fmin:
         minimisation=minimise.LogLikelihood.continuous,
         cl=None,
         parallel=False,
+        prior=False,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
         self.initial_guess = initial_guess
+        self.prior = prior
         self.kwargs = kwargs
         self.fit = []
         self.details = []
@@ -150,7 +155,7 @@ class Fmin:
             result = fmin(
                 minimum,
                 x0=self.initial_guess,
-                args=(model, participant.get("observed"), loss),
+                args=(model, participant.get("observed"), loss, prior),
                 disp=False,
                 **self.kwargs,
                 full_output=True,
@@ -163,6 +168,7 @@ class Fmin:
 
         loss = self.loss
         model = self.model
+        prior = self.prior
         pool = mp.Pool(self.cl)
         results = pool.map(__task, self.data)
         pool.close()

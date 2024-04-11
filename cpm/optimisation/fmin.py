@@ -46,14 +46,14 @@ def minimum(pars, function, data, loss, prior=False, **args):
     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
         metric = 1e10
     if prior:
-        prior_pars = function.parameters.prior(log=True)
+        prior_pars = function.parameters.PDF(log=True)
         metric += prior_pars
     return metric
 
 
 class Fmin:
     """
-    Class representing the Fmin search optimization algorithm.
+    Class representing the Fmin search (unbounded) optimization algorithm using a downhill simplex.
 
     Parameters
     ----------
@@ -62,7 +62,7 @@ class Fmin:
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
-        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
+        The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
@@ -95,7 +95,7 @@ class Fmin:
 
     Notes
     -----
-    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
+    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model `Wrapper`.
     """
 
     def __init__(
@@ -103,7 +103,7 @@ class Fmin:
         model=None,
         data=None,
         initial_guess=None,
-        minimisation=minimise.LogLikelihood.continuous,
+        minimisation=None,
         cl=None,
         parallel=False,
         prior=False,
@@ -145,7 +145,7 @@ class Fmin:
         """
 
         def __unpack(x):
-            keys = ["xopt", "fopt", "iter", "funcalls", "warnflag"]
+            keys = ["xopt", "fopt", "iter", "funcalls", "warnflag", "hessian"]
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x[i]
@@ -160,15 +160,15 @@ class Fmin:
                 **self.kwargs,
                 full_output=True,
             )
-            hessian = nd.Hessian(minimum)(
-                result["xopt"], model, participant.get("observed"), loss
-            )
-            result["hessian"] = hessian
+            hessian = Hessian(result[0], model, participant.get("observed"), loss)
+            result = (*result, hessian)
             return result
 
         loss = self.loss
         model = self.model
         prior = self.prior
+        Hessian = nd.Hessian(minimum)
+
         pool = mp.Pool(self.cl)
         results = pool.map(__task, self.data)
         pool.close()

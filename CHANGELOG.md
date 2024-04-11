@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - d42e0689: Fmin can incorporate priors into its log likelihood function
 - 0a9281f6: Fmin now also returns the hessian matrix of the minimisation function
 - 71937516: Parameters can now output parameter bounds
+- df4cac2c: FminBound implements a bounded parameter search with L-BFGS-B
 
 ### Changed
 

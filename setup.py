@@ -27,7 +27,7 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.2.0",
+    version="0.3.0",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     author="Lenard Dome",

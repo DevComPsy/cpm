@@ -23,8 +23,6 @@ class EmpiricalBayes:
         self,
         optimiser=None,
         population_parameters=None,
-        data=None,
-        bounds=None,
         iteration=1000,
         tolerance=1e-6,
         chain=4,
@@ -33,7 +31,6 @@ class EmpiricalBayes:
     ):
         self.function = copy.deepcopy(optimiser.function)
         self.optimiser = copy.deepcopy(optimiser)
-        self.data = data
         self.pop_parameters = population_parameters
         # bounds here should include mean and std for all parameters
         self.iteration = iteration  # maximum number of iterations
@@ -42,11 +39,10 @@ class EmpiricalBayes:
         self.kwargs = kwargs
         self.fit = []
         self.details = []
-        if hasattr(simulator, "bounds"):
-            self.bounds = simulator.bounds
-        else:
-            self.bounds = bounds
         self.prior = prior
+
+        if self.optimiser.prior is not True:
+            raise ValueError("The optimiser must be set to use priors.")
 
     def step(self):
         self.optimiser.run()

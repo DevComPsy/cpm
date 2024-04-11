@@ -110,6 +110,14 @@ class Parameters:
         return self.__dict__.keys()
 
     def bounds(self):
+        """
+        Returns a tuple with lower (first element) and upper (second element) bounds for parameters with defined priors.
+
+        Returns
+        -------
+        lower, upper: tuples
+            A tuple of lower and upper parameter bounds
+        """
         lower, upper = [], []
         for _, value in self.__dict__.items():
             if value.prior is not None:

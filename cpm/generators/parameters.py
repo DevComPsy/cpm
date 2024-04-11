@@ -109,6 +109,14 @@ class Parameters:
         """
         return self.__dict__.keys()
 
+    def bounds(self):
+        lower, upper = [], []
+        for _, value in self.__dict__.items():
+            if value.prior is not None:
+                lower.append(value.lower)
+                upper.append(value.upper)
+        return lower, upper
+
     def PDF(self, log=False):
         """
         Return the prior distribution of the parameters.

@@ -6,9 +6,6 @@ from scipy.stats import (
     uniform,
     beta,
     gamma,
-    lognorm,
-    loggamma,
-    loguniform,
 )
 
 
@@ -78,6 +75,9 @@ class Parameters:
     def __copy__(self):
         return Parameters(**self.__dict__)
 
+    def __deepcopy__(self, memo):
+        return Parameters(**copy.deepcopy(self.__dict__, memo))
+
     def __keys__(self):
         return self.__dict__.keys()
 
@@ -109,7 +109,7 @@ class Parameters:
         """
         return self.__dict__.keys()
 
-    def prior(self, log=False):
+    def PDF(self, log=False):
         """
         Return the prior distribution of the parameters.
 
@@ -120,8 +120,8 @@ class Parameters:
         """
         prior = 1
         for _, value in self.__dict__.items():
-            if value.priorf is not None:
-                prior *= value.prior()
+            if value.prior is not None:
+                prior *= value.PDF()
         if log:
             prior = np.log(prior)
         return prior
@@ -139,11 +139,11 @@ class Parameters:
         for i in range(size):
             sample = {}
             for key, value in self.__dict__.items():
-                if value.priorf is not None:
+                if value.prior is not None:
                     if jump:
-                        sample[key] = value.priorf.rvs(loc=value.value)
+                        sample[key] = value.prior.rvs(loc=value.value)
                     else:
-                        sample[key] = value.priorf.rvs()
+                        sample[key] = value.prior.rvs()
             output.append(sample)
         return output
 
@@ -174,7 +174,7 @@ class Value:
     ----------
     value : float
         The value of the parameter.
-    priorf : function, optional
+    prior : function, optional
         The prior distribution function of the parameter.
     lower : float, optional
         The lower bound of the parameter.
@@ -206,7 +206,7 @@ class Value:
         value=None,
         lower=0,
         upper=1,
-        prior="normal",
+        prior=None,
         args=None,
         **kwargs,
     ):
@@ -217,39 +217,39 @@ class Value:
         args = args if args is not None else {"a": 0, "b": 1, "mean": 0, "sd": 1}
 
         # set the prior distribution
-        self.__builtin__ = True
         if prior is None:
-            self.priorf = None
+            self.prior = None
         if prior == "uniform":
-            self.priorf = uniform(loc=lower, scale=upper)
-        elif prior == "normal":
+            self.prior = uniform(loc=lower, scale=upper)
+        elif prior == "truncated_normal":
             # calculate the bounds of the truncated normal distribution
             below, above = (lower - args.get("mean")) / args.get("sd"), (
                 upper - args.get("mean")
             ) / args.get("sd")
-            self.priorf = truncnorm(
+            self.prior = truncnorm(
                 loc=args.get("mean"), scale=args.get("sd"), a=below, b=above
             )
         elif prior == "beta":
-            self.priorf = beta(
+            self.prior = beta(
                 a=args.get("a"),
                 b=args.get("b"),
                 loc=args.get("mean"),
                 scale=args.get("sd"),
             )
         elif prior == "gamma":
-            self.priorf = gamma(
+            self.prior = gamma(
                 a=args.get("a"), loc=args.get("mean"), scale=args.get("sd")
             )
-        elif prior == "exponential":
-            self.priorf = truncexpon(
+        elif prior == "truncated_exponential":
+            self.prior = truncexpon(
                 b=(upper - args.get("mean")) / args.get("sd"),
                 loc=args.get("mean"),
                 scale=args.get("sd"),
             )
         elif callable(prior):
-            self.__builtin__ = False
-            self.priorf = prior(**args)
+            self.prior = prior(**args)
+        else:
+            self.prior = prior
 
     def __repr__(self):
         return str(self.value)
@@ -379,7 +379,7 @@ class Value:
         """
         self.value = value
 
-    def prior(self, log=False):
+    def PDF(self, log=False):
         """
         Return the prior distribution of the parameter.
 
@@ -389,9 +389,9 @@ class Value:
         If `log` is True, the log probability is returned.
         """
         if log:
-            return self.priorf.logpdf(self.value)
+            return self.prior.logpdf(self.value)
         else:
-            return self.priorf.pdf(self.value)
+            return self.prior.pdf(self.value)
 
     def sample(self, size=1, jump=False):
         """
@@ -403,10 +403,10 @@ class Value:
             A sample from the prior distribution of the parameter.
         """
         if jump:
-            new = self.priorf.rvs(loc=self.value)
+            new = self.prior.rvs(loc=self.value)
             self.fill(new)
         else:
-            new = self.priorf.rvs()
+            new = self.prior.rvs()
             self.fill(new)
 
 
@@ -452,7 +452,7 @@ class LogParameters(Parameters):
                 return np.log(value / (1 - value))
 
         for _, value in self.__dict__.items():
-            if value.priorf is not None and isinstance(value, Value):
+            if value.prior is not None and isinstance(value, Value):
                 value.value = _logtransform(value.value, value.lower, value.upper)
 
     def log_exp_transform(self):
@@ -479,7 +479,7 @@ class LogParameters(Parameters):
         out = {}
 
         for key, value in self.__dict__.items():
-            if isinstance(value, Value) and value.priorf is not None:
+            if isinstance(value, Value) and value.prior is not None:
                 out[key] = _logexptransform(value.value)
         return out
 

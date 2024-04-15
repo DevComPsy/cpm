@@ -14,8 +14,8 @@ class EmpiricalBayes:
     ----------
     optimiser : object
         The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.
-    population_parameters : list
-        A list of the group-level parameters that will be optimised.
+    population_parameters : Parameters
+        A list of the group-level parameters that will be optimised using the subject-level parameters. It must be a Parameters object.
 
     """
 
@@ -52,17 +52,51 @@ class EmpiricalBayes:
         hessian = np.array(hessian)
         return self.optimiser.parameters, hessian, self.optimiser.details
 
-    def optimise(self):
-        for chain in self.chain:
+    def chain(self):
+
+        log_model_evidence = []
+        lme_old = 0
+
+        for iteration in range(self.iteration):
             # TODO: prior setups, calculate group-level means and stds
+
+            population_prior = self.optimiser.model.parameters.PDF(log=True)
+
             for iteration in range(self.iteration):
                 parameters, hessian, details = self.step()
                 self.fit.append(copy.deepcopy(parameters))
                 self.details.append(copy.deepcopy(details))
                 self.optimiser.reset()
 
+            # TODO: transform negative log likelihood into maximum log likelihood
             # TODO: update group-level means and stds
+            # TODO: group-level mean is the avarage across participants
+            # TODO: std: first calculate variance (between-subjects squared differences)
+            # TODO: std: second calculate inverse hessian matrix
+            # TODO: std: third take the diagonal element of the inverse hessian matrix
+            # TODO: std: fourth add up variance plus diagonal for each ppt and then add up each ppt and divide them by mean
+            # TODO: std: fifth subtract the squared mean from result of the above four steps
+            # TODO: std: make sure the std is not too small by bounding it to 1e-6
+
+            # TODO: estimate log model evidence (lme)
+            lme = []
+            # TODO: lme: first find the log determinant of the hessian matrix for each ppt
+            # TODO: lme: second sum up the penalised log determinants and add
+            # TODO: lme: third penalise them by the number of parameters (param * log(2 *pi))
+            # TODO: lme: sum up ppt lme and add BIC penalty term - n_params * log(data_points)
+
+            if iteration > 0:
+                if np.abs(lme - lme_old) < self.tolerance:
+                    break
+                else:  # update the log likelihood
+                    lme_old = lme
+                    log_model_evidence.append(copy.deepcopy(lme))
+
             pass
+
+        def optimise(self):
+            for chain in self.chain:
+                self.chain()
 
     def export(self):
         """

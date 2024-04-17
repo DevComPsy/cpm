@@ -118,21 +118,27 @@ class Simulator:
             self.parameters = parameters
         return None
 
-    def generate(self):
+    def generate(self, variable=None):
         """
         Generate data for parameter recovery, etc.
+
+        Parameters
+        ----------
+        variable: str
+            Name of the variable to pull out from model output.
 
         Returns
         ------
         results: numpy.ndarray
             An array of dictionaries containing the results of the simulation.
         """
-        for i in self.simulation:
-            current = []
-            for j in i:
-                current.append(j.get("dependent"))
-            self.generated.append({"observed": np.asarray(current)})
-        self.generated = np.array(self.generated)
+        append = []
+        for ppt in self.simulation:
+            one = {"observed": np.zeros((self.function.__len__, 1))}
+            for k in range(self.function.__len__):
+                one.get("observed")[k] = np.array([ppt[k].get(variable)])
+            append.append(one)
+        self.generated = copy.deepcopy(append)
         return None
 
     def reset(self):

@@ -79,11 +79,12 @@ class ParameterRecovery:
         self,
         model=None,
         optimiser=None,
-        loss=minimise.LogLikelihood,
+        loss=minimise.LogLikelihood.bernoulli,
         strategy=strategies.grid,
         iteration=1000,
         bounds=None,
-        **kwargs
+        variable="dependent",
+        **kwargs,
     ):
         """ """
         self.model = copy.deepcopy(model)
@@ -98,6 +99,7 @@ class ParameterRecovery:
         self.bounds = bounds
         self.kwargs = kwargs
         self.output = []
+        self.variable = variable
 
         parameters = self.model.parameters[0]
         self.template = {
@@ -122,7 +124,7 @@ class ParameterRecovery:
             self.model.update(parameters=parameters)
             self.model.reset()
             self.model.run()
-            self.model.generate()
+            self.model.generate(variable=self.variable)
             data = self.model.generated.copy()
             for i in range(len(self.data)):
                 self.data[i]["observed"] = data[i]["observed"]
@@ -131,7 +133,7 @@ class ParameterRecovery:
                 data=self.data,
                 minimisation=self.loss,
                 bounds=self.bounds,
-                **self.kwargs
+                **self.kwargs,
             )
             optim.optimise()
             recovered = optim.parameters

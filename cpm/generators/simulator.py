@@ -118,7 +118,7 @@ class Simulator:
             self.parameters = parameters
         return None
 
-    def generate(self, variable=None):
+    def generate(self, variable="dependent"):
         """
         Generate data for parameter recovery, etc.
 

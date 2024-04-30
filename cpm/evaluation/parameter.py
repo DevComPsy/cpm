@@ -103,7 +103,7 @@ class ParameterRecovery:
 
         parameters = self.model.parameters[0]
         self.template = {
-            k: parameters[k] for k in self.parameter_names[0 : len(bounds[0])]
+            k: parameters[k] for k in self.parameter_names[0 : len(bounds)]
         }
 
     def recover(self):

@@ -233,6 +233,8 @@ class Value:
         args = args if args is not None else {"a": 0, "b": 1, "mean": 0, "sd": 1}
 
         # set the prior distribution
+        self.__pdef__ = prior
+
         if prior is None:
             self.prior = None
         if prior == "uniform":
@@ -424,6 +426,31 @@ class Value:
         else:
             new = self.prior.rvs()
             self.fill(new)
+
+    def update_prior(self, **kwargs):
+        """
+        Update the prior distribution of the parameter.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments representing the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the `scipy.stats` documentation or the `prior.kwds` attribute.
+
+        """
+        ## TODO: have to calcualte separate things for a beta distribution
+        if self.__pdef__ == "truncated_normal":
+            above, below = (self.lower - kwargs.get("mean")) / kwargs.get("sd"), (
+                self.upper - kwargs.get("mean")
+            ) / kwargs.get("sd")
+            updates = {
+                "a": below,
+                "b": above,
+                "loc": kwargs.get("mean"),
+                "scale": kwargs.get("sd"),
+            }
+            self.prior.kwds.update(**updates)
+        else:
+            self.prior.kwds.update(**kwargs)
 
 
 class LogParameters(Parameters):

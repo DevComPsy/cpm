@@ -1,4 +1,4 @@
-# %%
+
 from cpm.generators import Parameters, Wrapper
 
 # import components we want to use
@@ -10,7 +10,7 @@ from cpm.models.decision import Sigmoid
 import numpy as np
 
 
-# %%
+
 ## create a set of parameters
 ## the parameter class is only used for the Wrapper
 ## other classes and modules will convert the parameters to this class automatically
@@ -27,7 +27,7 @@ trial = {
 }
 
 
-# %%
+
 ## define a quick model
 def model(parameters, trial):
     ## import parameters
@@ -58,9 +58,13 @@ def model(parameters, trial):
     }
     return output
 
+def test():
+    model(parameters, trial)
 
-model(parameters, trial)
-# %%
+import timeit
+print(timeit.timeit("test()", setup="from __main__ import test", number=10000))
+print(timeit.timeit("test()", globals=locals(), number = 10000))
+
 ## create some data
 ## could be in a separate script
 experiment = []
@@ -81,17 +85,17 @@ for i in range(200):
                 [2, 3],
             ]
         ),
-        "feedback": np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
-        "observed": np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
+        "feedback": np.random.randint(2, size=(10, 1)),
+        "observed": np.random.randint(2, size=(10, 1)),
     }
     experiment.append(ppt)
 
-# %%
+
 ## reset wrapper for no reason other than tidying
 ## Wrapper can only take a single dictionary as data, so experiment[0] is used
 wrap = Wrapper(model=model, parameters=parameters, data=experiment[0])
 
-# %%
+
 from cpm.optimisation import minimise, Fmin
 
 ## initialise the optimisation object
@@ -106,6 +110,6 @@ Fit = Fmin(
 
 # run the optimisation
 Fit.optimise()
-# %%
+
 ## export data where each row is a participant
 Fit.export()

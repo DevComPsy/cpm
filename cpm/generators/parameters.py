@@ -142,6 +142,19 @@ class Parameters:
             prior = np.log(prior)
         return prior
 
+    def update_prior(self, **kwargs):
+        """
+        Update the prior distribution of all parameters.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments representing the parameters of the prior distribution. For each parameter, the keyword should be the name of the parameter and the value should be a dictionary of the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the `scipy.stats` documentation or the `prior.kwds` attribute.
+        """
+        for key, value in kwargs.items():
+            if key in self.__dict__:
+                self.__dict__[key].update_prior(**value)
+
     def sample(self, size=1, jump=False):
         """
         Sample and update parameter valuesthe parameters from their prior distribution.

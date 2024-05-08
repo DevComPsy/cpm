@@ -176,6 +176,21 @@ class Parameters:
             output.append(sample)
         return output
 
+    def free(self):
+        """
+        Return a dictionary of all parameters with a prior distribution.
+
+        Returns
+        -------
+        free : dict
+            A dictionary of all parameters with a prior distribution.
+        """
+        free = []
+        for key, value in self.__dict__.items():
+            if value.prior is not None:
+                free.append(key)
+        return free
+
 
 class Value:
     """

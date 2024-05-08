@@ -69,9 +69,11 @@ class DifferentialEvolution:
         self.parameters = []
         self.participant = data[0]
         if isinstance(model, Wrapper):
-            self.parameter_names = self.function.parameter_names
+            self.parameter_names = self.function.parameters.free()
         if isinstance(model, Simulator):
-            self.parameter_names = self.function.function.parameter_names
+            raise ValueError(
+                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
+            )
         if hasattr(self.function, "bounds"):
             self.bounds = self.function.bounds
         else:

@@ -122,7 +122,7 @@ class Fmin:
         self.parameters = []
         self.participant = data[0]
         if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameter_names
+            self.parameter_names = self.model.parameters.free()
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."
@@ -280,7 +280,7 @@ class FminBound:
         self.parameters = []
         self.participant = data[0]
         if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameter_names
+            self.parameter_names = self.model.parameters.free()
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."

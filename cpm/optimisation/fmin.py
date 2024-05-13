@@ -49,7 +49,7 @@ def minimum(pars, function, data, loss, prior=False, **args):
         metric = 1e10
     if prior:
         prior_pars = function.parameters.PDF(log=True)
-        metric += prior_pars
+        metric += -prior_pars
     return metric
 
 
@@ -194,6 +194,7 @@ class Fmin:
             None
         """
         self.fit = []
+        self.details = []
         self.parameters = []
         return None
 
@@ -309,6 +310,7 @@ class FminBound:
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x[i]
+            out["fopt"] = out.pop("f")
             return out
 
         bounds = self.model.parameters.bounds()
@@ -354,6 +356,7 @@ class FminBound:
             None
         """
         self.fit = []
+        self.details = []
         self.parameters = []
         return None
 

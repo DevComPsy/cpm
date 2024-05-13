@@ -1,9 +1,6 @@
 import numpy as np
 import pandas as pd
 import copy
-from . import minimise
-from . import utils
-from ..generators import Parameters, LogParameters
 
 
 class EmpiricalBayes:
@@ -36,7 +33,7 @@ class EmpiricalBayes:
         chain=4,
         **kwargs,
     ):
-        self.function = copy.deepcopy(optimiser.function)
+        self.function = copy.deepcopy(optimiser.model)
         self.optimiser = copy.deepcopy(optimiser)
         # bounds here should include mean and std for all parameters
         self.iteration = iteration  # maximum number of iterations
@@ -48,37 +45,34 @@ class EmpiricalBayes:
 
         self.fit = []
         self.details = []
-
-        if self.optimiser.prior is not True:
-            raise ValueError("The optimiser must be set to use priors.")
+        self.lmes = []
 
     def step(self):
-        self.optimiser.run()
-        hessian = np.zeros(
-            (
-                len(self.optimiser.details),
-                len(self.optimiser.parameter_names),
-                len(self.optimiser.parameter_names),
-            )
-        )
+        self.optimiser.optimise()
+        hessian = []
         for i, n in enumerate(self.optimiser.fit):
-            hessian[i] = n.get("hessian")
-        return self.optimiser.parameters, hessian, self.optimiser.details
+            hessian.append(n.get("hessian"))
 
-    def chain(self):
+        hessian = np.asarray(hessian)
+        return self.optimiser.parameters, hessian, self.optimiser.fit
+
+    def stair(self):
         ## Step numbers correspond to
         lme_old = 0
         lmes = []
 
         for iteration in range(self.iteration):
+            prior = self.optimiser.model.parameters.PDF()
+
+            self.optimiser.reset()
+
             parameters, hessian, details = self.step()
             self.fit.append(copy.deepcopy(parameters))
             self.details.append(copy.deepcopy(details))
-            self.optimiser.reset()
 
             # DONE: transform negative log likelihood into maximum log likelihood
-            negative_log_posterior = np.asarray([ppt.get("fopt") for ppt in self.fit])
-            # TODO: HIHG-LEVEL update group-level means and stds
+            negative_log_posterior = np.asarray([-ppt.get("fopt") for ppt in details])
+            negative_log_posterior = negative_log_posterior + prior
 
             # TODO: group-level mean is the avarage across participants
             parameter_names = self.optimiser.model.parameters.free()
@@ -86,6 +80,7 @@ class EmpiricalBayes:
             for i, name in enumerate(parameter_names):
                 for ppt, content in enumerate(parameters):
                     param[ppt, i] = content.get(name)
+
             means = param.mean(axis=0)
             # TODO: std: first calculate variance (between-subjects squared differences)
             variance = param.var(axis=0)
@@ -121,19 +116,26 @@ class EmpiricalBayes:
             for i, name in enumerate(parameter_names):
                 population_updates[name] = {
                     "mean": means[i],
-                    "std": variance[i],
+                    "sd": np.sqrt(np.abs(variance[i])),
                 }
 
             self.optimiser.model.parameters.update_prior(**population_updates)
 
             summed_lme = log_model_evidence.sum()
 
+            lmes.append(copy.deepcopy(summed_lme))
+
+            print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
+
             if iteration > 0:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
                     break
                 else:  # update the log likelihood
                     lme_old = summed_lme
-                    lmes.append(copy.deepcopy(summed_lme))
+
+            iteration += 1
+
+            self.lmes.append(lmes)
 
         output = {
             "lme": lmes,
@@ -141,11 +143,14 @@ class EmpiricalBayes:
             "parameters": self.optimiser.model.parameters,
         }
 
+        # print(f"Optimisation finished in {iteration} iterations: {output}")
         return output
 
     def optimise(self):
         output = []
-        for chain in self.chain:
-            results = self.chain()
+        for chain in range(self.chain):
+            print(f"Chain: {chain + 1}")
+            results = self.stair()
             output.append(copy.deepcopy(results))
+        self.output = output
         return output

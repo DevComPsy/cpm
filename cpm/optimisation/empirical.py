@@ -15,6 +15,17 @@ class EmpiricalBayes:
     optimiser : object
         The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.
 
+
+    Notes
+    -----
+    The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. The algorithm is based on the following steps:
+
+    INSERT IMAGE FROM PAPER
+
+    The current implementation also controls for some edge-cases that are not covered by the algorithm above:
+
+    - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
+
     """
 
     def __init__(
@@ -23,7 +34,6 @@ class EmpiricalBayes:
         iteration=1000,
         tolerance=1e-6,
         chain=4,
-        prior=True,
         **kwargs,
     ):
         self.function = copy.deepcopy(optimiser.function)
@@ -33,9 +43,11 @@ class EmpiricalBayes:
         self.tolerance = tolerance  # tolerance for convergence
         self.chain = chain  # number of random parameter initialisations
         self.kwargs = kwargs
+
+        self.__number_of_parameters__ = len(self.optimiser.model.parameters.free())
+
         self.fit = []
         self.details = []
-        self.prior = prior
 
         if self.optimiser.prior is not True:
             raise ValueError("The optimiser must be set to use priors.")
@@ -54,13 +66,9 @@ class EmpiricalBayes:
         return self.optimiser.parameters, hessian, self.optimiser.details
 
     def chain(self):
-
-        log_model_evidence = []
+        ## Step numbers correspond to
         lme_old = 0
-
-        # TODO: prior setups, calculate group-level means and stds
-
-        population_prior = self.optimiser.model.parameters.PDF(log=True)
+        lmes = []
 
         for iteration in range(self.iteration):
             parameters, hessian, details = self.step()
@@ -69,7 +77,7 @@ class EmpiricalBayes:
             self.optimiser.reset()
 
             # DONE: transform negative log likelihood into maximum log likelihood
-            mll = np.asarray([-ppt.get("fopt") for ppt in self.fit])
+            negative_log_posterior = np.asarray([ppt.get("fopt") for ppt in self.fit])
             # TODO: HIHG-LEVEL update group-level means and stds
 
             # TODO: group-level mean is the avarage across participants
@@ -90,48 +98,54 @@ class EmpiricalBayes:
             between_within_variance = (
                 np.square(param - means) + diagonal
             ) / param.shape[0]
-            # TODO: std: fifth subtract the squared mean from result of the above four steps
-            between_within_variance -= np.square(means)
             # TODO: std: make sure the std is not too small by bounding it to 1e-6
             np.clip(between_within_variance, 1e-6, None, out=between_within_variance)
-
+            between_within_variance = between_within_variance.mean(axis=0)
+            # TODO: std: fifth subtract the squared mean from result of the above four steps
+            variance = between_within_variance.mean(axis=0) - np.square(means)
             # TODO: estimate log model evidence (lme)
-            lme = []
             # TODO: lme: first find the log determinant of the hessian matrix for each ppt
-            # TODO: lme: second sum up the penalised log determinants and add
-            # TODO: lme: third penalise them by the number of parameters (param * log(2 *pi))
-            # TODO: lme: sum up ppt lme and add BIC penalty term - n_params * log(data_points)
+            log_determinants = (np.asarray(list(map(np.linalg.slogdet, hessian)))).sum(
+                axis=0
+            )[1]
+            penalty = 0.5 * (
+                self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
+            )
+            log_model_evidence = negative_log_posterior + penalty
+            # TODO: lme: penalty term - n_params * log(data_points)
+            # TODO: lme: third penalise them by the number of parameters (param * log(2 *pi)) - I will skip this step
+            # TODO: lme: second sum up the penalised log determinants
 
             population_updates = {}
 
-            for key, value in parameters:
-                # NOTE: code is placeholder - dimensions in value will be different
-                population_updates.update({key: {"mean": value[0], "std": value[1]}})
+            for i, name in enumerate(parameter_names):
+                population_updates[name] = {
+                    "mean": means[i],
+                    "std": variance[i],
+                }
 
             self.optimiser.model.parameters.update_prior(**population_updates)
 
+            summed_lme = log_model_evidence.sum()
+
             if iteration > 0:
-                if np.abs(lme - lme_old) < self.tolerance:
+                if np.abs(summed_lme - lme_old) < self.tolerance:
                     break
                 else:  # update the log likelihood
-                    lme_old = lme
-                    log_model_evidence.append(copy.deepcopy(lme))
+                    lme_old = summed_lme
+                    lmes.append(copy.deepcopy(summed_lme))
 
-            pass
+        output = {
+            "lme": lmes,
+            "hyperparameters": population_updates,
+            "parameters": self.optimiser.model.parameters,
+        }
 
-        def optimise(self):
-            for chain in self.chain:
-                self.chain()
+        return output
 
-    def export(self):
-        """
-        Exports the optimization results and fitted parameters as a `pandas.DataFrame`.
-
-        Returns
-        -------
-        pandas.DataFrame
-            A pandas DataFrame containing the optimization results and fitted parameters.
-        """
-        output = utils.detailed_pandas_compiler(self.details)
-        output.reset_index(drop=True, inplace=True)
+    def optimise(self):
+        output = []
+        for chain in self.chain:
+            results = self.chain()
+            output.append(copy.deepcopy(results))
         return output

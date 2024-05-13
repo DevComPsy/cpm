@@ -457,7 +457,7 @@ class Value:
 
     def update_prior(self, **kwargs):
         """
-        Update the prior distribution of the parameter.
+        Update the prior distribution of the parameter. Currently it is only implemented for truncated normal distributions.
 
         Parameters
         ----------
@@ -466,19 +466,16 @@ class Value:
 
         """
         ## TODO: have to calcualte separate things for a beta distribution
-        if self.__pdef__ == "truncated_normal":
-            above, below = (self.lower - kwargs.get("mean")) / kwargs.get("sd"), (
-                self.upper - kwargs.get("mean")
-            ) / kwargs.get("sd")
-            updates = {
-                "a": below,
-                "b": above,
-                "loc": kwargs.get("mean"),
-                "scale": kwargs.get("sd"),
-            }
-            self.prior.kwds.update(**updates)
-        else:
-            self.prior.kwds.update(**kwargs)
+        below, above = (self.lower - kwargs.get("mean")) / kwargs.get("sd"), (
+            self.upper - kwargs.get("mean")
+        ) / kwargs.get("sd")
+        updates = {
+            "a": below,
+            "b": above,
+            "loc": kwargs.get("mean"),
+            "scale": kwargs.get("sd"),
+        }
+        self.prior.kwds.update(**updates)
 
 
 class LogParameters(Parameters):

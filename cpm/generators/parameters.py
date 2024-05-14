@@ -1,6 +1,12 @@
 import numpy as np
 import copy
-from scipy.stats import truncnorm, truncexpon, uniform, beta, gamma
+from scipy.stats import (
+    truncnorm,
+    truncexpon,
+    uniform,
+    beta,
+    gamma,
+)
 
 
 class Parameters:
@@ -29,12 +35,29 @@ class Parameters:
     0.1
     >>> parameters()
     {'a': 0.1, 'b': 0.2, 'c': 0.5}
-    >>> parameters.prior()
+
+    The Parameters class can also provide a prior.
+
+    >>> x = Parameters(
+    >>>    a=Value(value=0.1, lower=0, upper=1, prior="normal", args={"mean": 0.5, "sd": 0.1}),
+    >>>    b=0.5,
+    >>>    weights=Value(value=[0.1, 0.2, 0.3], lower=0, upper=1, prior=None),
+    >>> )
+
+    >>> x.prior(log=True)
+    -6.5854290732499186
+
+    We can also sample new parameter values from the prior distributions.
+    >>> x.sample()
+    {'a': 0.4670755733417274, 'b': 0.30116207009111917}
     """
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
-            setattr(self, key, Value(value))
+            if isinstance(value, Value):
+                setattr(self, key, value)
+            else:
+                setattr(self, key, Value(value))
         # self.__dict__.update(kwargs)
 
     def __getitem__(self, key):
@@ -51,6 +74,9 @@ class Parameters:
 
     def __copy__(self):
         return Parameters(**self.__dict__)
+
+    def __deepcopy__(self, memo):
+        return Parameters(**copy.deepcopy(self.__dict__, memo))
 
     def __keys__(self):
         return self.__dict__.keys()
@@ -69,7 +95,8 @@ class Parameters:
 
         """
         for key, value in kwargs.items():
-            setattr(self, key, Value(value))
+            if key in self.__dict__:
+                self.__dict__[key].fill(value)
 
     def keys(self):
         """
@@ -82,7 +109,23 @@ class Parameters:
         """
         return self.__dict__.keys()
 
-    def prior(self, log=False):
+    def bounds(self):
+        """
+        Returns a tuple with lower (first element) and upper (second element) bounds for parameters with defined priors.
+
+        Returns
+        -------
+        lower, upper: tuples
+            A tuple of lower and upper parameter bounds
+        """
+        lower, upper = [], []
+        for _, value in self.__dict__.items():
+            if value.prior is not None:
+                lower.append(value.lower)
+                upper.append(value.upper)
+        return lower, upper
+
+    def PDF(self, log=False):
         """
         Return the prior distribution of the parameters.
 
@@ -92,12 +135,61 @@ class Parameters:
         If `log` is True, the log probability is returned.
         """
         prior = 1
-        for key, value in self.__dict__.items():
-            if value.priorf is not None:
-                prior *= value.prior(log=log)
+        for _, value in self.__dict__.items():
+            if value.prior is not None:
+                prior *= value.PDF()
         if log:
             prior = np.log(prior)
         return prior
+
+    def update_prior(self, **kwargs):
+        """
+        Update the prior distribution of all parameters.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments representing the parameters of the prior distribution. For each parameter, the keyword should be the name of the parameter and the value should be a dictionary of the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the `scipy.stats` documentation or the `prior.kwds` attribute.
+        """
+        for key, value in kwargs.items():
+            if key in self.__dict__:
+                self.__dict__[key].update_prior(**value)
+
+    def sample(self, size=1, jump=False):
+        """
+        Sample and update parameter valuesthe parameters from their prior distribution.
+
+        Returns
+        -------
+        sample : dict
+            A dictionary of the sampled parameters.
+        """
+        output = []
+        for i in range(size):
+            sample = {}
+            for key, value in self.__dict__.items():
+                if value.prior is not None:
+                    if jump:
+                        sample[key] = value.prior.rvs(loc=value.value)
+                    else:
+                        sample[key] = value.prior.rvs()
+            output.append(sample)
+        return output
+
+    def free(self):
+        """
+        Return a dictionary of all parameters with a prior distribution.
+
+        Returns
+        -------
+        free : dict
+            A dictionary of all parameters with a prior distribution.
+        """
+        free = []
+        for key, value in self.__dict__.items():
+            if value.prior is not None:
+                free.append(key)
+        return free
 
 
 class Value:
@@ -105,42 +197,45 @@ class Value:
 
     The `Value` class is a wrapper around a float value, with additional details such as the prior distribution, lower and upper bounds. It supports all basic mathematical operations and can be used as a regular float with the parameter value as operand.
 
-
     Parameters
     ----------
     value : float
         The value of the parameter.
-    prior : string or object, optional
-        If a string, it should be one of continuous distributions from `scipy.stats`.
-        See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details.
-        The default is 'normal'.
-        If an object, it should be or contain a callable function representing the prior distribution of the parameter.
-        See Notes for more details.
     lower : float, optional
         The lower bound of the parameter.
     upper : float, optional
         The upper bound of the parameter.
+    prior : string or object, optional
+        If a string, it should be one of continuous distributions from `scipy.stats`.
+        See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details.
+        The default is 'normal'.
+        If an object, it should be or contain a callable function representing the prior distribution of the parameter with methods similar to `scipy.stats` distributions.
+        See Notes for more details.
+    args : dict, optional
+        A dictionary of arguments for the prior distribution function.
 
     Attributes
     ----------
     value : float
         The value of the parameter.
     prior : function, optional
-
+        The prior distribution function of the parameter.
     lower : float, optional
         The lower bound of the parameter.
     upper : float, optional
         The upper bound of the parameter.
+    args : dict, optional
+        A dictionary of arguments for the prior distribution function.
 
     Notes
     -----
-    We currently implement the following continuous distributions from `scipy.stats`:
+    We currently implement the following continuous distributions from `scipy.stats` corresponding to the `prior` argument:
 
-    - 'uniform'
-    - 'normal'
-    - 'beta'
-    - 'gamma'
-    - 'exponential'
+    - uniform: 'uniform'
+    - normal: 'truncnormal'
+    - beta: 'beta'
+    - gamma: 'gamma'
+    - truncexp: 'exponential'
 
     Because these distributions are inherited from `scipy.stats`, see the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on how to update variables of the distribution.
 
@@ -150,33 +245,57 @@ class Value:
         A Value object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float with the parameter value as operand.
     """
 
-    def __init__(self, value=None, prior=None, lower=0, upper=1, **kwargs):
+    def __init__(
+        self,
+        value=None,
+        lower=0,
+        upper=1,
+        prior=None,
+        args=None,
+        **kwargs,
+    ):
         self.value = value
-
         self.lower = lower
         self.upper = upper
 
-        __sd__ = np.mean([upper, lower]) / 2
+        args = args if args is not None else {"a": 0, "b": 1, "mean": 0, "sd": 1}
 
         # set the prior distribution
-        self.__builtin__ = True
-        self.priorf = None
+        self.__pdef__ = prior
 
+        if prior is None:
+            self.prior = None
         if prior == "uniform":
-            self.priorf = uniform(loc=lower, scale=upper)
-        elif prior == "normal":
-            self.priorf = truncnorm(
-                loc=np.mean([lower, upper]), scale=__sd__, a=lower, b=upper
+            self.prior = uniform(loc=lower, scale=upper)
+        elif prior == "truncated_normal":
+            # calculate the bounds of the truncated normal distribution
+            below, above = (lower - args.get("mean")) / args.get("sd"), (
+                upper - args.get("mean")
+            ) / args.get("sd")
+            self.prior = truncnorm(
+                loc=args.get("mean"), scale=args.get("sd"), a=below, b=above
             )
         elif prior == "beta":
-            self.priorf = beta(a=1, b=1, loc=lower, scale=upper - lower)
+            self.prior = beta(
+                a=args.get("a"),
+                b=args.get("b"),
+                loc=args.get("mean"),
+                scale=args.get("sd"),
+            )
         elif prior == "gamma":
-            self.priorf = gamma(a=1, loc=lower, scale=upper - lower)
-        elif prior == "exponential":
-            self.priorf = truncexpon(b=upper - lower, loc=lower, scale=__sd__)
-        elif isinstance(prior, function):
-            self.__builtin__ = False
-            self.priorf = prior
+            self.prior = gamma(
+                a=args.get("a"), loc=args.get("mean"), scale=args.get("sd")
+            )
+        elif prior == "truncated_exponential":
+            self.prior = truncexpon(
+                b=(upper - args.get("mean")) / args.get("sd"),
+                loc=args.get("mean"),
+                scale=args.get("sd"),
+            )
+        elif callable(prior):
+            self.prior = prior(**args)
+        else:
+            self.prior = prior
 
     def __repr__(self):
         return str(self.value)
@@ -192,6 +311,9 @@ class Value:
 
     def __call__(self):
         return self.__dict__
+
+    def __str__(self):
+        return str(self.__dict__)
 
     def export(self):
         return self.__dict__
@@ -301,9 +423,9 @@ class Value:
         -----
         If the parameter is an array, it should be a list of values. If the parameter is an array, and the new value is a single value, it will be broadcasted to the shape of the array.
         """
-        self = Value(value)
+        self.value = value
 
-    def prior(self, log=False):
+    def PDF(self, log=False):
         """
         Return the prior distribution of the parameter.
 
@@ -313,30 +435,147 @@ class Value:
         If `log` is True, the log probability is returned.
         """
         if log:
-            return self.priorf.logpdf(self.value)
+            return self.prior.logpdf(self.value)
         else:
-            return self.priorf.pdf(self.value)
+            return self.prior.pdf(self.value)
 
-    def prior_update(self, **kwargs):
+    def sample(self, size=1, jump=False):
         """
-        Set the prior distribution of the parameter.
+        Sample and update the parameter value from its prior distribution.
+
+        Returns
+        -------
+        sample : float
+            A sample from the prior distribution of the parameter.
+        """
+        if jump:
+            new = self.prior.rvs(loc=self.value)
+            self.fill(new)
+        else:
+            new = self.prior.rvs()
+            self.fill(new)
+
+    def update_prior(self, **kwargs):
+        """
+        Update the prior distribution of the parameter. Currently it is only implemented for truncated normal distributions.
 
         Parameters
         ----------
         **kwargs : dict
-            Keyword arguments representing the prior distribution of the parameter.
-            It should contain the necessary arguments for the prior distribution function.
-            See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on what is allowed for each option with the built-in priors.
-
-        Raises
-        ------
-        ValueError
-            If the prior distribution of this parameter is a user-supplied function, it cannot be modified with the `prior` method.
+            Keyword arguments representing the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the `scipy.stats` documentation or the `prior.kwds` attribute.
 
         """
-        if self.__builtin__ and kwargs is not None:
-            self.priorf.kws.update(**kwargs)
-        if not self.__builtin__ and kwargs is not None:
-            raise ValueError(
-                "The prior distribution of this parameter is a user-supplied function. It cannot be modified with the `prior` method."
-            )
+        ## TODO: have to calcualte separate things for a beta distribution
+        below, above = (self.lower - kwargs.get("mean")) / kwargs.get("sd"), (
+            self.upper - kwargs.get("mean")
+        ) / kwargs.get("sd")
+        updates = {
+            "a": below,
+            "b": above,
+            "loc": kwargs.get("mean"),
+            "scale": kwargs.get("sd"),
+        }
+        self.prior.kwds.update(**updates)
+
+
+class LogParameters(Parameters):
+    """
+    A class that represents parameters with logarithmic transformations.
+
+    This class inherits from the `Parameters` class and provides methods to apply logarithmic transformations to the values of the parameters.
+
+    Attributes
+    ----------
+    ...
+
+    Methods
+    -------
+    log_transform()
+        Apply a logarithmic transformation to the values of the parameters.
+    log_exp_transform()
+        Apply a logarithmic exponential transformation to the values of the parameters.
+
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.log_transform()
+
+    def log_transform(self):
+        """
+        Apply a logarithmic transformation to the values of the parameters.
+
+        This method iterates over the attributes of the object and checks if the attribute has a prior function and is an instance of the Value class. If both conditions are met, the value of the attribute is transformed using the logarithmic transformation function.
+
+        """
+
+        def _logtransform(value, lower, upper):
+            if value < lower or value > upper:
+                raise ValueError("Value out of bounds.")
+            elif value == lower:
+                return -np.inf
+            elif value == upper:
+                return np.inf
+            else:
+                return np.log(value / (1 - value))
+
+        for _, value in self.__dict__.items():
+            if value.prior is not None and isinstance(value, Value):
+                value.value = _logtransform(value.value, value.lower, value.upper)
+
+    def log_exp_transform(self):
+        """
+        Apply a logarithmic exponential transformation to the values of the parameters.
+
+        This method iterates over the attributes of the object and checks if they are instances of the `Value` class.
+        If an attribute is an instance of `Value`, the `value` attribute of that instance is transformed using the
+        logarithmic exponential transformation function. The transformed value is then assigned
+        back to the `value` attribute.
+
+        Returns
+        -------
+        dict:
+            A dictionary containing the updated attributes of the object.
+
+        """
+
+        output = []
+
+        def _logexptransform(value):
+            return 1 / (1 + np.exp(-value))
+
+        out = {}
+
+        for key, value in self.__dict__.items():
+            if isinstance(value, Value) and value.prior is not None:
+                out[key] = _logexptransform(value.value)
+        return out
+
+    def update(self, **kwargs):
+        """
+        Update the parameters with new values.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments representing the parameters.
+
+        """
+
+        def _logtransform(value, lower, upper):
+            if value < lower or value > upper:
+                raise ValueError("Value out of bounds.")
+            elif value == lower:
+                return -np.inf
+            elif value == upper:
+                return np.inf
+            else:
+                return np.log(value / (1 - value))
+
+        for key, value in kwargs.items():
+            if key in self.__dict__:
+                self.__dict__[key].fill(
+                    _logtransform(
+                        value, self.__dict__[key].lower, self.__dict__[key].upper
+                    )
+                )

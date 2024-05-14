@@ -155,9 +155,7 @@ class Wrapper:
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
             for keys in self.parameter_names[0 : len(parameters)]:
                 value = parameters[self.parameter_names.index(keys)]
-                setattr(self.parameters, keys, value)
-        if isinstance(parameters, Parameters):
-            self.parameters = copy.deepcopy(parameters)
+                self.parameters.update(**{keys: value})
         return None
 
     def export(self):

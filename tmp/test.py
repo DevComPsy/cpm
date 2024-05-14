@@ -1,5 +1,4 @@
-# %%
-from cpm.generators import Parameters, Wrapper
+from cpm.generators import Value, Parameters, Wrapper
 
 # import components we want to use
 
@@ -12,7 +11,6 @@ from prettyformatter import pprint as pp  ## pretty print
 import numpy as np
 
 
-# %%
 ## create a single trial as a dictionary
 trial = {
     "trials": np.array([1, 2]),
@@ -29,7 +27,6 @@ parameters = Parameters(
 )
 
 
-# %%
 def model(parameters, trial):
     ## import parameters
     alpha = parameters.alpha
@@ -46,7 +43,7 @@ def model(parameters, trial):
     ## multiply weights with stimulis vector
     active = stimulus * weights
     ## this is a mock-up policy
-    policy = np.sum(active) * temperature
+    policy = np.sum(active) * 1 / temperature
     ## learning
     learning = DeltaRule(weights=active, feedback=feedback, alpha=alpha, input=stimulus)
     learning.compute()
@@ -60,11 +57,9 @@ def model(parameters, trial):
     return output
 
 
-# %%
 model(parameters, trial)
 
 
-# %%
 data = {
     "trials": np.array(
         [[2, 3], [1, 4], [3, 2], [4, 1], [2, 3], [2, 3], [1, 4], [3, 2], [4, 1], [2, 3]]
@@ -72,38 +67,34 @@ data = {
     "feedback": np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
 }
 
-# %%
-# Add new parameters to the model
-params = {
-    "alpha": 0.5,
-    "temperature": 1,
-    "values": np.zeros((1, 4)),
-}
 
-params = Parameters(**params)
+params = Parameters(
+    # freely varying parameters are indicated by specifying priors
+    alpha=Value(
+        value=0.5,
+        lower=1e-10,
+        upper=1,
+        prior="truncated_normal",
+        args={"mean": 0.5, "sd": 0.25},
+    ),
+    temperature=Value(
+        value=1,
+        lower=1e-10,
+        upper=1,
+        prior="truncated_normal",
+        args={"mean": 0.5, "sd": 0.25},
+    ),
+    values=np.array([[0.25, 0.25, 0.25, 0.25]]),
+)
 
 wrap = Wrapper(model=model, parameters=params, data=data)
 wrap.run()
 wrap.dependent
 
 
-# %%
-pp(wrap.export())
+wrap.export()
 
 
-# %%
-wrap.reset(parameters={"alpha": 0.05, "temperature": 1, "values": np.zeros((1, 4))})
-wrap.run()
-pp(wrap.export())
-
-
-# %%
-wrap.simulation
-
-# %%
-wrap.save(filename="test")
-
-# %%
 experiment = []
 for i in range(100):
     ppt = {
@@ -123,130 +114,37 @@ for i in range(100):
             ]
         ),
         "feedback": np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
-        "observed": np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
+        "observed": np.random.randint(0, 2, 10),
     }
     experiment.append(ppt)
 
 
-# %%
-from cpm.optimisation import DifferentialEvolution, minimise, Fmin
+from cpm.optimisation import DifferentialEvolution, minimise, FminBound, Fmin
 
-lower = [1e-10, 1e-10]
-upper = [1, 1]
-bounds = list(zip(lower, upper))
-
-# %%
 
 Fit = Fmin(
     model=wrap,
     data=experiment,
-    initial_guess=[0.32, 0.788],
+    initial_guess=[0.32, 0.5],
     minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
-    parallel=True
+    parallel=True,
+    prior=False,
 )
 
 Fit.optimise()
-# %%
-pp(Fit.parameters)
-Fit.export()
-# %%
-Fit = DifferentialEvolution(
-    model=wrap,
-    bounds=bounds,
-    data=experiment,
-    minimisation=minimise.LogLikelihood.bernoulli,  # currently, this is the only working metric
-    maxiter=200,  # kwargs
-)  # initialize the optimisation
 
-Fit.optimise()
-
-pp(Fit.fit)
-
-# %%
 pp(Fit.parameters)
 
-# %%
 Fit.export()
 
-# %%
-Fit.export(details=True)
-# %% [markdown]
-# This is great, so noew we can run the model on the best fitting parameters and see how it looks like.
-# We can use the `Simulator` class to do that, which takes in the data as defined above a list of dictionaries for the parameter.
-# I know that the Simulator was used a bit differently in what we outlined in the Engineering Document, but I think that this is still okay for now.
+Fit.export()
 
-# %%
-from cpm.generators import Simulator
+test = EmpiricalBayes(optimiser=Fit, iteration=5, tolerance=1e-6, chain=2)
 
-wrap.reset()
+test.optimise()
 
-explore = Simulator(model=wrap, data=experiment, parameters=Fit.parameters)
-explore.run()
+x = test.optimiser.model.parameters.alpha.prior.kwds
 
+test.details[0]
 
-# %%
-explore.simulation
-
-# %%
-explore.export()
-
-# %% [markdown]
-# Let's look at the output.
-# We can simply export the outcome as a pandas dataframe and plot it.
-# It is confusingly names `export()`, so that will need to be changed.
-
-# %% [markdown]
-# ### Evaluation
-#
-# Alright, let us now try to do some parameter recovery.
-# There is less and less thing to explain now, so I will just go through it quickly.
-#
-# We will use the `ParameterRecovery` from `cpm.evaluation`.
-# This will take in the Wrapper, the optimiser, the strategy, bounds, and iterations.
-
-# %% [markdown]
-# Okay, that was fairly quick.
-# Let's look at the results for the learning rate, which we can simply extract from the `ParameterRecovery` object.
-# NOTE that the model will have bad performance, but let's ignore that for now and focus on functionalities.
-
-# %%
-explore.generate()
-explore.generated[0].get("observed").shape
-
-# %%
-from cpm.evaluation import ParameterRecovery, strategies
-
-
-new = Simulator(model=wrap, data=experiment, parameters=Fit.parameters)
-
-recover = ParameterRecovery(
-    model=new,
-    strategy=strategies.grid,
-    optimiser=DifferentialEvolution,
-    loss=minimise.LogLikelihood.continuous,
-    iteration=10,
-    bounds=bounds,
-)
-
-recover.recover()
-
-
-# %%
-recover.extract(key="alpha")
-
-# %%
-import matplotlib.pyplot as plt
-
-alpha = recover.extract(key="alpha")
-alpha["ppt"] = np.repeat(np.arange(100), 10)
-
-
-# %%
-alpha.plot.scatter(x="recovered", y="original", c="iteration", colormap="viridis", s=10)
-
-# %% [markdown]
-# ## The END
-#
-# That's it for now.
-# There are some things that don't work as expected, but I am actively looking into them.
-# I think the biggest challenge was the modular aspect of the toolbox, but I think that it is working quite well now.
+test.lmes

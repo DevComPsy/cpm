@@ -231,11 +231,11 @@ class Value:
     -----
     We currently implement the following continuous distributions from `scipy.stats` corresponding to the `prior` argument:
 
-    - uniform: 'uniform'
-    - normal: 'truncnormal'
-    - beta: 'beta'
-    - gamma: 'gamma'
-    - truncexp: 'exponential'
+    - 'uniform'
+    - 'truncated_normal'
+    - 'beta'
+    - 'gamma'
+    - 'truncated_exponential'
 
     Because these distributions are inherited from `scipy.stats`, see the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on how to update variables of the distribution.
 

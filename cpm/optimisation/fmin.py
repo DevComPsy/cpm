@@ -71,7 +71,7 @@ class Fmin:
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
+        Additional keyword arguments. See the [`scipy.optimize.fmin`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin.html) documentation for what is supported.
 
     Attributes
     ----------
@@ -230,7 +230,8 @@ class FminBound:
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
+        Additional keyword arguments. See the [`scipy.optimize.fmin_l_bfgs_b`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html) documentation for what is supported.
+
 
     Attributes
     ----------

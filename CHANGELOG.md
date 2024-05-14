@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - 6780753c: Wrapper updates variables in parameters that are also present in model output
+- c8cd4c7c: Simulator.generate() method now expects users to specify what variable to generate
+- 7b2571b1: Parameter Recovery now supports the generation of user-specified dependent variables
 
 ### Fixed
 
 - 6780753c: Wrapper now correctly finds the number of trials in the model output
 - 5f5432bd: -Inf in Loglikelihood is turned into np.finfo(np.float64).min to avoid NaN in the optimization
 - a84ae319: Parameters now ignores attributes without prior when calculating the PDF
+- 32520016: Simulator generated returns an empty array
+- 7a276be6: Parameter Recovery quired the wrong dimension to establish what parameters to recover
 
 ### Changed
 

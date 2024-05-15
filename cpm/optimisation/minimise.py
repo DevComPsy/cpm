@@ -131,9 +131,10 @@ class LogLikelihood:
             LL = -1 * LL
         return LL
 
+
 class Distance:
 
-    def __init__(self.):
+    def __init__(self):
         pass
 
     def SSE(predicted, observed, **kwargs):
@@ -155,9 +156,9 @@ class Distance:
         sse = np.sum((predicted - observed) ** 2)
         return sse
 
-    def EDE(predicted, observed, **kwargs):
+    def MSE(predicted, observed, **kwargs):
         """
-        Compute the Euclidean Distance of Errors (EDE).
+        Compute the Mean Squared Errors (EDE).
 
         Parameters
         ----------
@@ -171,9 +172,9 @@ class Distance:
         float
             The Euclidean distance.
         """
-        euclidean = np.sqrt(np.sum((predicted - observed) ** 2))
+        euclidean = np.sqrt(np.mean((predicted - observed) ** 2))
         return euclidean
-        
+
 
 class Bayesian:
 

@@ -132,12 +132,15 @@ class Parameters:
         Returns
         -------
         The probability of the parameter set under the prior distribution for each parameter.
-        If `log` is True, the log probability is returned.
+        If `log` is True, the log probability is returned. When the PDF is 0, it returns the maximum
+        value of a float. If "log" is True, it returns the log of the maximum value of a float.
         """
         prior = 1
         for _, value in self.__dict__.items():
             if value.prior is not None:
                 prior *= value.PDF()
+        if prior == 0:
+            prior = np.finfo(np.float64).max
         if log:
             prior = np.log(prior)
         return prior

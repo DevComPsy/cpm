@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 71937516: Parameters can now output parameter bounds if parameter has specified priors
 - df4cac2c: FminBound implements a bounded parameter search with L-BFGS-B
 - 2fc82638: Parameters now output freely varying parameter names
+- abb837ff: Fmin can now reiterate the minimisation process for multiple starting points
+- abb837ff: Fmin can now add ppt identifier to the output of the minimisation process
 
 ### Changed
 

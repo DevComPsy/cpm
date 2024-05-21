@@ -65,11 +65,17 @@ class Fmin:
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
+    number_of_starts : int
+        The number of random initialisations for the optimization. Default is `1`.
+    initial_guess : list or array-like
+        The initial guess for the optimization. Default is `None`. If `number_of_starts` is set, and the `initial_guess` parameter is 'None', the initial guesses are randomly generated from a uniform distribution.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    ppt_identifier : str
+        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
 
@@ -98,6 +104,8 @@ class Fmin:
     Notes
     -----
     The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model `Wrapper`.
+
+    The optimization process is repeated `number_of_starts` times, and only the best-fitting output from the best guess is stored.
     """
 
     def __init__(
@@ -109,28 +117,52 @@ class Fmin:
         cl=None,
         parallel=False,
         prior=False,
+        number_of_starts=1,
+        ppt_identifier=None,
+        seed=1,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
-        self.initial_guess = initial_guess
         self.prior = prior
         self.kwargs = kwargs
         self.fit = []
         self.details = []
         self.parameters = []
         self.participant = data[0]
+        self.ppt_identifier = ppt_identifier
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
-        self.auxiliary = {
-            "n": len(self.participant.get("observed")),
-            "k": len(self.initial_guess),
-        }
+
+        if number_of_starts is not None and initial_guess is not None:
+            ## convert to a 2D array
+            initial_guess = np.asarray(initial_guess)
+            if len(initial_guess.shape) == 1:
+                initial_guess = np.expand_dims(initial_guess, axis=0)
+            ## assign the initial guess and raise an error if the number of starts does not match the number of initial guesses
+            self.initial_guess = initial_guess
+            if np.asarray(initial_guess).shape[0] != number_of_starts:
+                raise ValueError(
+                    "The number of initial guesses must match the number of starts."
+                )
+
+        if number_of_starts is not None and initial_guess is None:
+            bounds = self.model.parameters.bounds()
+            # set seed
+            np.random.seed(seed)
+            self.initial_guess = np.random.uniform(
+                low=bounds[0],
+                high=bounds[1],
+                size=(number_of_starts, len(self.parameter_names)),
+            )
+
+        self.__current_guess__ = self.initial_guess[0]
+
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
@@ -146,8 +178,10 @@ class Fmin:
         - None
         """
 
-        def __unpack(x):
+        def __unpack(x, id=None):
             keys = ["xopt", "fopt", "iter", "funcalls", "warnflag", "hessian"]
+            if id is not None:
+                keys.append(id)
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x[i]
@@ -156,7 +190,7 @@ class Fmin:
         def __task(participant, **args):
             result = fmin(
                 minimum,
-                x0=self.initial_guess,
+                x0=self.__current_guess__,
                 args=(model, participant.get("observed"), loss, prior),
                 disp=False,
                 **self.kwargs,
@@ -164,25 +198,45 @@ class Fmin:
             )
             hessian = Hessian(result[0], model, participant.get("observed"), loss)
             result = (*result, hessian)
+            # if participant data contains identifiers, return the identifiers too
+            if self.ppt_identifier is not None:
+                result = (*result, participant.get(self.ppt_identifier))
             return result
+
+        def __extract_nll(result):
+            output = np.zeros(len(result))
+            for i in range(len(result)):
+                output[i] = result[i][1]
+            return output.sum()
 
         loss = self.loss
         model = self.model
         prior = self.prior
         Hessian = nd.Hessian(minimum)
 
-        pool = mp.Pool(self.cl)
-        results = pool.map(__task, self.data)
-        pool.close()
-        del pool
-        self.details = results
+        old_nll = np.inf
+        for i in range(len(self.initial_guess)):
+            print(
+                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+            )
+            self.__current_guess__ = self.initial_guess[i]
+            pool = mp.Pool(self.cl)
+            results = pool.map(__task, self.data)
+            pool.close()
+            del pool
 
-        parameters = {}
-        for result in results:
-            for i in range(len(self.initial_guess)):
-                parameters[self.parameter_names[i]] = result[0][i]
-            self.parameters.append(parameters)
-            self.fit.append(__unpack(result))
+            nll = __extract_nll(results)
+            if nll < old_nll:
+                self.reset()
+                self.details = results
+
+                parameters = {}
+                for result in results:
+                    for i in range(len(self.parameter_names)):
+                        parameters[self.parameter_names[i]] = result[0][i]
+                    self.parameters.append(parameters)
+                    self.fit.append(__unpack(result, id=self.ppt_identifier))
+                old_nll = nll
 
         return None
 
@@ -264,10 +318,12 @@ class FminBound:
         model=None,
         data=None,
         initial_guess=None,
+        number_of_starts=1,
         minimisation=None,
         cl=None,
         parallel=False,
         prior=False,
+        ppt_identifier=None,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -280,16 +336,37 @@ class FminBound:
         self.details = []
         self.parameters = []
         self.participant = data[0]
+        self.ppt_identifier = ppt_identifier
+
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
-        self.auxiliary = {
-            "n": len(self.participant.get("observed")),
-            "k": len(self.initial_guess),
-        }
+
+        if number_of_starts is not None and initial_guess is not None:
+            ## convert to a 2D array
+            initial_guess = np.asarray(initial_guess)
+            if len(initial_guess.shape) == 1:
+                initial_guess = np.expand_dims(initial_guess, axis=0)
+            ## assign the initial guess and raise an error if the number of starts does not match the number of initial guesses
+            self.initial_guess = initial_guess
+            if np.asarray(initial_guess).shape[0] != number_of_starts:
+                raise ValueError(
+                    "The number of initial guesses must match the number of starts."
+                )
+
+        if number_of_starts is not None and initial_guess is None:
+            bounds = self.model.parameters.bounds()
+            self.initial_guess = np.random.uniform(
+                low=bounds[0],
+                high=bounds[1],
+                size=(number_of_starts, len(self.parameter_names)),
+            )
+
+        self.__current_guess__ = self.initial_guess[0]
+
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
@@ -307,6 +384,8 @@ class FminBound:
 
         def __unpack(x):
             keys = ["x", "f", "grad", "task", "funcalls", "nit", "warnflag", "hessian"]
+            if id is not None:
+                keys.append(id)
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x[i]
@@ -323,7 +402,7 @@ class FminBound:
         def __task(participant, **args):
             result = fmin_l_bfgs_b(
                 minimum,
-                x0=self.initial_guess,
+                x0=self.__current_guess__,
                 bounds=bounds,
                 args=(model, participant.get("observed"), loss, prior),
                 disp=False,
@@ -331,20 +410,45 @@ class FminBound:
             )
             hessian = Hessian(result[0], model, participant.get("observed"), loss)
             result = (*result[0:2], *tuple(list(result[2].values())), hessian)
+
+            if self.ppt_identifier is not None:
+                result = (*result, participant.get(self.ppt_identifier))
             return result
 
-        pool = mp.Pool(self.cl)
-        results = pool.map(__task, self.data)
-        pool.close()
-        del pool
-        self.details = results
+        def __extract_nll(result):
+            output = np.zeros(len(result))
+            for i in range(len(result)):
+                output[i] = result[i][1]
+            return output.sum()
 
-        parameters = {}
-        for result in results:
-            for i in range(len(self.initial_guess)):
-                parameters[self.parameter_names[i]] = result[0][i]
-            self.parameters.append(parameters)
-            self.fit.append(__unpack(result))
+        loss = self.loss
+        model = self.model
+        prior = self.prior
+        Hessian = nd.Hessian(minimum)
+
+        old_nll = np.inf
+        for i in range(len(self.initial_guess)):
+            print(
+                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+            )
+            self.__current_guess__ = self.initial_guess[i]
+            pool = mp.Pool(self.cl)
+            results = pool.map(__task, self.data)
+            pool.close()
+            del pool
+            print(results[0])
+            nll = __extract_nll(results)
+            if nll < old_nll:
+                self.reset()
+                self.details = results
+
+                parameters = {}
+                for result in results:
+                    for i in range(len(self.parameter_names)):
+                        parameters[self.parameter_names[i]] = result[0][i]
+                    self.parameters.append(parameters)
+                    self.fit.append(__unpack(result, id=self.ppt_identifier))
+                old_nll = nll
 
         return None
 

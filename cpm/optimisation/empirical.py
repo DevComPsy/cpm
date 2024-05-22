@@ -124,7 +124,7 @@ class EmpiricalBayes:
             for i, name in enumerate(parameter_names):
                 population_updates[name] = {
                     "mean": means[i],
-                    "sd": np.sqrt(np.abs(variance[i])),
+                    "sd": variance[i],
                 }
 
             self.optimiser.model.parameters.update_prior(**population_updates)

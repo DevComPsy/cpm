@@ -134,8 +134,8 @@ class Simulator:
         """
         append = []
         for ppt in self.simulation:
-            one = {"observed": np.zeros((self.function.__len__, 1))}
-            for k in range(self.function.__len__):
+            one = {"observed": np.zeros((self.wrapper.__len__, 1))}
+            for k in range(self.wrapper.__len__):
                 one.get("observed")[k] = np.array([ppt[k].get(variable)])
             append.append(one)
         self.generated = copy.deepcopy(append)

@@ -94,7 +94,6 @@ wrap.dependent
 
 wrap.export()
 
-
 experiment = []
 for i in range(100):
     ppt = {
@@ -113,14 +112,49 @@ for i in range(100):
                 [2, 3],
             ]
         ),
-        "feedback": np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
+        "feedback": np.random.randint(0, 2, 10),
         "observed": np.random.randint(0, 2, 10),
     }
     experiment.append(ppt)
 
 
+from cpm.generators import Simulator
 from cpm.optimisation import DifferentialEvolution, minimise, FminBound, Fmin
 
+
+Fit = Fmin(
+    model=wrap,
+    data=experiment,
+    initial_guess=None,
+    number_of_starts=10,
+    minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
+    parallel=True,
+    prior=False,
+    seed=123,
+)
+
+
+Fit.optimise()
+
+pp(Fit.parameters)
+
+FitBound = FminBound(
+    model=wrap,
+    data=experiment,
+    initial_guess=None,
+    number_of_starts=10,
+    minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
+    parallel=True,
+    prior=False,
+    maxiter=1000,
+    approx_grad=True,
+)
+
+FitBound.initial_guess
+
+FitBound.optimise()
+
+Fit.export()
 
 Fit = Fmin(
     model=wrap,
@@ -128,23 +162,23 @@ Fit = Fmin(
     initial_guess=[0.32, 0.5],
     minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
     parallel=True,
-    prior=False,
+    prior=True,
+    maxiter=100,
 )
 
-Fit.optimise()
-
-pp(Fit.parameters)
-
-Fit.export()
-
-Fit.export()
-
-test = EmpiricalBayes(optimiser=Fit, iteration=5, tolerance=1e-6, chain=2)
+test = EmpiricalBayes(optimiser=FitBound, iteration=10, tolerance=1e-6, chain=2)
 
 test.optimise()
 
-x = test.optimiser.model.parameters.alpha.prior.kwds
+test.optimiser.model.parameters.alpha.prior.kwds
+test.optimiser.model.parameters.temperature.prior.kwds
+
 
 test.details[0]
 
 test.lmes
+
+bounds = params.bounds()
+bounds = np.asarray(bounds).T
+bounds = list(map(tuple, bounds))
+bounds

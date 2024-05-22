@@ -207,14 +207,13 @@ class Fmin:
             output = np.zeros(len(result))
             for i in range(len(result)):
                 output[i] = result[i][1]
-            return output.sum()
+            return output.copy()
 
         loss = self.loss
         model = self.model
         prior = self.prior
         Hessian = nd.Hessian(minimum)
 
-        old_nll = np.inf
         for i in range(len(self.initial_guess)):
             print(
                 f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
@@ -225,24 +224,40 @@ class Fmin:
             pool.close()
             del pool
 
-            nll = __extract_nll(results)
-            if nll < old_nll:
-                self.reset()
+            ## extract the negative log likelihoods for each ppt
+            if i == 0:
+                old_nll = __extract_nll(results)
                 self.details = results
-
                 parameters = {}
                 for result in results:
                     for i in range(len(self.parameter_names)):
                         parameters[self.parameter_names[i]] = result[0][i]
                     self.parameters.append(parameters)
                     self.fit.append(__unpack(result, id=self.ppt_identifier))
-                old_nll = nll
+
+            ## after first iteration, only update participants with better fit
+            if i > 0:
+                nll = __extract_nll(results)
+                # check if ppt fit is better than the previous fit
+                indices = np.where(nll < old_nll)[0]
+                for ppt in indices:
+                    self.details[ppt] = results[ppt]
+                    for i in range(len(self.parameter_names)):
+                        self.parameters[ppt][self.parameter_names[i]] = results[ppt][0][
+                            i
+                        ]
+                    self.fit[ppt] = __unpack(results[ppt], id=self.ppt_identifier)
 
         return None
 
-    def reset(self):
+    def reset(self, initial_guess=True):
         """
         Resets the optimization results and fitted parameters.
+
+        Parameters
+        ----------
+        initial_guess : bool, optional
+            Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
         Returns:
             None
@@ -250,6 +265,11 @@ class Fmin:
         self.fit = []
         self.details = []
         self.parameters = []
+        if initial_guess:
+            bounds = self.model.parameters.bounds()
+            self.initial_guess = np.random.uniform(
+                low=bounds[0], high=bounds[1], size=self.initial_guess.shape
+            )
         return None
 
     def export(self):
@@ -374,7 +394,7 @@ class FminBound:
         if cl is None and not parallel:
             self.cl = 2
 
-    def optimise(self):
+    def optimise(self, display=True):
         """
         Performs the optimization process.
 
@@ -382,7 +402,7 @@ class FminBound:
         - None
         """
 
-        def __unpack(x):
+        def __unpack(x, id=None):
             keys = ["x", "f", "grad", "task", "funcalls", "nit", "warnflag", "hessian"]
             if id is not None:
                 keys.append(id)
@@ -393,7 +413,8 @@ class FminBound:
             return out
 
         bounds = self.model.parameters.bounds()
-        bounds = tuple(map(tuple, bounds))
+        bounds = np.asarray(bounds).T
+        bounds = list(map(tuple, bounds))
         loss = self.loss
         model = self.model
         prior = self.prior
@@ -428,33 +449,50 @@ class FminBound:
 
         old_nll = np.inf
         for i in range(len(self.initial_guess)):
-            print(
-                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
-            )
+            if display:
+                print(
+                    f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+                )
             self.__current_guess__ = self.initial_guess[i]
             pool = mp.Pool(self.cl)
             results = pool.map(__task, self.data)
             pool.close()
             del pool
-            print(results[0])
-            nll = __extract_nll(results)
-            if nll < old_nll:
-                self.reset()
-                self.details = results
 
+            ## extract the negative log likelihoods for each ppt
+            if i == 0:
+                old_nll = __extract_nll(results)
+                self.details = results
                 parameters = {}
                 for result in results:
                     for i in range(len(self.parameter_names)):
                         parameters[self.parameter_names[i]] = result[0][i]
                     self.parameters.append(parameters)
                     self.fit.append(__unpack(result, id=self.ppt_identifier))
-                old_nll = nll
+
+            ## after first iteration, only update participants with better fit
+            if i > 0:
+                nll = __extract_nll(results)
+                # check if ppt fit is better than the previous fit
+                indices = np.where(nll < old_nll)[0]
+                for ppt in indices:
+                    self.details[ppt] = results[ppt]
+                    for i in range(len(self.parameter_names)):
+                        self.parameters[ppt][self.parameter_names[i]] = results[ppt][0][
+                            i
+                        ]
+                    self.fit[ppt] = __unpack(results[ppt], id=self.ppt_identifier)
 
         return None
 
-    def reset(self):
+    def reset(self, initial_guess=True):
         """
         Resets the optimization results and fitted parameters.
+
+        Parameters
+        ----------
+        initial_guess : bool, optional
+            Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
         Returns:
             None
@@ -462,6 +500,11 @@ class FminBound:
         self.fit = []
         self.details = []
         self.parameters = []
+        if initial_guess:
+            bounds = self.model.parameters.bounds()
+            self.initial_guess = np.random.uniform(
+                low=bounds[0], high=bounds[1], size=self.initial_guess.shape
+            )
         return None
 
     def export(self):

@@ -13,8 +13,6 @@ class EmpiricalBayes:
         The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.
     objective : str
         The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level _a posteriori_ parameter estimates.
-    initial_guesses_matrix : numpy.ndarray, optional
-        A matrix of initial guesses for the parameters. The matrix should have the shape (chain, number of parameters). Default is None.
     iteration : int, optional
         The maximum number of iterations. Default is 1000.
     tolerance : float, optional
@@ -83,7 +81,6 @@ class EmpiricalBayes:
             prior = self.optimiser.model.parameters.PDF()
 
             self.optimiser.reset()
-            self.optimiser.initial_guess = self.initial_guesses_matrix[iteration]
 
             parameters, hessian, details = self.step()
             self.fit.append(copy.deepcopy(parameters))

@@ -17,10 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2fc82638: Parameters now output freely varying parameter names
 - abb837ff: Fmin can now reiterate the minimisation process for multiple starting points
 - abb837ff: Fmin can now add ppt identifier to the output of the minimisation process
+- 2254dbd6: Regenerate initial guesses in Fmin-type optimisation when reset (can be turned off)
+- 2254dbd6: EmpiricalBayes creates new starting points for each iteration of the optimisation
 
 ### Changed
 
 - 2477a127: Optimisers now only store freely varying parameter names
+- 2254dbd6: When using multiple starting points, Fmin now only updates parameter estimates for participants who has a better fit
 
 ### Removed
 

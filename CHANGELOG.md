@@ -39,4 +39,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - a84ae319: Parameters now ignores attributes without prior when calculating the PDF
 - 32520016: Simulator generated returns an empty array
 - 7a276be6: Parameter Recovery quired the wrong dimension to establish what parameters to recover
-
+- cd6ef8cb: Fix naming clashes in parameter recovery

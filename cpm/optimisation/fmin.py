@@ -119,7 +119,7 @@ class Fmin:
         prior=False,
         number_of_starts=1,
         ppt_identifier=None,
-        seed=1,
+        display=False,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -131,6 +131,7 @@ class Fmin:
         self.details = []
         self.parameters = []
         self.participant = data[0]
+        self.display = display
         self.ppt_identifier = ppt_identifier
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
@@ -153,8 +154,6 @@ class Fmin:
 
         if number_of_starts is not None and initial_guess is None:
             bounds = self.model.parameters.bounds()
-            # set seed
-            np.random.seed(seed)
             self.initial_guess = np.random.uniform(
                 low=bounds[0],
                 high=bounds[1],
@@ -192,7 +191,7 @@ class Fmin:
                 minimum,
                 x0=self.__current_guess__,
                 args=(model, participant.get("observed"), loss, prior),
-                disp=False,
+                disp=self.display,
                 **self.kwargs,
                 full_output=True,
             )
@@ -227,26 +226,30 @@ class Fmin:
             ## extract the negative log likelihoods for each ppt
             if i == 0:
                 old_nll = __extract_nll(results)
-                self.details = results
+                self.details = copy.deepcopy(results)
                 parameters = {}
                 for result in results:
                     for i in range(len(self.parameter_names)):
-                        parameters[self.parameter_names[i]] = result[0][i]
-                    self.parameters.append(parameters)
-                    self.fit.append(__unpack(result, id=self.ppt_identifier))
-
-            ## after first iteration, only update participants with better fit
-            if i > 0:
+                        parameters[self.parameter_names[i]] = copy.deepcopy(
+                            result[0][i]
+                        )
+                    self.parameters.append(copy.deepcopy(parameters))
+                    self.fit.append(
+                        __unpack(copy.deepcopy(result), id=self.ppt_identifier)
+                    )
+            else:
                 nll = __extract_nll(results)
                 # check if ppt fit is better than the previous fit
                 indices = np.where(nll < old_nll)[0]
                 for ppt in indices:
-                    self.details[ppt] = results[ppt]
+                    self.details[ppt] = copy.deepcopy(results[ppt])
                     for i in range(len(self.parameter_names)):
-                        self.parameters[ppt][self.parameter_names[i]] = results[ppt][0][
-                            i
-                        ]
-                    self.fit[ppt] = __unpack(results[ppt], id=self.ppt_identifier)
+                        self.parameters[ppt][self.parameter_names[i]] = copy.deepcopy(
+                            results[ppt][0][i]
+                        )
+                    self.fit[ppt] = __unpack(
+                        copy.deepcopy(results[ppt]), id=self.ppt_identifier
+                    )
 
         return None
 
@@ -345,6 +348,7 @@ class FminBound:
         parallel=False,
         prior=False,
         ppt_identifier=None,
+        display=False,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -353,11 +357,12 @@ class FminBound:
         self.initial_guess = initial_guess
         self.prior = prior
         self.kwargs = kwargs
+        self.participant = data[0]
+        self.ppt_identifier = ppt_identifier
+        self.display = display
         self.fit = []
         self.details = []
         self.parameters = []
-        self.participant = data[0]
-        self.ppt_identifier = ppt_identifier
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
@@ -427,7 +432,7 @@ class FminBound:
                 x0=self.__current_guess__,
                 bounds=bounds,
                 args=(model, participant.get("observed"), loss, prior),
-                disp=False,
+                disp=self.display,
                 **self.kwargs,
             )
             hessian = Hessian(result[0], model, participant.get("observed"), loss)
@@ -441,7 +446,7 @@ class FminBound:
             output = np.zeros(len(result))
             for i in range(len(result)):
                 output[i] = result[i][1]
-            return output.sum()
+            return output.copy()
 
         loss = self.loss
         model = self.model
@@ -463,26 +468,30 @@ class FminBound:
             ## extract the negative log likelihoods for each ppt
             if i == 0:
                 old_nll = __extract_nll(results)
-                self.details = results
+                self.details = copy.deepcopy(results)
                 parameters = {}
                 for result in results:
                     for i in range(len(self.parameter_names)):
-                        parameters[self.parameter_names[i]] = result[0][i]
-                    self.parameters.append(parameters)
-                    self.fit.append(__unpack(result, id=self.ppt_identifier))
-
-            ## after first iteration, only update participants with better fit
-            if i > 0:
+                        parameters[self.parameter_names[i]] = copy.deepcopy(
+                            result[0][i]
+                        )
+                    self.parameters.append(copy.deepcopy(parameters))
+                    self.fit.append(
+                        __unpack(copy.deepcopy(result), id=self.ppt_identifier)
+                    )
+            else:
                 nll = __extract_nll(results)
                 # check if ppt fit is better than the previous fit
                 indices = np.where(nll < old_nll)[0]
                 for ppt in indices:
-                    self.details[ppt] = results[ppt]
+                    self.details[ppt] = copy.deepcopy(results[ppt])
                     for i in range(len(self.parameter_names)):
-                        self.parameters[ppt][self.parameter_names[i]] = results[ppt][0][
-                            i
-                        ]
-                    self.fit[ppt] = __unpack(results[ppt], id=self.ppt_identifier)
+                        self.parameters[ppt][self.parameter_names[i]] = copy.deepcopy(
+                            results[ppt][0][i]
+                        )
+                    self.fit[ppt] = __unpack(
+                        copy.deepcopy(results[ppt]), id=self.ppt_identifier
+                    )
 
         return None
 

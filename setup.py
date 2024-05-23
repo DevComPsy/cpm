@@ -27,10 +27,10 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.3.0",
+    version="0.8.3",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
-    author="Lenard Dome",
+    author="Lenard Dome, Frank Hezemans, Tobias Hauser",
     author_email="lenarddome@gmail.com",
     url="https://github.com/DevComPsy/cpm",
     packages=find_packages(),

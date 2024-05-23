@@ -2,6 +2,8 @@ from scipy.optimize import differential_evolution
 import pandas as pd
 import numpy as np
 import copy
+import warnings
+
 from . import minimise
 from . import utils
 from ..generators import Simulator, Wrapper
@@ -74,11 +76,12 @@ class DifferentialEvolution:
             raise ValueError(
                 "The DifferentialEvolution algorithm is not compatible with the Simulator object."
             )
-        if hasattr(self.function, "bounds"):
-            self.bounds = self.function.bounds
-        else:
-            self.bounds = bounds
-            # raise ValueError("You must define the parameter bounds in the Model object.")
+        self.bounds = bounds
+        if bounds is None:
+            self.bounds = self.function.parameter.bounds()
+            warnings.warn(
+                "No explicit bounds are specified. Using model's parameter specification."
+            )
 
     def minimise(self, pars, **args):
         """

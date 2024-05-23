@@ -18,8 +18,8 @@ class Wrapper:
         The model function that calculates the output(s) of the model for a single trial. See Notes for more information.
     data : dict
         A dictionary containing the data for the model. The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.
-    parameters : [Parameters][cpm.models.Parameters] object
-        The parameters object for the model that contains all parameters for the model.
+    parameters : Parameters object
+        The parameters object for the model that contains all parameters (and initial states) for the model. See Notes on how it is updated internally.
 
     Attributes
     ----------
@@ -29,16 +29,14 @@ class Wrapper:
         The data for the model.
     parameters : object
         The parameters object for the model.
-    values : ndarray
-        The values array.
     simulation : list
-        The list of simulation results.
+        The list of the model outputs.
     data : dict
         The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.
-    policies : ndarray
-        The policies array.
     parameter_names : list
         The list of parameter names.
+    dependent : numpy.ndarray
+        The dependent variable calculated by the model.
 
     Returns
     -------
@@ -49,10 +47,9 @@ class Wrapper:
     -----
     The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. The model output should contain the following keys:
 
-    - 'values': The values array.
-    - 'policy': The policies array.
     - 'dependent': Any dependent variables calculated by the model that will be used for the loss function.
-    - 'other': Any other output from the model.
+
+    If a model output contains any keys that are also present in parameters, it updates those in the parameters based on the model output.
     """
 
     def __init__(self, model=None, data=None, parameters=None):
@@ -65,8 +62,11 @@ class Wrapper:
         self.simulation = []
         self.data = data
 
-        self.shape = self.data.get("trials").shape
-        self.__len__ = self.shape[0]
+        # determine the number of trials
+        # find the shape of each key in the data
+        self.shape = [(np.array(v).shape) for k, v in self.data.items() if k != "ppt"]
+        # find the maximum number of trials
+        self.__len__ = np.max([shape[0] for shape in self.shape])
         self.dependent = []
         self.parameter_names = list(parameters.keys())
 
@@ -85,19 +85,30 @@ class Wrapper:
         for i in range(self.__len__):
             ## create input for the model
             trial = {k: self.data[k][i] for k in self.data.keys() if k != "ppt"}
+
             ## run the model
             output = self.model(parameters=self.parameters, trial=trial)
             self.simulation.append(output.copy())
-            self.parameters.values = Value(output.get("values"))
 
+            ## update your dependent variables
+            ## create dependent output on first iteration
             if i == 0:
                 self.dependent = np.zeros(
                     (self.__len__, output.get("dependent").shape[0])
                 )
 
+            ## copy dependent variable from model output to attribute
             self.dependent[i] = np.asarray(output.get("dependent")).copy()
 
-        self.values = output.get("values").copy()
+            ## update variables present in both parameters and model output
+            self.parameters.update(
+                **{
+                    key: value
+                    for key, value in output.items()
+                    if key in self.parameters.keys()
+                }
+            )
+
         self.__run__ = True
         return None
 
@@ -107,14 +118,14 @@ class Wrapper:
 
         Parameters
         ----------
-        parameters : dict or array_like, optional
+        parameters : dict, array_like or Parameters, optional
             The parameters to reset the model with.
 
         Notes
         -----
-        When resetting the model, the values and policies arrays are reset to zero.
-        If values are provided by the user, the values array is updated with the new values,
-        otherwise the values array is reset to 1/len(values).
+        When resetting the model, and `parameters` is None, reset model to initial state.
+        If parameter is `array_like`, it resets the only the parameters in the order they are provided,
+        where the last parameter updated is the element in parameters corresponding to len(parameters).
 
         Examples
         --------
@@ -136,9 +147,6 @@ class Wrapper:
             self.dependent.fill(0)
             self.simulation = []
             self.parameters = copy.deepcopy(self.__init_parameters__)
-            self.values = 1 / len(self.parameters.values)
-            if "values" in self.parameters.__dict__.keys():
-                self.values = self.parameters.values
             self.__run__ = False
         # if dict, update using parameters update method
         if isinstance(parameters, dict):
@@ -149,27 +157,6 @@ class Wrapper:
                 value = parameters[self.parameter_names.index(keys)]
                 self.parameters.update(**{keys: value})
         return None
-
-    def summary(self):
-        """
-        Get a summary of the model.
-
-        Returns
-        -------
-        dict
-            A dictionary containing the model summary.
-
-            - 'values': The values array.
-            - 'policies': The policies array.
-            - 'model': The model summary.
-
-        """
-        summary = {
-            "values": self.values,
-            "policies": self.policies,
-            **self.parameters.export(),
-        }
-        return summary
 
     def export(self):
         """

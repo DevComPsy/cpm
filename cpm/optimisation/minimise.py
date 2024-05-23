@@ -132,6 +132,50 @@ class LogLikelihood:
         return LL
 
 
+class Distance:
+
+    def __init__(self):
+        pass
+
+    def SSE(predicted, observed, **kwargs):
+        """
+        Compute the sum of squared errors (SSE).
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+
+        Returns
+        -------
+        float
+            The sum of squared errors.
+        """
+        sse = np.sum((predicted - observed) ** 2)
+        return sse
+
+    def MSE(predicted, observed, **kwargs):
+        """
+        Compute the Mean Squared Errors (EDE).
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+
+        Returns
+        -------
+        float
+            The Euclidean distance.
+        """
+        euclidean = np.sqrt(np.mean((predicted - observed) ** 2))
+        return euclidean
+
+
 class Bayesian:
 
     def __init__(self) -> None:

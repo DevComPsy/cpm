@@ -113,10 +113,10 @@ class EmpiricalBayes:
             ## calculate the variance of the between-subjects squared differences and the within-subjects squared differences
             ## add up variance plus diagonal for each ppt and then add up each ppt and divide them by mean
             between_within_variance = np.square(param - means) + diagonal
-            ## make sure the STD is not too small by bounding it to 1e-6
-            np.clip(between_within_variance, 1e-6, None, out=between_within_variance)
             ## get the mean of the between_within_variance minus the
             variance = between_within_variance.mean(axis=0) - np.square(means)
+            ## make sure the STD is not too small by bounding it to 1e-6
+            np.clip(variance, 1e-6, None, out=variance)
 
             ## update population-level parameters.
             population_updates = {}
@@ -146,7 +146,7 @@ class EmpiricalBayes:
 
             print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
 
-            if iteration > 0:
+            if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
                     break
                 else:  # update the log likelihood
@@ -162,7 +162,7 @@ class EmpiricalBayes:
             "parameters": self.optimiser.model.parameters,
         }
 
-        print(f"Optimisation finished in {iteration} iterations: {output}")
+        # print(f"Chain finished in {iteration} iterations: {population_updates}")
         return output
 
     def optimise(self):
@@ -172,4 +172,4 @@ class EmpiricalBayes:
             results = self.stair()
             output.append(copy.deepcopy(results))
         self.output = output
-        return output
+        return None

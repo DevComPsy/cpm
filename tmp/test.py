@@ -80,7 +80,7 @@ params = Parameters(
     temperature=Value(
         value=1,
         lower=1e-10,
-        upper=1,
+        upper=10,
         prior="truncated_normal",
         args={"mean": 0.5, "sd": 0.25},
     ),
@@ -119,18 +119,26 @@ for i in range(100):
 
 
 from cpm.generators import Simulator
-from cpm.optimisation import DifferentialEvolution, minimise, FminBound, Fmin
+from cpm.optimisation import (
+    DifferentialEvolution,
+    minimise,
+    FminBound,
+    Fmin,
+    Minimize,
+    EmpiricalBayes,
+)
 
-
-Fit = Fmin(
+np.seterr(all="ignore")
+Fit = Minimize(
     model=wrap,
     data=experiment,
+    method="Nelder-Mead",
     initial_guess=None,
-    number_of_starts=10,
-    minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
-    parallel=True,
+    number_of_starts=2,
+    minimisation=minimise.LogLikelihood.bernoulli,  # currently, this is the only working metric
+    parallel=False,
     prior=False,
-    seed=123,
+    options={"maxiter": 400, "maxfev": 4000, "adaptive": False},
 )
 
 
@@ -138,35 +146,25 @@ Fit.optimise()
 
 pp(Fit.parameters)
 
-FitBound = FminBound(
+FitBound = Fmin(
     model=wrap,
     data=experiment,
     initial_guess=None,
-    number_of_starts=10,
+    number_of_starts=2,
     minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
-    parallel=True,
-    prior=False,
-    maxiter=1000,
-    approx_grad=True,
-)
-
-FitBound.initial_guess
-
-FitBound.optimise()
-
-Fit.export()
-
-Fit = Fmin(
-    model=wrap,
-    data=experiment,
-    initial_guess=[0.32, 0.5],
-    minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
-    parallel=True,
+    parallel=False,
     prior=True,
     maxiter=100,
 )
 
-test = EmpiricalBayes(optimiser=FitBound, iteration=10, tolerance=1e-6, chain=2)
+FitBound.initial_guess
+
+FitBound.reset()
+FitBound.optimise()
+
+FitBound.export()
+
+test = EmpiricalBayes(optimiser=FitBound, iteration=2, tolerance=1e-6, chain=2)
 
 test.optimise()
 
@@ -178,7 +176,7 @@ test.details[0]
 
 test.lmes
 
-bounds = params.bounds()
+bounds = FitBound.model.parameters.bounds()
 bounds = np.asarray(bounds).T
 bounds = list(map(tuple, bounds))
 bounds

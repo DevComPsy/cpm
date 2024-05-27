@@ -184,6 +184,7 @@ class Fmin:
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x[i]
+            out["fun"] = out.pop("fopt")
             return out
 
         def __task(participant, **args):
@@ -417,7 +418,7 @@ class FminBound:
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x[i]
-            out["fopt"] = out.pop("f")
+            out["fun"] = out.pop("f")
             return out
 
         bounds = self.model.parameters.bounds()

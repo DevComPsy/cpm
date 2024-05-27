@@ -88,7 +88,7 @@ class EmpiricalBayes:
 
             # extract and transform negative log posteriors into maximum log likelihood
             # this essentially gives us the output of Equation 5
-            negative_log_posterior = np.asarray([ppt.get("fopt") for ppt in details])
+            negative_log_posterior = np.asarray([ppt.get("fun") for ppt in details])
             if self.objective == "minimise":
                 negative_log_posterior = -1 * negative_log_posterior
 
@@ -106,6 +106,7 @@ class EmpiricalBayes:
 
             ## getting the diagonal of the inverse hessian matrix
             ## 1. calculate inverse hessian matrix
+            print(hessian)
             inv_hessian = np.asarray(list(map(np.linalg.inv, hessian)))
             ## 2. take the diagonal element of the inverse hessian matrix
             diagonal = np.diagonal(inv_hessian, axis1=1, axis2=2)

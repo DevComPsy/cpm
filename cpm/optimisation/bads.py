@@ -178,38 +178,84 @@ class Bads:
         - None
         """
 
-        def __unpack(x):
-            keys = ["x", "fval", "iterations", "func_count", "mesh_size", "total_time"]
+        def __unpack(x, id=None):
+            keys = ["x", "fval", "iterations", "func_count", "mesh_size", "total_time", "hessian"]
+            if id is not None:
+                keys.append(id)
             out = {}
             for i in range(len(keys)):
-                out[keys[i]] = x.get(keys[i])
+                out[keys[i]] = x[keys[i]]
             return out
 
         def __task(participant, **args):
             def target(x):
                 fval = minimum(
-                    pars=x, function=model, data=participant.get("observed"), loss=loss
+                    pars=x, function=model, data=participant.get("observed"), loss=loss, prior=prior
                 )
                 return fval
 
-            optimizer = BADS(fun=target, x0=self.initial_guess, **self.kwargs)
+            optimizer = BADS(fun=target, x0=self.__current_guess__, **self.kwargs)
             result = optimizer.optimize()
+            hessian = Hessian(
+                pars=result['x'], function=model, data=participant.get("observed"), loss=loss
+            )
+            result = (*result, hessian)
+            # if participant data contains identifiers, return the identifiers too
+            if self.ppt_identifier is not None:
+                result = (*result, participant.get(self.ppt_identifier))
             return result
+
+        def __extract_nll(result):
+            output = np.zeros(len(result))
+            for i in range(len(result)):
+                output[i] = result[i]['fval']
+            return output.copy()
 
         loss = self.loss
         model = self.model
-        pool = mp.Pool(self.cl)
-        results = pool.map(__task, self.data)
-        pool.close()
-        del pool
-        self.details = results
+        prior = self.prior
+        Hessian = nd.Hessian(minimum)
 
-        parameters = {}
-        for result in results:
-            for i in range(len(self.initial_guess)):
-                parameters[self.parameter_names[i]] = result["x"][i]
-            self.parameters.append(parameters)
-            self.fit.append(__unpack(result))
+        for i in range(len(self.initial_guess)):
+            print(
+                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+            )
+            self.__current_guess__ = self.initial_guess[i]
+            if self.__parallel__:
+                with mp.Pool(self.cl) as pool:
+                    results = pool.map(__task, self.data)
+                pool.close()
+                pool.join()
+            else:
+                results = list(map(__task, self.data))
+
+            ## extract the negative log likelihoods for each ppt
+            if i == 0:
+                old_nll = __extract_nll(results)
+                self.details = copy.deepcopy(results)
+                parameters = {}
+                for result in results:
+                    for i in range(len(self.parameter_names)):
+                        parameters[self.parameter_names[i]] = copy.deepcopy(
+                            result['x'][i]
+                        )
+                    self.parameters.append(copy.deepcopy(parameters))
+                    self.fit.append(
+                        __unpack(copy.deepcopy(result), id=self.ppt_identifier)
+                    )
+            else:
+                nll = __extract_nll(results)
+                # check if ppt fit is better than the previous fit
+                indices = np.where(nll < old_nll)[0]
+                for ppt in indices:
+                    self.details[ppt] = copy.deepcopy(results[ppt])
+                    for i in range(len(self.parameter_names)):
+                        self.parameters[ppt][self.parameter_names[i]] = copy.deepcopy(
+                            results[ppt]['x'][i]
+                        )
+                    self.fit[ppt] = __unpack(
+                        copy.deepcopy(results[ppt]), id=self.ppt_identifier
+                    )
 
         return None
 

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - c8cd4c7: Simulator.generate() method now expects users to specify what variable to generate
 - 7b2571b: Parameter Recovery now supports the generation of user-specified dependent variables
+- 71a86b8: Added Bayesian Adaptive Direct Search (BADS) as an optimization method
 
 ### Changed
 

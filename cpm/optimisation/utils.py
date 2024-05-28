@@ -14,7 +14,7 @@ def extract_params_from_fit(data, keys=None):
     return parameters
 
 
-def detailed_pandas_compiler(details, method="differential_evolution"):
+def detailed_pandas_compiler(details):
     """
     Exports a list of dictionaries as a pandas dataframe.
     Optimised for the output of the routines implemented.

@@ -17,7 +17,7 @@ class ParameterRecovery:
 
     Attributes
     ----------
-    model : Simulator
+    simulator : Simulator
         The simulator object.
     template : object
         The template parameter.
@@ -41,7 +41,7 @@ class ParameterRecovery:
 
     Parameters
     ----------
-    model : Simulator
+    simulator : Simulator
         The simulator object.
     optimiser : object
         The optimisation algorithm.
@@ -77,7 +77,7 @@ class ParameterRecovery:
 
     def __init__(
         self,
-        model=None,
+        simulator=None,
         optimiser=None,
         loss=minimise.LogLikelihood.bernoulli,
         strategy=strategies.grid,
@@ -87,13 +87,13 @@ class ParameterRecovery:
         **kwargs,
     ):
         """ """
-        self.model = copy.deepcopy(model)
-        self.function = copy.deepcopy(model.function)
+        self.simulator = copy.deepcopy(simulator)
+        self.function = copy.deepcopy(simulator.wrapper)
         self.optimisation = optimiser
         self.loss = loss
         self.strategy = strategy
         self.parameter_names = self.function.parameter_names
-        self.data = self.model.data
+        self.data = self.simulator.data
         self.iteration = iteration
         self.population = len(self.data)
         self.bounds = bounds
@@ -101,7 +101,7 @@ class ParameterRecovery:
         self.output = []
         self.variable = variable
 
-        parameters = self.model.parameters[0]
+        parameters = self.simulator.parameters[0]
         self.template = {
             k: parameters[k] for k in self.parameter_names[0 : len(bounds)]
         }
@@ -121,11 +121,11 @@ class ParameterRecovery:
             parameters = self.strategy(
                 template=self.template, population=self.population, bounds=self.bounds
             )
-            self.model.update(parameters=parameters)
-            self.model.reset()
-            self.model.run()
-            self.model.generate(variable=self.variable)
-            data = self.model.generated.copy()
+            self.simulator.update(parameters=parameters)
+            self.simulator.reset()
+            self.simulator.run()
+            self.simulator.generate(variable=self.variable)
+            data = self.simulator.generated.copy()
             for i in range(len(self.data)):
                 self.data[i]["observed"] = data[i]["observed"]
             optim = self.optimisation(

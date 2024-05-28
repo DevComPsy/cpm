@@ -8,6 +8,7 @@ import pandas as pd
 import copy
 import multiprocess as mp
 
+
 # this should not be available to users
 def minimum(pars, function, data, loss, **args):
     """
@@ -45,6 +46,7 @@ def minimum(pars, function, data, loss, **args):
     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
         metric = 1e10
     return metric
+
 
 class Bads:
     """
@@ -138,30 +140,20 @@ class Bads:
         """
 
         def __unpack(x):
-            keys = [
-                "x", "fval",
-                "iterations", "func_count", "mesh_size",
-                "total_time"
-            ]
+            keys = ["x", "fval", "iterations", "func_count", "mesh_size", "total_time"]
             out = {}
             for i in range(len(keys)):
-                out[keys[i]] = x[i]
+                out[keys[i]] = x.get(keys[i])
             return out
 
         def __task(participant, **args):
             def target(x):
                 fval = minimum(
-                    pars=x,
-                    function=model,
-                    data=participant.get("observed"),
-                    loss=loss
+                    pars=x, function=model, data=participant.get("observed"), loss=loss
                 )
                 return fval
-            optimizer = BADS(
-                fun=target,
-                x0=self.initial_guess,
-                **self.kwargs
-            )
+
+            optimizer = BADS(fun=target, x0=self.initial_guess, **self.kwargs)
             result = optimizer.optimize()
             return result
 
@@ -176,7 +168,7 @@ class Bads:
         parameters = {}
         for result in results:
             for i in range(len(self.initial_guess)):
-                parameters[self.parameter_names[i]] = result['x'][i]
+                parameters[self.parameter_names[i]] = result["x"][i]
             self.parameters.append(parameters)
             self.fit.append(__unpack(result))
 

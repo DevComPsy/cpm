@@ -266,8 +266,9 @@ class Fmin:
         initial_guess : bool, optional
             Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         self.fit = []
         self.details = []

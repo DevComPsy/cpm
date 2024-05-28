@@ -10,7 +10,7 @@ import multiprocess as mp
 
 
 # this should not be available to users
-def minimum(pars, function, data, loss, **args):
+def minimum(pars, function, data, loss, prior=False, **args):
     """
     The `minimise` function calculates a metric by comparing predicted values with
     observed values.
@@ -45,6 +45,9 @@ def minimum(pars, function, data, loss, **args):
     del predicted, observed
     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
         metric = 1e10
+    if prior:
+        prior_pars = function.parameters.PDF(log=True)
+        metric += -prior_pars
     return metric
 
 
@@ -103,6 +106,9 @@ class Bads:
         minimisation=minimise.LogLikelihood.continuous,
         cl=None,
         parallel=False,
+        prior=False,
+        number_of_starts=1,
+        ppt_identifier=None,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -110,26 +116,49 @@ class Bads:
         self.loss = minimisation
         self.initial_guess = initial_guess
         self.kwargs = kwargs
+        self.participant = data[0]
+        self.ppt_identifier = ppt_identifier
+        self.prior = prior
+
         self.fit = []
         self.details = []
         self.parameters = []
-        self.participant = data[0]
+
         if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameter_names
+            self.parameter_names = self.model.parameters.free()
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Bads algorithm is not compatible with the Simulator object."
             )
-        self.auxiliary = {
-            "n": len(self.participant.get("observed")),
-            "k": len(self.initial_guess),
-        }
+
+        if number_of_starts is not None and initial_guess is not None:
+            ## convert to a 2D array
+            initial_guess = np.asarray(initial_guess)
+            if len(initial_guess.shape) == 1:
+                initial_guess = np.expand_dims(initial_guess, axis=0)
+            ## assign the initial guess and raise an error if the number of starts does not match the number of initial guesses
+            self.initial_guess = initial_guess
+            if np.asarray(initial_guess).shape[0] != number_of_starts:
+                raise ValueError(
+                    "The number of initial guesses must match the number of starts."
+                )
+
+        if number_of_starts is not None and initial_guess is None:
+            bounds = self.model.parameters.bounds()
+            self.initial_guess = np.random.uniform(
+                low=bounds[0],
+                high=bounds[1],
+                size=(number_of_starts, len(self.parameter_names)),
+            )
+
+        self.__parallel__ = parallel
+        self.__current_guess__ = self.initial_guess[0]
+        self.__bounds__ = self.model.parameters.bounds()
+
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
             self.cl = mp.cpu_count()
-        if cl is None and not parallel:
-            self.cl = 2
 
     def optimise(self):
         """
@@ -139,8 +168,10 @@ class Bads:
         - None
         """
 
-        def __unpack(x):
+        def __unpack(x, id=None):
             keys = ["x", "fval", "iterations", "func_count", "mesh_size", "total_time"]
+            if id is not None:
+                keys.append(id)
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x.get(keys[i])
@@ -149,34 +180,86 @@ class Bads:
         def __task(participant, **args):
             def target(x):
                 fval = minimum(
-                    pars=x, function=model, data=participant.get("observed"), loss=loss
+                    pars=x,
+                    function=model,
+                    data=participant.get("observed"),
+                    loss=loss,
+                    prior=self.prior,
                 )
                 return fval
 
-            optimizer = BADS(fun=target, x0=self.initial_guess, **self.kwargs)
+            optimizer = BADS(
+                fun=target,
+                x0=self.__current_guess__,
+                lower_bounds=self.__bounds__[0],
+                upper_bounds=self.__bounds__[1],
+                **self.kwargs,
+            )
             result = optimizer.optimize()
+            if self.ppt_identifier is not None:
+                result = (*result, participant.get(self.ppt_identifier))
             return result
+
+        def __extract_nll(result):
+            output = np.zeros(len(result))
+            for i in range(len(result)):
+                output[i] = result[i].get("fval")
+            return output.copy()
 
         loss = self.loss
         model = self.model
-        pool = mp.Pool(self.cl)
-        results = pool.map(__task, self.data)
-        pool.close()
-        del pool
-        self.details = results
 
-        parameters = {}
-        for result in results:
-            for i in range(len(self.initial_guess)):
-                parameters[self.parameter_names[i]] = result["x"][i]
-            self.parameters.append(parameters)
-            self.fit.append(__unpack(result))
+        for i in range(len(self.initial_guess)):
+            print(
+                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+            )
+            self.__current_guess__ = self.initial_guess[i]
+            if self.__parallel__:
+                with mp.Pool(self.cl) as pool:
+                    results = pool.map(__task, self.data)
+                pool.close()
+                pool.join()
+            else:
+                results = list(map(__task, self.data))
+
+            ## extract the negative log likelihoods for each ppt
+            if i == 0:
+                self.details = copy.deepcopy(results)
+                old_nll = __extract_nll(results)
+                parameters = {}
+                for result in results:
+                    parameters = {}
+                    for i in range(len(self.parameter_names)):
+                        parameters[self.parameter_names[i]] = result["x"][i]
+
+                    self.parameters.append(copy.deepcopy(parameters))
+                    self.fit.append(
+                        __unpack(copy.deepcopy(result), id=self.ppt_identifier)
+                    )
+            else:
+                nll = __extract_nll(results)
+                # check if ppt fit is better than the previous fit
+                indices = np.where(nll < old_nll)[0]
+                for ppt in indices:
+                    self.details[ppt] = copy.deepcopy(results[ppt])
+                    for i in range(len(self.parameter_names)):
+                        self.parameters[ppt][self.parameter_names[i]] = copy.deepcopy(
+                            results[ppt]["x"][i]
+                        )
+                    self.fit[ppt] = __unpack(
+                        copy.deepcopy(results[ppt]), id=self.ppt_identifier
+                    )
 
         return None
 
-    def reset(self):
+    def reset(self, initial_guess=True):
         """
         Resets the optimization results and fitted parameters.
+
+        Parameters
+        ----------
+        initial_guess : bool, optional
+            Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
         Returns
         -------
@@ -184,6 +267,11 @@ class Bads:
         """
         self.fit = []
         self.parameters = []
+        if initial_guess:
+            bounds = self.model.parameters.bounds()
+            self.initial_guess = np.random.uniform(
+                low=bounds[0], high=bounds[1], size=self.initial_guess.shape
+            )
         return None
 
     def export(self):

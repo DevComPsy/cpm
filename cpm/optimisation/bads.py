@@ -120,6 +120,7 @@ class Bads:
         parallel=False,
         prior=False,
         number_of_starts=1,
+        ppt_identifier=None,
         **kwargs
     ):
         self.model = copy.deepcopy(model)
@@ -132,6 +133,7 @@ class Bads:
         self.details = []
         self.parameters = []
         self.participant = data[0]
+        self.ppt_identifier = ppt_identifier
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()

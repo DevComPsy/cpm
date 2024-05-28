@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - 2477a127: Optimisers now only store freely varying parameter names
+- b7ed8069: Refactored Bads to implement up-to-date changes (changed parallelisation, works with new methods in Parameters, implements priors)
 
 ### Removed
 

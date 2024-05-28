@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- b921be30: Added Bayesian Adaptive Direct Search (BADS) as an optimization method
 - d42e0689: Fmin can incorporate priors into its log likelihood function
 - 0a9281f6: Fmin now also returns the hessian matrix of the minimisation function
 - 71937516: Parameters can now output parameter bounds if parameter has specified priors

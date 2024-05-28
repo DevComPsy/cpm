@@ -66,12 +66,18 @@ class Bads:
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
-        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
+        The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
+    number_of_starts : int
+        The number of random initialisations for the optimization. Default is `1`.
+    initial_guess : list or array-like
+        The initial guess for the optimization. Default is `None`. If `number_of_starts` is set, and the `initial_guess` parameter is 'None', the initial guesses are randomly generated from a uniform distribution.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    ppt_identifier : str
+        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
         Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
 
@@ -99,7 +105,9 @@ class Bads:
 
     Notes
     -----
-    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
+    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model `Wrapper`.
+
+    The optimization process is repeated `number_of_starts` times, and only the best-fitting output from the best guess is stored.
     """
 
     def __init__(
@@ -107,36 +115,58 @@ class Bads:
         model=None,
         data=None,
         initial_guess=None,
-        minimisation=minimise.LogLikelihood.continuous,
+        minimisation=None,
         cl=None,
         parallel=False,
-        **kwargs,
+        prior=False,
+        number_of_starts=1,
+        **kwargs
     ):
         self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
         self.initial_guess = initial_guess
+        self.prior = prior
         self.kwargs = kwargs
         self.fit = []
         self.details = []
         self.parameters = []
         self.participant = data[0]
+
         if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameter_names
+            self.parameter_names = self.model.parameters.free()
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Bads algorithm is not compatible with the Simulator object."
             )
-        self.auxiliary = {
-            "n": len(self.participant.get("observed")),
-            "k": len(self.initial_guess),
-        }
+        
+        if number_of_starts is not None and initial_guess is not None:
+            ## convert to a 2D array
+            initial_guess = np.asarray(initial_guess)
+            if len(initial_guess.shape) == 1:
+                initial_guess = np.expand_dims(initial_guess, axis=0)
+            ## assign the initial guess and raise an error if the number of starts does not match the number of initial guesses
+            self.initial_guess = initial_guess
+            if np.asarray(initial_guess).shape[0] != number_of_starts:
+                raise ValueError(
+                    "The number of initial guesses must match the number of starts."
+                )
+
+        if number_of_starts is not None and initial_guess is None:
+            bounds = self.model.parameters.bounds()
+            self.initial_guess = np.random.uniform(
+                low=bounds[0],
+                high=bounds[1],
+                size=(number_of_starts, len(self.parameter_names)),
+            )
+
+        self.__parallel__ = parallel
+        self.__current_guess__ = self.initial_guess[0]
+
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
             self.cl = mp.cpu_count()
-        if cl is None and not parallel:
-            self.cl = 2
 
     def optimise(self):
         """

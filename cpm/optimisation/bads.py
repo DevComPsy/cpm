@@ -7,10 +7,11 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
+import numdifftools as nd
 
 
 # this should not be available to users
-def minimum(pars, function, data, loss, **args):
+def minimum(pars, function, data, loss, prior=False, **args):
     """
     The `minimise` function calculates a metric by comparing predicted values with
     observed values.
@@ -28,6 +29,9 @@ def minimum(pars, function, data, loss, **args):
     loss
         The `loss` parameter is the loss function that is used to calculate the metric
         value.
+    prior
+        Logical flag whether the summed log prior density should be added to the target
+        or not.
     args
         The `args` parameter is a dictionary that contains additional parameters that
         are used in the loss function.
@@ -45,6 +49,9 @@ def minimum(pars, function, data, loss, **args):
     del predicted, observed
     if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
         metric = 1e10
+    if prior:
+        prior_pars = function.parameters.PDF(log=True)
+        metric += -prior_pars
     return metric
 
 

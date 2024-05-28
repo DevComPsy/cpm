@@ -43,8 +43,9 @@ def minimum(pars, function, data, loss, prior=False, **args):
     observed = copy.deepcopy(data)
     metric = loss(predicted, observed, **args)
     del predicted, observed
-    if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+    if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
+        Warning(f"Metric is nan or inf with {pars}. Setting metric to 1e10.")
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
@@ -53,7 +54,7 @@ def minimum(pars, function, data, loss, prior=False, **args):
 
 class Minimize:
     """
-    Class representing the bounded optimization algorithms using gradient-free methods.
+    Class representing scipy's Minimize algorithm wrapped for subject-level parameter estimations.
 
     Parameters
     ----------
@@ -75,7 +76,7 @@ class Minimize:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.fmin`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin.html) documentation for what is supported.
+        Additional keyword arguments. See the [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html) documentation for what is supported.
 
     Attributes
     ----------
@@ -187,6 +188,7 @@ class Minimize:
             return out
 
         def __task(participant, **args):
+            model.data = participant
             result = minimize(
                 minimum,
                 x0=self.__current_guess__,

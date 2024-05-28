@@ -43,8 +43,9 @@ def minimum(pars, function, data, loss, prior=False, **args):
     observed = copy.deepcopy(data)
     metric = loss(predicted, observed, **args)
     del predicted, observed
-    if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+    if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
+        Warning(f"Metric is nan or inf with {pars}. Setting metric to 1e10.")
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
@@ -178,6 +179,9 @@ class Bads:
             return out
 
         def __task(participant, **args):
+
+            model.data = participant
+
             def target(x):
                 fval = minimum(
                     pars=x,

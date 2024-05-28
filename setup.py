@@ -42,6 +42,7 @@ setup(
         "SciPy>=1.11.4",  # Scientific functions
         "pandas>=2.1.4",  # Data structures & analysis
         "multiprocess>=0.70.16",  # Multiprocessing
+        "numdifftools>=0.9.41",  # Numerical differentiation
         "pybads>=1.0.4",  # Bayesian Directed Search
     ],
     license="AGPLv3",

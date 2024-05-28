@@ -259,16 +259,26 @@ class Bads:
 
         return None
 
-    def reset(self):
+    def reset(self, initial_guess=True):
         """
         Resets the optimization results and fitted parameters.
 
-        Returns
-        -------
-        None
+        Parameters
+        ----------
+        initial_guess : bool, optional
+            Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
+
+        Returns:
+            None
         """
         self.fit = []
+        self.details = []
         self.parameters = []
+        if initial_guess:
+            bounds = self.model.parameters.bounds()
+            self.initial_guess = np.random.uniform(
+                low=bounds[0], high=bounds[1], size=self.initial_guess.shape
+            )
         return None
 
     def export(self):

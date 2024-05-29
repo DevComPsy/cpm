@@ -48,6 +48,4 @@ For additional resources and support, check out the following:
 - [Community Forum](https://forum.example.com)
 - [FAQs](faqs.md)
 
-We hope this guide helps you get started with [Project Name]. If you have any questions or need further assistance, feel free to reach out to our support team.
-
 Happy coding!

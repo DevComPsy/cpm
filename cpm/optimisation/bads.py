@@ -198,7 +198,7 @@ class Bads:
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x.get(keys[i])
-            out["fun"] = out.pop("fopt")
+            out["fun"] = out.pop("fval")
             return out
 
         def __task(participant, **args):
@@ -223,17 +223,18 @@ class Bads:
                 **self.kwargs,
             )
             result = optimizer.optimize()
+            result = dict(result.items())
             hessian = Hessian(
-                pars=result["x"],
-                function=model,
-                data=participant.get("observed"),
-                loss=loss,
+                result["x"],
+                model,
+                participant.get("observed"),
+                loss,
             )
-            result["hessian"] = hessian
+            result.update({"hessian": hessian})
             # if participant data contains identifiers, return the identifiers too
 
             if self.ppt_identifier is not None:
-                result["ppt"] = participant.get(self.ppt_identifier)
+                result.update({"ppt": participant.get(self.ppt_identifier)})
             return result
 
         def __extract_nll(result):

@@ -190,19 +190,6 @@ class DifferentialEvolution:
             )
             self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result.fun)})
 
-            # for i in range(len(self.data)):
-            #     self.participant = self.data[i]
-            #     self.model.paramet.data = self.participant
-            #     # objective = copy.deepcopy(self.minimise)
-            #     result = differential_evolution(self.minimise, self.bounds, **self.kwargs)
-            #     # add the parameters to the list
-            #     self.details.append(result.copy())
-            # fitted_parameters = utils.extract_params_from_fit(
-            #     data=result.x, keys=self.parameter_names
-            # )
-        #     self.parameters.append(fitted_parameters.copy())
-        #     # add the results to the list
-        #     self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result.fun)})
         return None
 
     def reset(self):

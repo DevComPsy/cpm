@@ -82,10 +82,12 @@ params = Parameters(
         lower=1e-10,
         upper=10,
         prior="truncated_normal",
-        args={"mean": 0.5, "sd": 0.25},
+        args={"mean": 5, "sd": 2.5},
     ),
     values=np.array([[0.25, 0.25, 0.25, 0.25]]),
 )
+
+pp(params.sample(5))
 
 wrap = Wrapper(model=model, parameters=params, data=data)
 wrap.run()

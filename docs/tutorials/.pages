@@ -1,2 +1,5 @@
 nav:
     - getting-started.md
+    - data-format.md
+    - parameters.md
+    - defining-model.md

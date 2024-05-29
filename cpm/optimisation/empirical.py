@@ -39,10 +39,10 @@ class EmpiricalBayes:
     def __init__(
         self,
         optimiser=None,
+        objective="minimise",
         iteration=1000,
         tolerance=1e-6,
         chain=4,
-        objective="minimise",
         **kwargs,
     ):
         self.function = copy.deepcopy(optimiser.model)

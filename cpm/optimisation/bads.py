@@ -192,6 +192,7 @@ class Bads:
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x.get(keys[i])
+            out["fun"] = out.pop("fopt")
             return out
 
         def __task(participant, **args):

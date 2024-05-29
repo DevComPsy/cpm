@@ -27,7 +27,7 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.9.0",
+    version="0.9.1",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     author="Lenard Dome, Frank Hezemans, Andrew Webb, Tobias Hauser",
@@ -42,6 +42,7 @@ setup(
         "SciPy>=1.11.4",  # Scientific functions
         "pandas>=2.1.4",  # Data structures & analysis
         "multiprocess>=0.70.16",  # Multiprocessing
+        "numdifftools>=0.9.41",  # Numerical differentiation
         "pybads>=1.0.4",  # Bayesian Directed Search
     ],
     license="AGPLv3",

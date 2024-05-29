@@ -24,10 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - c8cd4c7c: Simulator.generate() method now expects users to specify what variable to generate
 - 7b2571b1: Parameter Recovery now supports the generation of user-specified dependent variables
 - 27d16f6b: add squared errors to minimise modules
+- 42db58b6: DifferentialEvolution now supports parallelisation
 
 ### Changed
 
 - 2477a127: Optimisers now only store freely varying parameter names
+- b7ed8069: Refactored Bads to implement up-to-date changes (changed parallelisation, works with new methods in Parameters, implements priors)
 
 ### Removed
 
@@ -44,3 +46,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 7a276be6: Parameter Recovery quired the wrong dimension to establish what parameters to recover
 - cd6ef8cb: Fix naming clashes in parameter recovery
 - 57c6a3c0: Fix parallel=False still spawns processes in Optimizations
+- 42db58b6: Fixing the issue when likelihood is -inf (bounding to minimum calculable value causes error in sums)
+- 42db58b6: Fixing nan and inf checks in the obejctive functions

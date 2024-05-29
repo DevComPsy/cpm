@@ -3,10 +3,54 @@ import pandas as pd
 import numpy as np
 import copy
 import warnings
+import multiprocess as mp
+
 
 from . import minimise
 from . import utils
 from ..generators import Simulator, Wrapper
+
+
+def minimum(pars, function, data, loss, prior=False, **args):
+    """
+    The `minimise` function calculates a metric by comparing predicted values with
+    observed values.
+
+    Parameters
+    ----------
+    pars
+        The `pars` parameter is a dictionary that contains the parameters for the
+        function that needs to be minimized.
+    function
+        The `function` parameter is the function that needs to be minimized.
+    data
+        The `data` parameter is the data that is used to compare the predicted values
+        with the observed values.
+    loss
+        The `loss` parameter is the loss function that is used to calculate the metric
+        value.
+    args
+        The `args` parameter is a dictionary that contains additional parameters that
+        are used in the loss function.
+
+    Returns
+    -------
+        The metric value is being returned.
+
+    """
+    function.reset(pars)
+    function.run()
+    predicted = function.dependent
+    observed = copy.deepcopy(data)
+    metric = loss(predicted, observed, **args)
+    del predicted, observed
+    if np.isnan(metric) or np.isinf(metric):
+        metric = 1e10
+        warnings.warn("Metric is nan or inf. Setting metric to 1e10.")
+    if prior:
+        prior_pars = function.parameters.PDF(log=True)
+        metric += -prior_pars
+    return metric
 
 
 class DifferentialEvolution:
@@ -57,12 +101,16 @@ class DifferentialEvolution:
     def __init__(
         self,
         model=None,
-        bounds=None,
         data=None,
         minimisation=minimise.LogLikelihood.bernoulli,
-        **kwargs
+        parallel=False,
+        cl=None,
+        prior=False,
+        ppt_identifier=None,
+        display=False,
+        **kwargs,
     ):
-        self.function = copy.deepcopy(model)
+        self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
         self.kwargs = kwargs
@@ -70,45 +118,34 @@ class DifferentialEvolution:
         self.details = []
         self.parameters = []
         self.participant = data[0]
+        self.display = display
+        self.ppt_identifier = ppt_identifier
+        self.prior = prior
+
         if isinstance(model, Wrapper):
-            self.parameter_names = self.function.parameters.free()
+            self.parameter_names = self.model.parameters.free()
         if isinstance(model, Simulator):
             raise ValueError(
                 "The DifferentialEvolution algorithm is not compatible with the Simulator object."
             )
-        self.bounds = bounds
-        if bounds is None:
-            self.bounds = self.function.parameter.bounds()
-            warnings.warn(
-                "No explicit bounds are specified. Using model's parameter specification."
+
+        self.__parallel__ = parallel
+
+        if cl is not None:
+            self.cl = cl
+        if cl is None and parallel:
+            self.cl = mp.cpu_count()
+
+        if isinstance(model, Wrapper):
+            self.parameter_names = self.model.parameters.free()
+            bounds = self.model.parameters.bounds()
+            bounds = np.asarray(bounds).T
+            bounds = list(map(tuple, bounds))
+            self.bounds = bounds
+        if isinstance(model, Simulator):
+            raise ValueError(
+                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
             )
-
-    def minimise(self, pars, **args):
-        """
-        The `minimise` function calculates a metric by comparing predicted values with
-        observed values.
-
-        Parameters
-        ----------
-        pars
-            The `pars` parameter is a dictionary that contains the parameters for the
-            function that needs to be minimized.
-
-        Returns
-        -------
-            The metric value is being returned.
-
-        """
-        evaluated = copy.deepcopy(self.function)
-        evaluated.reset(pars)
-        evaluated.run()
-        predicted = evaluated.dependent
-        observed = self.participant.get("observed")
-        metric = self.loss(predicted, observed, **args)
-        del predicted, observed
-        if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
-            metric = 1e10
-        return metric
 
     def optimise(self):
         """
@@ -117,19 +154,42 @@ class DifferentialEvolution:
         Returns:
         - None
         """
-        for i in range(len(self.data)):
-            self.participant = self.data[i]
-            self.function.data = self.participant
-            # objective = copy.deepcopy(self.minimise)
-            result = differential_evolution(self.minimise, self.bounds, **self.kwargs)
-            # add the parameters to the list
-            self.details.append(result.copy())
-            fitted_parameters = utils.extract_params_from_fit(
-                data=result.x, keys=self.parameter_names
+
+        def __task(participant, **args):
+            model.data = participant
+            result = differential_evolution(
+                func=minimum,
+                bounds=self.bounds,
+                args=((model, participant.get("observed"), loss, prior)),
+                **self.kwargs,
             )
-            self.parameters.append(fitted_parameters.copy())
-            # add the results to the list
+            if self.ppt_identifier is not None:
+                result.ppt = participant.get(self.ppt_identifier)
+            return result
+
+        loss = self.loss
+        model = self.model
+        prior = self.prior
+
+        if self.__parallel__:
+            with mp.Pool(self.cl) as pool:
+                results = pool.map(__task, self.data)
+            pool.close()
+            pool.join()
+        else:
+            results = list(map(__task, self.data))
+
+        self.details = copy.deepcopy(results)
+        for result in results:
+            self.parameters.append(
+                copy.deepcopy(
+                    utils.extract_params_from_fit(
+                        data=result.x, keys=self.parameter_names
+                    )
+                )
+            )
             self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result.fun)})
+
         return None
 
     def reset(self):

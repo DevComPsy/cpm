@@ -112,11 +112,13 @@ for i in range(100):
                 [2, 3],
             ]
         ),
-        "feedback": np.random.randint(0, 2, 10),
-        "observed": np.random.randint(0, 2, 10),
+        "feedback": np.random.randint(0, 2, size=(10, 1)),
+        "observed": np.random.randint(0, 2, size=(10, 1)),
     }
     experiment.append(ppt)
 
+wrap = Wrapper(model=model, parameters=params, data=experiment[0])
+wrap.run()
 
 from cpm.generators import Simulator
 from cpm.optimisation import (
@@ -141,28 +143,34 @@ Fit = Minimize(
     options={"maxiter": 400, "maxfev": 4000, "adaptive": False},
 )
 
+LogLikelihood.bernoulli(
+    observed=experiment[2].get("observed"), predicted=wrap.dependent, negative=True
+)
 
 Fit.optimise()
 
 pp(Fit.parameters)
 
-FitBound = Fmin(
+np.seterr(all="ignore")
+FitBound = FminBound(
     model=wrap,
     data=experiment,
     initial_guess=None,
     number_of_starts=2,
-    minimisation=minimise.LogLikelihood.continuous,  # currently, this is the only working metric
+    minimisation=minimise.LogLikelihood.bernoulli,
     parallel=False,
     prior=True,
-    maxiter=100,
+    ppt_identifier="ppt",
+    display=False,
+    maxiter=200,
+    approx_grad=True,
 )
 
 FitBound.initial_guess
-
-FitBound.reset()
 FitBound.optimise()
 
-FitBound.export()
+exported = FitBound.export()
+exported.fun_0.nansum()
 
 test = EmpiricalBayes(optimiser=FitBound, iteration=2, tolerance=1e-6, chain=2)
 
@@ -180,3 +188,19 @@ bounds = FitBound.model.parameters.bounds()
 bounds = np.asarray(bounds).T
 bounds = list(map(tuple, bounds))
 bounds
+
+genetic = DifferentialEvolution(
+    model=wrap,
+    # bounds=bounds,
+    data=experiment,
+    minimisation=minimise.LogLikelihood.bernoulli,
+    parallel=True,
+    prior=False,
+    ppt_identifier="ppt",
+    display=False,
+    maxiter=400,
+    tol=1e-10,
+)
+
+genetic.optimise()
+genetic.export()

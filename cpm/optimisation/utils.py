@@ -35,7 +35,7 @@ def detailed_pandas_compiler(details):
     for i in details:
         row = pd.DataFrame()
         for key, value in i.items():
-            if key is "population" or key is "population_energies":
+            if key == "population" or key == "population_energies":
                 continue
             if isinstance(value, list) or isinstance(value, np.ndarray):
                 value = pd.DataFrame(np.asarray(value)).T

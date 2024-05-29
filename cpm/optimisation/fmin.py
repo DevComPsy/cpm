@@ -6,6 +6,7 @@ from scipy.optimize import fmin, fmin_l_bfgs_b
 import numpy as np
 import pandas as pd
 import copy
+import warnings
 import multiprocess as mp
 import numdifftools as nd
 
@@ -45,8 +46,10 @@ def minimum(pars, function, data, loss, prior=False, **args):
     observed = copy.deepcopy(data)
     metric = loss(predicted, observed, **args)
     del predicted, observed
-    if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+    # check if metric is nan or inf
+    if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
+        warnings.warn("Metric is nan or inf. Setting metric to 1e10.")
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
@@ -188,6 +191,7 @@ class Fmin:
             return out
 
         def __task(participant, **args):
+            model.data = participant
             result = fmin(
                 minimum,
                 x0=self.__current_guess__,
@@ -245,6 +249,7 @@ class Fmin:
                 nll = __extract_nll(results)
                 # check if ppt fit is better than the previous fit
                 indices = np.where(nll < old_nll)[0]
+                print(indices)
                 for ppt in indices:
                     self.details[ppt] = copy.deepcopy(results[ppt])
                     for i in range(len(self.parameter_names)):
@@ -266,8 +271,9 @@ class Fmin:
         initial_guess : bool, optional
             Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         self.fit = []
         self.details = []
@@ -430,6 +436,7 @@ class FminBound:
         Hessian = nd.Hessian(minimum)
 
         def __task(participant, **args):
+            model.data = participant
             result = fmin_l_bfgs_b(
                 minimum,
                 x0=self.__current_guess__,

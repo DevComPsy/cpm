@@ -28,11 +28,32 @@ class EmpiricalBayes:
 
     It is also important to note that we will require the Hessian matrix of second derivatives of the negative log posterior (Gershman, 2016, p. 3). This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
 
-    INSERT IMAGE FROM PAPER
-
-    The current implementation also controls for some edge-cases that are not covered by the algorithm above:
+    The current implementation also controls for some **edge-cases** that are not covered by the algorithm above:
 
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
+
+    Examples
+    --------
+    >>> from cpm.optimisation import EmpiricalBayes
+    >>> from cpm.models import DeltaRule
+    >>> from cpm.optimisation import FminBound, minimise
+    >>>
+    >>> model = DeltaRule()
+    >>> optimiser = FminBound(
+        model=model,
+        data=data,
+        initial_guess=None,
+        number_of_starts=2,
+        minimisation=minimise.LogLikelihood.bernoulli,
+        parallel=False,
+        prior=True,
+        ppt_identifier="ppt",
+        display=False,
+        maxiter=200,
+        approx_grad=True
+        )
+    >>> eb = EmpiricalBayes(optimiser=optimiser, iteration=1000, tolerance=1e-6, chain=4)
+    >>> eb.optimise()
 
     """
 
@@ -72,6 +93,14 @@ class EmpiricalBayes:
         return self.optimiser.parameters, hessian, self.optimiser.fit
 
     def stair(self):
+        """
+        The main function that runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially a single chain.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.
+        """
         ## Equation Numbers refer to Equations in the Gershman (2016) Empirical priors for reinforcement learning models
         ## Step numbers correspond to
         lme_old = 0
@@ -166,6 +195,10 @@ class EmpiricalBayes:
         return output
 
     def optimise(self):
+        """
+        This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains.
+
+        """
         output = []
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")

@@ -131,9 +131,8 @@ class Parameters:
 
         Returns
         -------
-        The probability of the parameter set under the prior distribution for each parameter.
-        If `log` is True, the log probability is returned. When the PDF is 0, it returns the maximum
-        value of a float. If "log" is True, it returns the log of the maximum value of a float.
+        float
+            The probability of the parameter set under the prior distribution for each parameter. If `log` is True, the log probability is returned. When the PDF is 0, it returns the maximum value of a float. If "log" is True, it returns the log of the maximum value of a float.
         """
         prior = 1
         for _, value in self.__dict__.items():
@@ -434,8 +433,8 @@ class Value:
 
         Returns
         -------
-        The probability of the parameter value under the prior distribution.
-        If `log` is True, the log probability is returned.
+        float
+            The probability of the parameter value under the prior distribution. If `log` is True, the log probability is returned.
         """
         if log:
             return self.prior.logpdf(self.value)

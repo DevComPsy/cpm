@@ -121,6 +121,7 @@ class Bads:
         prior=False,
         number_of_starts=1,
         ppt_identifier=None,
+        display=False,
         **kwargs
     ):
         self.model = copy.deepcopy(model)
@@ -133,7 +134,31 @@ class Bads:
         self.details = []
         self.parameters = []
         self.participant = data[0]
+        self.display = display
         self.ppt_identifier = ppt_identifier
+
+        if 'options' in kwargs:
+            self.bads_options = kwargs['options']
+        else:
+            self.bads_options = {}
+        
+        # handle display settings
+        if 'display' in self.bads_options:
+            if not self.display and self.bads_options['display'] != 'off':
+                raise ValueError(
+                    "The display setting is not compatible with the display setting in the BADS options."
+                )
+
+        if not self.display:
+            self.bads_options['display'] = 'off'
+
+        # BADS uncertainty handling: This should typically be set to False,
+        # because the model function is typically deterministic (that is, it
+        # returns an *exact* probability value, given a particular dataset and
+        # proposed set of parameter values).
+        if 'uncertainty_handling' not in self.bads_options:
+            self.bads_options['uncertainty_handling'] = False
+            print("The BADS uncertainty_handling setting has been set to False.")
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
@@ -194,7 +219,7 @@ class Bads:
                 )
                 return fval
 
-            optimizer = BADS(fun=target, x0=self.__current_guess__, **self.kwargs)
+            optimizer = BADS(fun=target, x0=self.__current_guess__, options=self.bads_options, **self.kwargs)
             result = optimizer.optimize()
             hessian = Hessian(
                 pars=result['x'], function=model, data=participant.get("observed"), loss=loss

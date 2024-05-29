@@ -64,13 +64,21 @@ class Bads:
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
+    prior: bool
+        Whether to include the prior in the optimization. Default is `False`.
+    number_of_starts : int
+        The number of random initialisations for the optimization. Default is `1`.
+    initial_guess : list or array-like
+        The initial guess for the optimization. Default is `None`. If `number_of_starts` is set, and the `initial_guess` parameter is 'None', the initial guesses are randomly generated from a uniform distribution.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    ppt_identifier : str
+        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
+       Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
 
     Attributes
     ----------
@@ -103,12 +111,12 @@ class Bads:
         self,
         model=None,
         data=None,
-        initial_guess=None,
         minimisation=minimise.LogLikelihood.continuous,
-        cl=None,
-        parallel=False,
         prior=False,
         number_of_starts=1,
+        initial_guess=None,
+        parallel=False,
+        cl=None,
         ppt_identifier=None,
         **kwargs,
     ):

@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
+import numdifftools as nd
 
 
 # this should not be available to users

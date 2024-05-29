@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
+import numdifftools as nd
 
 
 # this should not be available to users
@@ -64,13 +65,21 @@ class Bads:
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
+    prior: bool
+        Whether to include the prior in the optimization. Default is `False`.
+    number_of_starts : int
+        The number of random initialisations for the optimization. Default is `1`.
+    initial_guess : list or array-like
+        The initial guess for the optimization. Default is `None`. If `number_of_starts` is set, and the `initial_guess` parameter is 'None', the initial guesses are randomly generated from a uniform distribution.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    ppt_identifier : str
+        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
+       Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
 
     Attributes
     ----------
@@ -103,12 +112,12 @@ class Bads:
         self,
         model=None,
         data=None,
-        initial_guess=None,
         minimisation=minimise.LogLikelihood.continuous,
-        cl=None,
-        parallel=False,
         prior=False,
         number_of_starts=1,
+        initial_guess=None,
+        parallel=False,
+        cl=None,
         ppt_identifier=None,
         **kwargs,
     ):
@@ -170,12 +179,21 @@ class Bads:
         """
 
         def __unpack(x, id=None):
-            keys = ["x", "fval", "iterations", "func_count", "mesh_size", "total_time"]
+            keys = [
+                "x",
+                "fval",
+                "iterations",
+                "func_count",
+                "mesh_size",
+                "total_time",
+                "hessian",
+            ]
             if id is not None:
                 keys.append(id)
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x.get(keys[i])
+            out["fun"] = out.pop("fopt")
             return out
 
         def __task(participant, **args):
@@ -200,8 +218,17 @@ class Bads:
                 **self.kwargs,
             )
             result = optimizer.optimize()
+            hessian = Hessian(
+                pars=result["x"],
+                function=model,
+                data=participant.get("observed"),
+                loss=loss,
+            )
+            result["hessian"] = hessian
+            # if participant data contains identifiers, return the identifiers too
+
             if self.ppt_identifier is not None:
-                result = (*result, participant.get(self.ppt_identifier))
+                result["ppt"] = participant.get(self.ppt_identifier)
             return result
 
         def __extract_nll(result):
@@ -212,6 +239,7 @@ class Bads:
 
         loss = self.loss
         model = self.model
+        Hessian = nd.Hessian(minimum)
 
         for i in range(len(self.initial_guess)):
             print(
@@ -234,7 +262,9 @@ class Bads:
                 for result in results:
                     parameters = {}
                     for i in range(len(self.parameter_names)):
-                        parameters[self.parameter_names[i]] = result["x"][i]
+                        parameters[self.parameter_names[i]] = copy.deepcopy(
+                            result["x"][i]
+                        )
 
                     self.parameters.append(copy.deepcopy(parameters))
                     self.fit.append(
@@ -271,6 +301,7 @@ class Bads:
         """
         self.fit = []
         self.parameters = []
+        self.details = []
         if initial_guess:
             bounds = self.model.parameters.bounds()
             self.initial_guess = np.random.uniform(
@@ -287,6 +318,6 @@ class Bads:
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        output = utils.detailed_pandas_compiler(self.fit, method="fmin")
+        output = utils.detailed_pandas_compiler(self.fit)
         output.reset_index(drop=True, inplace=True)
         return output

@@ -15,9 +15,29 @@
         show_root_heading: true
         heading_level: 3
 
+::: cpm.optimisation.Minimize
+    options:
+        show_root_heading: true
+        heading_level: 3
+
+::: cpm.optimisation.Bads
+    options:
+        show_root_heading: true
+        heading_level: 3
+
+::: cpm.optimisation.EmpiricalBayes
+    options:
+        show_root_heading: true
+        heading_level: 3
+
 ### cpm.optimisation.minimise
 
 ::: cpm.optimisation.minimise.LogLikelihood
+    options:
+        show_root_heading: true
+        heading_level: 4
+
+::: cpm.optimisation.minimise.Distance
     options:
         show_root_heading: true
         heading_level: 4

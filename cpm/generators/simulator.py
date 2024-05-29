@@ -18,12 +18,12 @@ class Simulator:
 
     Parameters
     ----------
-    model : Wrapper
+    wrapper : Wrapper
         An initialised Wrapper object for the model.
-    data : object
-        The data required for the simulation.
-    parameters : object
-        The parameters required for the simulation.
+    data : list
+        The data required for the simulation. It must be a list of dictionaries.
+    parameters : Parameters or list
+        The parameters required for the simulation. It can be a Parameters object or a list of dictionaries whose length is equal to data. If it is a Parameters object, Simulator will use the same parameters for all simulations. It is a list of dictionaries, it will use match the parameters with data, so that for example parameters[6] will be used for the simulation of data[6].
 
     Attributes
     ----------

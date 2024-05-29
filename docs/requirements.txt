@@ -53,7 +53,7 @@ pyparsing==3.0.9
     # via packaging
 python-dateutil==2.8.2
     # via ghp-import
-pyyaml==6.0
+pyyaml==6.0.1
     # via
     #   mkdocs
     #   pyyaml-env-tag
@@ -65,5 +65,5 @@ watchdog==2.1.9
     # via mkdocs
 zipp==3.8.0
     # via importlib-metadata
-mkdocs-awesome-pages-plugin==2.5.0
+mkdocs-awesome-pages-plugin==2.9.2
     # via -r docs/requirements.in

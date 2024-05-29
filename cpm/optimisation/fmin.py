@@ -68,6 +68,8 @@ class Fmin:
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
+    prior: bool
+        Whether to include the prior in the optimization. Default is `False`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like

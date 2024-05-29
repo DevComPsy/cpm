@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- b921be30: Added Bayesian Adaptive Direct Search (BADS) as an optimization method
 - d42e0689: Fmin can incorporate priors into its log likelihood function
 - 0a9281f6: Fmin now also returns the hessian matrix of the minimisation function
 - 71937516: Parameters can now output parameter bounds if parameter has specified priors
@@ -24,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - c8cd4c7c: Simulator.generate() method now expects users to specify what variable to generate
 - 7b2571b1: Parameter Recovery now supports the generation of user-specified dependent variables
 - 27d16f6b: add squared errors to minimise modules
+- b921be30: Added Bayesian Adaptive Direct Search (BADS) as an optimization method
 - 42db58b6: DifferentialEvolution now supports parallelisation
 
 ### Changed

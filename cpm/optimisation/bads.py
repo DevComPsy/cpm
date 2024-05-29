@@ -107,6 +107,10 @@ class Bads:
     Notes
     -----
     The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
+
+    The BADS algorithm has been designed to handle both deterministic and noisy (stochastic) target functions. A deterministic target function is a target function that returns the same exact probability value for a given dataset and proposed set of parameter values. By contrast, a stochastic target function returns varying probability values for the same input (data and parameters).
+    The vast majority of models use a deterministic target function. We recommend that users make this explicit to BADS, by providing an `options` dictionary that includes the key `uncertainty_handling` set to `False`.
+    Please see that [BADS options](https://acerbilab.github.io/pybads/api/options/bads_options.html) documentation for more details.
     """
 
     def __init__(

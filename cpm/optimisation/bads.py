@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
-import numdifftools as nd
 
 
 # this should not be available to users
@@ -29,9 +28,6 @@ def minimum(pars, function, data, loss, prior=False, **args):
     loss
         The `loss` parameter is the loss function that is used to calculate the metric
         value.
-    prior
-        Logical flag whether the summed log prior density should be added to the target
-        or not.
     args
         The `args` parameter is a dictionary that contains additional parameters that
         are used in the loss function.
@@ -47,8 +43,9 @@ def minimum(pars, function, data, loss, prior=False, **args):
     observed = copy.deepcopy(data)
     metric = loss(predicted, observed, **args)
     del predicted, observed
-    if metric == float("inf") or metric == float("-inf") or metric == float("nan"):
+    if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
+        Warning(f"Metric is nan or inf with {pars}. Setting metric to 1e10.")
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
@@ -66,18 +63,12 @@ class Bads:
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
-        The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
-    number_of_starts : int
-        The number of random initialisations for the optimization. Default is `1`.
-    initial_guess : list or array-like
-        The initial guess for the optimization. Default is `None`. If `number_of_starts` is set, and the `initial_guess` parameter is 'None', the initial guesses are randomly generated from a uniform distribution.
+        The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
-    ppt_identifier : str
-        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
         Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
 
@@ -105,9 +96,7 @@ class Bads:
 
     Notes
     -----
-    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model `Wrapper`.
-
-    The optimization process is repeated `number_of_starts` times, and only the best-fitting output from the best guess is stored.
+    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
     """
 
     def __init__(
@@ -115,50 +104,26 @@ class Bads:
         model=None,
         data=None,
         initial_guess=None,
-        minimisation=None,
+        minimisation=minimise.LogLikelihood.continuous,
         cl=None,
         parallel=False,
         prior=False,
         number_of_starts=1,
         ppt_identifier=None,
-        display=False,
-        **kwargs
+        **kwargs,
     ):
         self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
         self.initial_guess = initial_guess
-        self.prior = prior
         self.kwargs = kwargs
+        self.participant = data[0]
+        self.ppt_identifier = ppt_identifier
+        self.prior = prior
+
         self.fit = []
         self.details = []
         self.parameters = []
-        self.participant = data[0]
-        self.display = display
-        self.ppt_identifier = ppt_identifier
-
-        if 'options' in kwargs:
-            self.bads_options = kwargs['options']
-        else:
-            self.bads_options = {}
-        
-        # handle display settings
-        if 'display' in self.bads_options:
-            if not self.display and self.bads_options['display'] != 'off':
-                raise ValueError(
-                    "The display setting is not compatible with the display setting in the BADS options."
-                )
-
-        if not self.display:
-            self.bads_options['display'] = 'off'
-
-        # BADS uncertainty handling: This should typically be set to False,
-        # because the model function is typically deterministic (that is, it
-        # returns an *exact* probability value, given a particular dataset and
-        # proposed set of parameter values).
-        if 'uncertainty_handling' not in self.bads_options:
-            self.bads_options['uncertainty_handling'] = False
-            print("The BADS uncertainty_handling setting has been set to False.")
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
@@ -166,7 +131,7 @@ class Bads:
             raise ValueError(
                 "The Bads algorithm is not compatible with the Simulator object."
             )
-        
+
         if number_of_starts is not None and initial_guess is not None:
             ## convert to a 2D array
             initial_guess = np.asarray(initial_guess)
@@ -189,6 +154,7 @@ class Bads:
 
         self.__parallel__ = parallel
         self.__current_guess__ = self.initial_guess[0]
+        self.__bounds__ = self.model.parameters.bounds()
 
         if cl is not None:
             self.cl = cl
@@ -204,41 +170,65 @@ class Bads:
         """
 
         def __unpack(x, id=None):
-            keys = ["x", "fval", "iterations", "func_count", "mesh_size", "total_time", "hessian"]
+            keys = [
+                "x",
+                "fval",
+                "iterations",
+                "func_count",
+                "mesh_size",
+                "total_time",
+                "hessian",
+            ]
             if id is not None:
                 keys.append(id)
             out = {}
             for i in range(len(keys)):
-                out[keys[i]] = x[keys[i]]
+                out[keys[i]] = x.get(keys[i])
             return out
 
         def __task(participant, **args):
+
+            model.data = participant
+
             def target(x):
                 fval = minimum(
-                    pars=x, function=model, data=participant.get("observed"), loss=loss, prior=prior
+                    pars=x,
+                    function=model,
+                    data=participant.get("observed"),
+                    loss=loss,
+                    prior=self.prior,
                 )
                 return fval
 
-            optimizer = BADS(fun=target, x0=self.__current_guess__, options=self.bads_options, **self.kwargs)
+            optimizer = BADS(
+                fun=target,
+                x0=self.__current_guess__,
+                lower_bounds=self.__bounds__[0],
+                upper_bounds=self.__bounds__[1],
+                **self.kwargs,
+            )
             result = optimizer.optimize()
             hessian = Hessian(
-                pars=result['x'], function=model, data=participant.get("observed"), loss=loss
+                pars=result["x"],
+                function=model,
+                data=participant.get("observed"),
+                loss=loss,
             )
-            result = (*result, hessian)
+            result["hessian"] = hessian
             # if participant data contains identifiers, return the identifiers too
+
             if self.ppt_identifier is not None:
-                result = (*result, participant.get(self.ppt_identifier))
+                result["ppt"] = participant.get(self.ppt_identifier)
             return result
 
         def __extract_nll(result):
             output = np.zeros(len(result))
             for i in range(len(result)):
-                output[i] = result[i]['fval']
+                output[i] = result[i].get("fval")
             return output.copy()
 
         loss = self.loss
         model = self.model
-        prior = self.prior
         Hessian = nd.Hessian(minimum)
 
         for i in range(len(self.initial_guess)):
@@ -256,14 +246,16 @@ class Bads:
 
             ## extract the negative log likelihoods for each ppt
             if i == 0:
-                old_nll = __extract_nll(results)
                 self.details = copy.deepcopy(results)
+                old_nll = __extract_nll(results)
                 parameters = {}
                 for result in results:
+                    parameters = {}
                     for i in range(len(self.parameter_names)):
                         parameters[self.parameter_names[i]] = copy.deepcopy(
-                            result['x'][i]
+                            result["x"][i]
                         )
+
                     self.parameters.append(copy.deepcopy(parameters))
                     self.fit.append(
                         __unpack(copy.deepcopy(result), id=self.ppt_identifier)
@@ -276,7 +268,7 @@ class Bads:
                     self.details[ppt] = copy.deepcopy(results[ppt])
                     for i in range(len(self.parameter_names)):
                         self.parameters[ppt][self.parameter_names[i]] = copy.deepcopy(
-                            results[ppt]['x'][i]
+                            results[ppt]["x"][i]
                         )
                     self.fit[ppt] = __unpack(
                         copy.deepcopy(results[ppt]), id=self.ppt_identifier
@@ -293,12 +285,13 @@ class Bads:
         initial_guess : bool, optional
             Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         self.fit = []
-        self.details = []
         self.parameters = []
+        self.details = []
         if initial_guess:
             bounds = self.model.parameters.bounds()
             self.initial_guess = np.random.uniform(

@@ -46,7 +46,7 @@ def minimum(pars, function, data, loss, prior=False, **args):
     del predicted, observed
     if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
-        Warning(f"Metric is nan or inf with {pars}. Setting metric to 1e10.")
+        warnings.warn("Metric is nan or inf. Setting metric to 1e10.")
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars

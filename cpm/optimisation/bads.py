@@ -6,7 +6,6 @@ from pybads import BADS
 import numpy as np
 import pandas as pd
 import copy
-import warnings
 import multiprocess as mp
 import numdifftools as nd
 
@@ -47,7 +46,6 @@ def minimum(pars, function, data, loss, prior=False, **args):
     del predicted, observed
     if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
-        warnings.warn("Metric is nan or inf. Setting metric to 1e10.")
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
@@ -255,8 +253,6 @@ class Bads:
             if self.__parallel__:
                 with mp.Pool(self.cl) as pool:
                     results = pool.map(__task, self.data)
-                pool.close()
-                pool.join()
             else:
                 results = list(map(__task, self.data))
 

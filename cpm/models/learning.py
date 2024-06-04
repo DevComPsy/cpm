@@ -152,9 +152,10 @@ class DeltaRule:
             )
         epsilon = np.zeros_like(self.weights)
         for i in range(self.shape[0]):
+            activations = np.sum(self.weights[i] * self.input)            
             for j in range(self.shape[1]):
-                sigma = self.zeta * np.abs((self.teacher[i] - self.weights[i, j]) * self.input[j])
-                if (not np.less_equal(sigma, 0) and np.isclose(sigma, 0)):
+                sigma = self.zeta * np.abs((self.teacher[i] - activations) * self.input[j])
+                if (np.greater(sigma, 0) and not np.isclose(sigma, 0)):
                     epsilon[i, j] = np.random.normal(0, sigma)
         self.compute()
         self.weights = self.weights + epsilon
@@ -313,7 +314,7 @@ class SeparableRule:
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 sigma = self.zeta * np.abs((self.teacher[i] - self.weights[i, j]) * self.input[j])
-                if (not np.less_equal(sigma, 0) and np.isclose(sigma, 0)):
+                if (np.greater(sigma, 0) and not np.isclose(sigma, 0)):
                     epsilon[i, j] = np.random.normal(0, sigma)
         self.compute()
         self.weights = self.weights + epsilon

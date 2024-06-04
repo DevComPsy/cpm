@@ -339,11 +339,15 @@ class ProspectUtility:
         self.weighting = weighting
 
     def __utility(self, x=None):
-        return np.where(
-            x >= 0,
-            np.power(x, np.array(self.alpha_pos)),
-            -self.lambda_loss * np.power(-x, self.alpha_neg),
-        )
+        # ensure alpha_pos and alpha_neg are numpy arrays
+        alpha_pos = np.array(self.alpha_pos)
+        alpha_neg = np.array(self.alpha_neg)
+        # use np.maximum to handle very small negative numbers due to floating-point precision
+        positive_part = np.power(np.maximum(x, 0), alpha_pos)
+        # use np.maximum to handle very small positive numbers due to floating-point precision
+        negative_part = -self.lambda_loss * np.power(np.maximum(-x, 0), alpha_neg)
+        # combine the results using np.where
+        return np.where(x >= 0, positive_part, negative_part)
 
     def __weighting_tk(self, x=None):
         numerator = np.power(x, self.beta)

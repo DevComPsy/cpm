@@ -146,14 +146,17 @@ class DeltaRule:
 
         Findling, C., Skvortsova, V., Dromnelle, R., Palminteri, S., and Wyart, V. (2019). Computational noise in reward-guided learning drives behavioral variability in volatile environments. Nature Neuroscience 22, 2066–2077
         """
+        if self.__run__:
+            raise ValueError(
+                "Do not run .compute() prior to .noisy_learning_rule()."
+            )
         epsilon = np.zeros_like(self.weights)
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 sigma = self.zeta * np.abs((self.teacher[i] - self.weights[i, j]) * self.input[j])
                 if (not np.less_equal(sigma, 0) and np.isclose(sigma, 0)):
                     epsilon[i, j] = np.random.normal(0, sigma)
-        if not self.__run__:
-            self.compute()
+        self.compute()
         self.weights = self.weights + epsilon
         return self.weights
 
@@ -302,14 +305,17 @@ class SeparableRule:
 
         Findling, C., Skvortsova, V., Dromnelle, R., Palminteri, S., and Wyart, V. (2019). Computational noise in reward-guided learning drives behavioral variability in volatile environments. Nature Neuroscience 22, 2066–2077
         """
+        if self.__run__:
+            raise ValueError(
+                "Do not run .compute() prior to .noisy_learning_rule()."
+            )
         epsilon = np.zeros_like(self.weights)
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 sigma = self.zeta * np.abs((self.teacher[i] - self.weights[i, j]) * self.input[j])
                 if (not np.less_equal(sigma, 0) and np.isclose(sigma, 0)):
                     epsilon[i, j] = np.random.normal(0, sigma)
-        if not self.__run__:
-            self.compute()
+        self.compute()
         self.weights = self.weights + epsilon
         return self.weights
 

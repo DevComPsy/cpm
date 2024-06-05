@@ -3,3 +3,5 @@ nav:
     - data-format.md
     - parameters.md
     - defining-model.md
+    - fitting.md
+    - troubleshooting.md

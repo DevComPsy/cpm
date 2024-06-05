@@ -29,11 +29,6 @@ class SigmoidActivation:
         """
         Compute the activation value using the sigmoid function.
 
-        Parameters
-        ----------
-        kwargs : dict
-            Additional keyword arguments.
-
         Returns
         -------
         numpy.ndarray
@@ -108,13 +103,14 @@ class CompetitiveGating:
     def __str__(self):
         return f"CompetitiveGating(input={self.input}, values={self.values}, salience={self.salience}, P={self.P})"
 
+
 class ProspectUtility:
     """
     A class for computing choice utilities based on prospect theory.
 
     Parameters
     ----------
-    magnitude : numpy.ndarray
+    magnitudes : numpy.ndarray
         The magnitudes of potential outcomes for each choice option.
         Should be a nested array where the outer dimension represents trials,
         followed by options within each trial, followed by potential outcomes within each option.
@@ -133,7 +129,7 @@ class ProspectUtility:
         The discriminability parameter, which determines the curvature of the weighting function.
     delta : float
         The attractiveness parameter, which determines the elevation of the weighting function.
-    weigting : str
+    weighting : str
         The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'.
     **kwargs : dict, optional
         Additional keyword arguments.

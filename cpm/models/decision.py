@@ -42,7 +42,7 @@ class Softmax:
 
     Examples
     --------
-    >>> from cpm.components.decision import Softmax
+    >>> from cpm.models.decision import Softmax
     >>> import numpy as np
     >>> temperature = 1
     >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
@@ -358,7 +358,7 @@ class ChoiceKernel:
 
     See Also
     --------
-    [cpm.models.learning.KernelUpdate](cpm.components.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
+    [cpm.models.learning.KernelUpdate](models/cpm.models.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
 
     References
     ----------

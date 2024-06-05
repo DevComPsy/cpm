@@ -77,29 +77,6 @@ class DifferentialEvolution:
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
 
-    Attributes
-    ----------
-    function : Wrapper
-        The model object.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
-    loss : function
-        The loss function for the objective minimization function.
-    kwargs : dict
-        Additional keyword arguments.
-    fit : list
-        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
-    details : list
-        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
-    parameters : list
-        List to store the best-fitting parameters as dictionaries.
-    participant : object
-        The current participant data.
-    parameter_names : list
-        The names of the model parameters.
-    bounds : object
-        The parameter bounds for the optimization.
-
     Notes
     -----
     The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary should also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.

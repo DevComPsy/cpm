@@ -79,27 +79,6 @@ class Minimize:
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html) documentation for what is supported.
 
-    Attributes
-    ----------
-    function : Wrapper
-        The model object.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
-    loss : function
-        The loss function for the objective minimization function.
-    kwargs : dict
-        Additional keyword arguments.
-    fit : list
-        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
-    details : list
-        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
-    parameters : list
-        List to store the best-fitting parameters as dictionaries.
-    participant : object
-        The current participant data.
-    parameter_names : list
-        The names of the model parameters.
-
 
     Notes
     -----
@@ -272,8 +251,9 @@ class Minimize:
         initial_guess : bool, optional
             Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         self.fit = []
         self.details = []

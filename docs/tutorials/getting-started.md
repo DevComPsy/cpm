@@ -38,7 +38,7 @@ pip install git+https://github.com/DevComPsy/modelling-toolbox.git
 
 ## Troubleshooting
 
-If you encounter any issues while using [Project Name], refer to the [Troubleshooting Guide](troubleshooting.md) for solutions to common problems.
+If you encounter any issues while using `cpm`, refer to the [Troubleshooting Guide](troubleshooting.md) for way to get help or report issues.
 
 ## Resources
 
@@ -46,6 +46,5 @@ For additional resources and support, check out the following:
 
 - [Official Website](https://www.example.com)
 - [Community Forum](https://forum.example.com)
-- [FAQs](faqs.md)
 
 Happy coding!

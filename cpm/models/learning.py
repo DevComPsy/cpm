@@ -492,7 +492,7 @@ class HumbleTeacher:
     Examples
     --------
     >>> import numpy as np
-    >>> from cpm.components.learning import HumbleTeacher
+    >>> from cpm.models.learning import HumbleTeacher
     >>> weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     >>> teacher = np.array([0, 1])
     >>> input = np.array([1, 1, 1])
@@ -533,19 +533,3 @@ class HumbleTeacher:
                     self.alpha * (self.teacher[i] - activations) * self.input[j]
                 )
         return self.weights
-
-
-# NOTE: NOT TESTED
-# class HebbRule:
-#     def __init__(self, alphas, weights, *args, **kwargs):
-#         self.weights = weights
-#         self.alpha = alpha
-
-#     def call(self):
-#         active = self.weights
-#         active[active > 0] = 1
-
-#         for i in range(self.weights.shape[0]):
-#             for j in range(self.weights.shape[1]):
-#                 self.weights[i, j] += self.alpha * active[i] * active[j]
-#         return self.weights

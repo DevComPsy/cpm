@@ -7,21 +7,6 @@ class DeltaRule:
     """
     DeltaRule class computes the prediction error for a given input and target value.
 
-    Attributes
-    ----------
-    alpha : float
-        The learning rate.
-    zeta  : float
-        The constant fraction of the magnitude of the prediction error, also called Weber's scaling. Only used when adding noise to the prediction errors.
-    input : ndarray or array_like
-        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
-    weights : ndarray
-        The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
-    teacher : ndarray
-        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
-    shape : tuple
-        The shape of the weight matrix.
-
     Parameters
     ----------
     alpha : float
@@ -29,7 +14,7 @@ class DeltaRule:
     zeta  : float
         The constant fraction of the magnitude of the prediction error.
     weights : array-like
-        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+        The value matrix, where rows are outcomes and columns are stimuli or features. The values can be anything; for example belief values, association weights, connection weights, Q-values.
     feedback : array-like
         The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
     input : array-like
@@ -63,11 +48,11 @@ class DeltaRule:
     >>> delta_rule.compute()
     array([[ 0.07,  0.07,  0.  ],
            [-0.09, -0.09, -0.  ]])
-    >>> delta_rule.noisy_learning()
+    >>> delta_rule.noisy_learning_rule()
     array([[ 0.05755793,  0.09214091,  0.],
            [-0.08837513, -0.1304325 ,  0.]])
 
-    This implementation generalises to n-dimensional weight matrices, which means
+    This implementation generalises to n-dimensional matrices, which means
     that it can be applied to both single- and multi-outcome learning paradigms.
 
     >>> weights = np.array([0.1, 0.6, 0., 0.3])
@@ -111,14 +96,15 @@ class DeltaRule:
 
     def compute(self):
         """
-        Compute the weights using the delta learning rule. It is based on the
+        Compute the prediction error using the delta learning rule. It is based on the
         Gluck and Bower's (1988) delta rule, an extension to Rescorla and Wagner
         (1972), which was identical to that of Widrow and Hoff (1960).
 
         Returns
         -------
-        weights: numpy.ndarray
-            The updated weights matrix.
+        ndarray
+            The prediction error for each stimuli-outcome mapping with learning noise.
+            It has the same shape as the weights input argument.
         """
 
         for i in range(self.shape[0]):
@@ -132,14 +118,15 @@ class DeltaRule:
 
     def noisy_learning_rule(self):
         """
-        Add random noise to the weights computed from the delta learning rule as specified
+        Add random noise to the prediction error computed from the delta learning rule as specified
         Findling et al. (2019). It is inspired by Weber's law of intensity
         sensation.
 
         Returns
         -------
-        weights: numpy.ndarray
-            The updated weights matrix.
+        ndarray
+            The prediction error for each stimuli-outcome mapping with learning noise.
+            It has the same shape as the weights input argument.
 
         References
         ----------
@@ -168,30 +155,6 @@ class DeltaRule:
     def __call__(self):
         return self.compute()
 
-    def config(self):
-        """
-        Get the configuration of the learning component.
-
-        Returns
-        -------
-        config: dict
-            A dictionary containing the configuration parameters of the learning component.
-
-            - alpha (float): The learning rate.
-            - weights (list): The weights used for learning.
-            - teacher (str): The name of the teacher.
-            - name (str): The name of the learning component class.
-            - type (str): The type of the learning component.
-        """
-        config = {
-            "alpha": self.alpha,
-            "weights": self.weights,
-            "teacher": self.teacher,
-            "name": self.__class__.__name__,
-            "type": "learning",
-        }
-        return config
-
 
 class SeparableRule:
     """
@@ -204,29 +167,14 @@ class SeparableRule:
         The learning rate.
     zeta : float, optional
         The constant fraction of the magnitude of the prediction error, also called Weber's scaling.
-    weights : array-like, optional
-        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
+    weights : array-like
+        The value matrix, where rows are outcomes and columns are stimuli or features. The values can be anything; for example belief values, association weights, connection weights, Q-values.
     feedback : array-like, optional
         The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
     input : array-like, optional
         The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
     **kwargs : dict, optional
         Additional keyword arguments.
-
-    Attributes
-    -----------
-    alpha : float
-        The learning rate.
-    zeta  : float
-        The constant fraction of the magnitude of the prediction error, also called Weber's scaling.
-    input : ndarray
-        The input value. The stimulus representation in the form of a 1D array, where each element can take a value of 0 and 1.
-    weights : ndarray
-        The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
-    teacher : ndarray
-        The target values or feedback, sometimes referred to as teaching signals. These are the values that the algorithm should learn to predict.
-    shape : tuple
-        The shape of the weights array.
 
     See Also
     --------
@@ -267,12 +215,13 @@ class SeparableRule:
 
     def compute(self):
         """
-        Computes the updated weights using the learning rule.
+        Computes the prediction error using the learning rule.
 
         Returns:
         --------
         ndarray
-            The updated weights.
+            The prediction error for each stimuli-outcome mapping.
+            It has the same shape as the weights input argument.
         """
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
@@ -284,14 +233,15 @@ class SeparableRule:
 
     def noisy_learning_rule(self):
         """
-        Add random noise to the weights computed from the delta learning rule as specified
+        Add random noise to the prediction error computed from the delta learning rule as specified
         Findling et al. (2019). It is inspired by Weber's law of intensity
         sensation.
 
         Returns
         -------
-        weights: numpy.ndarray
-            The updated weights matrix.
+        ndarray
+            The prediction error for each stimuli-outcome mapping with learning noise.
+            It has the same shape as the weights input argument.
 
         References
         ----------
@@ -320,24 +270,6 @@ class SeparableRule:
     def __call__(self):
         return self.compute()
 
-    def config(self):
-        """
-        Returns a dictionary containing the configuration of the object.
-
-        Returns:
-        --------
-        dict
-            The configuration of the object.
-        """
-        config = {
-            "alpha": self.alpha,
-            "weights": self.weights,
-            "teacher": self.teacher,
-            "name": self.__class__.__name__,
-            "type": "learning",
-        }
-        return config
-
 
 class QLearningRule:
     """
@@ -351,19 +283,6 @@ class QLearningRule:
         The discount factor. Default is 0.1.
     values : ndarray
         The values matrix.  It is a 1D array of Q-values active for the current state, where each element corresponds to an action.
-    reward : float
-        The reward received on the current state.
-    maximum : float
-        The maximum estimated reward for the next state.
-
-    Attributes
-    ----------
-    alpha : float
-        The learning rate.
-    gamma : float
-        The discount factor.
-    values : ndarray
-        The values matrix. It is a 1D array of Q-values, where each element corresponds to an action.
     reward : float
         The reward received on the current state.
     maximum : float
@@ -445,49 +364,12 @@ class QLearningRule:
     def __call__(self):
         return self.compute()
 
-    def config(self):
-        """
-        Get the configuration of the q-learning component.
-
-        Returns
-        -------
-        config: dict
-            A dictionary containing the configuration parameters of the learning component.
-
-            - alpha (float): The learning rate.
-            - gamma (float): The discount factor.
-            - values (list): The values used for learning.
-            - reward (str): The name of the reward.
-            - maximum (str): The name of the maximum reward.
-            - name (str): The name of the learning component class.
-            - type (str): The type of the learning component.
-        """
-        config = {
-            "alpha": self.alpha,
-            "gamma": self.gamma,
-            "values": self.values,
-            "reward": self.reward,
-            "maximum": self.maximum,
-            "name": self.__class__.__name__,
-            "type": "learning",
-        }
-        return config
-
 
 class KernelUpdate:
     """
     A class representing a learning rule for updating the choice kernel as specified by Equation 5 in Wilson and Collins (2019).
 
     Parameters
-    ----------
-    response : ndarray
-        The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as `[0, 1, 0, 0]`.
-    alpha : float
-        The kernel learning rate.
-    kernel : ndarray
-        The kernel used for learning. It is a 1D array of kernel values, where each element corresponds to a response option. Each element must correspond to the same response option in the `response` vector.
-
-    Attributes
     ----------
     response : ndarray
         The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as `[0, 1, 0, 0]`.

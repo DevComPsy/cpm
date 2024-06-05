@@ -14,21 +14,6 @@ class Softmax:
 
         The softmax function is defined as: e^(temperature * x) / sum(e^(temperature * x)).
 
-    Attributes
-    ----------
-    temperature : float
-        The inverse temperature parameter for the softmax computation.
-    xi : float
-        The irreducible noise parameter for the softmax computation.
-    activations : numpy.ndarray
-        Array of activations for each possible outcome/action. It should be
-        a 2D ndarray, where each row represents an outcome and each column
-        represents a single stimulus.
-    policies : numpy.ndarray
-        Array of computed policies.
-    shape : tuple
-        The shape of the activations array.
-
     Parameters
     ----------
     temperature : float
@@ -159,21 +144,6 @@ class Softmax:
             self.compute()
         return np.random.choice(self.shape[0], p=self.policies)
 
-    def config(self):
-        """
-        Get the configuration of the Softmax class.
-
-        Returns
-        ------
-        config (dict): Dictionary containing the configuration parameters.
-        """
-        config = {
-            **self.__dict__,
-            "name": self.__class__.__name__,
-            "type": "decision",
-        }
-        return config
-
     def __repr__(self):
         return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations})"
 
@@ -201,20 +171,6 @@ class Sigmoid:
         of P = 0.5.
     activations : ndarray
         An array of activations for the sigmoid function.
-
-    Attributes
-    ----------
-    temperature : float
-        The inverse temperature parameter for the sigmoid function.
-    beta : float
-        The bias parameter for the sigmoid function. It is the value of the
-        output activation that results in an output rating of P = 0.5.
-    activations : ndarray
-        An array of activations for the sigmoid function.
-    policies : ndarray
-        An array of outputs computed using the sigmoid function.
-    shape : tuple
-        The shape of the activations array.
 
     """
 
@@ -265,29 +221,6 @@ class Sigmoid:
         if not self.__run__:
             self.compute()
         return np.random.choice(self.shape[0], p=self.policies / self.policies.sum())
-
-    def config(self):
-        """
-        Returns the configuration of the sigmoid function.
-
-        Returns
-        -------
-        config: dict
-            A dictionary containing the configuration of the sigmoid function.
-
-            - temperature (float): The temperature parameter for the sigmoid function.
-            - beta (float): The bias parameter for the sigmoid function.
-            - activations (ndarray): An array of activations for the sigmoid function.
-            - name (str): The name of the sigmoid function.
-            - type (str): The class of function it belongs.
-        """
-        config = {
-            "temperature": self.temperature,
-            "activations": self.activations,
-            "name": self.__class__.__name__,
-            "type": "decision",
-        }
-        return config
 
     def __repr__(self):
         return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations}, beta={self.beta})"
@@ -418,21 +351,6 @@ class ChoiceKernel:
     kernel : ndarray, optional
         An array of kernel values for the softmax function.
 
-    Attributes
-    ----------
-    temperature_a : float
-        The inverse temperature parameter for the softmax computation.
-    temperature_k : float
-        The inverse temperature parameter for the kernel computation.
-    activations : ndarray
-        An array of activations for the softmax function.
-    kernel : ndarray
-        An array of kernel values for the softmax function.
-    policies : ndarray
-        An array of outputs computed using the softmax function.
-    shape : tuple
-        The shape of the activations array.
-
     Notes
     -----
 
@@ -507,11 +425,3 @@ class ChoiceKernel:
 
     def __call__(self):
         return self.compute()
-
-
-# ChoiceKernel(
-#     temperature_activations=1,
-#     temperature_kernel=1,
-#     activations=np.array([[0.1], [0], [0.2]]),
-#     kernel=np.array([0.1, 0.9, 0.1]),
-# ).compute()

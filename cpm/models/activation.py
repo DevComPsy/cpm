@@ -7,14 +7,6 @@ class SigmoidActivation:
     """
     Represents a sigmoid activation function.
 
-
-    Attributes
-    ----------
-        input : array_like
-            The input value. The stimulus representation (vector).
-        weights : array_like
-            The weights value. A 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
-
     """
 
     def __init__(self, input=None, weights=None, **kwargs):
@@ -49,21 +41,6 @@ class SigmoidActivation:
         """
         return np.asarray(1 / (1 + np.exp(-self.input * self.weights)))
 
-    def config(self):
-        """
-        Get the configuration of the activation function.
-
-        Returns
-        -------
-        dict
-            The configuration of the activation function.
-        """
-        config = {
-            "name": "Sigmoid",
-            "type": "activation",
-        }
-        return config
-
 
 class CompetitiveGating:
     """
@@ -80,19 +57,6 @@ class CompetitiveGating:
         The salience value. A 1D array of salience values, where each value represents the salience of a single stimulus.
     P : float
         The power value, also called attentional normalisation or brutality, which influences the degree of attentional competition.
-
-    Attributes
-    ----------
-    input : array_like
-        The input value. The stimulus representation (vector).
-    values : array_like
-        The values value. A 2D array of values, where each row represents an outcome and each column represents a single stimulus.
-    salience : array_like
-        The salience value. A 1D array of salience values, where each value represents the salience of a single stimulus.
-    P : float
-        The power value, also called attentional normalisation or brutality. It influences the degree of attentional competition.
-    gain : array_like
-        The normalised attentional gain for each stimulus, corresponding to the input vector.
 
     Examples
     --------
@@ -144,26 +108,6 @@ class CompetitiveGating:
     def __str__(self):
         return f"CompetitiveGating(input={self.input}, values={self.values}, salience={self.salience}, P={self.P})"
 
-    def config(self):
-        """
-        Print the configuration of the attentional gating function.
-
-        Returns
-        -------
-        dict
-            The configuration of the attentional gating function.
-        """
-        return {
-            "input": self.input,
-            "values": self.values,
-            "salience": self.salience,
-            "P": self.P,
-            "gain": self.gain,
-            "type": "Activation",
-            "name": self.__class__.__name__,
-        }
-
-
 class ProspectUtility:
     """
     A class for computing choice utilities based on prospect theory.
@@ -193,36 +137,6 @@ class ProspectUtility:
         The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'.
     **kwargs : dict, optional
         Additional keyword arguments.
-
-    Attributes
-    ----------
-    magnitudes : numpy.ndarray
-        The magnitudes of potential outcomes for each choice option, for each trial.
-        Should be a nested array where the outer dimension represents trials,
-        followed by options within each trial, followed by potential outcomes within each option.
-    probabilities : numpy.ndarray
-        The probabilities of potential outcomes for each choice option, for each trial.
-        Should be a nested array where the outer dimension represents trials,
-        followed by options within each trial, followed by potential outcomes within each option.
-    alpha_pos : float
-        The risk attitude parameter for non-negative outcomes, which determines the curvature of the utility function in the gain domain.
-        If alpha_neg is undefined, alpha_pos will be used for both the gain and loss domains.
-    alpha_neg : float
-        The risk attitude parameter for negative outcomes, which determines the curvature of the utility function in the loss domain.
-    lambda_loss : float
-        The loss aversion parameter, which scales the utility of negative outcomes relative to non-negative outcomes.
-    beta : float
-        The discriminability parameter, which determines the curvature of the weighting function.
-    delta : float
-        The attractiveness parameter, which determines the elevation of the weighting function.
-    weighting : str
-        The definition of the weighting function. One of 'tk', 'pd', or 'gw'. See Notes for details on each definition.
-    utilities : ndarray
-        The computed utilities of potential outcomes for each choice option, for each trial.
-    weights : ndarray
-        The computed weights of potential outcomes for each choice option, for each trial.
-    expected_utility : ndarray
-        The computed expected utility of each choice option for each trial.
 
     Notes
     -----
@@ -392,21 +306,6 @@ class ProspectUtility:
     def __str__(self):
         return f"{self.__class__.__name__}(magnitudes={self.magnitudes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
 
-    def config(self):
-        config = {
-            "magnitudes": self.magnitudes,
-            "probabilities": self.probabilities,
-            "alpha_pos": self.alpha_pos,
-            "alpha_neg": self.alpha_neg,
-            "lambda_loss": self.lambda_loss,
-            "beta": self.beta,
-            "delta": self.delta,
-            "weighting": self.weighting,
-            "type": "Activation",
-            "name": self.__class__.__name__,
-        }
-        return config
-
 
 class Offset:
     """
@@ -424,16 +323,6 @@ class Offset:
     **kwargs : dict, optional
         Additional keyword arguments.
 
-    Attributes
-    ----------
-    input : ndarray
-        The input value. The stimulus representation (vector).
-    offset : float or array_like
-        The value(s) to be added to the element(s) of the input. If an array, it should be the same shape as the input, where elements correspond to elements of the input.
-    index : int or array_like
-        The index of the element of the input vector to which the offset should be added. If an array, it should be a vector of integers, denoted indices in input.
-    output : numpy.ndarray
-        The stimulus representation (vector) with offset added to the requested element.
 
     Examples
     --------
@@ -469,13 +358,3 @@ class Offset:
 
     def __str__(self):
         return f"{self.__class__.__name__}(input={self.input}, offset={self.offset}, index={self.index})"
-
-    def config(self):
-        config = {
-            "input": self.input,
-            "offset": self.offset,
-            "index": self.index,
-            "type": "Activation",
-            "name": self.__class__.__name__,
-        }
-        return config

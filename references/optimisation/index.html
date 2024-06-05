@@ -55,9 +55,23 @@
                 <li class="toctree-l1"><a class="reference internal" href="../../about/">About</a>
                 </li>
               </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../roadmap/">Roadmap</a>
+                </li>
+              </ul>
               <p class="caption"><span class="caption-text">User Guide</span></p>
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../tutorials/getting-started/">Getting Started</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -73,35 +87,63 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../generators/">cpm.generators</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">cpm.optimisation</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.optimisation</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#cpm.optimisation.DifferentialEvolution">DifferentialEvolution</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.DifferentialEvolution--notes">Notes</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.DifferentialEvolution.export">export</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.genetic.DifferentialEvolution.export">export()</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.genetic.DifferentialEvolution.export--notes">Notes</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.DifferentialEvolution.optimise">optimise</a>
     </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.genetic.DifferentialEvolution.minimise">minimise()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.genetic.DifferentialEvolution.optimise">optimise()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.genetic.DifferentialEvolution.reset">reset()</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.DifferentialEvolution.reset">reset</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpm.optimisation.Fmin">Fmin</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Fmin--notes">Notes</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Fmin.export">export</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.fmin.Fmin.export">export()</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Fmin.optimise">optimise</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.fmin.Fmin.optimise">optimise()</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Fmin.reset">reset</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.fmin.Fmin.reset">reset()</a>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.optimisation.FminBound">FminBound</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.FminBound.export">export</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.FminBound.optimise">optimise</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.FminBound.reset">reset</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.optimisation.Minimize">Minimize</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Minimize.export">export</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Minimize.optimise">optimise</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Minimize.reset">reset</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.optimisation.Bads">Bads</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Bads.export">export</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Bads.optimise">optimise</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.Bads.reset">reset</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.optimisation.EmpiricalBayes">EmpiricalBayes</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.EmpiricalBayes.optimise">optimise</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.EmpiricalBayes.stair">stair</a>
     </li>
         </ul>
     </li>
@@ -109,19 +151,27 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood">LogLikelihood</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood.bernoulli">bernoulli()</a>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood.bernoulli">bernoulli</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood.categorical">categorical()</a>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood.categorical">categorical</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood.continuous">continuous()</a>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.LogLikelihood.continuous">continuous</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.minimise.Distance">Distance</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Distance.MSE">MSE</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Distance.SSE">SSE</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.optimisation.minimise.Bayesian">Bayesian</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Bayesian.AIC">AIC()</a>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Bayesian.AIC">AIC</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Bayesian.BIC">BIC()</a>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Bayesian.BIC">BIC</a>
     </li>
         </ul>
     </li>
@@ -166,7 +216,7 @@
 
 
 <h3 id="cpm.optimisation.DifferentialEvolution" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">DifferentialEvolution</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">DifferentialEvolution</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -176,156 +226,105 @@
   
       <p>Class representing the Differential Evolution optimization algorithm.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>model</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The model to be optimized.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>bounds</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The parameter bounds for the optimization. The bounds should be a list of tuples, where each tuple contains the lower and upper bounds for a parameter. Elements of a tuple must corespond to the parameters in Parameters. If less bounds are provided than parameters, the algorithm will only fit those.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>data</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>minimisation</code></td>
-          <td>
-                <code><span title="cpm.optimisation.genetic.DifferentialEvolution.function">function</span></code>
-          </td>
-          <td><p>The loss function for the objective minimization function. Default is <code>minimise.LogLikelihood.bernoulli</code>. See the <code>minimise</code> module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.</p></td>
-          <td>
-                <code>minimise.LogLikelihood.bernoulli</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>**kwargs</code></td>
-          <td>
-                <code>dict</code>
-          </td>
-          <td><p>Additional keyword arguments. See the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html"><code>scipy.optimize.differential_evolution</code></a> documentation for what is supported.</p></td>
-          <td>
-                <code>{}</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  <p><strong>Attributes:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>function</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code>
-          </td>
-          <td><p>The model object.</p></td>
-        </tr>
-        <tr>
-          <td><code>data</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.</p></td>
-        </tr>
-        <tr>
-          <td><code>loss</code></td>
-          <td>
-                <code><span title="cpm.optimisation.genetic.DifferentialEvolution.function">function</span></code>
-          </td>
-          <td><p>The loss function for the objective minimization function.</p></td>
-        </tr>
-        <tr>
-          <td><code>kwargs</code></td>
-          <td>
-                <code>dict</code>
-          </td>
-          <td><p>Additional keyword arguments.</p></td>
-        </tr>
-        <tr>
-          <td><code>fit</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>List to store the optimization results. It includes the best-fitting parameters and the objective function value.</p></td>
-        </tr>
-        <tr>
-          <td><code>details</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in <code>fit</code>.</p></td>
-        </tr>
-        <tr>
-          <td><code>parameters</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>List to store the best-fitting parameters as dictionaries.</p></td>
-        </tr>
-        <tr>
-          <td><code>participant</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The current participant data.</p></td>
-        </tr>
-        <tr>
-          <td><code>parameter_names</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>The names of the model parameters.</p></td>
-        </tr>
-        <tr>
-          <td><code>bounds</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The parameter bounds for the optimization.</p></td>
-        </tr>
-    </tbody>
-  </table>
-      <h5 id="cpm.optimisation.DifferentialEvolution--notes">Notes</h5>
-<p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary should also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model <code>Wrapper</code>.</p>
 
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>model</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The model to be optimized.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>data</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>minimisation</code></b>
+                  (<code>function</code>, default:
+                      <code><a class="autorefs autorefs-internal" title="cpm.optimisation.minimise.LogLikelihood.bernoulli" href="#cpm.optimisation.minimise.LogLikelihood.bernoulli">bernoulli</a></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The loss function for the objective minimization function. Default is <code>minimise.LogLikelihood.bernoulli</code>. See the <code>minimise</code> module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>prior</code></b>
+              –
+              <div class="doc-md-description">
+                <p>Whether to include priors in the optimisation. Deafult is 'False'.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parallel</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to use parallel processing. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>cl</code></b>
+                  (<code>int</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of cores to use for parallel processing. Default is <code>None</code>. If <code>None</code>, the number of cores is set to 2.
+If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>ppt_identifier</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The key in the participant data dictionary that contains the participant identifier. Default is <code>None</code>. Returned in the optimization details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>**kwargs</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Additional keyword arguments. See the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html"><code>scipy.optimize.differential_evolution</code></a> documentation for what is supported.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary should also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model <code>Wrapper</code>.</p>
+</details>
 
   
 
@@ -339,12 +338,13 @@
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.optimisation.genetic.DifferentialEvolution.export" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">export</span><span class="p">(</span><span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h4 id="cpm.optimisation.DifferentialEvolution.export" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">export</span><span class="p">(</span><span class="n">details</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h4>
 
@@ -353,122 +353,73 @@
   
       <p>Exports the optimization results and fitted parameters as a <code>pandas.DataFrame</code>.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>details</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>Whether to include the various metrics related to the optimisation routine in the output.</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
-          </td>
-          <td><p>A pandas DataFrame containing the optimization results and fitted parameters. If <code>details</code> is <code>True</code>, the DataFrame will also include the optimization details.</p></td>
-        </tr>
-    </tbody>
-  </table>
-      <h6 id="cpm.optimisation.genetic.DifferentialEvolution.export--notes">Notes</h6>
-<p>The DataFrame will not contain the population and population_energies keys from the optimization details.
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>details</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to include the various metrics related to the optimisation routine in the output.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code><span title="pandas.DataFrame">DataFrame</span></code>
+            –
+            <div class="doc-md-description">
+              <p>A pandas DataFrame containing the optimization results and fitted parameters. If <code>details</code> is <code>True</code>, the DataFrame will also include the optimization details.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The DataFrame will not contain the population and population_energies keys from the optimization details.
 If you want to investigate it, please use the <code>details</code> attribute.</p>
-
+</details>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.optimisation.genetic.DifferentialEvolution.minimise" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">minimise</span><span class="p">(</span><span class="n">pars</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span></code>
-
-</h4>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>The <code>minimise</code> function calculates a metric by comparing predicted values with
-observed values.</p>
-
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>pars</code></td>
-          <td>
-          </td>
-          <td><p>The <code>pars</code> parameter is a dictionary that contains the parameters for the
-function that needs to be minimized.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>    The metric value is being returned.</code>
-          </td>
-          <td></td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h4 id="cpm.optimisation.genetic.DifferentialEvolution.optimise" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+<h4 id="cpm.optimisation.DifferentialEvolution.optimise" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
 
 </h4>
 
@@ -483,12 +434,13 @@ function that needs to be minimized.</p></td>
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.optimisation.genetic.DifferentialEvolution.reset" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">reset</span><span class="p">()</span></code>
+<h4 id="cpm.optimisation.DifferentialEvolution.reset" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">reset</span><span class="p">()</span></code>
 
 </h4>
 
@@ -508,6 +460,7 @@ function that needs to be minimized.</p></td>
   </div>
 
   </div>
+
 
 </div>
 
@@ -516,7 +469,7 @@ function that needs to be minimized.</p></td>
 
 
 <h3 id="cpm.optimisation.Fmin" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Fmin</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">continuous</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Fmin</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -524,162 +477,128 @@ function that needs to be minimized.</p></td>
   <div class="doc doc-contents first">
 
   
-      <p>Class representing the Fmin search optimization algorithm.</p>
-
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>model</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The model to be optimized.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>data</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>minimisation</code></td>
-          <td>
-                <code>function</code>
-          </td>
-          <td><p>The loss function for the objective minimization function. Default is <code>minimise.LogLikelihood.continuous</code>. See the <code>minimise</code> module for more information. User-defined loss functions are also supported.</p></td>
-          <td>
-                <code>minimise.LogLikelihood.continuous</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>parallel</code></td>
-          <td>
-                <code>bool</code>
-          </td>
-          <td><p>Whether to use parallel processing. Default is <code>False</code>.</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>cl</code></td>
-          <td>
-                <code>int</code>
-          </td>
-          <td><p>The number of cores to use for parallel processing. Default is <code>None</code>. If <code>None</code>, the number of cores is set to 2.
-If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>**kwargs</code></td>
-          <td>
-                <code>dict</code>
-          </td>
-          <td><p>Additional keyword arguments. See the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html"><code>scipy.optimize.differential_evolution</code></a> documentation for what is supported.</p></td>
-          <td>
-                <code>{}</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  <p><strong>Attributes:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>function</code></td>
-          <td>
-                <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code>
-          </td>
-          <td><p>The model object.</p></td>
-        </tr>
-        <tr>
-          <td><code>data</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.</p></td>
-        </tr>
-        <tr>
-          <td><code>loss</code></td>
-          <td>
-                <code>function</code>
-          </td>
-          <td><p>The loss function for the objective minimization function.</p></td>
-        </tr>
-        <tr>
-          <td><code>kwargs</code></td>
-          <td>
-                <code>dict</code>
-          </td>
-          <td><p>Additional keyword arguments.</p></td>
-        </tr>
-        <tr>
-          <td><code>fit</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>List to store the optimization results. It includes the best-fitting parameters and the objective function value.</p></td>
-        </tr>
-        <tr>
-          <td><code>details</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in <code>fit</code>.</p></td>
-        </tr>
-        <tr>
-          <td><code>parameters</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>List to store the best-fitting parameters as dictionaries.</p></td>
-        </tr>
-        <tr>
-          <td><code>participant</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The current participant data.</p></td>
-        </tr>
-        <tr>
-          <td><code>parameter_names</code></td>
-          <td>
-                <code>list</code>
-          </td>
-          <td><p>The names of the model parameters.</p></td>
-        </tr>
-    </tbody>
-  </table>
-      <h5 id="cpm.optimisation.Fmin--notes">Notes</h5>
-<p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary <strong>MUST</strong> also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model <code>Wrapper</code>.</p>
+      <p>Class representing the Fmin search (unbounded) optimization algorithm using a downhill simplex.</p>
 
 
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>model</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The model to be optimized.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>data</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>minimisation</code></b>
+                  (<code>function</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The loss function for the objective minimization function. See the <code>minimise</code> module for more information. User-defined loss functions are also supported.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>prior</code></b>
+              –
+              <div class="doc-md-description">
+                <p>Whether to include the prior in the optimization. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>number_of_starts</code></b>
+                  (<code>int</code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of random initialisations for the optimization. Default is <code>1</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>list or array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The initial guess for the optimization. Default is <code>None</code>. If <code>number_of_starts</code> is set, and the <code>initial_guess</code> parameter is 'None', the initial guesses are randomly generated from a uniform distribution.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parallel</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to use parallel processing. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>cl</code></b>
+                  (<code>int</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of cores to use for parallel processing. Default is <code>None</code>. If <code>None</code>, the number of cores is set to 2.
+If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>ppt_identifier</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The key in the participant data dictionary that contains the participant identifier. Default is <code>None</code>. Returned in the optimization details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>**kwargs</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Additional keyword arguments. See the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin.html"><code>scipy.optimize.fmin</code></a> documentation for what is supported.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary <strong>MUST</strong> also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model <code>Wrapper</code>.</p>
+<p>The optimization process is repeated <code>number_of_starts</code> times, and only the best-fitting output from the best guess is stored.</p>
+</details>
 
   
 
@@ -693,12 +612,13 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.optimisation.fmin.Fmin.export" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+<h4 id="cpm.optimisation.Fmin.export" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
 
 </h4>
 
@@ -707,34 +627,41 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
   
       <p>Exports the optimization results and fitted parameters as a <code>pandas.DataFrame</code>.</p>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
-          </td>
-          <td><p>A pandas DataFrame containing the optimization results and fitted parameters.</p></td>
-        </tr>
-    </tbody>
-  </table>
 
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code><span title="pandas.DataFrame">DataFrame</span></code>
+            –
+            <div class="doc-md-description">
+              <p>A pandas DataFrame containing the optimization results and fitted parameters.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.optimisation.fmin.Fmin.optimise" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+<h4 id="cpm.optimisation.Fmin.optimise" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
 
 </h4>
 
@@ -749,12 +676,13 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.optimisation.fmin.Fmin.reset" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">reset</span><span class="p">()</span></code>
+<h4 id="cpm.optimisation.Fmin.reset" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">reset</span><span class="p">(</span><span class="n">initial_guess</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h4>
 
@@ -762,9 +690,58 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
   <div class="doc doc-contents ">
   
       <p>Resets the optimization results and fitted parameters.</p>
-<p>Returns:
-    None</p>
 
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is <code>True</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>None</code>
+            –
+            <div class="doc-md-description">
+              
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
   </div>
 
 </div>
@@ -774,6 +751,1075 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
   </div>
 
   </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.optimisation.FminBound" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">FminBound</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>Class representing the Fmin search (bounded) optimization algorithm using the L-BFGS-B method.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>model</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The model to be optimized.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>data</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>minimisation</code></b>
+                  (<code>function</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The loss function for the objective minimization function. See the <code>minimise</code> module for more information. User-defined loss functions are also supported.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>prior</code></b>
+              –
+              <div class="doc-md-description">
+                <p>Whether to include the prior in the optimization. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>number_of_starts</code></b>
+                  (<code>int</code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of random initialisations for the optimization. Default is <code>1</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>list or array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The initial guess for the optimization. Default is <code>None</code>. If <code>number_of_starts</code> is set, and the <code>initial_guess</code> parameter is 'None', the initial guesses are randomly generated from a uniform distribution.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parallel</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to use parallel processing. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>cl</code></b>
+                  (<code>int</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of cores to use for parallel processing. Default is <code>None</code>. If <code>None</code>, the number of cores is set to 2.
+If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>ppt_identifier</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The key in the participant data dictionary that contains the participant identifier. Default is <code>None</code>. Returned in the optimization details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>**kwargs</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Additional keyword arguments. See the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html"><code>scipy.optimize.fmin_l_bfgs_b</code></a> documentation for what is supported.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary <strong>MUST</strong> also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model <code>Wrapper</code>.</p>
+</details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.FminBound.export" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Exports the optimization results and fitted parameters as a <code>pandas.DataFrame</code>.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code><span title="pandas.DataFrame">DataFrame</span></code>
+            –
+            <div class="doc-md-description">
+              <p>A pandas DataFrame containing the optimization results and fitted parameters.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.FminBound.optimise" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">optimise</span><span class="p">(</span><span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Performs the optimization process.</p>
+<p>Returns:
+- None</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.FminBound.reset" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">reset</span><span class="p">(</span><span class="n">initial_guess</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Resets the optimization results and fitted parameters.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is <code>True</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>None</code>
+            –
+            <div class="doc-md-description">
+              
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.optimisation.Minimize" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;Nelder-Mead&#39;</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>Class representing scipy's Minimize algorithm wrapped for subject-level parameter estimations.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>model</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The model to be optimized.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>data</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>minimisation</code></b>
+                  (<code>function</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The loss function for the objective minimization function. See the <code>minimise</code> module for more information. User-defined loss functions are also supported.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>number_of_starts</code></b>
+                  (<code>int</code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of random initialisations for the optimization. Default is <code>1</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>list or array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The initial guess for the optimization. Default is <code>None</code>. If <code>number_of_starts</code> is set, and the <code>initial_guess</code> parameter is 'None', the initial guesses are randomly generated from a uniform distribution.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parallel</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to use parallel processing. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>cl</code></b>
+                  (<code>int</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of cores to use for parallel processing. Default is <code>None</code>. If <code>None</code>, the number of cores is set to 2.
+If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>ppt_identifier</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The key in the participant data dictionary that contains the participant identifier. Default is <code>None</code>. Returned in the optimization details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>**kwargs</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Additional keyword arguments. See the <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html"><code>scipy.optimize.minimize</code></a> documentation for what is supported.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary <strong>MUST</strong> also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model <code>Wrapper</code>.</p>
+<p>The optimization process is repeated <code>number_of_starts</code> times, and only the best-fitting output from the best guess is stored.</p>
+</details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.Minimize.export" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Exports the optimization results and fitted parameters as a <code>pandas.DataFrame</code>.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code><span title="pandas.DataFrame">DataFrame</span></code>
+            –
+            <div class="doc-md-description">
+              <p>A pandas DataFrame containing the optimization results and fitted parameters.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.Minimize.optimise" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Performs the optimization process.</p>
+<p>Returns:
+- None</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.Minimize.reset" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">reset</span><span class="p">(</span><span class="n">initial_guess</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Resets the optimization results and fitted parameters.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is <code>True</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>None</code>
+            –
+            <div class="doc-md-description">
+              
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.optimisation.Bads" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Bads</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">continuous</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>Class representing the Bayesian Adaptive Direct Search (BADS) optimization algorithm.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>model</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The model to be optimized.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>data</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>minimisation</code></b>
+                  (<code>function</code>, default:
+                      <code><a class="autorefs autorefs-internal" title="cpm.optimisation.minimise.LogLikelihood.continuous" href="#cpm.optimisation.minimise.LogLikelihood.continuous">continuous</a></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The loss function for the objective minimization function. Default is <code>minimise.LogLikelihood.continuous</code>. See the <code>minimise</code> module for more information. User-defined loss functions are also supported.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>prior</code></b>
+              –
+              <div class="doc-md-description">
+                <p>Whether to include the prior in the optimization. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>number_of_starts</code></b>
+                  (<code>int</code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of random initialisations for the optimization. Default is <code>1</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>list or array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The initial guess for the optimization. Default is <code>None</code>. If <code>number_of_starts</code> is set, and the <code>initial_guess</code> parameter is 'None', the initial guesses are randomly generated from a uniform distribution.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parallel</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to use parallel processing. Default is <code>False</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>cl</code></b>
+                  (<code>int</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of cores to use for parallel processing. Default is <code>None</code>. If <code>None</code>, the number of cores is set to 2.
+If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>ppt_identifier</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The key in the participant data dictionary that contains the participant identifier. Default is <code>None</code>. Returned in the optimization details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>**kwargs</code></b>
+                  (<code>dict</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Additional keyword arguments. See the <a href="https://acerbilab.github.io/pybads/api/classes/bads.html"><code>pybads.bads</code></a> documentation for what is supported.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The <code>data</code> parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary <strong>MUST</strong> also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model <code>Wrapper</code>.</p>
+<p>The BADS algorithm has been designed to handle both deterministic and noisy (stochastic) target functions. A deterministic target function is a target function that returns the same exact probability value for a given dataset and proposed set of parameter values. By contrast, a stochastic target function returns varying probability values for the same input (data and parameters).
+The vast majority of models use a deterministic target function. We recommend that users make this explicit to BADS, by providing an <code>options</code> dictionary that includes the key <code>uncertainty_handling</code> set to <code>False</code>.
+Please see that <a href="https://acerbilab.github.io/pybads/api/options/bads_options.html">BADS options</a> documentation for more details.</p>
+</details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.Bads.export" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Exports the optimization results and fitted parameters as a <code>pandas.DataFrame</code>.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code><span title="pandas.DataFrame">DataFrame</span></code>
+            –
+            <div class="doc-md-description">
+              <p>A pandas DataFrame containing the optimization results and fitted parameters.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.Bads.optimise" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Performs the optimization process.</p>
+<p>Returns:
+- None</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.Bads.reset" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">reset</span><span class="p">(</span><span class="n">initial_guess</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Resets the optimization results and fitted parameters.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>initial_guess</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is <code>True</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>None</code>
+            –
+            <div class="doc-md-description">
+              
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.optimisation.EmpiricalBayes" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">EmpiricalBayes</span><span class="p">(</span><span class="n">optimiser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;minimise&#39;</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>optimiser</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>objective</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;minimise&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level <em>a posteriori</em> parameter estimates.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>iteration</code></b>
+                  (<code>int</code>, default:
+                      <code>1000</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The maximum number of iterations. Default is 1000.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>tolerance</code></b>
+                  (<code>float</code>, default:
+                      <code>1e-06</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The tolerance for convergence. Default is 1e-6.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>chain</code></b>
+                  (<code>int</code>, default:
+                      <code>4</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of random parameter initialisations. Default is 4.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. The algorithm is based on the following steps:</p>
+<p>The fitting function must return the Hessian matrix of the optimisation. The Hessian matrix is a square matrix of second-order partial derivatives of the negative log-likelihood function. The Hessian matrix is used to calculate the within-subject variance of the parameters. Compatible methods in the toolbox include Fmin and Fminbound.</p>
+<p>It is also important to note that we will require the Hessian matrix of second derivatives of the negative log posterior (Gershman, 2016, p. 3). This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.</p>
+<p>The current implementation also controls for some <strong>edge-cases</strong> that are not covered by the algorithm above:</p>
+<ul>
+<li>When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.</li>
+</ul>
+</details>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.optimisation</span> <span class="kn">import</span> <span class="n">EmpiricalBayes</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.models</span> <span class="kn">import</span> <span class="n">DeltaRule</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.optimisation</span> <span class="kn">import</span> <span class="n">FminBound</span><span class="p">,</span> <span class="n">minimise</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">DeltaRule</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">optimiser</span> <span class="o">=</span> <span class="n">FminBound</span><span class="p">(</span>
+<span class="go">    model=model,</span>
+<span class="go">    data=data,</span>
+<span class="go">    initial_guess=None,</span>
+<span class="go">    number_of_starts=2,</span>
+<span class="go">    minimisation=minimise.LogLikelihood.bernoulli,</span>
+<span class="go">    parallel=False,</span>
+<span class="go">    prior=True,</span>
+<span class="go">    ppt_identifier=&quot;ppt&quot;,</span>
+<span class="go">    display=False,</span>
+<span class="go">    maxiter=200,</span>
+<span class="go">    approx_grad=True</span>
+<span class="go">    )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eb</span> <span class="o">=</span> <span class="n">EmpiricalBayes</span><span class="p">(</span><span class="n">optimiser</span><span class="o">=</span><span class="n">optimiser</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eb</span><span class="o">.</span><span class="n">optimise</span><span class="p">()</span>
+</code></pre></div>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.EmpiricalBayes.optimise" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="cpm.optimisation.EmpiricalBayes.stair" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">stair</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>The main function that runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially a single chain.</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>dict</code>
+            –
+            <div class="doc-md-description">
+              <p>A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
 
 </div><h3 id="cpmoptimisationminimise">cpm.optimisation.minimise</h3>
 
@@ -783,7 +1829,7 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 
 <h4 id="cpm.optimisation.minimise.LogLikelihood" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="p">()</span></code>
 
 </h4>
 
@@ -792,10 +1838,10 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 
 
-
   
 
   <div class="doc doc-children">
+
 
 
 
@@ -810,7 +1856,7 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 
 <h5 id="cpm.optimisation.minimise.LogLikelihood.bernoulli" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">bernoulli</span><span class="p">(</span><span class="n">predicted</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">bernoulli</span><span class="p">(</span><span class="n">predicted</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h5>
 
@@ -821,73 +1867,87 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 <pre><code>Bernoulli(y|p) = p if y = 1 and 1 - p if y = 0
 </code></pre>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>predicted</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The predicted values. It must have the same shape as <code>observed</code>. See Notes for more details.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>observed</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The observed values. It must have the same shape as <code>predicted</code>. See Notes for more details.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>negative</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Flag indicating whether to return the negative log likelihood.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>predicted</code></b>
+                  (<code>array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The predicted values. It must have the same shape as <code>observed</code>. See Notes for more details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>observed</code></b>
+                  (<code>array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The observed values. It must have the same shape as <code>predicted</code>. See Notes for more details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>negative</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Flag indicating whether to return the negative log likelihood.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
                 <code>float</code>
-          </td>
-          <td><p>The log likelihood or negative log likelihood.</p></td>
-        </tr>
-    </tbody>
-  </table>
-      <h6 id="cpm.optimisation.minimise.LogLikelihood.bernoulli--notes">Notes</h6>
-<p><code>predicted</code> and <code>observed</code> must have the same shape.
+            –
+            <div class="doc-md-description">
+              <p>The log likelihood or negative log likelihood.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p><code>predicted</code> and <code>observed</code> must have the same shape.
 <code>observed</code> is a binary variable, so it can only take the values 0 or 1.
 Both <code>predicted</code> and <code>observed</code> must be 1D arrays.</p>
+<p><code>log(0)</code> is undefined, so the log likelihood is set to the value of np.log(1e-100).</p>
+</details>
 
-<p><strong>Examples:</strong></p>
+
+<p><span class="doc-section-title">Examples:</span></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
@@ -899,12 +1959,13 @@ Both <code>predicted</code> and <code>observed</code> must be 1D arrays.</p>
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h5 id="cpm.optimisation.minimise.LogLikelihood.categorical" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">categorical</span><span class="p">(</span><span class="n">predicted</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">categorical</span><span class="p">(</span><span class="n">predicted</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h5>
 
@@ -915,74 +1976,87 @@ Both <code>predicted</code> and <code>observed</code> must be 1D arrays.</p>
 <pre><code>Categorical(y|p) = p_y
 </code></pre>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>predicted</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The predicted values. It must have the same shape as <code>observed</code>. See Notes for more details.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>observed</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The observed values. It must have the same shape as <code>predicted</code>. See Notes for more details.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>negative</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Flag indicating whether to return the negative log likelihood.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>predicted</code></b>
+                  (<code>array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The predicted values. It must have the same shape as <code>observed</code>. See Notes for more details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>observed</code></b>
+                  (<code>array - like</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The observed values. It must have the same shape as <code>predicted</code>. See Notes for more details.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>negative</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Flag indicating whether to return the negative log likelihood.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
                 <code>float</code>
-          </td>
-          <td><p>The log likelihood or negative log likelihood.</p></td>
-        </tr>
-    </tbody>
-  </table>
-      <h6 id="cpm.optimisation.minimise.LogLikelihood.categorical--notes">Notes</h6>
-<p><code>predicted</code> and <code>observed</code> must have the same shape.
+            –
+            <div class="doc-md-description">
+              <p>The log likelihood or negative log likelihood.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+<details class="note" open>
+  <summary>Notes</summary>
+  <p><code>predicted</code> and <code>observed</code> must have the same shape.
 <code>observed</code> is a binary variable, so it can only take the values 0 or 1.
 If there are two choice options, then observed would have a shape of (n, 2) and predicted would have a shape of (n, 2).
 On each row of <code>observed</code>, the array would have a 1 in the column corresponding to the observed value and a 0 in the other column.</p>
+</details>
 
-<p><strong>Examples:</strong></p>
+
+<p><span class="doc-section-title">Examples:</span></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">]])</span>
@@ -994,12 +2068,13 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
 <h5 id="cpm.optimisation.minimise.LogLikelihood.continuous" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">continuous</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">continuous</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h5>
 
@@ -1008,69 +2083,76 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
   
       <p>Compute the log likelihood of the predicted values given the observed values for continuous data.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>predicted</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The predicted values.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>observed</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The observed values.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>negative</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Flag indicating whether to return the negative log likelihood.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>predicted</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The predicted values.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>observed</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The observed values.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>negative</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Flag indicating whether to return the negative log likelihood.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
                 <code>float</code>
-          </td>
-          <td><p>The log likelihood or negative log likelihood.</p></td>
-        </tr>
-    </tbody>
-  </table>
+            –
+            <div class="doc-md-description">
+              <p>The log likelihood or negative log likelihood.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
 
-<p><strong>Examples:</strong></p>
+
+<p><span class="doc-section-title">Examples:</span></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
@@ -1088,20 +2170,20 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
 
   </div>
 
+
 </div>
 
 <div class="doc doc-object doc-class">
 
 
 
-<h4 id="cpm.optimisation.minimise.Bayesian" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">minimise</span><span class="o">.</span><span class="n">Bayesian</span><span class="p">()</span></code>
+<h4 id="cpm.optimisation.minimise.Distance" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">minimise</span><span class="o">.</span><span class="n">Distance</span><span class="p">()</span></code>
 
 </h4>
 
 
   <div class="doc doc-contents first">
-
 
 
 
@@ -1117,12 +2199,200 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="cpm.optimisation.minimise.Distance.MSE" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">MSE</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Compute the Mean Squared Errors (EDE).</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>predicted</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The predicted values.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>observed</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The observed values.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>float</code>
+            –
+            <div class="doc-md-description">
+              <p>The Euclidean distance.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h5 id="cpm.optimisation.minimise.Distance.SSE" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">SSE</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h5>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Compute the sum of squared errors (SSE).</p>
+
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>predicted</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The predicted values.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>observed</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The observed values.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>float</code>
+            –
+            <div class="doc-md-description">
+              <p>The sum of squared errors.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cpm.optimisation.minimise.Bayesian" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">minimise</span><span class="o">.</span><span class="n">Bayesian</span><span class="p">()</span></code>
+
+</h4>
+
+
+  <div class="doc doc-contents first">
+
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
 <div class="doc doc-object doc-function">
 
 
 
 <h5 id="cpm.optimisation.minimise.Bayesian.AIC" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">AIC</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">AIC</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h5>
 
@@ -1131,78 +2401,82 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
   
       <p>Calculate the Akaike Information Criterion (AIC).</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>likelihood</code></td>
-          <td>
-                <code>float</code>
-          </td>
-          <td><p>The likelihood value.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>n</code></td>
-          <td>
-                <code>int</code>
-          </td>
-          <td><p>The number of data points.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>k</code></td>
-          <td>
-                <code>int</code>
-          </td>
-          <td><p>The number of parameters.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>float</code>
-          </td>
-          <td><p>The AIC value.</p></td>
-        </tr>
-    </tbody>
-  </table>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>likelihood</code></b>
+                  (<code>float</code>)
+              –
+              <div class="doc-md-description">
+                <p>The likelihood value.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>n</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The number of data points.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>k</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The number of parameters.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>float</code>
+            –
+            <div class="doc-md-description">
+              <p>The AIC value.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
   </div>
 
 </div>
+
 
 <div class="doc doc-object doc-function">
 
 
 
 <h5 id="cpm.optimisation.minimise.Bayesian.BIC" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">BIC</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">BIC</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h5>
 
@@ -1211,68 +2485,71 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
   
       <p>Calculate the Bayesian Information Criterion (BIC).</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>likelihood</code></td>
-          <td>
-                <code>float</code>
-          </td>
-          <td><p>The likelihood value.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>n</code></td>
-          <td>
-                <code>int</code>
-          </td>
-          <td><p>The number of data points.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>k</code></td>
-          <td>
-                <code>int</code>
-          </td>
-          <td><p>The number of parameters.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>float</code>
-          </td>
-          <td><p>The BIC value.</p></td>
-        </tr>
-    </tbody>
-  </table>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>likelihood</code></b>
+                  (<code>float</code>)
+              –
+              <div class="doc-md-description">
+                <p>The likelihood value.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>n</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The number of data points.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>k</code></b>
+                  (<code>int</code>)
+              –
+              <div class="doc-md-description">
+                <p>The number of parameters.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+      <ul class="first simple">
+          <li>
+                <code>float</code>
+            –
+            <div class="doc-md-description">
+              <p>The BIC value.</p>
+            </div>
+          </li>
+      </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
   </div>
 
 </div>
@@ -1282,6 +2559,7 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
   </div>
 
   </div>
+
 
 </div>
               

@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Getting Started - CPM library</title>
+    <title>Data formats - CPM library</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -14,8 +14,8 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Getting Started";
-        var mkdocs_page_input_path = "tutorials/getting-started.md";
+        var mkdocs_page_name = "Data formats";
+        var mkdocs_page_input_path = "tutorials/data-format.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -61,23 +61,13 @@
               </ul>
               <p class="caption"><span class="caption-text">User Guide</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Getting Started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../getting-started/">Getting Started</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Data formats</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#unstable-version">Unstable Version</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#resources">Resources</a>
+    <li class="toctree-l2"><a class="reference internal" href="#convert-your-data-from-csv-type-representation-pandasdataframe-to-dictionaries">Convert your data from csv-type representation (pandas.DataFrame) to dictionaries</a>
     </li>
     </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../data-format/">Data formats</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../parameters/">Specify your parameters</a>
                   </li>
@@ -123,7 +113,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">User Guide</li>
-      <li class="breadcrumb-item active">Getting Started</li>
+      <li class="breadcrumb-item active">Data formats</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -132,45 +122,83 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="getting-started">Getting Started</h1>
-<p>Welcome to the [Project Name] documentation! This guide will help you get started with [Project Name] and provide you with the necessary information to begin using it effectively.</p>
-<h2 id="prerequisites">Prerequisites</h2>
-<p>There are no prerequisites that you need to install for <code>cpm</code>.
-It is written completely in python, so most dependencies (other python packages) are installed alongside it if they are missing from your system.</p>
-<p>Note that some tools, such as <code>scipy</code>, might require some C++ compilers that are not present on Windows by default. It is up to you to check dependencies specific to your setup! If you are still struggling, try the Discussion forum, see below.</p>
-<h2 id="dependencies">Dependencies</h2>
-<ul>
-<li>numpy&gt;=1.26.0  : Numerical functions</li>
-<li>SciPy&gt;=1.11.4  : Scientific functions</li>
-<li>pandas&gt;=2.1.4  : Data structures &amp; analysis</li>
-<li>multiprocess&gt;=0.70.16  : Multiprocessing</li>
-<li>numdifftools&gt;=0.9.41  : Numerical differentiation</li>
-<li>pybads&gt;=1.0.4  : Bayesian Adaptive Directed Search</li>
-</ul>
-<h2 id="installation">Installation</h2>
-<p>To install <code>cpm</code>, simply type:</p>
-<pre><code class="language-bash">pip install cpm
+                <h1 id="data-formats">Data formats</h1>
+<p>How should your data look like? <code>cpm</code> is optimised for a specific data format, which is a list of dictionaries. Each dictionary represents a single participant. The key-value pairs in the dictionary are the names of the variables your model and the optimisation routines will need to simulate data and find the best-fitting parameters.</p>
+<p>Imagine you have four stimuli in a given experiment, where on every trial they appear in a combination of two. Data then should be in the following format:</p>
+<pre><code class="language-python">participant = {
+    &quot;trials&quot;: np.array(
+        [[2, 3],
+         [1, 4],
+         [3, 2],
+         [4, 1],
+         [2, 3],
+         [2, 3],
+         [1, 4],
+         [3, 2],
+         [4, 1],
+         [2, 3]]
+    ),
+    &quot;feedback&quot;: np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]]),
+    &quot;observed&quot;: np.array([[1], [0], [1], [0], [1], [1], [0], [1], [0], [1]])
+}
 </code></pre>
-<p>Note that this is not yet available!</p>
-<h2 id="unstable-version">Unstable Version</h2>
-<p>To install the unstable version, use this command:</p>
-<pre><code class="language-bash">pip install git+https://github.com/DevComPsy/modelling-toolbox.git
+<p>In this example, the <code>trials</code> key contains a list of all trials in the experiment. Each trial is a list of two values, representing stimuli that appeared on that trial. The <code>feedback</code> key contains a list of feedback values, where <code>1</code> means the participant responded correctly and <code>0</code> means the participant responded incorrectly. The <code>observed</code> key contains a list of observed values, which are the same as the feedback values in this case. The only mandatory field that we need you to specify is the <code>observed</code> key, which must be your dependent variables.</p>
+<p><strong>Note</strong> that the first dimension of the keys in the dictionary indexes the trials! This is important because <code>cpm</code> will only loop through the first dimension!</p>
+<p>You can also include additional variables in the data dictionary, such as participant id, reaction times. There is also no limits to what data you might include in the dictionary, as long as you have the <code>observed</code> key and everything else represents trial-by-trial information. What you include will largely depend on the model you are using.</p>
+<p>Models in <code>cpm</code> will loop through each element in the keys and use the information to compute whatever is specified in the model. Note that </p>
+<h2 id="convert-your-data-from-csv-type-representation-pandasdataframe-to-dictionaries">Convert your data from csv-type representation (pandas.DataFrame) to dictionaries</h2>
+<p>Most of us import data as a <code>pandas.DataFrame</code> from a csv. This usually looks something like this.</p>
+<pre><code class="language-python">      stimulus_left  stimulus_right  reward_left  reward_right  ppt
+0                 4               3          0.0           1.0    1
+1                 1               4          0.0           1.0    1
+2                 4               2          0.0           0.0    1
+3                 1               2          1.0           1.0    1
+4                 4               3          0.0           0.0    1
+...             ...             ...          ...           ...  ...
+5995              1               2          1.0           0.0  100
+5996              3               1          0.0           1.0  100
+5997              4               2          1.0           0.0  100
+5998              2               4          0.0           0.0  100
+5999              1               3          1.0           1.0  100
 </code></pre>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<p>If you encounter any issues while using <code>cpm</code>, refer to the <a href="../troubleshooting/">Troubleshooting Guide</a> for way to get help or report issues.</p>
-<h2 id="resources">Resources</h2>
-<p>For additional resources and support, check out the following:</p>
-<ul>
-<li><a href="https://www.example.com">Official Website</a></li>
-<li><a href="https://forum.example.com">Community Forum</a></li>
-</ul>
-<p>Happy coding!</p>
+<p><code>cpm</code> provides utilities to convert this type of representation to the right format.</p>
+<pre><code class="language-python">import pandas as pd
+from cpm.utils import pandas_to_dict
+
+dta = pd.read_csv(&quot;my_data.csv&quot;)
+experiment = pandas_to_dict(dta, participant=&quot;ppt&quot;, stimuli='stim', feedback='reward', observed='response')
+</code></pre>
+<pre><code class="language-python">[
+    {
+        &quot;trials&quot;:
+            array([[4, 3],
+       [1, 4],
+       [4, 2],
+       [1, 2],
+       [4, 3],
+       [3, 4],
+       [2, 3],
+       [3, 4],
+        ...
+        ...
+       [0., 1.],
+       [0., 1.],
+       [0., 1.],
+       [1., 1.],
+       [1., 0.],
+       [1., 1.],
+       [1., 1.],
+       [0., 0.]]),
+        &quot;ppt&quot;   : 1,
+    },
+]
+</code></pre>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../roadmap/" class="btn btn-neutral float-left" title="Roadmap"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../data-format/" class="btn btn-neutral float-right" title="Data formats">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../getting-started/" class="btn btn-neutral float-left" title="Getting Started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../parameters/" class="btn btn-neutral float-right" title="Specify your parameters">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -193,10 +221,10 @@ It is written completely in python, so most dependencies (other python packages)
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../roadmap/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../getting-started/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../data-format/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../parameters/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

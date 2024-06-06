@@ -23,7 +23,7 @@ class Parameters:
     -------
     Parameters
         A Parameters object, where each attributes is one of the keyword arguments
-        provided for the function.
+        provided for the function wrapped by the Value class.
 
     Examples
     --------
@@ -213,19 +213,6 @@ class Value:
         The default is 'normal'.
         If an object, it should be or contain a callable function representing the prior distribution of the parameter with methods similar to `scipy.stats` distributions.
         See Notes for more details.
-    args : dict, optional
-        A dictionary of arguments for the prior distribution function.
-
-    Attributes
-    ----------
-    value : float
-        The value of the parameter.
-    prior : function, optional
-        The prior distribution function of the parameter.
-    lower : float, optional
-        The lower bound of the parameter.
-    upper : float, optional
-        The upper bound of the parameter.
     args : dict, optional
         A dictionary of arguments for the prior distribution function.
 

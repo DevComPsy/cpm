@@ -60,8 +60,7 @@ class Simulator:
         for i in range(len(self.data)):
             self.wrapper.reset()
             evaluate = copy.deepcopy(self.wrapper)
-            evaluate.data = self.data[i]
-            evaluate.reset(parameters=self.parameters[i])
+            evaluate.reset(parameters=self.parameters[i], data=self.data[i])
             evaluate.run()
             output = copy.deepcopy(evaluate.simulation)
             self.simulation.append(output.copy())

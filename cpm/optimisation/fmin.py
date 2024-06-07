@@ -171,7 +171,9 @@ class Fmin:
             return out
 
         def __task(participant, **args):
-            model.data = participant
+
+            model.reset(data=participant)
+
             result = fmin(
                 minimum,
                 x0=self.__current_guess__,
@@ -400,7 +402,9 @@ class FminBound:
         Hessian = nd.Hessian(minimum)
 
         def __task(participant, **args):
-            model.data = participant
+
+            model.reset(data=participant)
+
             result = fmin_l_bfgs_b(
                 minimum,
                 x0=self.__current_guess__,

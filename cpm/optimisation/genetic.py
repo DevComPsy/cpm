@@ -139,7 +139,9 @@ class DifferentialEvolution:
         """
 
         def __task(participant, **args):
-            model.data = participant
+
+            model.reset(data=participant)
+
             result = differential_evolution(
                 func=minimum,
                 bounds=self.bounds,

@@ -167,7 +167,9 @@ class Minimize:
             return out
 
         def __task(participant, **args):
-            model.data = participant
+
+            model.reset(data=participant)
+
             result = minimize(
                 minimum,
                 x0=self.__current_guess__,

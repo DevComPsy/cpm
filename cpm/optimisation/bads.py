@@ -179,7 +179,7 @@ class Bads:
 
         def __task(participant, **args):
 
-            model.data = participant
+            model.reset(data=participant)
 
             def target(x):
                 fval = minimum(

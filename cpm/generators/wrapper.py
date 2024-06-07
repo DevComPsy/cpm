@@ -98,7 +98,7 @@ class Wrapper:
         self.__run__ = True
         return None
 
-    def reset(self, parameters=None):
+    def reset(self, parameters=None, data=None):
         """
         Reset the model.
 
@@ -142,6 +142,13 @@ class Wrapper:
             for keys in self.parameter_names[0 : len(parameters)]:
                 value = parameters[self.parameter_names.index(keys)]
                 self.parameters.update(**{keys: value})
+        if data is not None:
+            self.data = data
+            self.shape = [
+                (np.array(v).shape) for k, v in self.data.items() if k != "ppt"
+            ]
+            # find the maximum number of trials
+            self.__len__ = np.max([shape[0] for shape in self.shape])
         return None
 
     def export(self):

@@ -18,6 +18,9 @@ trial = {
 }
 ```
 
+Here we hav all the information we need for a given trial - all input to the model other than the parameters and its initial state. In reinforcement learning, this is what we call the state of the environment. The model will use this information to make a decision and update its internal state.
+
+
 One advantage of `cpm` is that most components that you will need to build sequential decision-making models are already implemented. This means that you can focus on the model itself, rather than the implementation details. Here we will use the `learning` and `decision` modules to build a simple model based on the Rescorla-Wagner update rule and a Greedy-decision rule.
 
 ```python

@@ -123,9 +123,11 @@ class DeltaRule:
         """
 
         for i in range(self.shape[0]):
+            # calculate summed error for a given output unit
             activations = np.sum(self.weights[i] * self.input)
             self.error[i] = self.teacher[i] - activations
             for j in range(self.shape[1]):
+                # calcualte the change on weights
                 self.weights[i, j] = self.alpha * self.error[i] * self.input[j]
         self.__run__ = True
         return self.weights
@@ -148,10 +150,14 @@ class DeltaRule:
         """
         if not self.__run__:
             self.compute()
+        # random noise vector initialized with zeros
         epsilon = np.zeros_like(self.error)
         for i in range(self.shape[0]):
+            # calculate standard deviation of the noise
             sigma = self.zeta * np.abs(self.error[i])
+            # select random noise from normal distribution
             epsilon[i] = np.random.normal(0, sigma)
+            # add noise to the weight changes for stimuli present on trial
             self.weights[i] = self.weights[i] + epsilon[i] * self.input
         return self.weights
 
@@ -259,6 +265,7 @@ class SeparableRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = weights.copy()
+        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape

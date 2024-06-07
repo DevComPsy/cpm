@@ -23,7 +23,7 @@ class Parameters:
     -------
     Parameters
         A Parameters object, where each attributes is one of the keyword arguments
-        provided for the function.
+        provided for the function wrapped by the Value class.
 
     Examples
     --------
@@ -131,9 +131,8 @@ class Parameters:
 
         Returns
         -------
-        The probability of the parameter set under the prior distribution for each parameter.
-        If `log` is True, the log probability is returned. When the PDF is 0, it returns the maximum
-        value of a float. If "log" is True, it returns the log of the maximum value of a float.
+        float
+            The probability of the parameter set under the prior distribution for each parameter. If `log` is True, the log probability is returned. When the PDF is 0, it returns the maximum value of a float. If "log" is True, it returns the log of the maximum value of a float.
         """
         prior = 1
         for _, value in self.__dict__.items():
@@ -214,19 +213,6 @@ class Value:
         The default is 'normal'.
         If an object, it should be or contain a callable function representing the prior distribution of the parameter with methods similar to `scipy.stats` distributions.
         See Notes for more details.
-    args : dict, optional
-        A dictionary of arguments for the prior distribution function.
-
-    Attributes
-    ----------
-    value : float
-        The value of the parameter.
-    prior : function, optional
-        The prior distribution function of the parameter.
-    lower : float, optional
-        The lower bound of the parameter.
-    upper : float, optional
-        The upper bound of the parameter.
     args : dict, optional
         A dictionary of arguments for the prior distribution function.
 
@@ -434,8 +420,8 @@ class Value:
 
         Returns
         -------
-        The probability of the parameter value under the prior distribution.
-        If `log` is True, the log probability is returned.
+        float
+            The probability of the parameter value under the prior distribution. If `log` is True, the log probability is returned.
         """
         if log:
             return self.prior.logpdf(self.value)

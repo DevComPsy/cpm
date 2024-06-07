@@ -15,30 +15,6 @@ class ParameterRecovery:
     """
     Class for performing parameter recovery analysis.
 
-    Attributes
-    ----------
-    simulator : Simulator
-        The simulator object.
-    template : object
-        The template parameter.
-    optimisation : object
-        The optimisation algorithm.
-    loss : function
-        The loss function used for optimisation. It usually takes in the model prediction (output) and the observed data (human responses).
-    strategy : object
-        The function used for generating parameter values.
-    parameter_names : list
-        A list of parameter names.
-    data : list
-        A list of dictionaries containing the data.
-    iteration : int or float
-        The number of iterations for the parameter recovery process.
-    population : int
-        The number of individuals in the population (how many parameter
-        sets should we generate on each iteration).
-    kwargs : dict
-        Additional keyword arguments.
-
     Parameters
     ----------
     simulator : Simulator
@@ -132,7 +108,7 @@ class ParameterRecovery:
                 model=self.function,
                 data=self.data,
                 minimisation=self.loss,
-                bounds=self.bounds,
+                # bounds=self.bounds,
                 **self.kwargs,
             )
             optim.optimise()

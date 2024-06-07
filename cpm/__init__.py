@@ -1,6 +1,6 @@
 __author__ = "Lenard Dome"
 __email__ = "lenarddome@gmail.com"
-__version__ = "0.1.0"
+__version__ = "0.15.3"
 
 """
 This is the main module of the package.
@@ -18,6 +18,7 @@ from . import generators
 from . import models
 from . import applications
 from . import optimisation
+from . import hierarchical
 from . import evaluation
 from . import utils
 

@@ -67,6 +67,8 @@ class Fmin:
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
+    prior: bool
+        Whether to include the prior in the optimization. Default is `False`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -80,27 +82,6 @@ class Fmin:
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.fmin`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin.html) documentation for what is supported.
-
-    Attributes
-    ----------
-    function : Wrapper
-        The model object.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
-    loss : function
-        The loss function for the objective minimization function.
-    kwargs : dict
-        Additional keyword arguments.
-    fit : list
-        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
-    details : list
-        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
-    parameters : list
-        List to store the best-fitting parameters as dictionaries.
-    participant : object
-        The current participant data.
-    parameter_names : list
-        The names of the model parameters.
 
 
     Notes
@@ -308,35 +289,21 @@ class FminBound:
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
+    prior: bool
+        Whether to include the prior in the optimization. Default is `False`.
+    number_of_starts : int
+        The number of random initialisations for the optimization. Default is `1`.
+    initial_guess : list or array-like
+        The initial guess for the optimization. Default is `None`. If `number_of_starts` is set, and the `initial_guess` parameter is 'None', the initial guesses are randomly generated from a uniform distribution.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    ppt_identifier : str
+        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.fmin_l_bfgs_b`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html) documentation for what is supported.
-
-
-    Attributes
-    ----------
-    function : Wrapper
-        The model object.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
-    loss : function
-        The loss function for the objective minimization function.
-    kwargs : dict
-        Additional keyword arguments.
-    fit : list
-        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
-    details : list
-        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
-    parameters : list
-        List to store the best-fitting parameters as dictionaries.
-    participant : object
-        The current participant data.
-    parameter_names : list
-        The names of the model parameters.
 
 
     Notes
@@ -510,8 +477,9 @@ class FminBound:
         initial_guess : bool, optional
             Whether to reset the initial guess (generates a new set of random numbers within parameter bounds). Default is `True`.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         self.fit = []
         self.details = []

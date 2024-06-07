@@ -60,37 +60,21 @@ class DifferentialEvolution:
     ----------
     model : object
         The model to be optimized.
-    bounds : object
-            The parameter bounds for the optimization. The bounds should be a list of tuples, where each tuple contains the lower and upper bounds for a parameter. Elements of a tuple must corespond to the parameters in Parameters. If less bounds are provided than parameters, the algorithm will only fit those.
     data : object
         The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.bernoulli`. See the `minimise` module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.
+    prior: bool
+        Whether to include priors in the optimisation. Deafult is 'False'.
+    parallel : bool
+        Whether to use parallel processing. Default is `False`.
+    cl : int
+        The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
+        If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    ppt_identifier : str
+        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
-
-    Attributes
-    ----------
-    function : Wrapper
-        The model object.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
-    loss : function
-        The loss function for the objective minimization function.
-    kwargs : dict
-        Additional keyword arguments.
-    fit : list
-        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
-    details : list
-        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
-    parameters : list
-        List to store the best-fitting parameters as dictionaries.
-    participant : object
-        The current participant data.
-    parameter_names : list
-        The names of the model parameters.
-    bounds : object
-        The parameter bounds for the optimization.
 
     Notes
     -----
@@ -102,9 +86,9 @@ class DifferentialEvolution:
         model=None,
         data=None,
         minimisation=minimise.LogLikelihood.bernoulli,
+        prior=False,
         parallel=False,
         cl=None,
-        prior=False,
         ppt_identifier=None,
         display=False,
         **kwargs,

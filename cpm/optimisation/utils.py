@@ -23,8 +23,6 @@ def detailed_pandas_compiler(details):
     ----------
     details : list
         A list of dictionaries containing the optimization details.
-    method : str
-        The method used for the optimization. Default is 'differential_evolution'.
 
     Returns
     -------
@@ -37,7 +35,9 @@ def detailed_pandas_compiler(details):
         for key, value in i.items():
             if key == "population" or key == "population_energies":
                 continue
-            if isinstance(value, list) or isinstance(value, np.ndarray):
+            if isinstance(value, (list, np.ndarray)):
+                if isinstance(value, np.ndarray) and value.ndim > 1:
+                    value = value.flatten()
                 value = pd.DataFrame(np.asarray(value)).T
             else:
                 value = pd.DataFrame([value]).T

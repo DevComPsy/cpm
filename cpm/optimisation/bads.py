@@ -6,7 +6,6 @@ from pybads import BADS
 import numpy as np
 import pandas as pd
 import copy
-import warnings
 import multiprocess as mp
 import numdifftools as nd
 
@@ -47,7 +46,6 @@ def minimum(pars, function, data, loss, prior=False, **args):
     del predicted, observed
     if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
-        warnings.warn("Metric is nan or inf. Setting metric to 1e10.")
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
@@ -176,7 +174,7 @@ class Bads:
             out = {}
             for i in range(len(keys)):
                 out[keys[i]] = x.get(keys[i])
-            out["fun"] = out.pop("fopt")
+            out["fun"] = out.pop("fval")
             return out
 
         def __task(participant, **args):
@@ -201,17 +199,18 @@ class Bads:
                 **self.kwargs,
             )
             result = optimizer.optimize()
+            result = dict(result.items())
             hessian = Hessian(
-                pars=result["x"],
-                function=model,
-                data=participant.get("observed"),
-                loss=loss,
+                result["x"],
+                model,
+                participant.get("observed"),
+                loss,
             )
-            result["hessian"] = hessian
+            result.update({"hessian": hessian})
             # if participant data contains identifiers, return the identifiers too
 
             if self.ppt_identifier is not None:
-                result["ppt"] = participant.get(self.ppt_identifier)
+                result.update({"ppt": participant.get(self.ppt_identifier)})
             return result
 
         def __extract_nll(result):
@@ -232,8 +231,6 @@ class Bads:
             if self.__parallel__:
                 with mp.Pool(self.cl) as pool:
                     results = pool.map(__task, self.data)
-                pool.close()
-                pool.join()
             else:
                 results = list(map(__task, self.data))
 

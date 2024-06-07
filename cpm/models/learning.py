@@ -46,7 +46,7 @@ class DeltaRule:
 
     The delta-rule is a summed error term, which means that the error is defined as
     the difference between the target value and the summed activation of all values
-    for a given output unit available on the current trial/state. For separable
+    for a given output units target value available on the current trial/state. For separable
     error term, see the Bush and Mosteller (1951) rule.
 
     The current implementation is based on the Gluck and Bower's (1988) delta rule, an
@@ -59,13 +59,13 @@ class DeltaRule:
     >>> weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     >>> teacher = np.array([1, 0])
     >>> input = np.array([1, 1, 0])
-    >>> delta_rule = DeltaRule(alpha=0.1, zeta=0.5, weights=weights, feedback=teacher, input=input)
+    >>> delta_rule = DeltaRule(alpha=0.1, zeta=0.1, weights=weights, feedback=teacher, input=input)
     >>> delta_rule.compute()
     array([[ 0.07,  0.07,  0.  ],
            [-0.09, -0.09, -0.  ]])
-    >>> delta_rule.noisy_learning()
-    array([[ 0.05755793,  0.09214091,  0.],
-           [-0.08837513, -0.1304325 ,  0.]])
+    >>> delta_rule.noisy_learning_rule()
+    array([[ 0.17922146,  0.17922146,  0.        ],
+        [-0.06748623, -0.06748623,  0.        ]])
 
     This implementation generalises to n-dimensional weight matrices, which means
     that it can be applied to both single- and multi-outcome learning paradigms.
@@ -101,6 +101,7 @@ class DeltaRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = np.asarray(weights.copy())
+        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
@@ -123,10 +124,9 @@ class DeltaRule:
 
         for i in range(self.shape[0]):
             activations = np.sum(self.weights[i] * self.input)
+            self.error[i] = self.teacher[i] - activations
             for j in range(self.shape[1]):
-                self.weights[i, j] = (
-                    self.alpha * (self.teacher[i] - activations) * self.input[j]
-                )
+                self.weights[i, j] = self.alpha * self.error[i] * self.input[j]
         self.__run__ = True
         return self.weights
 
@@ -146,19 +146,13 @@ class DeltaRule:
 
         Findling, C., Skvortsova, V., Dromnelle, R., Palminteri, S., and Wyart, V. (2019). Computational noise in reward-guided learning drives behavioral variability in volatile environments. Nature Neuroscience 22, 2066–2077
         """
-        if self.__run__:
-            raise ValueError(
-                "Do not run .compute() prior to .noisy_learning_rule()."
-            )
-        epsilon = np.zeros_like(self.weights)
+        if not self.__run__:
+            self.compute()
+        epsilon = np.zeros_like(self.error)
         for i in range(self.shape[0]):
-            activations = np.sum(self.weights[i] * self.input)            
-            for j in range(self.shape[1]):
-                sigma = self.zeta * np.abs((self.teacher[i] - activations) * self.input[j])
-                if np.greater(sigma, 0):
-                    epsilon[i, j] = np.random.normal(0, sigma)
-        self.compute()
-        self.weights = self.weights + epsilon
+            sigma = self.zeta * np.abs(self.error[i])
+            epsilon[i] = np.random.normal(0, sigma)
+            self.weights[i] = self.weights[i] + epsilon[i] * self.input
         return self.weights
 
     def reset(self):
@@ -306,18 +300,13 @@ class SeparableRule:
 
         Findling, C., Skvortsova, V., Dromnelle, R., Palminteri, S., and Wyart, V. (2019). Computational noise in reward-guided learning drives behavioral variability in volatile environments. Nature Neuroscience 22, 2066–2077
         """
-        if self.__run__:
-            raise ValueError(
-                "Do not run .compute() prior to .noisy_learning_rule()."
-            )
-        epsilon = np.zeros_like(self.weights)
+        if not self.__run__:
+            self.compute()
+        epsilon = np.zeros_like(self.error)
         for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                sigma = self.zeta * np.abs((self.teacher[i] - self.weights[i, j]) * self.input[j])
-                if np.greater(sigma, 0):
-                    epsilon[i, j] = np.random.normal(0, sigma)
-        self.compute()
-        self.weights = self.weights + epsilon
+            sigma = self.zeta * np.abs(self.error[i])
+            epsilon[i] = np.random.normal(0, sigma)
+            self.weights[i] = self.weights[i] + epsilon[i] * self.input
         return self.weights
 
     def reset(self):

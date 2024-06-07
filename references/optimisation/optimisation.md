@@ -25,12 +25,7 @@
         show_root_heading: true
         heading_level: 3
 
-::: cpm.optimisation.EmpiricalBayes
-    options:
-        show_root_heading: true
-        heading_level: 3
-
-### cpm.optimisation.minimise
+## minimise
 
 ::: cpm.optimisation.minimise.LogLikelihood
     options:

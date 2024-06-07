@@ -89,6 +89,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../optimisation/">cpm.optimisation</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hierarchical/">cpm.hierarchical</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.evaluation</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#cpm.evaluation.ParameterRecovery">ParameterRecovery</a>
@@ -156,104 +158,6 @@
   
       <p>Class for performing parameter recovery analysis.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Attributes:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>simulator</code></b>
-                  (<code>Simulator</code>)
-              –
-              <div class="doc-md-description">
-                <p>The simulator object.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>template</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The template parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>optimisation</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The optimisation algorithm.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>loss</code></b>
-                  (<code><span title="cpm.evaluation.parameter.ParameterRecovery.function">function</span></code>)
-              –
-              <div class="doc-md-description">
-                <p>The loss function used for optimisation. It usually takes in the model prediction (output) and the observed data (human responses).</p>
-              </div>
-            </li>
-            <li>
-              <b><code>strategy</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The function used for generating parameter values.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>parameter_names</code></b>
-                  (<code>list</code>)
-              –
-              <div class="doc-md-description">
-                <p>A list of parameter names.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>data</code></b>
-                  (<code>list</code>)
-              –
-              <div class="doc-md-description">
-                <p>A list of dictionaries containing the data.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>iteration</code></b>
-                  (<code>int or float</code>)
-              –
-              <div class="doc-md-description">
-                <p>The number of iterations for the parameter recovery process.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>population</code></b>
-                  (<code>int</code>)
-              –
-              <div class="doc-md-description">
-                <p>The number of individuals in the population (how many parameter
-sets should we generate on each iteration).</p>
-              </div>
-            </li>
-            <li>
-              <b><code>kwargs</code></b>
-                  (<code>dict</code>)
-              –
-              <div class="doc-md-description">
-                <p>Additional keyword arguments.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
 
 
 <table class="field-list">
@@ -725,7 +629,7 @@ process is repeated for a specified number of iterations.</p>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../optimisation/" class="btn btn-neutral float-left" title="cpm.optimisation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../hierarchical/" class="btn btn-neutral float-left" title="cpm.hierarchical"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../utils/" class="btn btn-neutral float-right" title="cpm.utils">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -749,7 +653,7 @@ process is repeated for a specified number of iterations.</p>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../optimisation/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../hierarchical/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../utils/" style="color: #fcfcfc">Next &raquo;</a></span>

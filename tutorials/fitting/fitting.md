@@ -28,8 +28,8 @@ There are a few things to note here.
 First, you don't define bounds for the parameter space.
 The reason for this is that you already defined bounds in the Parameter class for your model.
 Bounds are part of the model specification and you will have to explicitly state them when you are building the model.
-The second is that everything at the end that is not part of the named list of arguments `cpm.optimisation.DifferentialEvolution` will be passed on the `scipy.optimize.differential_evolution` function.
-As stated before,  `cpm` tries to avoid implementing methods from scratch, which is why we use `scipy` for the optimisation routines, and write most of the codebase with the intent on handling data cleaning and processing challenges.
+The second is that everything at the end that is not part of the named list of arguments for `cpm.optimisation.DifferentialEvolution` will be passed on the `scipy.optimize.differential_evolution` function.
+`cpm` tries to avoid implementing methods from scratch, which is why we use `scipy` for the optimisation routines, and write most of the codebase with the intent on handling data cleaning and processing challenges.
 
 ## Parallel computing on Windows
 

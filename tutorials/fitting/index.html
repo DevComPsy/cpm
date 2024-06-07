@@ -95,6 +95,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/optimisation/">cpm.optimisation</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../references/hierarchical/">cpm.hierarchical</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/evaluation/">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/utils/">cpm.utils</a>
@@ -148,8 +150,8 @@ genetic = DifferentialEvolution(
 First, you don't define bounds for the parameter space.
 The reason for this is that you already defined bounds in the Parameter class for your model.
 Bounds are part of the model specification and you will have to explicitly state them when you are building the model.
-The second is that everything at the end that is not part of the named list of arguments <code>cpm.optimisation.DifferentialEvolution</code> will be passed on the <code>scipy.optimize.differential_evolution</code> function.
-As stated before,  <code>cpm</code> tries to avoid implementing methods from scratch, which is why we use <code>scipy</code> for the optimisation routines, and write most of the codebase with the intent on handling data cleaning and processing challenges.</p>
+The second is that everything at the end that is not part of the named list of arguments for <code>cpm.optimisation.DifferentialEvolution</code> will be passed on the <code>scipy.optimize.differential_evolution</code> function.
+<code>cpm</code> tries to avoid implementing methods from scratch, which is why we use <code>scipy</code> for the optimisation routines, and write most of the codebase with the intent on handling data cleaning and processing challenges.</p>
 <h2 id="parallel-computing-on-windows">Parallel computing on Windows</h2>
 <p>Issue<a href="https://github.com/DevComPsy/modelling-toolbox/issues/16">#16</a> is a known issue with Windows and parallelisation.
 The way to circumvent this is to wrap your code in into <code>if __name__ == '__main__':</code> and load the parallelised optimisation modules under that code. Here is an example:</p>

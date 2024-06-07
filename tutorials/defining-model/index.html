@@ -97,6 +97,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/optimisation/">cpm.optimisation</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../references/hierarchical/">cpm.hierarchical</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/evaluation/">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/utils/">cpm.utils</a>
@@ -139,6 +141,7 @@ trial = {
     &quot;feedback&quot;: np.array([1, 0]),
 }
 </code></pre>
+<p>Here we hav all the information we need for a given trial - all input to the model other than the parameters and its initial state. In reinforcement learning, this is what we call the state of the environment. The model will use this information to make a decision and update its internal state.</p>
 <p>One advantage of <code>cpm</code> is that most components that you will need to build sequential decision-making models are already implemented. This means that you can focus on the model itself, rather than the implementation details. Here we will use the <code>learning</code> and <code>decision</code> modules to build a simple model based on the Rescorla-Wagner update rule and a Greedy-decision rule.</p>
 <pre><code class="language-python">from cpm.models import learning, decision, utils
 import copy

@@ -151,6 +151,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../optimisation/">cpm.optimisation</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hierarchical/">cpm.hierarchical</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../evaluation/">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../utils/">cpm.utils</a>
@@ -259,63 +261,6 @@ See Notes for more details.</p>
                   (<code>dict</code>, default:
                       <code>None</code>
 )
-              –
-              <div class="doc-md-description">
-                <p>A dictionary of arguments for the prior distribution function.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Attributes:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>value</code></b>
-                  (<code>float</code>)
-              –
-              <div class="doc-md-description">
-                <p>The value of the parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>prior</code></b>
-                  (<code>(function, optional)</code>)
-              –
-              <div class="doc-md-description">
-                <p>The prior distribution function of the parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>lower</code></b>
-                  (<code>(float, optional)</code>)
-              –
-              <div class="doc-md-description">
-                <p>The lower bound of the parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>upper</code></b>
-                  (<code>(float, optional)</code>)
-              –
-              <div class="doc-md-description">
-                <p>The upper bound of the parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>args</code></b>
-                  (<code>(dict, optional)</code>)
               –
               <div class="doc-md-description">
                 <p>A dictionary of arguments for the prior distribution function.</p>
@@ -667,7 +612,7 @@ It takes keyword arguments representing the parameters with their values and wra
             –
             <div class="doc-md-description">
               <p>A Parameters object, where each attributes is one of the keyword arguments
-provided for the function.</p>
+provided for the function wrapped by the Value class.</p>
             </div>
           </li>
       </ul>
@@ -1065,7 +1010,7 @@ provided for the function.</p>
 )
               –
               <div class="doc-md-description">
-                <p>The model function that calculates the output(s) of the model for a single trial. See Notes for more information.</p>
+                <p>The model function that calculates the output(s) of the model for a single trial. See Notes for more information. See Notes for more information.</p>
               </div>
             </li>
             <li>
@@ -1075,7 +1020,7 @@ provided for the function.</p>
 )
               –
               <div class="doc-md-description">
-                <p>A dictionary containing the data for the model. The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.</p>
+                <p>A dictionary containing the data for the model.This is a dictionary that contains information about the each state in the environment or each trial in the experiment - all input to the model that are not parameters.</p>
               </div>
             </li>
             <li>
@@ -1086,79 +1031,6 @@ provided for the function.</p>
               –
               <div class="doc-md-description">
                 <p>The parameters object for the model that contains all parameters (and initial states) for the model. See Notes on how it is updated internally.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Attributes:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>model</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The model object.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>data</code></b>
-                  (<code>dict</code>)
-              –
-              <div class="doc-md-description">
-                <p>The data for the model.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>parameters</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The parameters object for the model.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>simulation</code></b>
-                  (<code>list</code>)
-              –
-              <div class="doc-md-description">
-                <p>The list of the model outputs.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>data</code></b>
-                  (<code>dict</code>)
-              –
-              <div class="doc-md-description">
-                <p>The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>parameter_names</code></b>
-                  (<code>list</code>)
-              –
-              <div class="doc-md-description">
-                <p>The list of parameter names.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>dependent</code></b>
-                  (<code><span title="numpy.ndarray">ndarray</span></code>)
-              –
-              <div class="doc-md-description">
-                <p>The dependent variable calculated by the model.</p>
               </div>
             </li>
         </ul>
@@ -1192,11 +1064,12 @@ provided for the function.</p>
 </table>
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The model function should take two arguments: <code>parameters</code> and <code>trial</code>. The <code>parameters</code> argument should be a <a class="autorefs autorefs-internal" href="#cpm.generators.Parameters">Parameter</a> object specifying the model parameters. The <code>trial</code> argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. The model output should contain the following keys:</p>
+  <p>The model function should take two arguments: <code>parameters</code> and <code>trial</code>. The <code>parameters</code> argument should be a <a class="autorefs autorefs-internal" href="#cpm.generators.Parameters">Parameter</a> object specifying the model parameters. The <code>trial</code> argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:</p>
 <ul>
 <li>'dependent': Any dependent variables calculated by the model that will be used for the loss function.</li>
 </ul>
 <p>If a model output contains any keys that are also present in parameters, it updates those in the parameters based on the model output.</p>
+<p>Information on how to compile the model can be found in the [Tutorials - Build your model][/tutorials/defining-model] module.</p>
 </details>
 
   
@@ -1522,7 +1395,7 @@ where the last parameter updated is the element in parameters corresponding to l
 )
               –
               <div class="doc-md-description">
-                <p>The data required for the simulation. It must be a list of dictionaries.</p>
+                <p>The data required for the simulation. It must be a list of dictionaries, where each dictionary contains the data (or environment) for a single participant.</p>
               </div>
             </li>
             <li>
@@ -1533,71 +1406,6 @@ where the last parameter updated is the element in parameters corresponding to l
               –
               <div class="doc-md-description">
                 <p>The parameters required for the simulation. It can be a Parameters object or a list of dictionaries whose length is equal to data. If it is a Parameters object, Simulator will use the same parameters for all simulations. It is a list of dictionaries, it will use match the parameters with data, so that for example parameters[6] will be used for the simulation of data[6].</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Attributes:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>wrapper</code></b>
-                  (<code><a class="autorefs autorefs-internal" title="cpm.generators.wrapper.Wrapper" href="#cpm.generators.Wrapper">Wrapper</a></code>)
-              –
-              <div class="doc-md-description">
-                <p>The simulation wrapper to be used.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>data</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The data required for the simulation.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>parameters</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The parameters required for the simulation.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>parameter_names</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The names of the parameters.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>simulation</code></b>
-                  (<code><span title="numpy.ndarray">ndarray</span></code>)
-              –
-              <div class="doc-md-description">
-                <p>The results of the simulation, including the policies and the states.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>generated</code></b>
-                  (<code>object</code>)
-              –
-              <div class="doc-md-description">
-                <p>The results of the simulation, only including the policies.</p>
               </div>
             </li>
         </ul>

@@ -23,14 +23,15 @@ participant = {
 }
 ```
 
-In this example, the `trials` key contains a list of all trials in the experiment. Each trial is a list of two values, representing stimuli that appeared on that trial. The `feedback` key contains a list of feedback values, where `1` means the participant responded correctly and `0` means the participant responded incorrectly. The `observed` key contains a list of observed values, which are the same as the feedback values in this case. The only mandatory field that we need you to specify is the `observed` key, which must be your dependent variables.
+In this example, the `trials` key contains a list of all trials or states in the experiment or environment. Each trial is a list of two values, representing stimuli that appeared on that trial. The `feedback` key contains a list of feedback values, where `1` means the participant responded correctly and `0` means the participant responded incorrectly. The `observed` key contains a list of observed values, which are the same as the feedback values in this case. The only mandatory field that we need you to specify is the `observed` key, which must be your dependent variables.
 
 **Note** that the first dimension of the keys in the dictionary indexes the trials! This is important because `cpm` will only loop through the first dimension!
 
 
 You can also include additional variables in the data dictionary, such as participant id, reaction times. There is also no limits to what data you might include in the dictionary, as long as you have the `observed` key and everything else represents trial-by-trial information. What you include will largely depend on the model you are using.
 
-Models in `cpm` will loop through each element in the keys and use the information to compute whatever is specified in the model. Note that 
+Models in `cpm` will loop through each element in the keys and use the information to compute whatever is specified in the model. Note that, in `cpm`, we determine the number of trials/states by the length of the first dimension of the keys in the dictionary. `cpm` will take all the lengths of the keys in the dictionary and selects the maximum length as the number of trials/states.
+
 ## Convert your data from csv-type representation (pandas.DataFrame) to dictionaries
 
 Most of us import data as a `pandas.DataFrame` from a csv. This usually looks something like this.

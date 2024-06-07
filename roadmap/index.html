@@ -62,6 +62,12 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#scaling-from-local-to-distributed">Scaling from local to distributed</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#new-features">New features</a>
+    </li>
     </ul>
                 </li>
               </ul>
@@ -95,6 +101,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../references/optimisation/">cpm.optimisation</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../references/hierarchical/">cpm.hierarchical</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../references/evaluation/">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../references/utils/">cpm.utils</a>
@@ -126,8 +134,32 @@
                 <h1 id="cpm-roadmap">cpm Roadmap</h1>
 <h2 id="performance-improvement">Performance improvement</h2>
 <p>We are always looking for ways to speed up the code. Any contribution aiming to do so is welcome.</p>
+<p>Some specific areas we are looking to improve are:</p>
+<ul>
+<li>Using <code>numba</code> to speed up the code and allow compilation of classes with <a href="https://numba.pydata.org/numba-doc/dev/user/jitclass.html">@jitclass</a>.</li>
+<li>Reduce code duplication and improve code organization.</li>
+<li>Improve the performance of the <code>cpm.generators</code> module to speed up simulations.</li>
+<li>Improve memory usage and reduce the number of copies of the data.</li>
+<li>Improve the data compilation process to speed up the majority of data cleaning happening in the modules.</li>
+</ul>
 <h2 id="scaling-from-local-to-distributed">Scaling from local to distributed</h2>
-<p>The big performance-improvement goal is to scale from local to distributed computing. If you have experience with scaling python libraries, we would really appreciate your help.</p>
+<p>The big performance-improvement goal is to scale from local to distributed computing.
+If you have experience with scaling python libraries, we would really appreciate your help.</p>
+<h2 id="documentation">Documentation</h2>
+<p>We would like to expand the documentation to include more examples and tutorials.
+We imagine that these will at some point migrate to their own repository, but for now, they will be part of the main documentation.</p>
+<h2 id="testing">Testing</h2>
+<p>We would like to improve the testing coverage of the code.</p>
+<h2 id="new-features">New features</h2>
+<p>We are always looking for new features to add to the library.
+If you have an idea for a new feature, please open an issue to discuss it.</p>
+<p>Two main types of features we planned are:</p>
+<ol>
+<li>Expansion of the models classes. There are many model components out in the literature and we would like to add as many of them to the library as possible.</li>
+<li>Add pre-built models to the library as ready-to-deploy applications.</li>
+<li>Hierarchical and MCMC methods for model fitting.</li>
+<li>Introducing new classes to scale your simulations from local to distributed computing.</li>
+</ol>
               
             </div>
           </div><footer>

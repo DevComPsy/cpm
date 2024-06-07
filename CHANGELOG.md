@@ -51,3 +51,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 42db58b6: Fixing the issue when likelihood is -inf (bounding to minimum calculable value causes error in sums)
 - 42db58b6: Fixing nan and inf checks in the obejctive functions
 - 3e830f6416512c0d0eab944fe0074b0f7de8c1a1: fix bads value error when unpacking and compiling results from subject-level fits
+- ea5b2750ce3bcf2cb267e5392863439ad45e4dbe: cpm.generators.Simulator can now handle cases where trial numbers differ between participants

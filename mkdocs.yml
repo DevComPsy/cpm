@@ -21,6 +21,9 @@ plugins:
       handlers:
         # See: https://mkdocstrings.github.io/python/usage/
         python:
+          import:
+            - https://docs.python-requests.org/en/master/objects.inv
+          load_external_modules: true
           options:
             show_source: false
             docstring_style: numpy
@@ -31,6 +34,7 @@ plugins:
   - mkdocs-jupyter:
             no_input: False
             include_source: True
+            ignore: ['examples/bandit.py']
 
 
 

@@ -15,28 +15,12 @@ class Wrapper:
     Parameters
     ----------
     model : function
-        The model function that calculates the output(s) of the model for a single trial. See Notes for more information.
+        The model function that calculates the output(s) of the model for a single trial. See Notes for more information. See Notes for more information.
     data : dict
-        A dictionary containing the data for the model. The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.
+        A dictionary containing the data for the model.This is a dictionary that contains information about the each state in the environment or each trial in the experiment - all input to the model that are not parameters.
     parameters : Parameters object
         The parameters object for the model that contains all parameters (and initial states) for the model. See Notes on how it is updated internally.
 
-    Attributes
-    ----------
-    model : object
-        The model object.
-    data : dict
-        The data for the model.
-    parameters : object
-        The parameters object for the model.
-    simulation : list
-        The list of the model outputs.
-    data : dict
-        The data for the model. This is a dictionary that contains information about the each state or trial in the environment or the experiment.
-    parameter_names : list
-        The list of parameter names.
-    dependent : numpy.ndarray
-        The dependent variable calculated by the model.
 
     Returns
     -------
@@ -45,11 +29,13 @@ class Wrapper:
 
     Notes
     -----
-    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. The model output should contain the following keys:
+    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:
 
     - 'dependent': Any dependent variables calculated by the model that will be used for the loss function.
 
     If a model output contains any keys that are also present in parameters, it updates those in the parameters based on the model output.
+
+    Information on how to compile the model can be found in the [Tutorials - Build your model][/tutorials/defining-model] module.
     """
 
     def __init__(self, model=None, data=None, parameters=None):
@@ -112,7 +98,7 @@ class Wrapper:
         self.__run__ = True
         return None
 
-    def reset(self, parameters=None):
+    def reset(self, parameters=None, data=None):
         """
         Reset the model.
 
@@ -156,6 +142,13 @@ class Wrapper:
             for keys in self.parameter_names[0 : len(parameters)]:
                 value = parameters[self.parameter_names.index(keys)]
                 self.parameters.update(**{keys: value})
+        if data is not None:
+            self.data = data
+            self.shape = [
+                (np.array(v).shape) for k, v in self.data.items() if k != "ppt"
+            ]
+            # find the maximum number of trials
+            self.__len__ = np.max([shape[0] for shape in self.shape])
         return None
 
     def export(self):

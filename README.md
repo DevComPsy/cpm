@@ -33,6 +33,8 @@ mkdocs serve
 
 Then open a browser and go to http://127.0.0.1:8000/
 
+Depending on the version you have, you might need to add Jupyter to PATH, see this [link](https://github.com/jupyter/nbconvert/issues/1773#issuecomment-1283852572) for more information.
+
 ### Building the documentation
 
 To build the documentation, run the following command in the root directory:

@@ -78,29 +78,7 @@ class Bads:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-       Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
-
-    Attributes
-    ----------
-    function : Wrapper
-        The model object.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant.
-    loss : function
-        The loss function for the objective minimization function.
-    kwargs : dict
-        Additional keyword arguments.
-    fit : list
-        List to store the optimization results. It includes the best-fitting parameters and the objective function value.
-    details : list
-        List to store the optimization details. It includes all information returned by the optimization algorithm in addition to what is already stored in `fit`.
-    parameters : list
-        List to store the best-fitting parameters as dictionaries.
-    participant : object
-        The current participant data.
-    parameter_names : list
-        The names of the model parameters.
-
+        Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
 
     Notes
     -----
@@ -201,7 +179,7 @@ class Bads:
 
         def __task(participant, **args):
 
-            model.data = participant
+            model.reset(data=participant)
 
             def target(x):
                 fval = minimum(

@@ -18,27 +18,12 @@ class Simulator:
 
     Parameters
     ----------
-    model : Wrapper
-        An initialised Wrapper object for the model.
-    data : object
-        The data required for the simulation.
-    parameters : object
-        The parameters required for the simulation.
-
-    Attributes
-    ----------
     wrapper : Wrapper
-        The simulation wrapper to be used.
-    data : object
-        The data required for the simulation.
-    parameters : object
-        The parameters required for the simulation.
-    parameter_names : object
-        The names of the parameters.
-    simulation : numpy.ndarray
-        The results of the simulation, including the policies and the states.
-    generated : object
-        The results of the simulation, only including the policies.
+        An initialised Wrapper object for the model.
+    data : list
+        The data required for the simulation. It must be a list of dictionaries, where each dictionary contains the data (or environment) for a single participant.
+    parameters : Parameters or list
+        The parameters required for the simulation. It can be a Parameters object or a list of dictionaries whose length is equal to data. If it is a Parameters object, Simulator will use the same parameters for all simulations. It is a list of dictionaries, it will use match the parameters with data, so that for example parameters[6] will be used for the simulation of data[6].
 
     Returns
     -------
@@ -75,8 +60,7 @@ class Simulator:
         for i in range(len(self.data)):
             self.wrapper.reset()
             evaluate = copy.deepcopy(self.wrapper)
-            evaluate.data = self.data[i]
-            evaluate.reset(parameters=self.parameters[i])
+            evaluate.reset(parameters=self.parameters[i], data=self.data[i])
             evaluate.run()
             output = copy.deepcopy(evaluate.simulation)
             self.simulation.append(output.copy())

@@ -104,7 +104,7 @@ Your `fitting.py` file can be structured as follows:
 ```python
 def fitting(wrapper, experiment):
     """
-    The following function is used to fit the model to the data using the Differential Evolution algorithm. The function also saves the optimisation data and the simulation data both as .csv files and as .pkl files.
+    The following function is used to fit the model to the data using the Differential Evolution algorithm. The function also saves the optimisation data and the simulation data as .csv files.
 
     Parameters
     ----------

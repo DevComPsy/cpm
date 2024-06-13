@@ -34,21 +34,173 @@ The second is that everything at the end that is not part of the named list of a
 ## Parallel computing on Windows
 
 Issue[#16](https://github.com/DevComPsy/modelling-toolbox/issues/16) is a known issue with Windows and parallelisation.
-The way to circumvent this is to wrap your code in into `if __name__ == '__main__':` and load the parallelised optimisation modules under that code. Here is an example:
+The way to circumvent this is to wrap your code in into `if __name__ == '__main__':` and load the parallelised optimisation bits as separate modules.
+
+### Walkthrough
+
+Assume that you have the following folder structure:
+
+```bash
+
+```bash
+project_name/
+├── docs/
+│   ├── lab_report.ipynb
+│   └── data/
+│       └── big_data_file.csv
+├── src/
+│   ├── main.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── setup_model.py
+│       └── fitting.py
+└── README.md
+```
+
+Feel free to adjust this structure based on your specific project needs.
+fitting.py and setup_model.py are the files that contain the fitting and model setup functions, respectively.
+
+For setup_model.py, you can structure it as follows:
 
 ```python
-import pandas as pd
-import numpy as np
-import time
-import os
-import cpm
+def model_setup(data):
+    """
+    The following function sets up the model.
 
-from cpm.generators import Parameters, Wrapper
-from cpm.models import learning, decision
-from cpm.optimisation import minimise
+    Parameters
+    ----------
+    data : list
+        The data as a list of dictionaries.
 
-if __name__ == '__main__:
-    from cpm.optimisation import Fmin
-    # the rest of the code goes here...
+    Return
+    ------
+    parameters : cpm.generators.Parameters
+        The parameter object for the model
+    wrapper : cpm.generators.Wrapper
+        The Wrapper object with the model specified below.
+    """
 
+    from cpm.models import learning, decision
+    from cpm.generators import Value, Parameters, Wrapper
+    import numpy as np
+
+    parameters = Parameters(
+        # ... your parameters here
+    )
+
+    def model(parameters, trial):
+        # ... your model code here
+        return output
+
+    wrapper = Wrapper(model=model, parameters=parameters, data=data)
+
+    print(wrapper)
+
+    return parameters, wrapper
+```
+
+Your `fitting.py` file can be structured as follows:
+
+```python
+def fitting(wrapper, experiment):
+    """
+    The following function is used to fit the model to the data using the Differential Evolution algorithm. The function also saves the optimisation data and the simulation data both as .csv files and as .pkl files.
+
+    Parameters
+    ----------
+    wrapper : cpm.generators.Wrapper
+        The wrapper class with the model we specified from before.
+    experiment : list
+        The data as a list of dictionaries.
+
+    Returns
+    -------
+    data : pandas.DataFrame
+        The optimisation data.
+    """
+
+    from cpm.optimisation import minimise, DifferentialEvolution
+    from cpm.generators import Wrapper, Simulator, Parameters
+    import pickle as pkl
+
+    genetic = DifferentialEvolution(
+        model=wrapper,  # Wrapper class with the model we specified from before
+        data=experiment,  # the data as a list of dictionaries
+        minimisation=minimise.LogLikelihood.bernoulli,
+        # ... additional arguments go here
+    )
+
+    genetic.optimise()
+
+    data = genetic.export()
+    data.to_csv("optimisation.csv", index=False) # make sure to save stuff
+
+    simulation = Simulator(
+        wrapper=wrapper, parameters=genetic.parameters, data=experiment
+    )
+    simulation.run()
+
+    simulation_data = simulation.export()
+    simulation_data.to_csv("simulation.csv", index=False) # make sure to save stuff
+
+    return data
+
+```
+
+**The important part is that you have a `main.py` file that will be the entry point for your project.**
+You can structure your `main.py` as follows:
+
+```python
+if __name__ == "__main__":
+    import sys
+    import os
+    import time
+    import pandas as pd
+    from cpm.utils import pandas_to_dict
+    from pickle import load
+
+    # get the directory of the current file, and add to sys.path if necessary
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if current_dir not in sys.path:
+        sys.path.append(current_dir)
+
+    print("Importing data")
+
+    file_path = r"some_data_file.csv"
+
+    experiment = pd.read_csv(file_path)
+    experiment.head(10)
+
+    experiment = experiment.astype(int)
+
+    environment = pandas_to_dict(
+        experiment,
+        participant="ppt",
+        stimuli="Stim",
+        feedback="Feedback",
+        observed="Response",
+        trial_number="trial",
+    )
+
+    from utils.model import model_setup
+    from utils.fitting import fitting
+
+    print("\nSetting up model")
+    # model_setup is a function that returns a cpm.generators.Parameters and a cpm.generators.Wrapper object
+    parameters, learning_model = model_setup(environment[0])
+
+    # time to fit the model
+    start = time.time()
+
+    print(f"\n {start} : Fitting model")
+    # fitting is a function that returns a pandas dataframe with the fitted parameters and other information
+    output = fitting(learning_model, environment)
+    end = time.time()
+    print(f"\n {end} : Model fitted in {end - start} seconds")
+```
+
+If you have this sorted, you can execute the `main.py` file from the command line, and the parallelisation should work as expected.
+
+```bash
+python src/main.py
 ```

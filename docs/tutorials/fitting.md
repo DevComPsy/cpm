@@ -31,6 +31,24 @@ Bounds are part of the model specification and you will have to explicitly state
 The second is that everything at the end that is not part of the named list of arguments for `cpm.optimisation.DifferentialEvolution` will be passed on the `scipy.optimize.differential_evolution` function.
 `cpm` tries to avoid implementing methods from scratch, which is why we use `scipy` for the optimisation routines, and write most of the codebase with the intent on handling data cleaning and processing challenges.
 
+### Extracting Parameters
+
+Once the optimisation is done, you can extract the parameters from the optimisation object.
+Here, you will have two options: `genetic.export()` and `genetic.parameters`.
+The former will return a pandas DataFrame with the optimisation data, whereas the latter will return the parameters as a list dictionary.
+You can use `genetic.export()` to save the optimisation data to a .csv file and do everything you would want to do with a pandas DataFrame.
+`genetic.parameters` is useful if you want to use the parameters for further simulations or analyses.
+You can directly feed it to the `cpm.generators.Simulator` class to simulate:
+
+```python
+simulation = Simulator(
+    wrapper=wrapped_model, parameters=genetic.parameters, data=experiment
+)
+simulation.run()
+simulation_results = simulation.export() # export the simulation results to a pandas DataFrame
+simulation_results.to_csv("simulation.csv", index=False) # save the simulation results to a .csv file
+```
+
 ## Parallel computing on Windows
 
 Issue[#16](https://github.com/DevComPsy/modelling-toolbox/issues/16) is a known issue with Windows and parallelisation.

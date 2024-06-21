@@ -111,38 +111,66 @@ class EmpiricalBayes:
 
             self.optimiser.reset()
 
+            # perform participant-wise optimisation, extracting MAP parameter estimates,
+            # the Hessian matrix of the target function evaluated at the MAP parameter estimates,
+            # and the full output from model fitting
             parameters, hessian, details = self.step()
             self.fit.append(copy.deepcopy(parameters))
             self.details.append(copy.deepcopy(details))
 
-            # extract and transform negative log posteriors into maximum log likelihood
+            # extract the participant-wise unnormalised log posterior density
             # this essentially gives us the output of Equation 5
-            negative_log_posterior = np.asarray([ppt.get("fun") for ppt in details])
+            log_posterior = np.asarray([ppt.get("fun") for ppt in details])
+            # if the optimiser minimses rather than maximises the target function, then the
+            # target function is the _negative_ of the log posterior density function. Thus, we
+            # multiply by minus 1 to get the log posterior density.
             if self.objective == "minimise":
-                negative_log_posterior = -1 * negative_log_posterior
+                log_posterior = -1 * log_posterior
+            # for the Laplace approximation, the Hessian matrix is assumed to contain the second
+            # derivatives of the _negative_ log posterior density function. So, if the objective
+            # was to maximise, then we need to multiply the entries of the Hessian matrix by -1.
+            if self.objective != "minimise":
+                hessian = -1 * hessian
 
-            # get group-level mean across participants
+            # organise parameter estimates in a participant x parameter array
             parameter_names = self.optimiser.model.parameters.free()
             param = np.zeros((len(parameters), len(parameter_names)))
             for i, name in enumerate(parameter_names):
                 for ppt, content in enumerate(parameters):
                     param[ppt, i] = content.get(name)
 
-            means = param.mean(axis=0)
-            ## In what follows, we break down Equation 6
-            # first calculate variance (between-subjects squared differences)
-            variance = param.var(axis=0)
+            # define a mask that excludes any NaN or inf param values
+            param_valid = np.isfinite(param)
 
-            ## getting the diagonal of the inverse hessian matrix
-            ## 1. calculate inverse hessian matrix
-            inv_hessian = np.asarray(list(map(np.linalg.inv, hessian)))
-            ## 2. take the diagonal element of the inverse hessian matrix
-            diagonal = np.diagonal(inv_hessian, axis1=1, axis2=2)
+            # get empirical mean of parameter estimates across participants
+            means = np.mean(
+                param[param_valid].reshape(param.shape[0], -1), axis=0
+            )            
 
-            ## calculate the variance of the between-subjects squared differences and the within-subjects squared differences
-            ## add up variance plus diagonal for each ppt and then add up each ppt and divide them by mean
-            between_within_variance = np.square(param - means) + diagonal
-            ## get the mean of the between_within_variance minus the
+            # get estimates of variance of parameters, taking into account both
+            # the "between-subject" variance (individual differences relative to mean)
+            # and the "within-subject" variance (uncertainty of parameter estimates)
+
+            # 1. "within-subject" variance
+            # the Hessian matrix should correspond to the precision matrix, hence its
+            # inverse is the variance-covariance matrix. we then take the diagonal
+            # elements to get the variance (uncertainty) of parameter estimates.
+            try:
+                inv_hessian = np.linalg.inv(hessian)
+            except np.linalg.LinAlgError:
+                inv_hessian = np.linalg.pinv(hessian)
+            
+            within_variance = np.diagonal(inv_hessian, axis1=1, axis2=2)
+            # these diagonal elements should correspond to variances, so exclude
+            # any negative or non-finite values
+            within_variance[np.logical_not(np.isfinite(within_variance)) |
+                            (within_variance < 0)] = np.nan
+            
+            # 2. "between-subject" variance
+            # calculate squared differences from mean, add up the "within-subject" variance,
+            # take the mean of that term, and subtract the squared mean
+            # TODO account for `param_valid`
+            between_within_variance = np.square(param - means) + within_variance
             variance = between_within_variance.mean(axis=0) - np.square(means)
             ## make sure the STD is not too small by bounding it to 1e-6
             np.clip(variance, 1e-6, None, out=variance)
@@ -159,6 +187,7 @@ class EmpiricalBayes:
             self.optimiser.model.parameters.update_prior(**population_updates)
 
             # estimate log model evidence (lme)
+            # TODO add checks on calculating log_determinants
             # first find the log determinant of the hessian matrix for each ppt
             log_determinants = (np.asarray(list(map(np.linalg.slogdet, hessian)))).sum(
                 axis=0
@@ -168,7 +197,7 @@ class EmpiricalBayes:
                 self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
             )
             ## calculate the log model evidence with a penalty and sum them up
-            log_model_evidence = negative_log_posterior + penalty
+            log_model_evidence = log_posterior + penalty
             summed_lme = log_model_evidence.sum()
             ## store the log model evidence
             lmes.append(copy.deepcopy(summed_lme))

@@ -229,11 +229,10 @@ class EmpiricalBayes:
             penalty = 0.5 * (
                 self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
             )
-            # calculate the participant-wise log model evidence with a penalty,
+            # calculate the participant-wise log model evidence as the penalised log posterior density,
             # and then sum them up for an overall measure
             log_model_evidence = log_posterior + penalty
             summed_lme = log_model_evidence.sum()
-            # store the log model evidence
             lmes.append(copy.deepcopy(summed_lme))
 
             print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
@@ -241,7 +240,7 @@ class EmpiricalBayes:
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
                     break
-                else:  # update the log model evidence
+                else:  # update the summed log model evidence
                     lme_old = summed_lme
 
             iteration += 1
@@ -263,7 +262,6 @@ class EmpiricalBayes:
 
         """
         output = []
-        # TODO check on number of cpus
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")
             results = self.stair()

@@ -101,8 +101,43 @@ class EmpiricalBayes:
         dict
             A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.
         """
-        ## Equation Numbers refer to Equations in the Gershman (2016) Empirical priors for reinforcement learning models
-        ## Step numbers correspond to
+
+        # convenience function to obtain the log determinant of a Hessian matrix
+        def __log_det_hessian(x):
+            # first attempt using Cholesky decomposition, which is the most efficient
+            try:
+                L = np.linalg.cholesky(x)
+                log_det = 2.0 * np.sum(np.log(np.diag(L)))
+                # force error if solution is complex number with non-zero imaginary part
+                if np.iscomplex(log_det) and np.imag(log_det) != 0:
+                    raise np.linalg.LinAlgError
+            # second attempt using `slogdet`, which uses LU decomposition
+            except np.linalg.LinAlgError:
+                try:
+                    sign, log_det = np.linalg.slogdet(x)
+                    # force error if solution is zero or complex number with non-zero imaginary part 
+                    if sign == 0 or (np.iscomplex(log_det) and np.imag(log_det) != 0):
+                        raise np.linalg.LinAlgError
+                # third and final attempt using QR decomposition
+                except np.linalg.LinAlgError:
+                    try:
+                        Q, R = np.linalg.qr(x)
+                        log_det = np.sum(np.log(np.abs(np.diag(R))))
+                        # give up (NaN) if solution is complex number with non-zero imaginary part
+                        if np.iscomplex(log_det) and np.imag(log_det) != 0:
+                            return np.nan
+                    # give up (NaN) if all matrix decomposition methods failed
+                    except np.linalg.LinAlgError:
+                        return np.nan
+            
+            # if solution is complex number with zero imaginary part, just keep the real part
+            if np.iscomplex(log_det):
+                log_det = np.real(log_det)
+
+            return log_det
+        
+
+        # Equation numbers refer to equations in the Gershman (2016) Empirical priors for reinforcement learning models
         lme_old = 0
         lmes = []
 
@@ -119,7 +154,6 @@ class EmpiricalBayes:
             self.details.append(copy.deepcopy(details))
 
             # extract the participant-wise unnormalised log posterior density
-            # this essentially gives us the output of Equation 5
             log_posterior = np.asarray([ppt.get("fun") for ppt in details])
             # if the optimiser minimses rather than maximises the target function, then the
             # target function is the _negative_ of the log posterior density function. Thus, we
@@ -142,26 +176,26 @@ class EmpiricalBayes:
             # define a mask that excludes any NaN or inf param values
             param_valid = np.isfinite(param)
 
-            # get empirical mean of parameter estimates across participants
+            # get estimates of population-level means of parameters
             means = np.mean(
                 param[param_valid].reshape(param.shape[0], -1), axis=0
             )            
 
-            # get estimates of variance of parameters, taking into account both
-            # the "between-subject" variance (individual differences relative to mean)
-            # and the "within-subject" variance (uncertainty of parameter estimates)
+            # get estimates of population-level variances of parameters.
+            # this requires accounting for both the "within-subject" variance (i.e.
+            # uncertainty of parameter estimates) and the "between-subject" variance
+            # (i.e. individual differences relative to mean)
 
             # 1. "within-subject" variance
             # the Hessian matrix should correspond to the precision matrix, hence its
-            # inverse is the variance-covariance matrix. we then take the diagonal
-            # elements to get the variance (uncertainty) of parameter estimates.
+            # inverse is the variance-covariance matrix.
             try:
                 inv_hessian = np.linalg.inv(hessian)
             except np.linalg.LinAlgError:
                 inv_hessian = np.linalg.pinv(hessian)
             
             within_variance = np.diagonal(inv_hessian, axis1=1, axis2=2)
-            # these diagonal elements should correspond to variances, so exclude
+            # the diagonal elements should correspond to variances, so exclude (NaN)
             # any negative or non-finite values
             within_variance[np.logical_not(np.isfinite(within_variance)) |
                             (within_variance < 0)] = np.nan
@@ -172,7 +206,7 @@ class EmpiricalBayes:
             # TODO account for `param_valid`
             between_within_variance = np.square(param - means) + within_variance
             variance = between_within_variance.mean(axis=0) - np.square(means)
-            ## make sure the STD is not too small by bounding it to 1e-6
+            # make sure the STD is not too small by bounding it to 1e-6
             np.clip(variance, 1e-6, None, out=variance)
 
             ## update population-level parameters.
@@ -184,22 +218,22 @@ class EmpiricalBayes:
                     "sd": variance[i],
                 }
 
+            # use the updated population-level parameters to update the priors on
+            # model parameters, for next round of participant-wise MAP estimation
             self.optimiser.model.parameters.update_prior(**population_updates)
 
-            # estimate log model evidence (lme)
-            # TODO add checks on calculating log_determinants
-            # first find the log determinant of the hessian matrix for each ppt
-            log_determinants = (np.asarray(list(map(np.linalg.slogdet, hessian)))).sum(
-                axis=0
-            )[1]
-            ## add a penalty term to the negative log posterior
+            # approximate the log model evidence (lme) a.k.a. marginal likelihood:
+            # obtain the log determinant of the hessian matrix for each ppt, and incorporate
+            # the number of free parameters to define a penalty term
+            log_determinants = np.asarray(list(map(__log_det_hessian, hessian)))
             penalty = 0.5 * (
                 self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
             )
-            ## calculate the log model evidence with a penalty and sum them up
+            # calculate the participant-wise log model evidence with a penalty,
+            # and then sum them up for an overall measure
             log_model_evidence = log_posterior + penalty
             summed_lme = log_model_evidence.sum()
-            ## store the log model evidence
+            # store the log model evidence
             lmes.append(copy.deepcopy(summed_lme))
 
             print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
@@ -207,7 +241,7 @@ class EmpiricalBayes:
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
                     break
-                else:  # update the log likelihood
+                else:  # update the log model evidence
                     lme_old = summed_lme
 
             iteration += 1
@@ -229,6 +263,7 @@ class EmpiricalBayes:
 
         """
         output = []
+        # TODO check on number of cpus
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")
             results = self.stair()

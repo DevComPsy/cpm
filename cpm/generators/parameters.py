@@ -454,16 +454,20 @@ class Value:
             Keyword arguments representing the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the `scipy.stats` documentation or the `prior.kwds` attribute.
 
         """
-        ## TODO: have to calcualte separate things for a beta distribution
-        below, above = (self.lower - kwargs.get("mean")) / kwargs.get("sd"), (
-            self.upper - kwargs.get("mean")
-        ) / kwargs.get("sd")
+
+        # initialize updates with "loc" and "scale" parameters
         updates = {
-            "a": below,
-            "b": above,
             "loc": kwargs.get("mean"),
-            "scale": kwargs.get("sd"),
+            "scale": kwargs.get("sd")
         }
+        available_params = self.prior.kwds.keys()
+
+        # check if "a" and "b" are both in `available_params`, and if so add to updates dict
+        if "a" in available_params and "b" in available_params:
+            updates["a"] = (self.lower - kwargs.get("mean")) / kwargs.get("sd")
+            updates["b"] = (self.upper - kwargs.get("mean")) / kwargs.get("sd")
+
+        # now, update the prior object
         self.prior.kwds.update(**updates)
 
 

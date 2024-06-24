@@ -175,49 +175,47 @@ class EmpiricalBayes:
             if self.objective != "minimise":
                 hessian = -1 * hessian
 
-            # organise parameter estimates in a participant x parameter array
+            # organise parameter estimates in an array
             parameter_names = self.optimiser.model.parameters.free()
-            param = np.zeros((len(parameters), len(parameter_names)))
+            param = np.zeros((len(parameters), len(parameter_names)))           # shape: ppt x params
             for i, name in enumerate(parameter_names):
                 for ppt, content in enumerate(parameters):
                     param[ppt, i] = content.get(name)
 
-            # define a mask that excludes any NaN or inf param values
-            param_valid = np.isfinite(param)
+            # turn any non-finite values into NaN, to avoid subsequent issues
+            # with calculating parameter means and variances
+            param[np.logical_not(np.isfinite(param))] = np.nan
 
             # get estimates of population-level means of parameters
-            means = np.mean(
-                param[param_valid].reshape(param.shape[0], -1), axis=0
-            )            
+            means = np.nanmean(param, axis=0)                                   # shape: 1 x params
 
             # get estimates of population-level variances of parameters.
             # this requires accounting for both the "within-subject" variance (i.e.
             # uncertainty of parameter estimates) and the "between-subject" variance
             # (i.e. individual differences relative to mean)
 
-            # 1. "within-subject" variance
             # the Hessian matrix should correspond to the precision matrix, hence its
             # inverse is the variance-covariance matrix.
-            inv_hessian = np.asarray(list(map(__inv_mat, hessian)))
-            within_variance = np.diagonal(inv_hessian, axis1=1, axis2=2)
-            # the diagonal elements should correspond to variances, so exclude (NaN)
-            # any negative or non-finite values
-            within_variance[np.logical_not(np.isfinite(within_variance)) |
-                            (within_variance < 0)] = np.nan
+            inv_hessian = np.asarray(list(map(__inv_mat, hessian)))             # shape: ppt x params x params
+            # diagonal elements should correspond to variances (uncertainties)
+            param_uncertainty = np.diagonal(inv_hessian, axis1=1, axis2=2)      # shape: ppt x params 
+            # set any negative or non-finite values to NaN
+            param_uncertainty[np.logical_not(np.isfinite(param_uncertainty)) |
+                              (param_uncertainty < 0)] = np.nan
             
-            # 2. "between-subject" variance
-            # calculate squared differences from mean, add up the "within-subject" variance,
-            # take the mean of that term, and subtract the squared mean
-            # TODO account for `param_valid`
-            between_within_variance = np.square(param - means) + within_variance
-            variance = between_within_variance.mean(axis=0) - np.square(means)
-            # make sure the variances are non-negative, setting 1e-6 as a
-            # lower threshold to avoid numerical issues
+            # for each parameter, compute the sum across participants of the squared estimate and
+            # the uncertainty of the estimate.
+            # variance is then estimated as the mean of that term (across participants), minus the
+            # square of the estimated mean.
+            param_var_mat = np.square(param) + param_uncertainty                # shape: ppt x params
+            param_var_mat[np.logical_not(np.isfinite(param_var_mat))] = np.nan
+            variance = param_var_mat.nanmean(axis=0) - np.square(means)         # shape: 1 x params
+            # make sure the variances are non-negative, setting 1e-6 as a lower threshold
             np.clip(variance, 1e-6, None, out=variance)
             # convert variances to standard deviations
             stdev = np.sqrt(variance)
 
-            ## update population-level parameters.
+            # update population-level parameters
             population_updates = {}
 
             for i, name in enumerate(parameter_names):

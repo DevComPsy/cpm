@@ -102,6 +102,15 @@ class EmpiricalBayes:
             A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.
         """
 
+        # convenience function to obtain the (pseudo-)inverse of a matrix
+        def __inv_mat(x):
+            try:
+                inv_x = np.linalg.inv(x)
+            except np.linalg.LinAlgError:
+                inv_x = np.linalg.pinv(x)
+            
+            return inv_x
+
         # convenience function to obtain the log determinant of a Hessian matrix
         def __log_det_hessian(x):
             # first attempt using Cholesky decomposition, which is the most efficient
@@ -189,11 +198,7 @@ class EmpiricalBayes:
             # 1. "within-subject" variance
             # the Hessian matrix should correspond to the precision matrix, hence its
             # inverse is the variance-covariance matrix.
-            try:
-                inv_hessian = np.linalg.inv(hessian)
-            except np.linalg.LinAlgError:
-                inv_hessian = np.linalg.pinv(hessian)
-            
+            inv_hessian = np.asarray(list(map(__inv_mat, hessian)))
             within_variance = np.diagonal(inv_hessian, axis1=1, axis2=2)
             # the diagonal elements should correspond to variances, so exclude (NaN)
             # any negative or non-finite values
@@ -206,7 +211,8 @@ class EmpiricalBayes:
             # TODO account for `param_valid`
             between_within_variance = np.square(param - means) + within_variance
             variance = between_within_variance.mean(axis=0) - np.square(means)
-            # make sure the variance is not too small by bounding it to 1e-6
+            # make sure the variances are non-negative, setting 1e-6 as a
+            # lower threshold to avoid numerical issues
             np.clip(variance, 1e-6, None, out=variance)
             # convert variances to standard deviations
             stdev = np.sqrt(variance)

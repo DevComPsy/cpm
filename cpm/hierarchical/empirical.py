@@ -206,8 +206,10 @@ class EmpiricalBayes:
             # TODO account for `param_valid`
             between_within_variance = np.square(param - means) + within_variance
             variance = between_within_variance.mean(axis=0) - np.square(means)
-            # make sure the STD is not too small by bounding it to 1e-6
+            # make sure the variance is not too small by bounding it to 1e-6
             np.clip(variance, 1e-6, None, out=variance)
+            # convert variances to standard deviations
+            stdev = np.sqrt(variance)
 
             ## update population-level parameters.
             population_updates = {}
@@ -215,7 +217,7 @@ class EmpiricalBayes:
             for i, name in enumerate(parameter_names):
                 population_updates[name] = {
                     "mean": means[i],
-                    "sd": variance[i],
+                    "sd": stdev[i],
                 }
 
             # use the updated population-level parameters to update the priors on

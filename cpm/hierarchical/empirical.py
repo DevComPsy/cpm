@@ -113,29 +113,33 @@ class EmpiricalBayes:
 
         # convenience function to obtain the log determinant of a Hessian matrix
         def __log_det_hessian(x):
+            
+            # local convenience function to determine if input is a
+            # complex number with non-zero imaginary part
+            def has_nonzero_imaginary(x) -> bool:
+                if np.iscomplex(x):
+                    return np.imag(x) != 0
+                return False
+
             # first attempt using Cholesky decomposition, which is the most efficient
             try:
                 L = np.linalg.cholesky(x)
                 log_det = 2.0 * np.sum(np.log(np.diag(L)))
-                # force error if solution is complex number with non-zero imaginary part
-                if np.iscomplex(log_det) and np.imag(log_det) != 0:
+                if has_nonzero_imaginary(log_det):
                     raise np.linalg.LinAlgError
             # second attempt using `slogdet`, which uses LU decomposition
             except np.linalg.LinAlgError:
                 try:
                     sign, log_det = np.linalg.slogdet(x)
-                    # force error if solution is zero or complex number with non-zero imaginary part 
-                    if sign == 0 or (np.iscomplex(log_det) and np.imag(log_det) != 0):
+                    if sign == 0 or has_nonzero_imaginary(log_det):
                         raise np.linalg.LinAlgError
                 # third and final attempt using QR decomposition
                 except np.linalg.LinAlgError:
                     try:
                         Q, R = np.linalg.qr(x)
                         log_det = np.sum(np.log(np.abs(np.diag(R))))
-                        # give up (NaN) if solution is complex number with non-zero imaginary part
-                        if np.iscomplex(log_det) and np.imag(log_det) != 0:
+                        if has_nonzero_imaginary(log_det):
                             return np.nan
-                    # give up (NaN) if all matrix decomposition methods failed
                     except np.linalg.LinAlgError:
                         return np.nan
             
@@ -199,9 +203,9 @@ class EmpiricalBayes:
             inv_hessian = np.asarray(list(map(__inv_mat, hessian)))             # shape: ppt x params x params
             # diagonal elements should correspond to variances (uncertainties)
             param_uncertainty = np.diagonal(inv_hessian, axis1=1, axis2=2)      # shape: ppt x params 
-            # set any negative or non-finite values to NaN
+            # set any non-finite or non-positive values to NaN
             param_uncertainty[np.logical_not(np.isfinite(param_uncertainty)) |
-                              (param_uncertainty < 0)] = np.nan
+                              (param_uncertainty <= 0)] = np.nan
             
             # for each parameter, compute the sum across participants of the squared estimate and
             # the uncertainty of the estimate.

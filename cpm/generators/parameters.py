@@ -127,21 +127,23 @@ class Parameters:
 
     def PDF(self, log=False):
         """
-        Return the prior distribution of the parameters.
+        Return the prior probability density of the parameter values.
 
         Returns
         -------
         float
-            The probability of the parameter set under the prior distribution for each parameter. If `log` is True, the log probability is returned. When the PDF is 0, it returns the maximum value of a float. If "log" is True, it returns the log of the maximum value of a float.
+            The summed probability density of the parameter set under the prior distribution for each parameter. If `log` is True, the log probability is returned. When the PDF is 0, it returns the smallest positive float value. If `log` is True and the log probability is negative infinity, it returns the most negative float value.
         """
-        prior = 1
+        prior = 0
         for _, value in self.__dict__.items():
             if value.prior is not None:
-                prior *= value.PDF()
-        if prior == 0:
-            prior = np.finfo(np.float64).max
-        if log:
-            prior = np.log(prior)
+                prior += value.PDF(log=True)
+        if np.isneginf(prior):
+            prior = np.finfo(np.float64).min
+        if not log:
+            prior = np.exp(prior)
+            if prior <= 0:
+                prior = np.finfo(np.float64).tiny
         return prior
 
     def update_prior(self, **kwargs):

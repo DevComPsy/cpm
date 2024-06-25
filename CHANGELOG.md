@@ -25,17 +25,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 27d16f6b: add squared errors to minimise modules
 - b921be30: Added Bayesian Adaptive Direct Search (BADS) as an optimization method
 - 42db58b6: DifferentialEvolution now supports parallelisation
+- 6312ad99: more thorough computation of inverse Hessian matrix and log determinant of Hessian matrix
+- 289cde73: made update_priors usable for both normal and truncated normal priors
 
 ### Changed
 
 - 2477a127: Optimisers now only store freely varying parameter names
 - b7ed8069: Refactored Bads to implement up-to-date changes (changed parallelisation, works with new methods in Parameters, implements priors)
-- b921393d10e45dfd9ac68a0f3d9e25b57c90bcc2: rewrote piecewise power function to compute utilities to avoid numpy warnings
+- b921393d: rewrote piecewise power function to compute utilities to avoid numpy warnings
+- 634b0e87: corrected estimation of parameter variances and means
 
 ### Removed
 
 - 6780753c: Wrapper summary output is removed due to redundancy
-- f47c684a461fc0d35b011900bf01ceaec876c976: remove the redundant pool.join and pool.close
+- f47c684a: remove the redundant pool.join and pool.close
 
 ### Fixed
 
@@ -50,6 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 57c6a3c0: Fix parallel=False still spawns processes in Optimizations
 - 42db58b6: Fixing the issue when likelihood is -inf (bounding to minimum calculable value causes error in sums)
 - 42db58b6: Fixing nan and inf checks in the obejctive functions
-- 3e830f6416512c0d0eab944fe0074b0f7de8c1a1: fix bads value error when unpacking and compiling results from subject-level fits
-- ea5b2750ce3bcf2cb267e5392863439ad45e4dbe: cpm.generators.Simulator can now handle cases where trial numbers differ between participants
-- 2ae833f37f49dbd4e37385b684d076861d9900bb: cpm.models.learning.DeltaRule.noisy_learning_rule() should not be scaled by learning rate
+- 3e830f64: fix bads value error when unpacking and compiling results from subject-level fits
+- ea5b2750: cpm.generators.Simulator can now handle cases where trial numbers differ between participants
+- 2ae833f3: cpm.models.learning.DeltaRule.noisy_learning_rule() should not be scaled by learning rate

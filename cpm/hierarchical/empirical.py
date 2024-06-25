@@ -22,15 +22,31 @@ class EmpiricalBayes:
 
     Notes
     -----
-    The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. The algorithm is based on the following steps:
+    The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. For the complete description of the method, please see Gershman (2016).
 
-    The fitting function must return the Hessian matrix of the optimisation. The Hessian matrix is a square matrix of second-order partial derivatives of the negative log-likelihood function. The Hessian matrix is used to calculate the within-subject variance of the parameters. Compatible methods in the toolbox include Fmin and Fminbound.
 
-    It is also important to note that we will require the Hessian matrix of second derivatives of the negative log posterior (Gershman, 2016, p. 3). This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
+    The fitting function must return the [Hessian matrix](https://en.wikipedia.org/wiki/Hessian_matrix) of the optimisation.
+    The Hessian matrix is then used in establishing the within-subject variance of the parameters.
+    It is also important to note that we will require the Hessian matrix of second derivatives of the **negative log posterior** (Gershman, 2016, p. 3).
+    This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
+
+    In the current implementation, wetry to calculate the second derivative of the negative log posterior density function according to the following algorithm:
+
+    1. Attempt to use [Cholesky decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition).
+    2. If fails, attempt to use [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition).
+    3. If fails, attempt to use [QR decomposition](https://en.wikipedia.org/wiki/QR_decomposition).
+    4. If the result is a complex number with zero imaginary part, keep the real part.
+
+    In addition, because the the Hessian matrix should correspond to the precision matrix, hence its inverse is the variance-covariance matrix, we will use its inverse to calculate the within-subject variance of the parameters. If the algorithm fails to calculate the inverse of the Hessian matrix, it will use the [Moore-Penrose pseudoinverse](https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse) instead.
 
     The current implementation also controls for some **edge-cases** that are not covered by the algorithm above:
 
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
+
+    References
+    ----------
+
+    Gershman, S. J. (2016). Empirical priors for reinforcement learning models. Journal of Mathematical Psychology, 71, 1-6.
 
     Examples
     --------
@@ -108,12 +124,12 @@ class EmpiricalBayes:
                 inv_x = np.linalg.inv(x)
             except np.linalg.LinAlgError:
                 inv_x = np.linalg.pinv(x)
-            
+
             return inv_x
 
         # convenience function to obtain the log determinant of a Hessian matrix
         def __log_det_hessian(x):
-            
+
             # local convenience function to determine if input is a
             # complex number with non-zero imaginary part
             def has_nonzero_imaginary(x) -> bool:
@@ -142,13 +158,12 @@ class EmpiricalBayes:
                             return np.nan
                     except np.linalg.LinAlgError:
                         return np.nan
-            
+
             # if solution is complex number with zero imaginary part, just keep the real part
             if np.iscomplex(log_det):
                 log_det = np.real(log_det)
 
             return log_det
-        
 
         # Equation numbers refer to equations in the Gershman (2016) Empirical priors for reinforcement learning models
         lme_old = 0
@@ -181,7 +196,9 @@ class EmpiricalBayes:
 
             # organise parameter estimates in an array
             parameter_names = self.optimiser.model.parameters.free()
-            param = np.zeros((len(parameters), len(parameter_names)))           # shape: ppt x params
+            param = np.zeros(
+                (len(parameters), len(parameter_names))
+            )  # shape: ppt x params
             for i, name in enumerate(parameter_names):
                 for ppt, content in enumerate(parameters):
                     param[ppt, i] = content.get(name)
@@ -191,7 +208,7 @@ class EmpiricalBayes:
             param[np.logical_not(np.isfinite(param))] = np.nan
 
             # get estimates of population-level means of parameters
-            means = np.nanmean(param, axis=0)                                   # shape: 1 x params
+            means = np.nanmean(param, axis=0)  # shape: 1 x params
 
             # get estimates of population-level variances of parameters.
             # this requires accounting for both the "within-subject" variance (i.e.
@@ -200,20 +217,28 @@ class EmpiricalBayes:
 
             # the Hessian matrix should correspond to the precision matrix, hence its
             # inverse is the variance-covariance matrix.
-            inv_hessian = np.asarray(list(map(__inv_mat, hessian)))             # shape: ppt x params x params
+            inv_hessian = np.asarray(
+                list(map(__inv_mat, hessian))
+            )  # shape: ppt x params x params
             # diagonal elements should correspond to variances (uncertainties)
-            param_uncertainty = np.diagonal(inv_hessian, axis1=1, axis2=2)      # shape: ppt x params 
+            param_uncertainty = np.diagonal(
+                inv_hessian, axis1=1, axis2=2
+            )  # shape: ppt x params
             # set any non-finite or non-positive values to NaN
-            param_uncertainty[np.logical_not(np.isfinite(param_uncertainty)) |
-                              (param_uncertainty <= 0)] = np.nan
-            
+            param_uncertainty[
+                np.logical_not(np.isfinite(param_uncertainty))
+                | (param_uncertainty <= 0)
+            ] = np.nan
+
             # for each parameter, compute the sum across participants of the squared estimate and
             # the uncertainty of the estimate.
             # variance is then estimated as the mean of that term (across participants), minus the
             # square of the estimated mean.
-            param_var_mat = np.square(param) + param_uncertainty                # shape: ppt x params
+            param_var_mat = np.square(param) + param_uncertainty  # shape: ppt x params
             param_var_mat[np.logical_not(np.isfinite(param_var_mat))] = np.nan
-            variance = param_var_mat.nanmean(axis=0) - np.square(means)         # shape: 1 x params
+            variance = param_var_mat.nanmean(axis=0) - np.square(
+                means
+            )  # shape: 1 x params
             # make sure the variances are non-negative, setting 1e-6 as a lower threshold
             np.clip(variance, 1e-6, None, out=variance)
             # convert variances to standard deviations

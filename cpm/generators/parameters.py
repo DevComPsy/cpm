@@ -6,6 +6,7 @@ from scipy.stats import (
     uniform,
     beta,
     gamma,
+    norm,
 )
 
 
@@ -227,6 +228,7 @@ class Value:
     - 'beta'
     - 'gamma'
     - 'truncated_exponential'
+    - 'norm'
 
     Because these distributions are inherited from `scipy.stats`, see the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on how to update variables of the distribution.
 
@@ -283,6 +285,8 @@ class Value:
                 loc=args.get("mean"),
                 scale=args.get("sd"),
             )
+        elif prior == "norm":
+            self.prior = norm(loc=args.get("mean"), scale=args.get("sd"))
         elif callable(prior):
             self.prior = prior(**args)
         else:
@@ -458,10 +462,7 @@ class Value:
         """
 
         # initialize updates with "loc" and "scale" parameters
-        updates = {
-            "loc": kwargs.get("mean"),
-            "scale": kwargs.get("sd")
-        }
+        updates = {"loc": kwargs.get("mean"), "scale": kwargs.get("sd")}
         available_params = self.prior.kwds.keys()
 
         # check if "a" and "b" are both in `available_params`, and if so add to updates dict
@@ -512,7 +513,7 @@ class LogParameters(Parameters):
             elif value == upper:
                 return np.inf
             else:
-                return np.log(value / (1 - value))
+                return np.log((value - lower) / (upper - lower))
 
         for _, value in self.__dict__.items():
             if value.prior is not None and isinstance(value, Value):
@@ -536,14 +537,14 @@ class LogParameters(Parameters):
 
         output = []
 
-        def _logexptransform(value):
-            return 1 / (1 + np.exp(-value))
+        def _logexptransform(value, lower, upper):
+            return lower + (upper - lower) * (1 / (1 + np.exp(-value)))
 
         out = {}
 
         for key, value in self.__dict__.items():
             if isinstance(value, Value) and value.prior is not None:
-                out[key] = _logexptransform(value.value)
+                out[key] = _logexptransform(value.value, value.lower, value.upper)
         return out
 
     def update(self, **kwargs):

@@ -56,3 +56,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 3e830f64: fix bads value error when unpacking and compiling results from subject-level fits
 - ea5b2750: cpm.generators.Simulator can now handle cases where trial numbers differ between participants
 - 2ae833f3: cpm.models.learning.DeltaRule.noisy_learning_rule() should not be scaled by learning rate
+- 2d0c716d: cpm.hierarchical.EmpiricalBayes non-writable array and np.nanmean reference bug

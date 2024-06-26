@@ -224,6 +224,7 @@ class EmpiricalBayes:
             param_uncertainty = np.diagonal(
                 inv_hessian, axis1=1, axis2=2
             )  # shape: ppt x params
+            param_uncertainty = param_uncertainty.copy()  # make sure array is writable
             # set any non-finite or non-positive values to NaN
             param_uncertainty[
                 np.logical_not(np.isfinite(param_uncertainty))
@@ -236,7 +237,7 @@ class EmpiricalBayes:
             # square of the estimated mean.
             param_var_mat = np.square(param) + param_uncertainty  # shape: ppt x params
             param_var_mat[np.logical_not(np.isfinite(param_var_mat))] = np.nan
-            variance = param_var_mat.nanmean(axis=0) - np.square(
+            variance = np.nanmean(param_var_mat, axis=0) - np.square(
                 means
             )  # shape: 1 x params
             # make sure the variances are non-negative, setting 1e-6 as a lower threshold

@@ -497,6 +497,20 @@ class LogParameters(Parameters):
         super().__init__(**kwargs)
         self.log_transform()
 
+    def __logit(self, value, lower, upper):
+        """
+        Function that transforms a value to a logit scale.
+        """
+        if value < lower or value > upper:
+            raise ValueError("Value out of bounds.")
+        elif value == lower:
+            return -np.inf
+        elif value == upper:
+            return np.inf
+        else:
+            x = (value - lower) / (upper - lower)
+            return np.log(x / (1 - x))
+
     def log_transform(self):
         """
         Apply a logarithmic transformation to the values of the parameters.
@@ -504,27 +518,16 @@ class LogParameters(Parameters):
         This method iterates over the attributes of the object and checks if the attribute has a prior function and is an instance of the Value class. If both conditions are met, the value of the attribute is transformed using the logarithmic transformation function.
 
         """
-
-        def _logtransform(value, lower, upper):
-            if value < lower or value > upper:
-                raise ValueError("Value out of bounds.")
-            elif value == lower:
-                return -np.inf
-            elif value == upper:
-                return np.inf
-            else:
-                return np.log((value - lower) / (upper - lower))
-
         for _, value in self.__dict__.items():
             if value.prior is not None and isinstance(value, Value):
-                value.value = _logtransform(value.value, value.lower, value.upper)
+                value.value = self.__logit(value.value, value.lower, value.upper)
 
-    def log_exp_transform(self):
+    def log_inverse_transform(self):
         """
         Apply a logarithmic exponential transformation to the values of the parameters.
 
         This method iterates over the attributes of the object and checks if they are instances of the `Value` class.
-        If an attribute is an instance of `Value`, the `value` attribute of that instance is transformed using the
+        If an attribute is an instance of `Value` with a specified prior, the `value` attribute of that instance is transformed using the
         logarithmic exponential transformation function. The transformed value is then assigned
         back to the `value` attribute.
 
@@ -558,20 +561,10 @@ class LogParameters(Parameters):
 
         """
 
-        def _logtransform(value, lower, upper):
-            if value < lower or value > upper:
-                raise ValueError("Value out of bounds.")
-            elif value == lower:
-                return -np.inf
-            elif value == upper:
-                return np.inf
-            else:
-                return np.log(value / (1 - value))
-
         for key, value in kwargs.items():
             if key in self.__dict__:
                 self.__dict__[key].fill(
-                    _logtransform(
+                    self.__logit(
                         value, self.__dict__[key].lower, self.__dict__[key].upper
                     )
                 )

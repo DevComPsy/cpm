@@ -566,7 +566,7 @@ class LogParameters(Parameters):
             if isinstance(value, Value) and value.prior is not None:
                 value.value = _logexptransform(value.value, value.lower, value.upper)
 
-    def update(self, **kwargs):
+    def update(self, log=False, **kwargs):
         """
         Update the parameters with new values.
 
@@ -579,7 +579,7 @@ class LogParameters(Parameters):
 
         for key, value in kwargs.items():
             if key in self.__dict__:
-                if self.__dict__[key].prior is not None:
+                if self.__dict__[key].prior is not None and log:
                     value = self.__logit(
                         value, self.__dict__[key].lower, self.__dict__[key].upper
                     )

@@ -501,17 +501,17 @@ class LogParameters(Parameters):
                 setattr(self, key, Value(value))
         self.log_transform()
 
-    def __logit(self, value, lower, upper, new=False):
+    def __logit(self, value, lower, upper):
         """
         Function that transforms a value to a logit scale.
         """
-        if new and value < lower or value > upper:
+        if value < lower or value > upper:
             raise ValueError("Value out of bounds.")
-        elif new and value == lower:
+        elif value == lower:
             return -np.inf
-        elif new and value == upper:
+        elif value == upper:
             return np.inf
-        elif new:
+        else:
             x = (value - lower) / (upper - lower)
             return np.log(x / (1 - x))
 
@@ -524,9 +524,7 @@ class LogParameters(Parameters):
         """
         for _, value in self.__dict__.items():
             if value.prior is not None and isinstance(value, Value):
-                value.value = self.__logit(
-                    value.value, value.lower, value.upper, self.__new__
-                )
+                value.value = self.__logit(value.value, value.lower, value.upper)
 
     def log_inverse_transform(self):
         """
@@ -581,14 +579,11 @@ class LogParameters(Parameters):
 
         for key, value in kwargs.items():
             if key in self.__dict__:
-                self.__dict__[key].fill(
-                    self.__logit(
-                        value,
-                        self.__dict__[key].lower,
-                        self.__dict__[key].upper,
-                        self.__new__,
+                if self.__dict__[key].prior is not None:
+                    value = self.__logit(
+                        value, self.__dict__[key].lower, self.__dict__[key].upper
                     )
-                )
+                self.__dict__[key].fill(value)
 
     def __copy__(self):
         self.__revert()

@@ -494,20 +494,24 @@ class LogParameters(Parameters):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        for key, value in kwargs.items():
+            if isinstance(value, Value):
+                setattr(self, key, value)
+            else:
+                setattr(self, key, Value(value))
         self.log_transform()
 
-    def __logit(self, value, lower, upper):
+    def __logit(self, value, lower, upper, new=False):
         """
         Function that transforms a value to a logit scale.
         """
-        if value < lower or value > upper:
+        if new and value < lower or value > upper:
             raise ValueError("Value out of bounds.")
-        elif value == lower:
+        elif new and value == lower:
             return -np.inf
-        elif value == upper:
+        elif new and value == upper:
             return np.inf
-        else:
+        elif new:
             x = (value - lower) / (upper - lower)
             return np.log(x / (1 - x))
 
@@ -520,7 +524,9 @@ class LogParameters(Parameters):
         """
         for _, value in self.__dict__.items():
             if value.prior is not None and isinstance(value, Value):
-                value.value = self.__logit(value.value, value.lower, value.upper)
+                value.value = self.__logit(
+                    value.value, value.lower, value.upper, self.__new__
+                )
 
     def log_inverse_transform(self):
         """
@@ -550,6 +556,18 @@ class LogParameters(Parameters):
                 out[key] = _logexptransform(value.value, value.lower, value.upper)
         return out
 
+    def __revert(self):
+        """
+        Function to revert log transform of the parameters - for internal use only.
+        """
+
+        def _logexptransform(value, lower, upper):
+            return lower + (upper - lower) * (1 / (1 + np.exp(-value)))
+
+        for _, value in self.__dict__.items():
+            if isinstance(value, Value) and value.prior is not None:
+                value.value = _logexptransform(value.value, value.lower, value.upper)
+
     def update(self, **kwargs):
         """
         Update the parameters with new values.
@@ -565,6 +583,17 @@ class LogParameters(Parameters):
             if key in self.__dict__:
                 self.__dict__[key].fill(
                     self.__logit(
-                        value, self.__dict__[key].lower, self.__dict__[key].upper
+                        value,
+                        self.__dict__[key].lower,
+                        self.__dict__[key].upper,
+                        self.__new__,
                     )
                 )
+
+    def __copy__(self):
+        self.__revert()
+        return LogParameters(**self.__dict__)
+
+    def __deepcopy__(self, memo):
+        self.__revert()
+        return LogParameters(**copy.deepcopy(self.__dict__, memo))

@@ -592,3 +592,27 @@ class LogParameters(Parameters):
     def __deepcopy__(self, memo):
         self.__revert()
         return LogParameters(**copy.deepcopy(self.__dict__, memo))
+
+    def bounds(self):
+        """
+        Returns a tuple with lower (first element) and upper (second element) bounds for parameters with defined priors.
+
+        Returns
+        -------
+        lower, upper: tuples
+            A tuple of lower and upper parameter bounds
+        """
+        lower, upper = [], []
+        for _, value in self.__dict__.items():
+            if value.prior is not None:
+                if value.lower == 0:
+                    lower.append(
+                        self.__logit(value.lower + 1e-10, value.lower, value.upper)
+                    )
+                else:
+                    lower.append(self.__logit(value.lower, value.lower, value.upper))
+
+                upper.append(
+                    self.__logit(value.upper - 1e-10, value.lower, value.upper)
+                )
+        return lower, upper

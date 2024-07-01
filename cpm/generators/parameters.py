@@ -6,6 +6,7 @@ from scipy.stats import (
     uniform,
     beta,
     gamma,
+    norm,
 )
 
 
@@ -227,6 +228,7 @@ class Value:
     - 'beta'
     - 'gamma'
     - 'truncated_exponential'
+    - 'norm'
 
     Because these distributions are inherited from `scipy.stats`, see the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on how to update variables of the distribution.
 
@@ -283,6 +285,8 @@ class Value:
                 loc=args.get("mean"),
                 scale=args.get("sd"),
             )
+        elif prior == "norm":
+            self.prior = norm(loc=args.get("mean"), scale=args.get("sd"))
         elif callable(prior):
             self.prior = prior(**args)
         else:
@@ -458,10 +462,7 @@ class Value:
         """
 
         # initialize updates with "loc" and "scale" parameters
-        updates = {
-            "loc": kwargs.get("mean"),
-            "scale": kwargs.get("sd")
-        }
+        updates = {"loc": kwargs.get("mean"), "scale": kwargs.get("sd")}
         available_params = self.prior.kwds.keys()
 
         # check if "a" and "b" are both in `available_params`, and if so add to updates dict
@@ -493,8 +494,26 @@ class LogParameters(Parameters):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        for key, value in kwargs.items():
+            if isinstance(value, Value):
+                setattr(self, key, value)
+            else:
+                setattr(self, key, Value(value))
         self.log_transform()
+
+    def __logit(self, value, lower, upper):
+        """
+        Function that transforms a value to a logit scale.
+        """
+        if value < lower or value > upper:
+            raise ValueError("Value out of bounds.")
+        elif value == lower:
+            return -np.inf
+        elif value == upper:
+            return np.inf
+        else:
+            x = (value - lower) / (upper - lower)
+            return np.log(x / (1 - x))
 
     def log_transform(self):
         """
@@ -503,27 +522,16 @@ class LogParameters(Parameters):
         This method iterates over the attributes of the object and checks if the attribute has a prior function and is an instance of the Value class. If both conditions are met, the value of the attribute is transformed using the logarithmic transformation function.
 
         """
-
-        def _logtransform(value, lower, upper):
-            if value < lower or value > upper:
-                raise ValueError("Value out of bounds.")
-            elif value == lower:
-                return -np.inf
-            elif value == upper:
-                return np.inf
-            else:
-                return np.log(value / (1 - value))
-
         for _, value in self.__dict__.items():
             if value.prior is not None and isinstance(value, Value):
-                value.value = _logtransform(value.value, value.lower, value.upper)
+                value.value = self.__logit(value.value, value.lower, value.upper)
 
-    def log_exp_transform(self):
+    def log_inverse_transform(self):
         """
         Apply a logarithmic exponential transformation to the values of the parameters.
 
         This method iterates over the attributes of the object and checks if they are instances of the `Value` class.
-        If an attribute is an instance of `Value`, the `value` attribute of that instance is transformed using the
+        If an attribute is an instance of `Value` with a specified prior, the `value` attribute of that instance is transformed using the
         logarithmic exponential transformation function. The transformed value is then assigned
         back to the `value` attribute.
 
@@ -536,17 +544,29 @@ class LogParameters(Parameters):
 
         output = []
 
-        def _logexptransform(value):
-            return 1 / (1 + np.exp(-value))
+        def _logexptransform(value, lower, upper):
+            return lower + (upper - lower) * (1 / (1 + np.exp(-value)))
 
         out = {}
 
         for key, value in self.__dict__.items():
             if isinstance(value, Value) and value.prior is not None:
-                out[key] = _logexptransform(value.value)
+                out[key] = _logexptransform(value.value, value.lower, value.upper)
         return out
 
-    def update(self, **kwargs):
+    def __revert(self):
+        """
+        Function to revert log transform of the parameters - for internal use only.
+        """
+
+        def _logexptransform(value, lower, upper):
+            return lower + (upper - lower) * (1 / (1 + np.exp(-value)))
+
+        for _, value in self.__dict__.items():
+            if isinstance(value, Value) and value.prior is not None:
+                value.value = _logexptransform(value.value, value.lower, value.upper)
+
+    def update(self, log=False, **kwargs):
         """
         Update the parameters with new values.
 
@@ -557,20 +577,42 @@ class LogParameters(Parameters):
 
         """
 
-        def _logtransform(value, lower, upper):
-            if value < lower or value > upper:
-                raise ValueError("Value out of bounds.")
-            elif value == lower:
-                return -np.inf
-            elif value == upper:
-                return np.inf
-            else:
-                return np.log(value / (1 - value))
-
         for key, value in kwargs.items():
             if key in self.__dict__:
-                self.__dict__[key].fill(
-                    _logtransform(
+                if self.__dict__[key].prior is not None and log:
+                    value = self.__logit(
                         value, self.__dict__[key].lower, self.__dict__[key].upper
                     )
+                self.__dict__[key].fill(value)
+
+    def __copy__(self):
+        self.__revert()
+        return LogParameters(**self.__dict__)
+
+    def __deepcopy__(self, memo):
+        self.__revert()
+        return LogParameters(**copy.deepcopy(self.__dict__, memo))
+
+    def bounds(self):
+        """
+        Returns a tuple with lower (first element) and upper (second element) bounds for parameters with defined priors.
+
+        Returns
+        -------
+        lower, upper: tuples
+            A tuple of lower and upper parameter bounds
+        """
+        lower, upper = [], []
+        for _, value in self.__dict__.items():
+            if value.prior is not None:
+                if value.lower == 0:
+                    lower.append(
+                        self.__logit(value.lower + 1e-10, value.lower, value.upper)
+                    )
+                else:
+                    lower.append(self.__logit(value.lower, value.lower, value.upper))
+
+                upper.append(
+                    self.__logit(value.upper - 1e-10, value.lower, value.upper)
                 )
+        return lower, upper

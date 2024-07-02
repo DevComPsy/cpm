@@ -19,6 +19,8 @@ class EmpiricalBayes:
         The tolerance for convergence. Default is 1e-6.
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
+    bounded : array_like, optional
+        A vector of 'upper', 'lower', 'both' or 'none' to indicate the bounds of the parameters. If None, assumes that all parameters are bounded. Default is None.
 
     Notes
     -----
@@ -92,12 +94,14 @@ class EmpiricalBayes:
             objective  # whether the optimiser looks for the minimum or maximum
         )
         self.__number_of_parameters__ = len(self.optimiser.model.parameters.free())
+        self.__bounds__ = self.optimiser.model.parameters.bounds()
 
         self.kwargs = kwargs
 
-        self.fit = []
         self.details = []
         self.lmes = []
+        self.hyperparameters = pd.DataFrame()
+        self.fit = pd.DataFrame()
 
     def step(self):
         self.optimiser.optimise()
@@ -108,7 +112,7 @@ class EmpiricalBayes:
         hessian = np.asarray(hessian)
         return self.optimiser.parameters, hessian, self.optimiser.fit
 
-    def stair(self):
+    def stair(self, chain_index=0):
         """
         The main function that runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially a single chain.
 
@@ -117,6 +121,18 @@ class EmpiricalBayes:
         dict
             A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.
         """
+
+        def __logit(value, lower, upper):
+            if value == upper:
+                value = value - 1e-10
+            if value == lower:
+                value = value + 1e-10
+            x = (value - lower) / (upper - lower)
+            transformed = np.log(x / (1 - x))
+            return transformed
+
+        def __log_inverse(value, lower, upper):
+            return lower + (upper - lower) * (1 / (1 + np.exp(-value)))
 
         # convenience function to obtain the (pseudo-)inverse of a matrix
         def __inv_mat(x):
@@ -178,7 +194,6 @@ class EmpiricalBayes:
             # the Hessian matrix of the target function evaluated at the MAP parameter estimates,
             # and the full output from model fitting
             parameters, hessian, details = self.step()
-            self.fit.append(copy.deepcopy(parameters))
             self.details.append(copy.deepcopy(details))
 
             # extract the participant-wise unnormalised log posterior density
@@ -203,10 +218,14 @@ class EmpiricalBayes:
                 for ppt, content in enumerate(parameters):
                     param[ppt, i] = content.get(name)
 
+            parameter_long = pd.DataFrame(param, columns=parameter_names)
+            parameter_long["ppt"] = [i for i in range(len(parameters))]
+            parameter_long["iteration"] = iteration + 1
+            parameter_long["chain"] = chain_index
+            self.fit = pd.concat([self.fit, parameter_long]).reset_index(drop=True)
             # turn any non-finite values into NaN, to avoid subsequent issues
             # with calculating parameter means and variances
-            param[np.logical_not(np.isfinite(param))] = np.nan
-
+            param[np.isinf(param)] = np.nan
             # get estimates of population-level means of parameters
             means = np.nanmean(param, axis=0)  # shape: 1 x params
 
@@ -224,8 +243,11 @@ class EmpiricalBayes:
             param_uncertainty = np.diagonal(
                 inv_hessian, axis1=1, axis2=2
             )  # shape: ppt x params
-            param_uncertainty = param_uncertainty.copy()  # make sure array is writable
-            # set any non-finite or non-positive values to NaN
+            param_uncertainty = np.abs(
+                param_uncertainty.copy()
+            )  # make sure array is writable
+            # keep the signs of the derivatives
+            # # set any non-finite or non-positive values to NaN
             param_uncertainty[
                 np.logical_not(np.isfinite(param_uncertainty))
                 | (param_uncertainty <= 0)
@@ -247,7 +269,10 @@ class EmpiricalBayes:
 
             # update population-level parameters
             population_updates = {}
-
+            hyper = pd.DataFrame(
+                [0, 0, 0, 0, 0, 0],
+                index=["chain", "iteration", "parameter", "mean", "sd", "lme"],
+            ).T
             for i, name in enumerate(parameter_names):
                 population_updates[name] = {
                     "mean": means[i],
@@ -272,6 +297,15 @@ class EmpiricalBayes:
             lmes.append(copy.deepcopy(summed_lme))
 
             print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
+
+            for i, name in enumerate(parameter_names):
+                hyper["parameter"] = name
+                hyper["mean"] = means[i]
+                hyper["sd"] = stdev[i]
+                hyper["iteration"] = iteration + 1
+                hyper["chain"] = chain_index
+                hyper["lme"] = copy.deepcopy(summed_lme)
+                self.hyperparameters = pd.concat([self.hyperparameters, hyper])
 
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
@@ -300,7 +334,7 @@ class EmpiricalBayes:
         output = []
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")
-            results = self.stair()
+            results = self.stair(chain_index=chain)
             output.append(copy.deepcopy(results))
         self.output = output
         return None

@@ -1,3 +1,4 @@
-__all__ = ["EmpiricalBayes"]
+__all__ = ["EmpiricalBayes", "VariationalBayes"]
 
 from .empirical import EmpiricalBayes
+from .variational import VariationalBayes

@@ -186,7 +186,6 @@ class EmpiricalBayes:
         lmes = []
 
         for iteration in range(self.iteration):
-            prior = self.optimiser.model.parameters.PDF()
 
             self.optimiser.reset()
 
@@ -243,9 +242,7 @@ class EmpiricalBayes:
             param_uncertainty = np.diagonal(
                 inv_hessian, axis1=1, axis2=2
             )  # shape: ppt x params
-            param_uncertainty = np.abs(
-                param_uncertainty.copy()
-            )  # make sure array is writable
+            param_uncertainty = param_uncertainty.copy()  # make sure array is writable
             # keep the signs of the derivatives
             # # set any non-finite or non-positive values to NaN
             param_uncertainty[
@@ -313,8 +310,6 @@ class EmpiricalBayes:
                 else:  # update the summed log model evidence
                     lme_old = summed_lme
 
-            iteration += 1
-
             self.lmes.append(lmes)
 
         output = {
@@ -338,3 +333,25 @@ class EmpiricalBayes:
             output.append(copy.deepcopy(results))
         self.output = output
         return None
+
+    def parameters(self):
+        """
+        Returns the estimated individual-level parameters for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated individual-level parameters for each iteration and chain.
+        """
+        return self.fit
+
+    def priors(self):
+        """
+        Returns the estimated group-level hyperparameters (priors) for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated group-level hyperparameters for each iteration and chain.
+        """
+        return self.hyperparameters

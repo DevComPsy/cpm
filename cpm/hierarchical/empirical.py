@@ -333,3 +333,25 @@ class EmpiricalBayes:
             output.append(copy.deepcopy(results))
         self.output = output
         return None
+
+    def parameters(self):
+        """
+        Returns the estimated individual-level parameters for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated individual-level parameters for each iteration and chain.
+        """
+        return self.fit
+
+    def priors(self):
+        """
+        Returns the estimated group-level hyperparameters (priors) for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated group-level hyperparameters for each iteration and chain.
+        """
+        return self.hyperparameters

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 from scipy.special import digamma
+from scipy.stats import t as students_t
 
 
 class VariationalBayes:
@@ -16,12 +17,14 @@ class VariationalBayes:
         The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level _a posteriori_ parameter estimates.
     iteration : int, optional
         The maximum number of iterations. Default is 1000.
-    tolerance : float, optional
-        The tolerance for convergence. Default is 1e-6.
+    tolerance_lme : float, optional
+        The tolerance for convergence with respect to the log model evidence. Default is 1e-3.
+    tolerance_param : float, optional
+        The tolerance for convergence with respect to the "normalized" means of parameters. Default is 1e-3.
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
-    bounded : array_like, optional
-        A vector of 'upper', 'lower', 'both' or 'none' to indicate the bounds of the parameters. If None, assumes that all parameters are bounded. Default is None.
+    hyperpriors: dict, optional
+        A dictionary of given parameter values of the prior distributtions on the population-level parameters (means mu and precisions tau).
 
     Notes
     -----
@@ -42,47 +45,68 @@ class VariationalBayes:
         optimiser=None,
         objective="minimise",
         iteration=50,
-        tolerance_lme=1e-6,
-        tolerance_param=0.01,
+        tolerance_lme=1e-3,
+        tolerance_param=1e-3,
         chain=4,
-        hyperpriors=None, # TODO
+        hyperpriors=None,
         **kwargs,
     ):
-        self.function = copy.deepcopy(optimiser.model)
+        # write input arguments to self
         self.optimiser = copy.deepcopy(optimiser)
-        # bounds here should include mean and std for all parameters
-        self.iteration = iteration  # maximum number of iterations
-        # tolerances for convergence
+        self.objective = objective
+        self.iteration = iteration 
         self.tolerance_lme = tolerance_lme
         self.tolerance_param = tolerance_param
-        self.chain = chain  # number of random parameter initialisations
-        self.objective = (
-            objective  # whether the optimiser looks for the minimum or maximum
-        )
-        self.__n_ppt__ = len(self.optimiser.data)
+        self.chain = chain
         self.__n_param__ = len(self.optimiser.model.parameters.free())
+        if hyperpriors is None:
+            # default parameters of prior distributions ('hyperpriors') on
+            # population-level means and precisions ('hyperparameters') follow
+            # notation and values used by Piray et al. (2019)
+            self.hyperpriors = {
+                # vector of means of the normal prior on the population-level
+                # means, mu.
+                'a0': np.zeros(self.__n_param__),
+                # scalar value that is multiplied with population-level
+                # precisions, tau, to determine the standard deviations of the
+                # normal prior on the population-level means, mu.
+                'b': 1,
+                # scalar value that is used to determine the shape parameter
+                # (nu) of the gamma prior on population-level precisions, tau.
+                'v': 0.5,
+                # vector of values that serve as lower bounds on the scale
+                # parameters (sigma) of the gamma prior on population-level
+                # precisions, tau.
+                's': np.repeat(0.01, self.__n_param__)
+            }
+        else:
+            self.hyperpriors = hyperpriors
+        self.kwargs = kwargs
+
+        # write some further objects to self:
+        # copy the given model function
+        self.function = copy.deepcopy(optimiser.model)
+        # store some useful variables
+        self.__n_ppt__ = len(self.optimiser.data)
         self.__n_param_penalty__ = self.__n_param__ * np.log(2 * np.pi)
         self.__param_names__ = self.optimiser.model.parameters.free()
         self.__bounds__ = self.optimiser.model.parameters.bounds()
-        # TODO unpack the hyperpriors input argument
-        # currently hyperpriors assumed to have entries v, b, s, and a0,
-        # following Piray et al., but this is not at all clear
-        self.hyperpriors = hyperpriors
-        # based on the given parameters of the prior distributions ('hyperpriors')
-        # on the population-level means and precisions ('hyperparameters'), we
-        # compute some constant variables
+        # based on the given 'hyperpriors' dictionary, compute some constant
+        # values that will be needed for parameter estimation. again, following
+        # notation used by Piray et al. (2019).
         self.__nu__ = self.hyperpriors.v + 0.5 * self.__n_ppt__
         self.__beta__ = self.hyperpriors.b + self.__n_ppt__
         self.__lambda__ = (self.__n_param__ / 2) * (
             digamma(self.__nu__) - np.log(self.__nu__) - (1 / self.__beta__)
         )
 
-        self.kwargs = kwargs
-
+        # initialise some output objects to self
         self.details = []
         self.lmes = []
         self.hyperparameters = pd.DataFrame()
+        self.mu_stats = pd.DataFrame()
         self.fit = pd.DataFrame()
+
 
     # function to update participant-level variables
     def update_participants(self, iter_idx=0, chain_idx=0):
@@ -242,8 +266,13 @@ class VariationalBayes:
         empirical_variances = mean_squares - square_means
         # also create empirical estimates of standard deviations (square root
         # of empirical variances), ensuring variances are not smaller than 1e-6
-        empirical_SDs = np.sqrt(np.clip(empirical_variances, 1e-6, None))
+        empirical_SDs = np.sqrt(
+            np.clip(empirical_variances, a_min=1e-6, a_max=None)
+        )
 
+        # TODO ensure that shapes of `empirical_means` and `self.hyperpriors.a0`
+        # are consistent
+        
         # compute the expected value (mean) of the posterior distribution of the
         # population-level means (mu) of model parameters
         E_mu = (1 / self.__beta__) * (
@@ -267,10 +296,13 @@ class VariationalBayes:
         # variances are not unreasonably small (using 1e-6 as lower threshold),
         # (3) take the square root of the estimated variances to get estimated
         # standard deviations.
-        E_sd = np.sqrt(np.clip((1 / E_tau), 1e-6, None))
+        E_sd = np.sqrt(
+            np.clip((1 / E_tau), a_min=1e-6, a_max=None)
+        )
 
-        # also compute "hierarchical errorbars", which can be used post-hoc for
-        # statistical inference on the estimated population-level means
+        # also compute "hierarchical errorbars" - basically standard errors of
+        # the estimates of the population-level means, which can be used
+        # post-hoc for statistical inference
         E_mu_error = np.sqrt(
             (2 * sigma / self.__beta__) / (2 * self.__nu__)
         )
@@ -298,7 +330,7 @@ class VariationalBayes:
         for i, name in enumerate(self.__param_names__):
             hyper["parameter"] = name
             hyper["mean"] = E_mu[i]
-            hyper["mean_errorbar"] = E_mu_error[i]
+            hyper["mean_se"] = E_mu_error[i]
             hyper["sd"] = E_sd[i]
             hyper["iteration"] = iter_idx + 1
             hyper["chain"] = chain_idx
@@ -307,7 +339,7 @@ class VariationalBayes:
 
         # lastly, calculate the empirical means divided by the empirical SDs,
         # resulting in "normalised" means a.k.a. signal-to-noise ratios, which
-        # may be used to track convergence
+        # can be used assess convergence
         param_snr = empirical_means / empirical_SDs
 
         return population_updates, param_snr
@@ -343,8 +375,8 @@ class VariationalBayes:
     # function to run the hierarchical bayesian inference algorithm
     def run_vb(self, chain_index=0):
 
-        lme_old = np.nan
         lmes = []
+        lme_old = np.nan
         param_snr_old = np.nan
 
         for iteration in range(self.iteration):
@@ -357,9 +389,10 @@ class VariationalBayes:
             )
 
             # STEP 2: Estimate the participant-wise log model evidence
+            # TODO use participant-wise lme estimates (`lme_vector`) in output
             lme_vector, lme_sum = self.get_lme(
                 log_post=log_posterior, hessian=hessian
-            ) # TODO add participant-wise lme estimates (`lme_vector`) to output somehow
+            )
             lme_sum = copy.deepcopy(lme_sum)
             lmes.append(lme_sum)
             self.lmes.append(lmes)
@@ -394,10 +427,8 @@ class VariationalBayes:
 
         return output
 
+    # function to run the VB algorithm for multiple repeats ("chains")
     def optimise(self):
-        """
-
-        """
         output = []
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")
@@ -405,3 +436,47 @@ class VariationalBayes:
             output.append(copy.deepcopy(results))
         self.output = output
         return None
+
+    # function to perform one-sample Student's t-tests on the estimated values
+    # of population-level means with respect to given null hypothesis values.
+    def mu_ttest(self, null_vals):
+
+        # extract the pandas dataframe containing results regarding the
+        # estimated population-level parameters
+        hyper_df = self.hyperparameters
+
+        # convert null_vals to pandas dataframe if it is a dictionary
+        if isinstance(null_vals, dict):
+            null_vals_df = pd.DataFrame(
+                list(null_vals.items()),
+                columns=['parameter', 'null']
+            )
+        elif isinstance(null_vals, pd.DataFrame):
+            null_vals_df = null_vals
+            null_vals_df.columns = ['parameter', 'null']
+        else:
+            raise ValueError("null_vals should be either a dictionary or pandas DataFrame")
+
+        # merge the given null values with the results dataframe.
+        # NB doing inner join, so any parameters not given in null_vals will be
+        # excluded from subsequent analysis.
+        t_df = hyper_df.merge(null_vals_df, on='parameter', how='inner')
+
+        # calculate the t-statistics
+        t_df['t_stat'] = (t_df['mean'] - t_df['null']) / t_df['mean_se']
+        # calculate the p-value. we do this in two steps:
+        # first, calculate the left tail probability: that is, the probability
+        # under the null hypothesis that a t-statistic is less than or equal to
+        # the negative absolute values of our observed t-statistics.
+        # second, we multiply these left tail probabilities by 2, to account for
+        # both the left and right tails of the Student's t-distribution (this
+        # works because it is a symmetric distribution).
+        t_df['p_val'] = 2 * students_t.cdf(
+            x=(-1 * np.abs(t_df['t_stat'])), df=(2 * self.__nu__)
+        )
+
+        # TODO check if this is a sensible approach, or if we get issues with
+        # overwriting an existing dataframe
+        self.mu_stats = pd.concat([self.mu_stats, t_df])
+
+        return t_df

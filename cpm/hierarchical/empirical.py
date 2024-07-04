@@ -44,6 +44,7 @@ class EmpiricalBayes:
     The current implementation also controls for some **edge-cases** that are not covered by the algorithm above:
 
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
+    - When calculating the within-subject variance via the Hessian matrix, the algorithm sets any non-finite or non-positive values to NaN.
 
     References
     ----------
@@ -121,18 +122,6 @@ class EmpiricalBayes:
         dict
             A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.
         """
-
-        def __logit(value, lower, upper):
-            if value == upper:
-                value = value - 1e-10
-            if value == lower:
-                value = value + 1e-10
-            x = (value - lower) / (upper - lower)
-            transformed = np.log(x / (1 - x))
-            return transformed
-
-        def __log_inverse(value, lower, upper):
-            return lower + (upper - lower) * (1 / (1 + np.exp(-value)))
 
         # convenience function to obtain the (pseudo-)inverse of a matrix
         def __inv_mat(x):
@@ -318,7 +307,6 @@ class EmpiricalBayes:
             "parameters": self.optimiser.model.parameters,
         }
 
-        # print(f"Chain finished in {iteration} iterations: {population_updates}")
         return output
 
     def optimise(self):

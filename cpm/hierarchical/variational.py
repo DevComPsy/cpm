@@ -68,9 +68,11 @@ class VariationalBayes:
         self.__use_params__ = convergence == "parameters"
         self.__n_param__ = len(self.optimiser.model.parameters.free())
         if hyperpriors is None:
-            # default parameters of prior distributions ('hyperpriors') on
-            # population-level means and precisions ('hyperparameters') follow
-            # notation and values used by Piray et al. (2019)
+            # default parameter values of prior distributions ('hyperpriors')
+            # on population-level means and precisions ('hyperparameters').
+            # All of the following default values follow Piray et al. (2019)
+            # page 31, section "Parameters, initialization and convergence
+            # criteria".
             warnings.warn("Using default hyperpriors.")
             self.hyperpriors = Parameters(
                 # vector of means of the normal prior on the population-level
@@ -97,16 +99,19 @@ class VariationalBayes:
         self.function = copy.deepcopy(optimiser.model)
         # store some useful variables
         self.__n_ppt__ = len(self.optimiser.data)
-        self.__n_param_penalty__ = self.__n_param__ * np.log(2 * np.pi)
         self.__param_names__ = self.optimiser.model.parameters.free()
         self.__bounds__ = self.optimiser.model.parameters.bounds()
 
         # Compute some constant values that will be needed for parameter estimation.
-        # Notation mimics Piray et al. (2019).
-        # Equation references mirror those in Piray et al. (2019).
-        self.__beta__ = self.hyperpriors.b + self.__n_ppt__  # Equation 15. p.28
-        self.__nu__ = self.hyperpriors.v + 0.5 * self.__n_ppt__  # Equation 17. p.28
-        # TODO: Equation reference is needed - @frankhezemans
+        # Notation follows Piray et al. (2019), dropping subscript k (model indicator).
+        # Equation references mirror those in Piray et al. (2019):
+        # Equation 22, page 29 (term `D_{k} * log 2pi`)
+        self.__n_param_penalty__ = self.__n_param__ * np.log(2 * np.pi)
+        # Equation 15, page 28.
+        self.__beta__ = self.hyperpriors.b + self.__n_ppt__
+        # Equation 17, page 28.
+        self.__nu__ = self.hyperpriors.v + 0.5 * self.__n_ppt__
+        # Equation 23, page 29.
         self.__lambda__ = (self.__n_param__ / 2) * (
             digamma(self.__nu__) - np.log(self.__nu__) - (1 / self.__beta__)
         )
@@ -232,7 +237,12 @@ class VariationalBayes:
         log_dets = np.asarray(list(map(__log_det_hessian, hessian)))
 
         # compute the participant-wise log model evidence (lme)
-        # TODO: Equation reference is needed - @frankhezemans
+        # Following line corresponds to Piray et al. (2019) Equation 22, page 29:
+        # - log_post corresponds to `log f_{kn}`
+        # - self.__n_param_penalty corrsponds to `D_{k} log 2pi`
+        # - log_dets corresponds to `log |A_{kn}|`
+        # - self.__lambda__ corresponds `lambda_{k}`
+        # `E[log m_{k}]` is assumed to be equal to log(1) = 0, hence dropped.
         lme = log_post + 0.5 * (self.__n_param_penalty__ - log_dets) + self.__lambda__
 
         # compute the summed log model evidence, ignoring NaN or non-finite values
@@ -277,16 +287,35 @@ class VariationalBayes:
 
             return inv_x
 
+        # Equation and page numbers refer to Piray et al. (2019).
+        # Compared to Piray et al. (2019), we use the following simplifying
+        # assumptions:
+        # - `r_{kn}` is assumed to be equal to 1 for all n (and k), hence can be
+        #   dropped from all equations
+        # - `bar{N}_{k}` is assumed to be equal to N
+
         # get empirical mean of parameter estimates, ignoring NaN or non-finite
         # values
+        # The following code corresponds to Equation 12, page 28, where
+        # param corresponds to `lambda_{kn}`, hence `bar{lambda}_{k}` is simply
+        # the arithmetic mean (given our simplifying assumptions above)
         param[np.isinf(param)] = np.nan
         empirical_means = np.nanmean(param, axis=0)
 
         # get empirical variance of parameter estimates, ignoring NaN or
         # non-finite values.
-        # to this end, we first need to obtain the "within-participant"
-        # variances (uncertainties) of the parameter estimates, which are given
-        # by the diagonal elements of the matrix inverse of the Hessian
+        # Following lines correspond to Equation 13, page 28, where
+        # - np.square(param) corresponds to `lambda_{kn} lambda_{kn}^{T}`
+        # - np.square(empirical_means) corresponds to
+        #   `bar_{lambda}_{k} bar_{lambda}_{k}^{T}`
+        #    
+        # - param_uncertainty corresponds to `A_{kn}^{-1}`
+        # Confirmed our implementation is consistent with Piray et al.'s code implementation:
+        # https://github.com/payampiray/cbm/blob/11b5ad6dbcb0475b49564f8888515a6c06a76f18/codes/cbm_hbi_hbi.m#L258
+        #
+        # we first need to obtain the "within-participant" variances (uncertainties)
+        # of the parameter estimates, which are given by the diagonal elements of
+        # the matrix inverse of the Hessian
         inv_hessian = np.asarray(
             list(map(__inv_mat, hessian))
         )  # shape: ppt x params x params
@@ -314,16 +343,19 @@ class VariationalBayes:
         # TODO: ensure that shapes of `empirical_means` and `self.hyperpriors.a0`
         # are consistent
 
-        # TODO: Equation references are needed below - @frankhezemans
-
         # compute the expected value (mean) of the posterior distribution of the
         # population-level means (mu) of model parameters
+        # Following lines correspond to Equation 14, page 28
         E_mu = (1 / self.__beta__) * (
             self.__n_ppt__ * empirical_means + self.hyperpriors.b * self.hyperpriors.a0
         )
 
         # compute the expected value (mean) of the posterior distribution of the
         # population-level precisions (tau) of model-parameters
+        # Following lines correspond to Equation 16, page 28, where:
+        # - sq_meandev corresponds to
+        #   `(bar{lambda}_{k} - a_{0})(bar{lambda}_{k} - a_{0})^{T}`
+        # - empirical_variances corresponds to `bar{V}_{k}`
         sq_meandev = np.square(empirical_means - self.hyperpriors.a0)
         scaled_sq_meandev = sq_meandev * (
             (self.hyperpriors.b * self.__n_ppt__) / self.__beta__
@@ -331,18 +363,23 @@ class VariationalBayes:
         sigma = self.hyperpriors.s + 0.5 * (
             self.__n_ppt__ * empirical_variances + scaled_sq_meandev
         )
+        # Following line is given in text in between Equations 19 and 20, page 29 
         E_tau = sigma / self.__nu__
-        # now we need to convert these estimates to usable estimates of standard
-        # deviations. to this end, we (1) take the inverse of the estimated
-        # precisions to get estimated variances, (2) ensure the estimated
-        # variances are not unreasonably small (using 1e-6 as lower threshold),
-        # (3) take the square root of the estimated variances to get estimated
-        # standard deviations.
+
+        # now we need to convert these estimates of population-level precisions
+        # into usable estimates of standard deviations.
+        # to this end, we (1) take the inverse of the estimated precisions to
+        # get estimated variances, (2) ensure the estimated variances are not
+        # unreasonably small (using 1e-6 as lower threshold), (3) take the
+        # square root of the estimated variances to get estimated SDs.
         E_sd = np.sqrt(np.clip((1 / E_tau), a_min=1e-6, a_max=None))
 
         # also compute "hierarchical errorbars" - basically standard errors of
         # the estimates of the population-level means, which can be used
         # post-hoc for statistical inference
+        # Following line is given in text around Equation 24, page 30.
+        # See also Piray et al's code implementation:
+        # https://github.com/payampiray/cbm/blob/11b5ad6dbcb0475b49564f8888515a6c06a76f18/codes/cbm_hbi_hbi.m#L168-L174
         E_mu_error = np.sqrt((2 * sigma / self.__beta__) / (2 * self.__nu__))
 
         # use these estimates of the population-level mean and variance to
@@ -555,6 +592,8 @@ class VariationalBayes:
         # excluded from subsequent analysis.
         t_df = hyper_df.merge(null_df, on="parameter", how="inner")
 
+        # Following test is consistent with Piray et al.'s code implementation:
+        # https://github.com/payampiray/cbm/blob/11b5ad6dbcb0475b49564f8888515a6c06a76f18/codes/cbm_hbi_ttest.m
         # calculate the t-statistics
         t_df["t_stat"] = (t_df["mean"] - t_df["null"]) / t_df["mean_se"]
         # calculate the p-value. we do this in two steps:

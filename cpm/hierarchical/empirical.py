@@ -19,8 +19,6 @@ class EmpiricalBayes:
         The tolerance for convergence. Default is 1e-6.
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
-    bounded : array_like, optional
-        A vector of 'upper', 'lower', 'both' or 'none' to indicate the bounds of the parameters. If None, assumes that all parameters are bounded. Default is None.
 
     Notes
     -----

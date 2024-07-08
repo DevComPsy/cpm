@@ -1,8 +1,12 @@
 import numpy as np
 import pandas as pd
 import copy
+import warnings
+
 from scipy.special import digamma
 from scipy.stats import t as students_t
+
+from ..generators import Parameters
 
 
 class VariationalBayes:
@@ -24,17 +28,19 @@ class VariationalBayes:
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
     hyperpriors: dict, optional
-        A dictionary of given parameter values of the prior distributtions on the population-level parameters (means mu and precisions tau).
+        A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau).
+    convergence : str, optional
+        The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.
 
     Notes
     -----
 
-    
+
     References
     ----------
 
     Piray, P., Dezfouli, A., Heskes, T., Frank, M. J., & Daw, N. D. (2019). Hierarchical Bayesian inference for concurrent model fitting and comparison for group studies. PLoS computational biology, 15(6), e1007043.
-    
+
     Examples
     --------
 
@@ -49,36 +55,39 @@ class VariationalBayes:
         tolerance_param=1e-3,
         chain=4,
         hyperpriors=None,
+        convergence="parameters",
         **kwargs,
     ):
         # write input arguments to self
         self.optimiser = copy.deepcopy(optimiser)
         self.objective = objective
-        self.iteration = iteration 
+        self.iteration = iteration
         self.tolerance_lme = tolerance_lme
         self.tolerance_param = tolerance_param
         self.chain = chain
+        self.__use_params__ = convergence == "parameters"
         self.__n_param__ = len(self.optimiser.model.parameters.free())
         if hyperpriors is None:
             # default parameters of prior distributions ('hyperpriors') on
             # population-level means and precisions ('hyperparameters') follow
             # notation and values used by Piray et al. (2019)
-            self.hyperpriors = {
+            warnings.warn("Using default hyperpriors.")
+            self.hyperpriors = Parameters(
                 # vector of means of the normal prior on the population-level
                 # means, mu.
-                'a0': np.zeros(self.__n_param__),
+                a0=np.zeros(self.__n_param__),
                 # scalar value that is multiplied with population-level
                 # precisions, tau, to determine the standard deviations of the
                 # normal prior on the population-level means, mu.
-                'b': 1,
+                b=1,
                 # scalar value that is used to determine the shape parameter
                 # (nu) of the gamma prior on population-level precisions, tau.
-                'v': 0.5,
+                v=0.5,
                 # vector of values that serve as lower bounds on the scale
                 # parameters (sigma) of the gamma prior on population-level
                 # precisions, tau.
-                's': np.repeat(0.01, self.__n_param__)
-            }
+                s=np.repeat(0.01, self.__n_param__),
+            )
         else:
             self.hyperpriors = hyperpriors
         self.kwargs = kwargs
@@ -91,11 +100,13 @@ class VariationalBayes:
         self.__n_param_penalty__ = self.__n_param__ * np.log(2 * np.pi)
         self.__param_names__ = self.optimiser.model.parameters.free()
         self.__bounds__ = self.optimiser.model.parameters.bounds()
-        # based on the given 'hyperpriors' dictionary, compute some constant
-        # values that will be needed for parameter estimation. again, following
-        # notation used by Piray et al. (2019).
-        self.__nu__ = self.hyperpriors.v + 0.5 * self.__n_ppt__
-        self.__beta__ = self.hyperpriors.b + self.__n_ppt__
+
+        # Compute some constant values that will be needed for parameter estimation.
+        # Notation mimics Piray et al. (2019).
+        # Equation references mirror those in Piray et al. (2019).
+        self.__beta__ = self.hyperpriors.b + self.__n_ppt__  # Equation 15. p.28
+        self.__nu__ = self.hyperpriors.v + 0.5 * self.__n_ppt__  # Equation 17. p.28
+        # TODO: Equation reference is needed - @frankhezemans
         self.__lambda__ = (self.__n_param__ / 2) * (
             digamma(self.__nu__) - np.log(self.__nu__) - (1 / self.__beta__)
         )
@@ -103,10 +114,10 @@ class VariationalBayes:
         # initialise some output objects to self
         self.details = []
         self.lmes = []
+
         self.hyperparameters = pd.DataFrame()
         self.mu_stats = pd.DataFrame()
         self.fit = pd.DataFrame()
-
 
     # function to update participant-level variables
     def update_participants(self, iter_idx=0, chain_idx=0):
@@ -117,11 +128,11 @@ class VariationalBayes:
         # run the optimisation
         self.optimiser.optimise()
 
-        # extract detailed output of optimisation, and append to self.details                
+        # extract detailed output of optimisation, and append to self.details
         details = self.optimiser.fit
         self.details.append(copy.deepcopy(details))
 
-        # extract the parameter estimates and organise them into an array 
+        # extract the parameter estimates and organise them into an array
         parameters = self.optimiser.parameters
         param = np.zeros(self.__n_ppt__, self.__n_param__)
         for i, name in enumerate(self.__param_names__):
@@ -160,19 +171,28 @@ class VariationalBayes:
             hessian = -1 * hessian
 
         return param, log_posterior, hessian
-    
-    # function to approximate the participant-wise log model evidence using
-    # Laplace's approximation.
-    # Input:
-    # log_post = participant-wise value of log posterior density function at the
-    #   mode (i.e., MAP parameter estimates)
-    # hessian = participant-wise Hessian matrix of log posterior density
-    # function evaluated at the mode (i.e., MAP parameter estimates)
+
     def get_lme(self, log_post, hessian):
+        """
+        Function to approximate the participant-wise log model evidence using Laplace's approximation.
+
+        Parameters
+        ----------
+        log_post : array-like
+            Participant-wise value of log posterior density function at the mode (i.e., MAP parameter estimates).
+        hessian : array-like
+            Participant-wise Hessian matrix of log posterior density function evaluated at the mode (i.e., MAP parameter estimates).
+
+        Returns
+        -------
+        lme : array
+            Participant-wise log model evidence.
+        lme_sum : float
+            Summed log model evidence.
+        """
 
         # convenience function to obtain the log determinant of a Hessian matrix
         def __log_det_hessian(x):
-
             # local convenience function to determine if input is a
             # complex number with non-zero imaginary part
             def has_nonzero_imaginary(x) -> bool:
@@ -207,11 +227,12 @@ class VariationalBayes:
                 log_det = np.real(log_det)
 
             return log_det
-        
+
         # apply the function defined above to the input hessian matrices
         log_dets = np.asarray(list(map(__log_det_hessian, hessian)))
 
         # compute the participant-wise log model evidence (lme)
+        # TODO: Equation reference is needed - @frankhezemans
         lme = log_post + 0.5 * (self.__n_param_penalty__ - log_dets) + self.__lambda__
 
         # compute the summed log model evidence, ignoring NaN or non-finite values
@@ -219,10 +240,33 @@ class VariationalBayes:
         lme_sum = np.sum(lme_finite)
 
         return lme, lme_sum
-    
+
     # function to update population-level parameters based on result of
     # participant-wise optimisation
     def update_population(self, param, hessian, lme, iter_idx=0, chain_idx=0):
+        """
+        Function to update the population-level parameters based on the results of participant-wise optimisation.
+
+        Parameters
+        ----------
+        param : array-like
+            Participant-wise parameter estimates.
+        hessian : array-like
+            Participant-wise Hessian matrices of the log posterior density function evaluated at the mode (i.e., MAP parameter estimates).
+        lme : float
+            Summed log model evidence.
+        iter_idx : int, optional
+            The iteration index. Default is 0.
+        chain_idx : int, optional
+            The chain index. Default is 0.
+
+        Returns
+        -------
+        population_updates : dict
+            Dictionary of updated population-level parameters.
+        param_snr : array-like
+            Standardised estimates of population-level means.
+        """
 
         # convenience function to obtain the (pseudo-)inverse of a matrix
         def __inv_mat(x):
@@ -245,19 +289,18 @@ class VariationalBayes:
         # by the diagonal elements of the matrix inverse of the Hessian
         inv_hessian = np.asarray(
             list(map(__inv_mat, hessian))
-        ) # shape: ppt x params x params
+        )  # shape: ppt x params x params
         param_uncertainty = np.diagonal(
             inv_hessian, axis1=1, axis2=2
         )  # shape: ppt x params
         param_uncertainty = param_uncertainty.copy()
         # set any non-finite or non-positive values to NaN
         param_uncertainty[
-            np.logical_not(np.isfinite(param_uncertainty))
-            | (param_uncertainty <= 0)
+            np.logical_not(np.isfinite(param_uncertainty)) | (param_uncertainty <= 0)
         ] = np.nan
         # for each parameter, compute the sum across participants of the squared
         # estimate and the uncertainty of the estimate.
-        # empirical variance is then computed as the mean of that term (across 
+        # empirical variance is then computed as the mean of that term (across
         # participants), minus the square of the empirical means.
         param_var_mat = np.square(param) + param_uncertainty  # shape: ppt x params
         param_var_mat[np.logical_not(np.isfinite(param_var_mat))] = np.nan
@@ -266,18 +309,17 @@ class VariationalBayes:
         empirical_variances = mean_squares - square_means
         # also create empirical estimates of standard deviations (square root
         # of empirical variances), ensuring variances are not smaller than 1e-6
-        empirical_SDs = np.sqrt(
-            np.clip(empirical_variances, a_min=1e-6, a_max=None)
-        )
+        empirical_SDs = np.sqrt(np.clip(empirical_variances, a_min=1e-6, a_max=None))
 
-        # TODO ensure that shapes of `empirical_means` and `self.hyperpriors.a0`
+        # TODO: ensure that shapes of `empirical_means` and `self.hyperpriors.a0`
         # are consistent
-        
+
+        # TODO: Equation references are needed below - @frankhezemans
+
         # compute the expected value (mean) of the posterior distribution of the
         # population-level means (mu) of model parameters
         E_mu = (1 / self.__beta__) * (
-            self.__n_ppt__ * empirical_means +
-            self.hyperpriors.b * self.hyperpriors.a0
+            self.__n_ppt__ * empirical_means + self.hyperpriors.b * self.hyperpriors.a0
         )
 
         # compute the expected value (mean) of the posterior distribution of the
@@ -296,16 +338,12 @@ class VariationalBayes:
         # variances are not unreasonably small (using 1e-6 as lower threshold),
         # (3) take the square root of the estimated variances to get estimated
         # standard deviations.
-        E_sd = np.sqrt(
-            np.clip((1 / E_tau), a_min=1e-6, a_max=None)
-        )
+        E_sd = np.sqrt(np.clip((1 / E_tau), a_min=1e-6, a_max=None))
 
         # also compute "hierarchical errorbars" - basically standard errors of
         # the estimates of the population-level means, which can be used
         # post-hoc for statistical inference
-        E_mu_error = np.sqrt(
-            (2 * sigma / self.__beta__) / (2 * self.__nu__)
-        )
+        E_mu_error = np.sqrt((2 * sigma / self.__beta__) / (2 * self.__nu__))
 
         # use these estimates of the population-level mean and variance to
         # update the priors on model parameters, for next round of
@@ -323,8 +361,13 @@ class VariationalBayes:
         hyper = pd.DataFrame(
             [0, 0, 0, 0, 0, 0],
             index=[
-                "chain", "iteration", "parameter",
-                "mean", "mean_errorbar", "sd", "lme"
+                "chain",
+                "iteration",
+                "parameter",
+                "mean",
+                "mean_errorbar",
+                "sd",
+                "lme",
             ],
         ).T
         for i, name in enumerate(self.__param_names__):
@@ -343,14 +386,44 @@ class VariationalBayes:
         param_snr = empirical_means / empirical_SDs
 
         return population_updates, param_snr
-    
 
     # function to check if the algorithm has converged
     def check_convergence(
-            self, lme_new, lme_old, param_snr_new, param_snr_old,
-            iter_idx=0, use_lme=True, use_param=True
+        self,
+        lme_new,
+        lme_old,
+        param_snr_new,
+        param_snr_old,
+        iter_idx=0,
+        use_lme=True,
+        use_param=True,
     ):
-        
+        """
+        Function to check if the algorithm has converged.
+
+        Parameters
+        ----------
+        lme_new : float
+            The new log model evidence.
+        lme_old : float
+            The old log model evidence.
+        param_snr_new : array-like
+            The new standardised estimates of population-level means.
+        param_snr_old : array-like
+            The old standardised estimates of population-level means.
+        iter_idx : int, optional
+            The iteration index. Default is 0.
+        use_lme : bool, optional
+            Whether to use the log model evidence for checking convergence. Default is True.
+        use_param : bool, optional
+            Whether to use the standardised estimates of population-level means for checking convergence. Default is True.
+
+        Returns
+        -------
+        convergence : bool
+            Whether the algorithm has converged.
+        """
+
         print(f"Iteration: {iter_idx + 1}, LME: {lme_new}")
 
         lme_satisfied = False
@@ -368,12 +441,24 @@ class VariationalBayes:
 
             if lme_satisfied or param_satisfied:
                 convergence = True
-        
+
         return convergence
-    
 
     # function to run the hierarchical bayesian inference algorithm
     def run_vb(self, chain_index=0):
+        """
+        Run the hierarchical Bayesian inference algorithm.
+
+        Parameters
+        ----------
+        chain_index : int, optional
+            The chain index. Default is 0.
+
+        Returns
+        -------
+        output : dict
+            Dictionary of results.
+        """
 
         lmes = []
         lme_old = np.nan
@@ -390,9 +475,7 @@ class VariationalBayes:
 
             # STEP 2: Estimate the participant-wise log model evidence
             # TODO use participant-wise lme estimates (`lme_vector`) in output
-            lme_vector, lme_sum = self.get_lme(
-                log_post=log_posterior, hessian=hessian
-            )
+            lme_vector, lme_sum = self.get_lme(log_post=log_posterior, hessian=hessian)
             lme_sum = copy.deepcopy(lme_sum)
             lmes.append(lme_sum)
             self.lmes.append(lmes)
@@ -401,16 +484,22 @@ class VariationalBayes:
             # precisions (tau), and use these estimates to update the normal prior
             # on participant-level parameters
             population_updates, param_snr = self.update_population(
-                param=param, hessian=hessian, lme = lme_sum,
-                iter_idx=iter_index, chain_idx=chain_index
+                param=param,
+                hessian=hessian,
+                lme=lme_sum,
+                iter_idx=iter_index,
+                chain_idx=chain_index,
             )
 
             # STEP 4: Check for convergence based on the change in LME and/or
             # change in standardized estimates of population-level means
             convergence = self.check_convergence(
-                lme_new=lme_sum, lme_old=lme_old,
-                param_snr_new=param_snr, param_snr_old=param_snr_old,
-                iter_idx=iter_index
+                lme_new=lme_sum,
+                lme_old=lme_old,
+                param_snr_new=param_snr,
+                param_snr_old=param_snr_old,
+                iter_idx=iter_index,
+                use_param=True,
             )
             if convergence:
                 break
@@ -429,6 +518,11 @@ class VariationalBayes:
 
     # function to run the VB algorithm for multiple repeats ("chains")
     def optimise(self):
+        """
+        Run the Variational Bayes algorithm for multiple chains.
+
+
+        """
         output = []
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")
@@ -439,31 +533,30 @@ class VariationalBayes:
 
     # function to perform one-sample Student's t-tests on the estimated values
     # of population-level means with respect to given null hypothesis values.
-    def mu_ttest(self, null_vals):
+    def ttest(self, null):
 
         # extract the pandas dataframe containing results regarding the
         # estimated population-level parameters
         hyper_df = self.hyperparameters
 
-        # convert null_vals to pandas dataframe if it is a dictionary
-        if isinstance(null_vals, dict):
-            null_vals_df = pd.DataFrame(
-                list(null_vals.items()),
-                columns=['parameter', 'null']
-            )
-        elif isinstance(null_vals, pd.DataFrame):
-            null_vals_df = null_vals
-            null_vals_df.columns = ['parameter', 'null']
+        # convert null to pandas dataframe if it is a dictionary
+        if isinstance(null, dict):
+            null_pd = pd.DataFrame(list(null.items()), columns=["parameter", "null"])
+        elif isinstance(null, pd.DataFrame):
+            null_df = null_pd
+            null_df.columns = ["parameter", "null"]
         else:
-            raise ValueError("null_vals should be either a dictionary or pandas DataFrame")
+            raise ValueError(
+                "null should be either a dictionary or pandas DataFrame"
+            )
 
         # merge the given null values with the results dataframe.
-        # NB doing inner join, so any parameters not given in null_vals will be
+        # NB doing inner join, so any parameters not given in null will be
         # excluded from subsequent analysis.
-        t_df = hyper_df.merge(null_vals_df, on='parameter', how='inner')
+        t_df = hyper_df.merge(null_df, on="parameter", how="inner")
 
         # calculate the t-statistics
-        t_df['t_stat'] = (t_df['mean'] - t_df['null']) / t_df['mean_se']
+        t_df["t_stat"] = (t_df["mean"] - t_df["null"]) / t_df["mean_se"]
         # calculate the p-value. we do this in two steps:
         # first, calculate the left tail probability: that is, the probability
         # under the null hypothesis that a t-statistic is less than or equal to
@@ -471,8 +564,8 @@ class VariationalBayes:
         # second, we multiply these left tail probabilities by 2, to account for
         # both the left and right tails of the Student's t-distribution (this
         # works because it is a symmetric distribution).
-        t_df['p_val'] = 2 * students_t.cdf(
-            x=(-1 * np.abs(t_df['t_stat'])), df=(2 * self.__nu__)
+        t_df["p_val"] = 2 * students_t.cdf(
+            x=(-1 * np.abs(t_df["t_stat"])), df=(2 * self.__nu__)
         )
 
         # TODO check if this is a sensible approach, or if we get issues with

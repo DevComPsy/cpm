@@ -239,7 +239,7 @@ class VariationalBayes:
         # compute the participant-wise log model evidence (lme)
         # Following line corresponds to Piray et al. (2019) Equation 22, page 29:
         # - log_post corresponds to `log f_{kn}`
-        # - self.__n_param_penalty corrsponds to `D_{k} log 2pi`
+        # - self.__n_param_penalty__ corrsponds to `D_{k} log 2pi`
         # - log_dets corresponds to `log |A_{kn}|`
         # - self.__lambda__ corresponds `lambda_{k}`
         # `E[log m_{k}]` is assumed to be equal to log(1) = 0, hence dropped.
@@ -308,7 +308,6 @@ class VariationalBayes:
         # - np.square(param) corresponds to `lambda_{kn} lambda_{kn}^{T}`
         # - np.square(empirical_means) corresponds to
         #   `bar_{lambda}_{k} bar_{lambda}_{k}^{T}`
-        #    
         # - param_uncertainty corresponds to `A_{kn}^{-1}`
         # Confirmed our implementation is consistent with Piray et al.'s code implementation:
         # https://github.com/payampiray/cbm/blob/11b5ad6dbcb0475b49564f8888515a6c06a76f18/codes/cbm_hbi_hbi.m#L258

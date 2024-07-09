@@ -226,6 +226,9 @@ class Fmin:
                         copy.deepcopy(results[ppt]), id=self.ppt_identifier
                     )
 
+        if self.prior:
+            pass
+
         return None
 
     def reset(self, initial_guess=True):
@@ -444,6 +447,9 @@ class FminBound:
                     self.fit[ppt] = __unpack(
                         copy.deepcopy(results[ppt]), id=self.ppt_identifier
                     )
+
+        if self.prior:
+            pass
 
         return None
 

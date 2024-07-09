@@ -57,3 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ea5b2750: cpm.generators.Simulator can now handle cases where trial numbers differ between participants
 - 2ae833f3: cpm.models.learning.DeltaRule.noisy_learning_rule() should not be scaled by learning rate
 - 2d0c716d: cpm.hierarchical.EmpiricalBayes non-writable array and np.nanmean reference bug
+- 62f92b16: fix #33:optimiser reset fails for parameters with any non-finite bounds
+- bfb167a8: updating params in LogParameters should only apply log transform when it is a freely varying parameter
+- b2a8ee35: fix LogParameters copy problem
+- 5ecada13: fix the issue where updating parameters in LogParameters would only accept non-log values

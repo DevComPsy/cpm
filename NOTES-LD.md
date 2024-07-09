@@ -32,3 +32,9 @@ Therefore, algorithm has converged.
 
 Some possible solutions that come to mind are Kullback-Leibler divergence, Jensen-Shannon divergence, or effect size measures.
 I will think about it.
+
+## one-sample t-test
+
+With a one sample t-test, we should have more summary stats in the output.
+We should probably include the mean, standard deviation, and the t-statistic, confidence intervals, as well as the p-value and the null hypothesis we tested against.
+We might also just throw in an effect size - although people could do that themselves.

@@ -362,7 +362,7 @@ class VariationalBayes:
         sigma = self.hyperpriors.s + 0.5 * (
             self.__n_ppt__ * empirical_variances + scaled_sq_meandev
         )
-        # Following line is given in text in between Equations 19 and 20, page 29 
+        # Following line is given in text in between Equations 19 and 20, page 29
         E_tau = sigma / self.__nu__
 
         # now we need to convert these estimates of population-level precisions
@@ -569,7 +569,20 @@ class VariationalBayes:
 
     # function to perform one-sample Student's t-tests on the estimated values
     # of population-level means with respect to given null hypothesis values.
-    def ttest(self, null):
+    def ttest(self, null=None):
+        """
+        Perform a one-sample Student's t-test on the estimated values of population-level means with respect to given null hypothesis values.
+
+        Parameters
+        ----------
+        null : dict or pd.DataFrame
+            The null hypothesis values for the population-level means for each parameters.
+
+        Returns
+        -------
+        t_df : pd.DataFrame
+            The results of the t-test.
+        """
 
         # extract the pandas dataframe containing results regarding the
         # estimated population-level parameters
@@ -581,18 +594,16 @@ class VariationalBayes:
         elif isinstance(null, pd.DataFrame):
             null_df = null_pd
             null_df.columns = ["parameter", "null"]
+        elif null is None:
+            raise ValueError("The null hypothesis must be provided.")
         else:
-            raise ValueError(
-                "null should be either a dictionary or pandas DataFrame"
-            )
+            raise ValueError("null should be either a dictionary or pandas DataFrame")
 
         # merge the given null values with the results dataframe.
         # NB doing inner join, so any parameters not given in null will be
         # excluded from subsequent analysis.
         t_df = hyper_df.merge(null_df, on="parameter", how="inner")
 
-        # Following test is consistent with Piray et al.'s code implementation:
-        # https://github.com/payampiray/cbm/blob/11b5ad6dbcb0475b49564f8888515a6c06a76f18/codes/cbm_hbi_ttest.m
         # calculate the t-statistics
         t_df["t_stat"] = (t_df["mean"] - t_df["null"]) / t_df["mean_se"]
         # calculate the p-value. we do this in two steps:

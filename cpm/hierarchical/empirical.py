@@ -261,6 +261,19 @@ class EmpiricalBayes:
             # model parameters, for next round of participant-wise MAP estimation
             self.optimiser.model.parameters.update_prior(**population_updates)
 
+            # approximate the log model evidence (lme) a.k.a. marginal likelihood:
+            # obtain the log determinant of the hessian matrix for each ppt, and incorporate
+            # the number of free parameters to define a penalty term
+            log_determinants = np.asarray(list(map(__log_det_hessian, hessian)))
+            penalty = 0.5 * (
+                self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
+            )
+            # calculate the participant-wise log model evidence as the penalised log posterior density,
+            # and then sum them up for an overall measure
+            log_model_evidence = log_posterior + penalty
+            summed_lme = log_model_evidence.sum()
+            lmes.append(copy.deepcopy(summed_lme))
+
             hyper = pd.DataFrame(
                 [0, 0, 0, 0, 0, 0, 0],
                 index=[
@@ -283,19 +296,6 @@ class EmpiricalBayes:
                 hyper["lme"] = copy.deepcopy(summed_lme)
                 hyper["reject"] = summed_lme < lme_old
                 self.hyperparameters = pd.concat([self.hyperparameters, hyper])
-
-            # approximate the log model evidence (lme) a.k.a. marginal likelihood:
-            # obtain the log determinant of the hessian matrix for each ppt, and incorporate
-            # the number of free parameters to define a penalty term
-            log_determinants = np.asarray(list(map(__log_det_hessian, hessian)))
-            penalty = 0.5 * (
-                self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
-            )
-            # calculate the participant-wise log model evidence as the penalised log posterior density,
-            # and then sum them up for an overall measure
-            log_model_evidence = log_posterior + penalty
-            summed_lme = log_model_evidence.sum()
-            lmes.append(copy.deepcopy(summed_lme))
 
             print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
 

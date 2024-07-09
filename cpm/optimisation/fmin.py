@@ -124,25 +124,12 @@ class Fmin:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
-        if number_of_starts is not None and initial_guess is not None:
-            ## convert to a 2D array
-            initial_guess = np.asarray(initial_guess)
-            if len(initial_guess.shape) == 1:
-                initial_guess = np.expand_dims(initial_guess, axis=0)
-            ## assign the initial guess and raise an error if the number of starts does not match the number of initial guesses
-            self.initial_guess = initial_guess
-            if np.asarray(initial_guess).shape[0] != number_of_starts:
-                raise ValueError(
-                    "The number of initial guesses must match the number of starts."
-                )
-
-        if number_of_starts is not None and initial_guess is None:
-            bounds = self.model.parameters.bounds()
-            self.initial_guess = np.random.uniform(
-                low=bounds[0],
-                high=bounds[1],
-                size=(number_of_starts, len(self.parameter_names)),
-            )
+        self.initial_guess = utils.generate_guesses(
+            bounds=self.model.parameters.bounds(),
+            number_of_starts=number_of_starts,
+            guesses=initial_guess,
+            shape=(number_of_starts, len(self.parameter_names)),
+        )
 
         self.__parallel__ = parallel
         self.__current_guess__ = self.initial_guess[0]
@@ -229,7 +216,6 @@ class Fmin:
                 nll = __extract_nll(results)
                 # check if ppt fit is better than the previous fit
                 indices = np.where(nll < old_nll)[0]
-                print(indices)
                 for ppt in indices:
                     self.details[ppt] = copy.deepcopy(results[ppt])
                     for i in range(len(self.parameter_names)):
@@ -259,9 +245,11 @@ class Fmin:
         self.details = []
         self.parameters = []
         if initial_guess:
-            bounds = self.model.parameters.bounds()
-            self.initial_guess = np.random.uniform(
-                low=bounds[0], high=bounds[1], size=self.initial_guess.shape
+            self.initial_guess = utils.generate_guesses(
+                bounds=self.model.parameters.bounds(),
+                number_of_starts=self.initial_guess.shape[0],
+                guesses=None,
+                shape=self.initial_guess.shape,
             )
         return None
 
@@ -347,25 +335,12 @@ class FminBound:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
-        if number_of_starts is not None and initial_guess is not None:
-            ## convert to a 2D array
-            initial_guess = np.asarray(initial_guess)
-            if len(initial_guess.shape) == 1:
-                initial_guess = np.expand_dims(initial_guess, axis=0)
-            ## assign the initial guess and raise an error if the number of starts does not match the number of initial guesses
-            self.initial_guess = initial_guess
-            if np.asarray(initial_guess).shape[0] != number_of_starts:
-                raise ValueError(
-                    "The number of initial guesses must match the number of starts."
-                )
-
-        if number_of_starts is not None and initial_guess is None:
-            bounds = self.model.parameters.bounds()
-            self.initial_guess = np.random.uniform(
-                low=bounds[0],
-                high=bounds[1],
-                size=(number_of_starts, len(self.parameter_names)),
-            )
+        self.initial_guess = utils.generate_guesses(
+            bounds=self.model.parameters.bounds(),
+            number_of_starts=number_of_starts,
+            guesses=initial_guess,
+            shape=(number_of_starts, len(self.parameter_names)),
+        )
 
         self.__parallel__ = parallel
         self.__current_guess__ = self.initial_guess[0]
@@ -489,9 +464,11 @@ class FminBound:
         self.details = []
         self.parameters = []
         if initial_guess:
-            bounds = self.model.parameters.bounds()
-            self.initial_guess = np.random.uniform(
-                low=bounds[0], high=bounds[1], size=self.initial_guess.shape
+            self.initial_guess = utils.generate_guesses(
+                bounds=self.model.parameters.bounds(),
+                number_of_starts=self.initial_guess.shape[0],
+                guesses=None,
+                shape=self.initial_guess.shape,
             )
         return None
 

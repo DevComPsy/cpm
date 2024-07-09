@@ -38,3 +38,14 @@ I will think about it.
 With a one sample t-test, we should have more summary stats in the output.
 We should probably include the mean, standard deviation, and the t-statistic, confidence intervals, as well as the p-value and the null hypothesis we tested against.
 We might also just throw in an effect size - although people could do that themselves.
+
+Response from Frank:
+The output dataframe `t_df` builds on the `self.hyperparameters` dataframe, so it already includes - for each parameter - the estimated population-level mean, standard error of that mean, and the estimated population-level standard deviation. We then add the t-statistics and the p-values.
+We could indeed add confidence intervals and effect sizes. We know the exact form of the marginal posterior over the population-level mean (Piray et al. Equation 24, page 30). So we could provide a 95% quantile interval of that distribution as the confidence interval.
+The effect size a la Cohen's d is directly proportional to the t-statistic, so I'm not sure how much added value that would have.
+
+## Adding Output
+
+Since we can determine the exact posterior distributions over the participant-level parameters and the population-level means and standard deviations, we could add more details in the output.
+In terms of participant-level parameters, we currently only return the MAP parameter estimates - which correspond to the posterior means - but we could also return the participant-level standard deviations (obtained from Hessian matrices), and even 95% quantile intervals of the normal posterior distributions (based on the estimated means and SDs).
+In terms of the population-level means and SDs of parameters, we could similarly return their posterior means, SDs and 95% QIs.

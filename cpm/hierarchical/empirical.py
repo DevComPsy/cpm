@@ -99,8 +99,6 @@ class EmpiricalBayes:
 
         self.kwargs = kwargs
 
-        self.details = []
-        self.lmes = []
         self.hyperparameters = pd.DataFrame()
         self.fit = pd.DataFrame()
 
@@ -182,7 +180,6 @@ class EmpiricalBayes:
             # the Hessian matrix of the target function evaluated at the MAP parameter estimates,
             # and the full output from model fitting
             parameters, hessian, details = self.step()
-            self.details.append(copy.deepcopy(details))
 
             # extract the participant-wise unnormalised log posterior density
             log_posterior = np.asarray([ppt.get("fun") for ppt in details])
@@ -255,19 +252,37 @@ class EmpiricalBayes:
 
             # update population-level parameters
             population_updates = {}
-            hyper = pd.DataFrame(
-                [0, 0, 0, 0, 0, 0],
-                index=["chain", "iteration", "parameter", "mean", "sd", "lme"],
-            ).T
             for i, name in enumerate(parameter_names):
                 population_updates[name] = {
                     "mean": means[i],
                     "sd": stdev[i],
                 }
-
             # use the updated population-level parameters to update the priors on
             # model parameters, for next round of participant-wise MAP estimation
             self.optimiser.model.parameters.update_prior(**population_updates)
+
+            hyper = pd.DataFrame(
+                [0, 0, 0, 0, 0, 0, 0],
+                index=[
+                    "chain",
+                    "iteration",
+                    "parameter",
+                    "mean",
+                    "sd",
+                    "lme",
+                    "reject",
+                ],
+            ).T
+
+            for i, name in enumerate(parameter_names):
+                hyper["parameter"] = name
+                hyper["mean"] = means[i]
+                hyper["sd"] = stdev[i]
+                hyper["iteration"] = iteration + 1
+                hyper["chain"] = chain_index
+                hyper["lme"] = copy.deepcopy(summed_lme)
+                hyper["reject"] = summed_lme < lme_old
+                self.hyperparameters = pd.concat([self.hyperparameters, hyper])
 
             # approximate the log model evidence (lme) a.k.a. marginal likelihood:
             # obtain the log determinant of the hessian matrix for each ppt, and incorporate
@@ -282,24 +297,13 @@ class EmpiricalBayes:
             summed_lme = log_model_evidence.sum()
             lmes.append(copy.deepcopy(summed_lme))
 
-            print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
-
-            for i, name in enumerate(parameter_names):
-                hyper["parameter"] = name
-                hyper["mean"] = means[i]
-                hyper["sd"] = stdev[i]
-                hyper["iteration"] = iteration + 1
-                hyper["chain"] = chain_index
-                hyper["lme"] = copy.deepcopy(summed_lme)
-                self.hyperparameters = pd.concat([self.hyperparameters, hyper])
+            print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
 
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
                     break
                 else:  # update the summed log model evidence
                     lme_old = summed_lme
-
-            self.lmes.append(lmes)
 
         output = {
             "lme": lmes,

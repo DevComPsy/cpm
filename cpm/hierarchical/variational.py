@@ -139,7 +139,7 @@ class VariationalBayes:
 
         # extract the parameter estimates and organise them into an array
         parameters = self.optimiser.parameters
-        param = np.zeros(self.__n_ppt__, self.__n_param__)
+        param = np.zeros((self.__n_ppt__, self.__n_param__))
         for i, name in enumerate(self.__param_names__):
             for ppt, content in enumerate(parameters):
                 param[ppt, i] = content.get(name)
@@ -395,7 +395,7 @@ class VariationalBayes:
 
         # organise population-level variables into a pandas dataframe in long format
         hyper = pd.DataFrame(
-            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
             index=[
                 "chain",
                 "iteration",

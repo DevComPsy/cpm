@@ -42,6 +42,7 @@ class EmpiricalBayes:
     The current implementation also controls for some **edge-cases** that are not covered by the algorithm above:
 
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
+    - When calculating the within-subject variance via the Hessian matrix, the algorithm sets any non-finite or non-positive values to NaN.
 
     References
     ----------
@@ -92,12 +93,12 @@ class EmpiricalBayes:
             objective  # whether the optimiser looks for the minimum or maximum
         )
         self.__number_of_parameters__ = len(self.optimiser.model.parameters.free())
+        self.__bounds__ = self.optimiser.model.parameters.bounds()
 
         self.kwargs = kwargs
 
-        self.fit = []
-        self.details = []
-        self.lmes = []
+        self.hyperparameters = pd.DataFrame()
+        self.fit = pd.DataFrame()
 
     def step(self):
         self.optimiser.optimise()
@@ -108,7 +109,7 @@ class EmpiricalBayes:
         hessian = np.asarray(hessian)
         return self.optimiser.parameters, hessian, self.optimiser.fit
 
-    def stair(self):
+    def stair(self, chain_index=0):
         """
         The main function that runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially a single chain.
 
@@ -170,7 +171,6 @@ class EmpiricalBayes:
         lmes = []
 
         for iteration in range(self.iteration):
-            prior = self.optimiser.model.parameters.PDF()
 
             self.optimiser.reset()
 
@@ -178,8 +178,6 @@ class EmpiricalBayes:
             # the Hessian matrix of the target function evaluated at the MAP parameter estimates,
             # and the full output from model fitting
             parameters, hessian, details = self.step()
-            self.fit.append(copy.deepcopy(parameters))
-            self.details.append(copy.deepcopy(details))
 
             # extract the participant-wise unnormalised log posterior density
             log_posterior = np.asarray([ppt.get("fun") for ppt in details])
@@ -203,10 +201,14 @@ class EmpiricalBayes:
                 for ppt, content in enumerate(parameters):
                     param[ppt, i] = content.get(name)
 
+            parameter_long = pd.DataFrame(param, columns=parameter_names)
+            parameter_long["ppt"] = [i for i in range(len(parameters))]
+            parameter_long["iteration"] = iteration + 1
+            parameter_long["chain"] = chain_index
+            self.fit = pd.concat([self.fit, parameter_long]).reset_index(drop=True)
             # turn any non-finite values into NaN, to avoid subsequent issues
             # with calculating parameter means and variances
-            param[np.logical_not(np.isfinite(param))] = np.nan
-
+            param[np.isinf(param)] = np.nan
             # get estimates of population-level means of parameters
             means = np.nanmean(param, axis=0)  # shape: 1 x params
 
@@ -225,7 +227,8 @@ class EmpiricalBayes:
                 inv_hessian, axis1=1, axis2=2
             )  # shape: ppt x params
             param_uncertainty = param_uncertainty.copy()  # make sure array is writable
-            # set any non-finite or non-positive values to NaN
+            # keep the signs of the derivatives
+            # # set any non-finite or non-positive values to NaN
             param_uncertainty[
                 np.logical_not(np.isfinite(param_uncertainty))
                 | (param_uncertainty <= 0)
@@ -247,13 +250,11 @@ class EmpiricalBayes:
 
             # update population-level parameters
             population_updates = {}
-
             for i, name in enumerate(parameter_names):
                 population_updates[name] = {
                     "mean": means[i],
                     "sd": stdev[i],
                 }
-
             # use the updated population-level parameters to update the priors on
             # model parameters, for next round of participant-wise MAP estimation
             self.optimiser.model.parameters.update_prior(**population_updates)
@@ -271,7 +272,30 @@ class EmpiricalBayes:
             summed_lme = log_model_evidence.sum()
             lmes.append(copy.deepcopy(summed_lme))
 
-            print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
+            hyper = pd.DataFrame(
+                [0, 0, 0, 0, 0, 0, 0],
+                index=[
+                    "chain",
+                    "iteration",
+                    "parameter",
+                    "mean",
+                    "sd",
+                    "lme",
+                    "reject",
+                ],
+            ).T
+
+            for i, name in enumerate(parameter_names):
+                hyper["parameter"] = name
+                hyper["mean"] = means[i]
+                hyper["sd"] = stdev[i]
+                hyper["iteration"] = iteration + 1
+                hyper["chain"] = chain_index
+                hyper["lme"] = copy.deepcopy(summed_lme)
+                hyper["reject"] = summed_lme < lme_old
+                self.hyperparameters = pd.concat([self.hyperparameters, hyper])
+
+            print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
 
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
@@ -279,17 +303,12 @@ class EmpiricalBayes:
                 else:  # update the summed log model evidence
                     lme_old = summed_lme
 
-            iteration += 1
-
-            self.lmes.append(lmes)
-
         output = {
             "lme": lmes,
             "hyperparameters": population_updates,
             "parameters": self.optimiser.model.parameters,
         }
 
-        # print(f"Chain finished in {iteration} iterations: {population_updates}")
         return output
 
     def optimise(self):
@@ -300,7 +319,29 @@ class EmpiricalBayes:
         output = []
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")
-            results = self.stair()
+            results = self.stair(chain_index=chain)
             output.append(copy.deepcopy(results))
         self.output = output
         return None
+
+    def parameters(self):
+        """
+        Returns the estimated individual-level parameters for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated individual-level parameters for each iteration and chain.
+        """
+        return self.fit
+
+    def priors(self):
+        """
+        Returns the estimated group-level hyperparameters (priors) for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated group-level hyperparameters for each iteration and chain.
+        """
+        return self.hyperparameters

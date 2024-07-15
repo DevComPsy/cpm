@@ -55,6 +55,23 @@ def minimum(pars, function, data, loss, prior=False, **args):
     return metric
 
 
+def numerical_hessian(func=None, params=None, hessian=None):
+    """Calculate numerically the hessian matrix of func with respect to ``params``.
+
+    Args:
+        func: Function without arguments that depends on ``params``
+        params: Parameters that ``func`` implicitly depends on and with respect to which the
+            derivatives will be taken.
+
+    Returns:
+        Hessian matrix
+    """
+
+    hesse_func = nd.Hessian(func, step=1e-4, method="forward")
+    computed_hessian = hesse_func(params)
+    return computed_hessian
+
+
 class Fmin:
     """
     Class representing the Fmin search (unbounded) optimization algorithm using a downhill simplex.
@@ -169,7 +186,11 @@ class Fmin:
                 **self.kwargs,
                 full_output=True,
             )
-            hessian = Hessian(result[0], model, participant.get("observed"), loss)
+
+            def f(x):
+                return minimum(x, model, participant.get("observed"), loss, prior)
+
+            hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
             result = (*result, hessian)
             # if participant data contains identifiers, return the identifiers too
             if self.ppt_identifier is not None:
@@ -185,7 +206,6 @@ class Fmin:
         loss = self.loss
         model = self.model
         prior = self.prior
-        Hessian = nd.Hessian(minimum)
 
         for i in range(len(self.initial_guess)):
             print(
@@ -374,7 +394,6 @@ class FminBound:
         loss = self.loss
         model = self.model
         prior = self.prior
-        Hessian = nd.Hessian(minimum)
 
         def __task(participant, **args):
 
@@ -388,7 +407,12 @@ class FminBound:
                 disp=self.display,
                 **self.kwargs,
             )
-            hessian = Hessian(result[0], model, participant.get("observed"), loss)
+
+            def f(x):
+                return minimum(x, model, participant.get("observed"), loss, prior)
+
+            hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
+
             result = (*result[0:2], *tuple(list(result[2].values())), hessian)
 
             if self.ppt_identifier is not None:
@@ -400,11 +424,6 @@ class FminBound:
             for i in range(len(result)):
                 output[i] = result[i][1]
             return output.copy()
-
-        loss = self.loss
-        model = self.model
-        prior = self.prior
-        Hessian = nd.Hessian(minimum)
 
         for i in range(len(self.initial_guess)):
             print(

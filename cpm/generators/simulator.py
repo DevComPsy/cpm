@@ -9,7 +9,7 @@ import copy
 import pickle as pkl
 
 from .parameters import Parameters, Value
-from .utils import simulation_export
+from .utils import simulation_export, unpack_participants, cast_parameters
 
 
 class Simulator:
@@ -20,9 +20,11 @@ class Simulator:
     ----------
     wrapper : Wrapper
         An initialised Wrapper object for the model.
-    data : list
-        The data required for the simulation. It must be a list of dictionaries, where each dictionary contains the data (or environment) for a single participant.
-    parameters : Parameters or list
+    data : pandas.core.groupby.generic.DataFrameGroupBy or list of dictionaries
+        The data required for the simulation.
+        If it is a pandas.core.groupby.generic.DataFrameGroupBy, as returned by `pandas.DataFrame.groupby()`, each group must contain the data (or environment) for a single participant.
+        If it is a list of dictionaries, each dictionary must contain the data (or environment) for a single participant.
+    parameters : Parameters, pd.DataFrame, pd.Series or list
         The parameters required for the simulation. It can be a Parameters object or a list of dictionaries whose length is equal to data. If it is a Parameters object, Simulator will use the same parameters for all simulations. It is a list of dictionaries, it will use match the parameters with data, so that for example parameters[6] will be used for the simulation of data[6].
 
     Returns
@@ -35,19 +37,23 @@ class Simulator:
     def __init__(self, wrapper=None, data=None, parameters=None):
         self.wrapper = wrapper
         self.data = data
-        self.parameters = copy.deepcopy(parameters)
-        if len(self.data) != len(self.parameters):
-            self.parameters = []
-            self.parameters = [
-                copy.deepcopy(parameters) for i in range(1, len(self.data) + 1)
-            ]
-            warnings.warn(
-                "The number of parameter sets and number of participants in data do not match.\nUsing the same parameters for all participants."
+
+        self.groups = None
+        self.__run__ = False
+        self.__pandas__ = isinstance(data, pd.api.typing.DataFrameGroupBy)
+        self.__parameter__pandas__ = isinstance(parameters, pd.DataFrame)
+        if isinstance(self.__pandas__, pd.DataFrame):
+            raise ValueError(
+                "Data should be a pandas.DataFrameGroupBy object, not a pandas.DataFrame."
             )
+        if self.__pandas__:
+            self.groups = list(self.data.groups.keys())
+
+        self.parameters = cast_parameters(parameters, len(self.data))
         self.parameter_names = self.wrapper.parameter_names
+
         self.simulation = []
         self.generated = []
-        self.__run__ = False
 
     def run(self):
         """
@@ -57,10 +63,17 @@ class Simulator:
         -------
         experiment: A list containing the results of the simulation.
         """
+
         for i in range(len(self.data)):
             self.wrapper.reset()
             evaluate = copy.deepcopy(self.wrapper)
-            evaluate.reset(parameters=self.parameters[i], data=self.data[i])
+            ppt_data = unpack_participants(
+                self.data, i, self.groups, pandas=self.__pandas__
+            )
+            ppt_parameter = unpack_participants(
+                self.parameters, i, self.groups, pandas=self.__parameter__pandas__
+            )
+            evaluate.reset(parameters=ppt_parameter, data=ppt_data)
             evaluate.run()
             output = copy.deepcopy(evaluate.simulation)
             self.simulation.append(output.copy())

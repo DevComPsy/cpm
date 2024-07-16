@@ -5,7 +5,7 @@ import pickle as pkl
 
 ## import local modules
 from .parameters import Parameters, Value
-from .utils import simulation_export
+from .utils import simulation_export, unpack_trials, determine_data_length
 
 
 class Wrapper:
@@ -16,8 +16,9 @@ class Wrapper:
     ----------
     model : function
         The model function that calculates the output(s) of the model for a single trial. See Notes for more information. See Notes for more information.
-    data : dict
-        A dictionary containing the data for the model.This is a dictionary that contains information about the each state in the environment or each trial in the experiment - all input to the model that are not parameters.
+    data : pandas.DataFrame or dict
+        If a `pandas.DataFrame`, it must contain information about each trial in the experiment that serves as an input to the model. Each trial is a complete row.
+        If a `dictionary`, it must contains information about the each state in the environment or each trial in the experiment - all input to the model that are not parameters.
     parameters : Parameters object
         The parameters object for the model that contains all parameters (and initial states) for the model. See Notes on how it is updated internally.
 
@@ -29,7 +30,7 @@ class Wrapper:
 
     Notes
     -----
-    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:
+    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary or `pd.Series` containing all input to the model on a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:
 
     - 'dependent': Any dependent variables calculated by the model that will be used for the loss function.
 
@@ -47,12 +48,9 @@ class Wrapper:
             self.values = self.parameters.values
         self.simulation = []
         self.data = data
-
         # determine the number of trials
-        # find the shape of each key in the data
-        self.shape = [(np.array(v).shape) for k, v in self.data.items() if k != "ppt"]
-        # find the maximum number of trials
-        self.__len__ = np.max([shape[0] for shape in self.shape])
+        self.__len__, self.__pandas__ = determine_data_length(data)
+
         self.dependent = []
         self.parameter_names = list(parameters.keys())
 
@@ -70,8 +68,7 @@ class Wrapper:
         """
         for i in range(self.__len__):
             ## create input for the model
-            trial = {k: self.data[k][i] for k in self.data.keys() if k != "ppt"}
-
+            trial = unpack_trials(self.data, i, self.__pandas__)
             ## run the model
             output = self.model(parameters=self.parameters, trial=trial)
             self.simulation.append(output.copy())
@@ -104,7 +101,7 @@ class Wrapper:
 
         Parameters
         ----------
-        parameters : dict, array_like or Parameters, optional
+        parameters : dict, array_like, pd.Series or Parameters, optional
             The parameters to reset the model with.
 
         Notes
@@ -135,7 +132,7 @@ class Wrapper:
             self.parameters = copy.deepcopy(self.__init_parameters__)
             self.__run__ = False
         # if dict, update using parameters update method
-        if isinstance(parameters, dict):
+        if isinstance(parameters, dict) or isinstance(parameters, pd.Series):
             self.parameters.update(**parameters)
         # if list, update the parameters in for keys in range of 0:len(parameters)
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
@@ -144,11 +141,7 @@ class Wrapper:
                 self.parameters.update(**{keys: value})
         if data is not None:
             self.data = data
-            self.shape = [
-                (np.array(v).shape) for k, v in self.data.items() if k != "ppt"
-            ]
-            # find the maximum number of trials
-            self.__len__ = np.max([shape[0] for shape in self.shape])
+            self.__len__, self.__pandas__ = determine_data_length(data)
         return None
 
     def export(self):

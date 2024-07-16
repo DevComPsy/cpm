@@ -162,7 +162,7 @@ class Parameters:
 
     def sample(self, size=1, jump=False):
         """
-        Sample and update parameter valuesthe parameters from their prior distribution.
+        Sample and update parameter values from their prior distribution.
 
         Returns
         -------

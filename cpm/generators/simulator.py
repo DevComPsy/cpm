@@ -4,12 +4,12 @@ Runs a simulation for each ppt in the data.
 
 import numpy as np
 import pandas as pd
-import warnings
 import copy
 import pickle as pkl
 
-from .parameters import Parameters, Value
-from ..core.data import unpack_participants, cast_parameters
+from .parameters import Parameters
+from ..core.data import unpack_participants
+from ..core.generators import cast_parameters
 from ..core.exports import simulation_export
 
 

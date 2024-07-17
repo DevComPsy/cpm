@@ -1,5 +1,6 @@
 from . import minimise
-from ..core import generators
+from ..core.generators import generate_guesses
+from ..core.data import detailed_pandas_compiler
 from ..generators import Simulator, Wrapper
 
 from pybads import BADS
@@ -122,7 +123,7 @@ class Bads:
                 "The Bads algorithm is not compatible with the Simulator object."
             )
 
-        self.initial_guess = generators.generate_guesses(
+        self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
             guesses=initial_guess,
@@ -270,7 +271,7 @@ class Bads:
         self.parameters = []
         self.details = []
         if initial_guess:
-            self.initial_guess = generators.generate_guesses(
+            self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
                 number_of_starts=self.initial_guess.shape[0],
                 guesses=None,
@@ -287,6 +288,6 @@ class Bads:
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        output = generators.detailed_pandas_compiler(self.fit)
+        output = detailed_pandas_compiler(self.fit)
         output.reset_index(drop=True, inplace=True)
         return output

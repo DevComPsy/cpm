@@ -2,12 +2,11 @@ from scipy.optimize import differential_evolution
 import pandas as pd
 import numpy as np
 import copy
-import warnings
 import multiprocess as mp
 
 
 from . import minimise
-from ..core import generators
+from ..core.data import detailed_pandas_compiler
 from ..generators import Simulator, Wrapper
 
 
@@ -166,9 +165,7 @@ class DifferentialEvolution:
         for result in results:
             self.parameters.append(
                 copy.deepcopy(
-                    generators.extract_params_from_fit(
-                        data=result.x, keys=self.parameter_names
-                    )
+                    extract_params_from_fit(data=result.x, keys=self.parameter_names)
                 )
             )
             self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result.fun)})
@@ -214,7 +211,7 @@ class DifferentialEvolution:
             output = pd.concat([output, current], axis=0)
 
         if details:
-            metrics = generators.detailed_pandas_compiler(
+            metrics = detailed_pandas_compiler(
                 self.details, method="differential_evolution"
             )
             output.reset_index(drop=True, inplace=True)

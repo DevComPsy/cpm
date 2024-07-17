@@ -1,12 +1,11 @@
-from . import minimise
-from ..core import generators
+from ..core.generators import generate_guesses
+from ..core.data import detailed_pandas_compiler
 from ..generators import Simulator, Wrapper
 
 from scipy.optimize import fmin, fmin_l_bfgs_b
 import numpy as np
 import pandas as pd
 import copy
-import warnings
 import multiprocess as mp
 import numdifftools as nd
 
@@ -141,7 +140,7 @@ class Fmin:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
-        self.initial_guess = generators.generate_guesses(
+        self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
             guesses=initial_guess,
@@ -265,7 +264,7 @@ class Fmin:
         self.details = []
         self.parameters = []
         if initial_guess:
-            self.initial_guess = generators.generate_guesses(
+            self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
                 number_of_starts=self.initial_guess.shape[0],
                 guesses=None,
@@ -282,7 +281,7 @@ class Fmin:
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        output = generators.detailed_pandas_compiler(self.fit)
+        output = detailed_pandas_compiler(self.fit)
         output.reset_index(drop=True, inplace=True)
         return output
 
@@ -355,7 +354,7 @@ class FminBound:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
-        self.initial_guess = generators.generate_guesses(
+        self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
             guesses=initial_guess,
@@ -483,7 +482,7 @@ class FminBound:
         self.details = []
         self.parameters = []
         if initial_guess:
-            self.initial_guess = generators.generate_guesses(
+            self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
                 number_of_starts=self.initial_guess.shape[0],
                 guesses=None,
@@ -500,6 +499,6 @@ class FminBound:
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        output = generators.detailed_pandas_compiler(self.fit)
+        output = detailed_pandas_compiler(self.fit)
         output.reset_index(drop=True, inplace=True)
         return output

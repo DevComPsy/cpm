@@ -5,11 +5,11 @@ import warnings
 from ..generators.parameters import Parameters
 
 __all__ = [
-    "simulation_export",
     "unpack_trials",
     "unpack_participants",
     "determine_data_length",
-    "cast_parameters",
+    "extract_params_from_fit",
+    "detailed_pandas_compiler",
 ]
 
 
@@ -89,40 +89,44 @@ def determine_data_length(data):
     return __len__, __pandas__
 
 
-def cast_parameters(parameters, sample=None):
+def extract_params_from_fit(data, keys=None):
     """
-    Identify parameter type and repeat it for each participant.
+    Extract the parameters from the fit.
+    """
+    parameters = {}
+    for i in range(len(data)):
+        parameters[keys[i]] = data[i]
+    return parameters
+
+
+def detailed_pandas_compiler(details):
+    """
+    Exports a list of dictionaries as a pandas dataframe.
+    Optimised for the output of the routines implemented.
 
     Parameters
     ----------
-    parameters : dict, list, pd.Series, pd.DataFrame or cpm.generators.Parameters
-        The parameters to cast.
-    """
-    cast = len(parameters) != sample
-    if cast:
-        if isinstance(parameters, dict):
-            output = [copy.deepcopy(parameters) for i in range(1, sample + 1)]
-        if isinstance(parameters, pd.Series):
-            output = pd.DataFrame([parameters for i in range(1, sample + 1)])
-        if isinstance(parameters, pd.DataFrame):
-            repeats = sample // len(
-                parameters
-            )  # Calculate how many times to repeat the DataFrame to fit into sample
-            remainder = sample % len(
-                parameters
-            )  # Calculate the remainder to adjust the final DataFrame size
-            output = pd.concat(
-                [parameters] * repeats + [parameters.iloc[:remainder]],
-                ignore_index=True,
-            )
-        if isinstance(parameters, list):
-            output = [copy.deepcopy(parameters) for i in range(1, sample + 1)]
-        if isinstance(parameters, Parameters):
-            output = parameters.sample(sample)
-        warnings.warn(
-            "The number of parameter sets and number of participants in data do not match.\nUsing the same parameters for all participants."
-        )
-    else:
-        output = parameters
+    details : list
+        A list of dictionaries containing the optimization details.
 
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas DataFrame containing the optimization details.
+    """
+    output = pd.DataFrame()
+    for i in details:
+        row = pd.DataFrame()
+        for key, value in i.items():
+            if key == "population" or key == "population_energies":
+                continue
+            if isinstance(value, (list, np.ndarray)):
+                if isinstance(value, np.ndarray) and value.ndim > 1:
+                    value = value.flatten()
+                value = pd.DataFrame(np.asarray(value)).T
+            else:
+                value = pd.DataFrame([value]).T
+            value.columns = [key + "_" + str(x) for x in value.columns]
+            row = pd.concat([row, value], axis=1)
+        output = pd.concat([output, row], axis=0)
     return output

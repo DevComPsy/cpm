@@ -5,7 +5,8 @@ import pickle as pkl
 
 ## import local modules
 from .parameters import Parameters, Value
-from .utils import simulation_export, unpack_trials, determine_data_length
+from ..core.data import unpack_trials, determine_data_length
+from ..core.exports import simulation_export
 
 
 class Wrapper:

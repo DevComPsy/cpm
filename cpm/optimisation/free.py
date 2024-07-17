@@ -1,5 +1,5 @@
 from . import minimise
-from . import utils
+from ..core import generators
 from ..generators import Simulator, Wrapper
 
 from scipy.optimize import minimize
@@ -121,7 +121,7 @@ class Minimize:
         self.details = []
         self.parameters = []
 
-        self.initial_guess = utils.generate_guesses(
+        self.initial_guess = generators.generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
             guesses=initial_guess,
@@ -245,7 +245,7 @@ class Minimize:
         self.details = []
         self.parameters = []
         if initial_guess:
-            self.initial_guess = utils.generate_guesses(
+            self.initial_guess = generators.generate_guesses(
                 bounds=self.model.parameters.bounds(),
                 number_of_starts=self.initial_guess.shape[0],
                 guesses=None,
@@ -262,6 +262,6 @@ class Minimize:
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        output = utils.detailed_pandas_compiler(self.fit)
+        output = generators.detailed_pandas_compiler(self.fit)
         output.reset_index(drop=True, inplace=True)
         return output

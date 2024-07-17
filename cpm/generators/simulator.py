@@ -9,7 +9,8 @@ import copy
 import pickle as pkl
 
 from .parameters import Parameters, Value
-from .utils import simulation_export, unpack_participants, cast_parameters
+from ..core.data import unpack_participants, cast_parameters
+from ..core.exports import simulation_export
 
 
 class Simulator:

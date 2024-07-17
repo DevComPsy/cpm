@@ -7,7 +7,7 @@ import multiprocess as mp
 
 
 from . import minimise
-from . import utils
+from ..core import generators
 from ..generators import Simulator, Wrapper
 
 
@@ -166,7 +166,7 @@ class DifferentialEvolution:
         for result in results:
             self.parameters.append(
                 copy.deepcopy(
-                    utils.extract_params_from_fit(
+                    generators.extract_params_from_fit(
                         data=result.x, keys=self.parameter_names
                     )
                 )
@@ -214,7 +214,7 @@ class DifferentialEvolution:
             output = pd.concat([output, current], axis=0)
 
         if details:
-            metrics = utils.detailed_pandas_compiler(
+            metrics = generators.detailed_pandas_compiler(
                 self.details, method="differential_evolution"
             )
             output.reset_index(drop=True, inplace=True)

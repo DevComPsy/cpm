@@ -209,6 +209,7 @@ class EmpiricalBayes:
             # turn any non-finite values into NaN, to avoid subsequent issues
             # with calculating parameter means and variances
             param[np.isinf(param)] = np.nan
+
             # get estimates of population-level means of parameters
             means = np.nanmean(param, axis=0)  # shape: 1 x params
 
@@ -259,7 +260,8 @@ class EmpiricalBayes:
             # model parameters, for next round of participant-wise MAP estimation
             self.optimiser.model.parameters.update_prior(**population_updates)
 
-            # approximate the log model evidence (lme) a.k.a. marginal likelihood:
+            # Equation 6 in Gershman (2016) provides the formula for the log model evidence
+            # how to approximate the log model evidence (lme) a.k.a. marginal likelihood:
             # obtain the log determinant of the hessian matrix for each ppt, and incorporate
             # the number of free parameters to define a penalty term
             log_determinants = np.asarray(list(map(__log_det_hessian, hessian)))
@@ -269,6 +271,8 @@ class EmpiricalBayes:
             # calculate the participant-wise log model evidence as the penalised log posterior density,
             # and then sum them up for an overall measure
             log_model_evidence = log_posterior + penalty
+            # sum the log model evidence across participants
+            # it is a log-converted version of Equation 8 in Gershman (2016)
             summed_lme = log_model_evidence.sum()
             lmes.append(copy.deepcopy(summed_lme))
 

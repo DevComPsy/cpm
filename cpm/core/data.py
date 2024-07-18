@@ -77,7 +77,6 @@ def determine_data_length(data):
     bool
         Whether the data is a pandas dataframe.
     """
-    __pandas__ = True
     # find the shape of each key in the data
     if isinstance(data, dict):
         shape = [(np.array(v).shape) for k, v in data.items() if k != "ppt"]
@@ -86,6 +85,8 @@ def determine_data_length(data):
         __pandas__ = False
     if isinstance(data, pd.DataFrame):
         __len__ = len(data)
+        __pandas__ = True
+
     return __len__, __pandas__
 
 

@@ -6,49 +6,9 @@ import multiprocess as mp
 
 
 from . import minimise
-from ..core.data import detailed_pandas_compiler
+from ..core.data import decompose, detailed_pandas_compiler, extract_params_from_fit
 from ..generators import Simulator, Wrapper
-
-
-def minimum(pars, function, data, loss, prior=False, **args):
-    """
-    The `minimise` function calculates a metric by comparing predicted values with
-    observed values.
-
-    Parameters
-    ----------
-    pars
-        The `pars` parameter is a dictionary that contains the parameters for the
-        function that needs to be minimized.
-    function
-        The `function` parameter is the function that needs to be minimized.
-    data
-        The `data` parameter is the data that is used to compare the predicted values
-        with the observed values.
-    loss
-        The `loss` parameter is the loss function that is used to calculate the metric
-        value.
-    args
-        The `args` parameter is a dictionary that contains additional parameters that
-        are used in the loss function.
-
-    Returns
-    -------
-        The metric value is being returned.
-
-    """
-    function.reset(pars)
-    function.run()
-    predicted = function.dependent
-    observed = copy.deepcopy(data)
-    metric = loss(predicted, observed, **args)
-    del predicted, observed
-    if np.isnan(metric) or np.isinf(metric):
-        metric = 1e10
-    if prior:
-        prior_pars = function.parameters.PDF(log=True)
-        metric += -prior_pars
-    return metric
+from ..core.optimisers import objective, prepare_data
 
 
 class DifferentialEvolution:
@@ -99,10 +59,27 @@ class DifferentialEvolution:
         self.fit = []
         self.details = []
         self.parameters = []
-        self.participant = data[0]
+
         self.display = display
         self.ppt_identifier = ppt_identifier
         self.prior = prior
+
+        self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
+            data, self.ppt_identifier
+        )
+
+        # if isinstance(data, pd.api.typing.DataFrameGroupBy):
+        #     self.groups = list(data.groups.keys())
+        #     self.participants = data.get_group(self.groups[0])
+        #     self.__pandas__ = True
+        # if isinstance(data, list):
+        #     self.participants = data[0]
+        #     self.__pandas__ = False
+        # if isinstance(data, pd.DataFrame) and self.ppt_identifier is not None:
+        #     self.data = data.groupby(self.ppt_identifier)
+        #     self.groups = list(self.data.groups.keys())
+        #     self.participants = self.data.get_group(self.groups[0])
+        #     self.__pandas__ = True
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
@@ -138,17 +115,27 @@ class DifferentialEvolution:
         """
 
         def __task(participant, **args):
+            """
+            Utility function to wrap fitting the model to each individual and organise the output.
+            """
 
-            model.reset(data=participant)
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+
+            model.reset(data=participant_dc)
 
             result = differential_evolution(
-                func=minimum,
+                func=objective,
                 bounds=self.bounds,
-                args=((model, participant.get("observed"), loss, prior)),
+                args=((model, observed, loss, prior)),
                 **self.kwargs,
             )
-            if self.ppt_identifier is not None:
-                result.ppt = participant.get(self.ppt_identifier)
+
+            result.ppt = ppt
+
             return result
 
         loss = self.loss
@@ -162,6 +149,7 @@ class DifferentialEvolution:
             results = list(map(__task, self.data))
 
         self.details = copy.deepcopy(results)
+
         for result in results:
             self.parameters.append(
                 copy.deepcopy(

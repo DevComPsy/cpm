@@ -50,7 +50,7 @@ class Simulator:
         if self.__pandas__:
             self.groups = list(self.data.groups.keys())
 
-        self.parameters = cast_parameters(parameters, len(self.data))
+        self.parameters = cast_parameters(parameters, len(self.groups))
         self.parameter_names = self.wrapper.parameter_names
 
         self.simulation = []
@@ -65,7 +65,7 @@ class Simulator:
         experiment: A list containing the results of the simulation.
         """
 
-        for i in range(len(self.data)):
+        for i in range(len(self.groups)):
             self.wrapper.reset()
             evaluate = copy.deepcopy(self.wrapper)
             ppt_data = unpack_participants(

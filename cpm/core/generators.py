@@ -1,5 +1,8 @@
 import numpy as np
+import copy
 import pandas as pd
+import warnings
+from ..generators.parameters import Parameters
 
 __all__ = [
     "cast_parameters",

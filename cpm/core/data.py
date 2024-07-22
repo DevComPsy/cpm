@@ -10,6 +10,7 @@ __all__ = [
     "determine_data_length",
     "extract_params_from_fit",
     "detailed_pandas_compiler",
+    "decompose",
 ]
 
 
@@ -41,17 +42,29 @@ def unpack_trials(data, i, pandas=True):
 
 def unpack_participants(data, index, keys=None, pandas=True):
     """
-    Unpack the data into a list of dictionaries.
+    Return a single participant's data or parameter identified by an indexing variable.
 
     Parameters
     ----------
-    data : pandas.DataFrameGroupBy or array_like
-        A dataframe or list of dictionaries containing the data to unpack.
+    data : pandas.DataFrame, pandas.api.texting.DataFrameGroupBy or array_like
+        A pd.DataFrame, a grouped DataFrame or list of dictionaries containing the data to unpack.
+    index : int
+        The index of the data to unpack, or the index of the grouping variable if `keys` is not None.
+    keys : array_like
+        An array of keys according to which the data is grouped.
+    pandas: bool
+        Whether data is a pandas DataFrame or not.
 
     Returns
     -------
-    pd.DataFrame or dict
-        A dataframe or dict containing a single participant's data.
+    pandas.DataFrame, pandas.Series, or dict
+        A dataframe or dict containing a single participant's data. If the data are parameters, where each row is a participant, a pandas Series is returned.
+
+    Notes
+    -----
+    If the data are parameters, the keys argument must be None.
+
+    This function is mainly used in cpm.generators.Simulator to manage different data structures before updating and running the model on a data set with multiple participants.
     """
     if pandas and keys is not None:
         return data.get_group(keys[index])
@@ -131,3 +144,38 @@ def detailed_pandas_compiler(details):
             row = pd.concat([row, value], axis=1)
         output = pd.concat([output, row], axis=0)
     return output
+
+
+def decompose(participant=None, pandas=False, identifier=None):
+    """
+    Decompose the data for fitting. The function extracts subsets of data from the participant's data and returns them as separate variables.
+
+    Parameters
+    ----------
+    participant : pandas.DataFrame or dict
+        A dataframe or dict containing the data to unpack.
+    pandas : bool
+        Whether to return the data as a pandas dataframe.
+    id : str
+        The id of the participant.
+
+    Returns
+    -------
+    participant : pandas.DataFrame or dict
+        The participant data.
+    observed : array_like
+        The observed data to fit the model to.
+    ppt : str or float
+        The participant identifier.
+    """
+    if pandas:
+        ppt, data = participant
+        observed = data.observed.to_numpy()
+    else:
+        ppt = None
+        observed = participant.get("observed")
+
+    if identifier is not None and pandas is False:
+        ppt = participant.get(identifier)
+
+    return data, observed, ppt

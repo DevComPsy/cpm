@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 42db58b6: DifferentialEvolution now supports parallelisation
 - 6312ad99: more thorough computation of inverse Hessian matrix and log determinant of Hessian matrix
 - 289cde73: made update_priors usable for both normal and truncated normal priors
+- ec2a181c: Implementing Piray's Variational Bayes method
 
 ### Changed
 
@@ -61,3 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bfb167a8: updating params in LogParameters should only apply log transform when it is a freely varying parameter
 - b2a8ee35: fix LogParameters copy problem
 - 5ecada13: fix the issue where updating parameters in LogParameters would only accept non-log values
+- 988b77a4: fix variational bayes data type error
+- 67df33c3: fix empirical bayes assigning values to objects before creating them
+- 62f92b16: fix initial guesses cannot generate starting guesses for parameter with non-finite or nan bounds

@@ -31,7 +31,7 @@ class DeltaRule:
 
     The delta-rule is a summed error term, which means that the error is defined as
     the difference between the target value and the summed activation of all values
-    for a given output unit available on the current trial/state. For separable
+    for a given output units target value available on the current trial/state. For separable
     error term, see the Bush and Mosteller (1951) rule.
 
     The current implementation is based on the Gluck and Bower's (1988) delta rule, an
@@ -44,7 +44,7 @@ class DeltaRule:
     >>> weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     >>> teacher = np.array([1, 0])
     >>> input = np.array([1, 1, 0])
-    >>> delta_rule = DeltaRule(alpha=0.1, zeta=0.5, weights=weights, feedback=teacher, input=input)
+    >>> delta_rule = DeltaRule(alpha=0.1, zeta=0.1, weights=weights, feedback=teacher, input=input)
     >>> delta_rule.compute()
     array([[ 0.07,  0.07,  0.  ],
            [-0.09, -0.09, -0.  ]])
@@ -86,6 +86,7 @@ class DeltaRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = np.asarray(weights.copy())
+        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
@@ -108,11 +109,12 @@ class DeltaRule:
         """
 
         for i in range(self.shape[0]):
+            # calculate summed error for a given output unit
             activations = np.sum(self.weights[i] * self.input)
+            self.error[i] = self.teacher[i] - activations
             for j in range(self.shape[1]):
-                self.weights[i, j] = (
-                    self.alpha * (self.teacher[i] - activations) * self.input[j]
-                )
+                # calcualte the change on weights
+                self.weights[i, j] = self.alpha * self.error[i] * self.input[j]
         self.__run__ = True
         return self.weights
 
@@ -135,9 +137,15 @@ class DeltaRule:
         """
         if not self.__run__:
             self.compute()
-        omega = np.abs(self.zeta * self.weights)
-        epsilon = np.random.normal(0, omega)
-        self.weights = self.weights + epsilon
+        # random noise vector initialized with zeros
+        epsilon = np.zeros_like(self.error)
+        for i in range(self.shape[0]):
+            # calculate standard deviation of the noise
+            sigma = self.zeta * np.abs(self.error[i])
+            # select random noise from normal distribution
+            epsilon[i] = np.random.normal(0, sigma)
+            # add noise to the weight changes for stimuli present on trial
+            self.weights[i] = self.weights[i] + epsilon[i] * self.input
         return self.weights
 
     def reset(self):
@@ -205,6 +213,7 @@ class SeparableRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = weights.copy()
+        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
@@ -250,9 +259,11 @@ class SeparableRule:
         """
         if not self.__run__:
             self.compute()
-        omega = np.abs(self.zeta * self.weights)
-        epsilon = np.random.normal(0, omega)
-        self.weights = self.weights + epsilon
+        epsilon = np.zeros_like(self.error)
+        for i in range(self.shape[0]):
+            sigma = self.zeta * np.abs(self.error[i])
+            epsilon[i] = np.random.normal(0, sigma)
+            self.weights[i] = self.weights[i] + epsilon[i] * self.input
         return self.weights
 
     def reset(self):

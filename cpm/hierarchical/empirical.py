@@ -22,15 +22,32 @@ class EmpiricalBayes:
 
     Notes
     -----
-    The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. The algorithm is based on the following steps:
+    The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. For the complete description of the method, please see Gershman (2016).
 
-    The fitting function must return the Hessian matrix of the optimisation. The Hessian matrix is a square matrix of second-order partial derivatives of the negative log-likelihood function. The Hessian matrix is used to calculate the within-subject variance of the parameters. Compatible methods in the toolbox include Fmin and Fminbound.
 
-    It is also important to note that we will require the Hessian matrix of second derivatives of the negative log posterior (Gershman, 2016, p. 3). This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
+    The fitting function must return the [Hessian matrix](https://en.wikipedia.org/wiki/Hessian_matrix) of the optimisation.
+    The Hessian matrix is then used in establishing the within-subject variance of the parameters.
+    It is also important to note that we will require the Hessian matrix of second derivatives of the **negative log posterior** (Gershman, 2016, p. 3).
+    This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
+
+    In the current implementation, wetry to calculate the second derivative of the negative log posterior density function according to the following algorithm:
+
+    1. Attempt to use [Cholesky decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition).
+    2. If fails, attempt to use [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition).
+    3. If fails, attempt to use [QR decomposition](https://en.wikipedia.org/wiki/QR_decomposition).
+    4. If the result is a complex number with zero imaginary part, keep the real part.
+
+    In addition, because the the Hessian matrix should correspond to the precision matrix, hence its inverse is the variance-covariance matrix, we will use its inverse to calculate the within-subject variance of the parameters. If the algorithm fails to calculate the inverse of the Hessian matrix, it will use the [Moore-Penrose pseudoinverse](https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse) instead.
 
     The current implementation also controls for some **edge-cases** that are not covered by the algorithm above:
 
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
+    - When calculating the within-subject variance via the Hessian matrix, the algorithm sets any non-finite or non-positive values to NaN.
+
+    References
+    ----------
+
+    Gershman, S. J. (2016). Empirical priors for reinforcement learning models. Journal of Mathematical Psychology, 71, 1-6.
 
     Examples
     --------
@@ -76,12 +93,12 @@ class EmpiricalBayes:
             objective  # whether the optimiser looks for the minimum or maximum
         )
         self.__number_of_parameters__ = len(self.optimiser.model.parameters.free())
+        self.__bounds__ = self.optimiser.model.parameters.bounds()
 
         self.kwargs = kwargs
 
-        self.fit = []
-        self.details = []
-        self.lmes = []
+        self.hyperparameters = pd.DataFrame()
+        self.fit = pd.DataFrame()
 
     def step(self):
         self.optimiser.optimise()
@@ -92,7 +109,7 @@ class EmpiricalBayes:
         hessian = np.asarray(hessian)
         return self.optimiser.parameters, hessian, self.optimiser.fit
 
-    def stair(self):
+    def stair(self, chain_index=0):
         """
         The main function that runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially a single chain.
 
@@ -101,89 +118,194 @@ class EmpiricalBayes:
         dict
             A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.
         """
-        ## Equation Numbers refer to Equations in the Gershman (2016) Empirical priors for reinforcement learning models
-        ## Step numbers correspond to
+
+        # convenience function to obtain the (pseudo-)inverse of a matrix
+        def __inv_mat(x):
+            try:
+                inv_x = np.linalg.inv(x)
+            except np.linalg.LinAlgError:
+                inv_x = np.linalg.pinv(x)
+
+            return inv_x
+
+        # convenience function to obtain the log determinant of a Hessian matrix
+        def __log_det_hessian(x):
+
+            # local convenience function to determine if input is a
+            # complex number with non-zero imaginary part
+            def has_nonzero_imaginary(x) -> bool:
+                if np.iscomplex(x):
+                    return np.imag(x) != 0
+                return False
+
+            # first attempt using Cholesky decomposition, which is the most efficient
+            try:
+                L = np.linalg.cholesky(x)
+                log_det = 2.0 * np.sum(np.log(np.diag(L)))
+                if has_nonzero_imaginary(log_det):
+                    raise np.linalg.LinAlgError
+            # second attempt using `slogdet`, which uses LU decomposition
+            except np.linalg.LinAlgError:
+                try:
+                    sign, log_det = np.linalg.slogdet(x)
+                    if sign == 0 or has_nonzero_imaginary(log_det):
+                        raise np.linalg.LinAlgError
+                # third and final attempt using QR decomposition
+                except np.linalg.LinAlgError:
+                    try:
+                        Q, R = np.linalg.qr(x)
+                        log_det = np.sum(np.log(np.abs(np.diag(R))))
+                        if has_nonzero_imaginary(log_det):
+                            return np.nan
+                    except np.linalg.LinAlgError:
+                        return np.nan
+
+            # if solution is complex number with zero imaginary part, just keep the real part
+            if np.iscomplex(log_det):
+                log_det = np.real(log_det)
+
+            return log_det
+
+        # Equation numbers refer to equations in the Gershman (2016) Empirical priors for reinforcement learning models
         lme_old = 0
         lmes = []
 
         for iteration in range(self.iteration):
-            prior = self.optimiser.model.parameters.PDF()
 
             self.optimiser.reset()
 
+            # perform participant-wise optimisation, extracting MAP parameter estimates,
+            # the Hessian matrix of the target function evaluated at the MAP parameter estimates,
+            # and the full output from model fitting
             parameters, hessian, details = self.step()
-            self.fit.append(copy.deepcopy(parameters))
-            self.details.append(copy.deepcopy(details))
 
-            # extract and transform negative log posteriors into maximum log likelihood
-            # this essentially gives us the output of Equation 5
-            negative_log_posterior = np.asarray([ppt.get("fun") for ppt in details])
+            # extract the participant-wise unnormalised log posterior density
+            log_posterior = np.asarray([ppt.get("fun") for ppt in details])
+            # if the optimiser minimses rather than maximises the target function, then the
+            # target function is the _negative_ of the log posterior density function. Thus, we
+            # multiply by minus 1 to get the log posterior density.
             if self.objective == "minimise":
-                negative_log_posterior = -1 * negative_log_posterior
+                log_posterior = -1 * log_posterior
+            # for the Laplace approximation, the Hessian matrix is assumed to contain the second
+            # derivatives of the _negative_ log posterior density function. So, if the objective
+            # was to maximise, then we need to multiply the entries of the Hessian matrix by -1.
+            if self.objective != "minimise":
+                hessian = -1 * hessian
 
-            # get group-level mean across participants
+            # organise parameter estimates in an array
             parameter_names = self.optimiser.model.parameters.free()
-            param = np.zeros((len(parameters), len(parameter_names)))
+            param = np.zeros(
+                (len(parameters), len(parameter_names))
+            )  # shape: ppt x params
             for i, name in enumerate(parameter_names):
                 for ppt, content in enumerate(parameters):
                     param[ppt, i] = content.get(name)
 
-            means = param.mean(axis=0)
-            ## In what follows, we break down Equation 6
-            # first calculate variance (between-subjects squared differences)
-            variance = param.var(axis=0)
+            parameter_long = pd.DataFrame(param, columns=parameter_names)
+            parameter_long["ppt"] = [i for i in range(len(parameters))]
+            parameter_long["iteration"] = iteration + 1
+            parameter_long["chain"] = chain_index
+            self.fit = pd.concat([self.fit, parameter_long]).reset_index(drop=True)
+            # turn any non-finite values into NaN, to avoid subsequent issues
+            # with calculating parameter means and variances
+            param[np.isinf(param)] = np.nan
 
-            ## getting the diagonal of the inverse hessian matrix
-            ## 1. calculate inverse hessian matrix
-            inv_hessian = np.asarray(list(map(np.linalg.inv, hessian)))
-            ## 2. take the diagonal element of the inverse hessian matrix
-            diagonal = np.diagonal(inv_hessian, axis1=1, axis2=2)
+            # get estimates of population-level means of parameters
+            means = np.nanmean(param, axis=0)  # shape: 1 x params
 
-            ## calculate the variance of the between-subjects squared differences and the within-subjects squared differences
-            ## add up variance plus diagonal for each ppt and then add up each ppt and divide them by mean
-            between_within_variance = np.square(param - means) + diagonal
-            ## get the mean of the between_within_variance minus the
-            variance = between_within_variance.mean(axis=0) - np.square(means)
-            ## make sure the STD is not too small by bounding it to 1e-6
+            # get estimates of population-level variances of parameters.
+            # this requires accounting for both the "within-subject" variance (i.e.
+            # uncertainty of parameter estimates) and the "between-subject" variance
+            # (i.e. individual differences relative to mean)
+
+            # the Hessian matrix should correspond to the precision matrix, hence its
+            # inverse is the variance-covariance matrix.
+            inv_hessian = np.asarray(
+                list(map(__inv_mat, hessian))
+            )  # shape: ppt x params x params
+            # diagonal elements should correspond to variances (uncertainties)
+            param_uncertainty = np.diagonal(
+                inv_hessian, axis1=1, axis2=2
+            )  # shape: ppt x params
+            param_uncertainty = param_uncertainty.copy()  # make sure array is writable
+            # keep the signs of the derivatives
+            # # set any non-finite or non-positive values to NaN
+            param_uncertainty[
+                np.logical_not(np.isfinite(param_uncertainty))
+                | (param_uncertainty <= 0)
+            ] = np.nan
+
+            # for each parameter, compute the sum across participants of the squared estimate and
+            # the uncertainty of the estimate.
+            # variance is then estimated as the mean of that term (across participants), minus the
+            # square of the estimated mean.
+            param_var_mat = np.square(param) + param_uncertainty  # shape: ppt x params
+            param_var_mat[np.logical_not(np.isfinite(param_var_mat))] = np.nan
+            variance = np.nanmean(param_var_mat, axis=0) - np.square(
+                means
+            )  # shape: 1 x params
+            # make sure the variances are non-negative, setting 1e-6 as a lower threshold
             np.clip(variance, 1e-6, None, out=variance)
+            # convert variances to standard deviations
+            stdev = np.sqrt(variance)
 
-            ## update population-level parameters.
+            # update population-level parameters
             population_updates = {}
-
             for i, name in enumerate(parameter_names):
                 population_updates[name] = {
                     "mean": means[i],
-                    "sd": variance[i],
+                    "sd": stdev[i],
                 }
-
+            # use the updated population-level parameters to update the priors on
+            # model parameters, for next round of participant-wise MAP estimation
             self.optimiser.model.parameters.update_prior(**population_updates)
 
-            # estimate log model evidence (lme)
-            # first find the log determinant of the hessian matrix for each ppt
-            log_determinants = (np.asarray(list(map(np.linalg.slogdet, hessian)))).sum(
-                axis=0
-            )[1]
-            ## add a penalty term to the negative log posterior
+            # Equation 6 in Gershman (2016) provides the formula for the log model evidence
+            # how to approximate the log model evidence (lme) a.k.a. marginal likelihood:
+            # obtain the log determinant of the hessian matrix for each ppt, and incorporate
+            # the number of free parameters to define a penalty term
+            log_determinants = np.asarray(list(map(__log_det_hessian, hessian)))
             penalty = 0.5 * (
                 self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
             )
-            ## calculate the log model evidence with a penalty and sum them up
-            log_model_evidence = negative_log_posterior + penalty
+            # calculate the participant-wise log model evidence as the penalised log posterior density,
+            # and then sum them up for an overall measure
+            log_model_evidence = log_posterior + penalty
+            # sum the log model evidence across participants
+            # it is a log-converted version of Equation 8 in Gershman (2016)
             summed_lme = log_model_evidence.sum()
-            ## store the log model evidence
             lmes.append(copy.deepcopy(summed_lme))
 
-            print(f"Iteration: {iteration + 1}, LME: {summed_lme}")
+            hyper = pd.DataFrame(
+                [0, 0, 0, 0, 0, 0, 0],
+                index=[
+                    "chain",
+                    "iteration",
+                    "parameter",
+                    "mean",
+                    "sd",
+                    "lme",
+                    "reject",
+                ],
+            ).T
+
+            for i, name in enumerate(parameter_names):
+                hyper["parameter"] = name
+                hyper["mean"] = means[i]
+                hyper["sd"] = stdev[i]
+                hyper["iteration"] = iteration + 1
+                hyper["chain"] = chain_index
+                hyper["lme"] = copy.deepcopy(summed_lme)
+                hyper["reject"] = summed_lme < lme_old
+                self.hyperparameters = pd.concat([self.hyperparameters, hyper])
+
+            print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
 
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
                     break
-                else:  # update the log likelihood
+                else:  # update the summed log model evidence
                     lme_old = summed_lme
-
-            iteration += 1
-
-            self.lmes.append(lmes)
 
         output = {
             "lme": lmes,
@@ -191,7 +313,6 @@ class EmpiricalBayes:
             "parameters": self.optimiser.model.parameters,
         }
 
-        # print(f"Chain finished in {iteration} iterations: {population_updates}")
         return output
 
     def optimise(self):
@@ -202,7 +323,29 @@ class EmpiricalBayes:
         output = []
         for chain in range(self.chain):
             print(f"Chain: {chain + 1}")
-            results = self.stair()
+            results = self.stair(chain_index=chain)
             output.append(copy.deepcopy(results))
         self.output = output
         return None
+
+    def parameters(self):
+        """
+        Returns the estimated individual-level parameters for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated individual-level parameters for each iteration and chain.
+        """
+        return self.fit
+
+    def priors(self):
+        """
+        Returns the estimated group-level hyperparameters (priors) for each iteration and chain.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The estimated group-level hyperparameters for each iteration and chain.
+        """
+        return self.hyperparameters

@@ -85,6 +85,7 @@ def prepare_data(data, identifier):
         __pandas__ = True
     if isinstance(data, list):
         participants = data[0]
+        groups = None
         __pandas__ = False
     if isinstance(data, pd.DataFrame) and identifier is not None:
         data = data.groupby(identifier)

@@ -173,6 +173,7 @@ def decompose(participant=None, pandas=False, identifier=None):
         observed = data.observed.to_numpy()
     else:
         ppt = None
+        data = participant
         observed = participant.get("observed")
 
     if identifier is not None and pandas is False:

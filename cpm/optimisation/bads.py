@@ -1,5 +1,7 @@
 from . import minimise
-from . import utils
+from ..core.generators import generate_guesses
+from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 
 from pybads import BADS
@@ -7,49 +9,6 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
-import numdifftools as nd
-
-
-# this should not be available to users
-def minimum(pars, function, data, loss, prior=False, **args):
-    """
-    The `minimise` function calculates a metric by comparing predicted values with
-    observed values.
-
-    Parameters
-    ----------
-    pars
-        The `pars` parameter is a dictionary that contains the parameters for the
-        function that needs to be minimized.
-    function
-        The `function` parameter is the function that needs to be minimized.
-    data
-        The `data` parameter is the data that is used to compare the predicted values
-        with the observed values.
-    loss
-        The `loss` parameter is the loss function that is used to calculate the metric
-        value.
-    args
-        The `args` parameter is a dictionary that contains additional parameters that
-        are used in the loss function.
-
-    Returns
-    -------
-        The metric value is being returned.
-
-    """
-    function.reset(pars)
-    function.run()
-    predicted = function.dependent
-    observed = copy.deepcopy(data)
-    metric = loss(predicted, observed, **args)
-    del predicted, observed
-    if np.isnan(metric) or np.isinf(metric):
-        metric = 1e10
-    if prior:
-        prior_pars = function.parameters.PDF(log=True)
-        metric += -prior_pars
-    return metric
 
 
 class Bads:
@@ -58,10 +17,10 @@ class Bads:
 
     Parameters
     ----------
-    model : object
+    model : cpm.generators.Wrapper
         The model to be optimized.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
+    data : pd.DataFrame, pd.DataFrameGroupBy, list
+        The data used for optimization. If a pd.Dataframe, it is grouped by the `ppt_identifier`. If it is a pd.DataFrameGroupby, groups are assumed to be participants. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
@@ -82,7 +41,9 @@ class Bads:
 
     Notes
     -----
-    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary **MUST** also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
+    The data parameter must contain all input to the model, including the observed data. The data parameter can be a pandas DataFrame, a pandas DataFrameGroupBy object, or a list of dictionaries. If the data parameter is a pandas DataFrame, it is assumed that the data needs to be grouped by the participant identifier, `ppt_identifier`. If the data parameter is a pandas DataFrameGroupBy object, the groups are assumed to be participants. If the data parameter is a list of dictionaries, each dictionary should contain the data for a single participant, including information about the experiment and the results. The observed data for each participant should be included in the dictionary under the key or column 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model Wrapper.
+
+    The optimization process is repeated `number_of_starts` times, and only the best-fitting output from the best guess is stored.
 
     The BADS algorithm has been designed to handle both deterministic and noisy (stochastic) target functions. A deterministic target function is a target function that returns the same exact probability value for a given dataset and proposed set of parameter values. By contrast, a stochastic target function returns varying probability values for the same input (data and parameters).
     The vast majority of models use a deterministic target function. We recommend that users make this explicit to BADS, by providing an `options` dictionary that includes the key `uncertainty_handling` set to `False`.
@@ -104,12 +65,14 @@ class Bads:
     ):
         self.model = copy.deepcopy(model)
         self.data = data
-        self.loss = minimisation
-        self.initial_guess = initial_guess
-        self.kwargs = kwargs
-        self.participant = data[0]
         self.ppt_identifier = ppt_identifier
+        self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
+            data, self.ppt_identifier
+        )
+
+        self.loss = minimisation
         self.prior = prior
+        self.kwargs = kwargs
 
         self.fit = []
         self.details = []
@@ -117,12 +80,16 @@ class Bads:
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
+        if not self.parameter_names:
+            raise ValueError(
+                "The model does not contain any free parameters. Please check the model parameters."
+            )
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Bads algorithm is not compatible with the Simulator object."
             )
 
-        self.initial_guess = utils.generate_guesses(
+        self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
             guesses=initial_guess,
@@ -166,13 +133,19 @@ class Bads:
 
         def __task(participant, **args):
 
-            model.reset(data=participant)
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+
+            model.reset(data=participant_dc)
 
             def target(x):
-                fval = minimum(
+                fval = objective(
                     pars=x,
                     function=model,
-                    data=participant.get("observed"),
+                    data=observed,
                     loss=loss,
                     prior=self.prior,
                 )
@@ -185,19 +158,18 @@ class Bads:
                 upper_bounds=self.__bounds__[1],
                 **self.kwargs,
             )
+
             result = optimizer.optimize()
             result = dict(result.items())
-            hessian = Hessian(
-                result["x"],
-                model,
-                participant.get("observed"),
-                loss,
-            )
+
+            def f(x):
+                return objective(x, model, observed, loss, prior)
+
+            hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
             result.update({"hessian": hessian})
             # if participant data contains identifiers, return the identifiers too
 
-            if self.ppt_identifier is not None:
-                result.update({"ppt": participant.get(self.ppt_identifier)})
+            result.update({"ppt": ppt})
             return result
 
         def __extract_nll(result):
@@ -208,7 +180,7 @@ class Bads:
 
         loss = self.loss
         model = self.model
-        Hessian = nd.Hessian(minimum)
+        prior = self.prior
 
         for i in range(len(self.initial_guess)):
             print(
@@ -270,7 +242,7 @@ class Bads:
         self.parameters = []
         self.details = []
         if initial_guess:
-            self.initial_guess = utils.generate_guesses(
+            self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
                 number_of_starts=self.initial_guess.shape[0],
                 guesses=None,
@@ -287,6 +259,6 @@ class Bads:
         pandas.DataFrame
             A pandas DataFrame containing the optimization results and fitted parameters.
         """
-        output = utils.detailed_pandas_compiler(self.fit)
+        output = detailed_pandas_compiler(self.fit)
         output.reset_index(drop=True, inplace=True)
         return output

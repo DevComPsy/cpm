@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 import copy
 
+__all__ = [
+    "simulation_export",
+]
+
 
 def simulation_export(simulation):
     """
@@ -35,5 +39,5 @@ def simulation_export(simulation):
         id += 1
         policies = pd.concat([policies, ppt.copy()], axis=0)
         del ppt
-    policies.reset_index()
+    policies = policies.reset_index(drop=True)
     return policies

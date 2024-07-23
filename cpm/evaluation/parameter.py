@@ -1,6 +1,6 @@
 # import modules from the cpm package
 from .. import optimisation
-from ..optimisation import utils
+from ..core import generators
 from ..optimisation import minimise
 from . import strategies
 

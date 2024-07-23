@@ -17,10 +17,10 @@ class DifferentialEvolution:
 
     Parameters
     ----------
-    model : object
+    model : cpm.generators.Wrapper
         The model to be optimized.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
+    data : pd.DataFrame, pd.DataFrameGroupBy, list
+        The data used for optimization. If a pd.Dataframe, it is grouped by the `ppt_identifier`. If it is a pd.DataFrameGroupby, groups are assumed to be participants. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.bernoulli`. See the `minimise` module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.
     prior: bool

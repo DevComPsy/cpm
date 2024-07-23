@@ -44,7 +44,7 @@ class Simulator:
         self.__pandas__ = isinstance(data, pd.api.typing.DataFrameGroupBy)
         self.__parameter__pandas__ = isinstance(parameters, pd.DataFrame)
         if isinstance(self.__pandas__, pd.DataFrame):
-            raise ValueError(
+            raise TypeError(
                 "Data should be a pandas.DataFrameGroupBy object, not a pandas.DataFrame."
             )
         if self.__pandas__:
@@ -106,7 +106,7 @@ class Simulator:
             The parameters to be updated.
         """
         if isinstance(parameters, Parameters):
-            TypeError("Parameters must be a dictionary or array_like.")
+            raise TypeError("Parameters must be a dictionary or array_like.")
         ## if parameters is a single set of parameters, then repeat for each ppt
         if isinstance(parameters, dict):
             self.parameters = [

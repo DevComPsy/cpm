@@ -213,7 +213,7 @@ class Value:
     prior : string or object, optional
         If a string, it should be one of continuous distributions from `scipy.stats`.
         See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details.
-        The default is 'normal'.
+        The default is None.
         If an object, it should be or contain a callable function representing the prior distribution of the parameter with methods similar to `scipy.stats` distributions.
         See Notes for more details.
     args : dict, optional

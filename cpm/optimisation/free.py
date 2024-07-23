@@ -1,5 +1,6 @@
 from ..core.generators import generate_guesses
-from ..core.data import detailed_pandas_compiler
+from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 
 from scipy.optimize import minimize
@@ -7,48 +8,6 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
-import numdifftools as nd
-
-
-def minimum(pars, function, data, loss, prior=False, **args):
-    """
-    The `minimise` function calculates a metric by comparing predicted values with
-    observed values.
-
-    Parameters
-    ----------
-    pars
-        The `pars` parameter is a dictionary that contains the parameters for the
-        function that needs to be minimized.
-    function
-        The `function` parameter is the function that needs to be minimized.
-    data
-        The `data` parameter is the data that is used to compare the predicted values
-        with the observed values.
-    loss
-        The `loss` parameter is the loss function that is used to calculate the metric
-        value.
-    args
-        The `args` parameter is a dictionary that contains additional parameters that
-        are used in the loss function.
-
-    Returns
-    -------
-        The metric value is being returned.
-
-    """
-    function.reset(pars)
-    function.run()
-    predicted = function.dependent
-    observed = copy.deepcopy(data)
-    metric = loss(predicted, observed, **args)
-    del predicted, observed
-    if np.isnan(metric) or np.isinf(metric):
-        metric = 1e10
-    if prior:
-        prior_pars = function.parameters.PDF(log=True)
-        metric += -prior_pars
-    return metric
 
 
 class Minimize:
@@ -102,15 +61,24 @@ class Minimize:
     ):
         self.model = copy.deepcopy(model)
         self.data = data
+        self.ppt_identifier = ppt_identifier
+        self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
+            data, self.ppt_identifier
+        )
+
         self.loss = minimisation
         self.prior = prior
         self.kwargs = kwargs
-        self.participant = data[0]
         self.display = display
-        self.ppt_identifier = ppt_identifier
+        self.prior = prior
+
         self.method = method
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
+        if not self.parameter_names:
+            raise ValueError(
+                "The model does not contain any free parameters. Please check the model parameters."
+            )
         if isinstance(model, Simulator):
             raise ValueError(
                 "The GradientFree class is not compatible with the Simulator object."
@@ -154,21 +122,31 @@ class Minimize:
 
         def __task(participant, **args):
 
-            model.reset(data=participant)
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+
+            model.reset(data=participant_dc)
 
             result = minimize(
-                minimum,
+                objective,
                 x0=self.__current_guess__,
-                args=(model, participant.get("observed"), loss, prior),
+                args=(model, observed, loss, prior),
                 method=self.method,
                 **self.kwargs,
             )
             result = {**result}
-            hessian = Hessian(result["x"], model, participant.get("observed"), loss)
+
+            def f(x):
+                return objective(x, model, observed, loss, prior)
+
+            hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
+
             result.update({"hessian": hessian})
             # if participant data contains identifiers, return the identifiers too
-            if self.ppt_identifier is not None:
-                result.update({"ppt": participant.get(self.ppt_identifier)})
+            result.update({"ppt": ppt})
             return result
 
         def __extract_nll(result):
@@ -181,10 +159,10 @@ class Minimize:
         bounds = np.asarray(bounds).T
         bounds = list(map(tuple, bounds))
         self.kwargs.update({"bounds": bounds})
+
         loss = self.loss
         model = self.model
         prior = self.prior
-        Hessian = nd.Hessian(minimum)
 
         for i in range(len(self.initial_guess)):
             print(

@@ -1,5 +1,6 @@
 from ..core.generators import generate_guesses
-from ..core.data import detailed_pandas_compiler
+from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 
 from scipy.optimize import fmin, fmin_l_bfgs_b
@@ -7,68 +8,8 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
-import numdifftools as nd
 
 __all__ = ["Fmin", "FminBound"]
-
-
-def minimum(pars, function, data, loss, prior=False, **args):
-    """
-    The `minimise` function calculates a metric by comparing predicted values with
-    observed values.
-
-    Parameters
-    ----------
-    pars
-        The `pars` parameter is a dictionary that contains the parameters for the
-        function that needs to be minimized.
-    function
-        The `function` parameter is the function that needs to be minimized.
-    data
-        The `data` parameter is the data that is used to compare the predicted values
-        with the observed values.
-    loss
-        The `loss` parameter is the loss function that is used to calculate the metric
-        value.
-    args
-        The `args` parameter is a dictionary that contains additional parameters that
-        are used in the loss function.
-
-    Returns
-    -------
-        The metric value is being returned.
-
-    """
-    function.reset(pars)
-    function.run()
-    predicted = function.dependent
-    observed = copy.deepcopy(data)
-    metric = loss(predicted, observed, **args)
-    del predicted, observed
-    # check if metric is nan or inf
-    if np.isnan(metric) or np.isinf(metric):
-        metric = 1e10
-    if prior:
-        prior_pars = function.parameters.PDF(log=True)
-        metric += -prior_pars
-    return metric
-
-
-def numerical_hessian(func=None, params=None, hessian=None):
-    """Calculate numerically the hessian matrix of func with respect to ``params``.
-
-    Args:
-        func: Function without arguments that depends on ``params``
-        params: Parameters that ``func`` implicitly depends on and with respect to which the
-            derivatives will be taken.
-
-    Returns:
-        Hessian matrix
-    """
-
-    hesse_func = nd.Hessian(func, step=1e-4, method="forward")
-    computed_hessian = hesse_func(params)
-    return computed_hessian
 
 
 class Fmin:
@@ -123,20 +64,29 @@ class Fmin:
     ):
         self.model = copy.deepcopy(model)
         self.data = data
+        self.ppt_identifier = ppt_identifier
+        self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
+            data, self.ppt_identifier
+        )
+
         self.loss = minimisation
         self.prior = prior
         self.kwargs = kwargs
+        self.display = display
+        self.prior = prior
+
         self.fit = []
         self.details = []
         self.parameters = []
-        self.participant = data[0]
-        self.display = display
-        self.ppt_identifier = ppt_identifier
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
-        if isinstance(model, Simulator):
+        if not self.parameter_names:
             raise ValueError(
+                "The model does not contain any free parameters. Please check the model parameters."
+            )
+        if isinstance(model, Simulator):
+            raise TypeError(
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
@@ -175,25 +125,31 @@ class Fmin:
 
         def __task(participant, **args):
 
-            model.reset(data=participant)
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+
+            model.reset(data=participant_dc)
 
             result = fmin(
-                minimum,
+                objective,
                 x0=self.__current_guess__,
-                args=(model, participant.get("observed"), loss, prior),
+                args=(model, observed, loss, prior),
                 disp=self.display,
                 **self.kwargs,
                 full_output=True,
             )
 
             def f(x):
-                return minimum(x, model, participant.get("observed"), loss, prior)
+                return objective(x, model, observed, loss, prior)
 
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
             result = (*result, hessian)
+
             # if participant data contains identifiers, return the identifiers too
-            if self.ppt_identifier is not None:
-                result = (*result, participant.get(self.ppt_identifier))
+            result = (*result, ppt)
             return result
 
         def __extract_nll(result):
@@ -336,19 +292,27 @@ class FminBound:
     ):
         self.model = copy.deepcopy(model)
         self.data = data
+        self.ppt_identifier = ppt_identifier
+        self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
+            data, self.ppt_identifier
+        )
+
         self.loss = minimisation
-        self.initial_guess = initial_guess
         self.prior = prior
         self.kwargs = kwargs
-        self.participant = data[0]
-        self.ppt_identifier = ppt_identifier
         self.display = display
+        self.prior = prior
+
         self.fit = []
         self.details = []
         self.parameters = []
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
+        if not self.parameter_names:
+            raise ValueError(
+                "The model does not contain any free parameters. Please check the model parameters."
+            )
         if isinstance(model, Simulator):
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."
@@ -396,26 +360,31 @@ class FminBound:
 
         def __task(participant, **args):
 
-            model.reset(data=participant)
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+
+            model.reset(data=participant_dc)
 
             result = fmin_l_bfgs_b(
-                minimum,
+                objective,
                 x0=self.__current_guess__,
                 bounds=bounds,
-                args=(model, participant.get("observed"), loss, prior),
+                args=(model, observed, loss, prior),
                 disp=self.display,
                 **self.kwargs,
             )
 
             def f(x):
-                return minimum(x, model, participant.get("observed"), loss, prior)
+                return objective(x, model, observed, loss, prior)
 
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
 
             result = (*result[0:2], *tuple(list(result[2].values())), hessian)
 
-            if self.ppt_identifier is not None:
-                result = (*result, participant.get(self.ppt_identifier))
+            result = (*result, ppt)
             return result
 
         def __extract_nll(result):

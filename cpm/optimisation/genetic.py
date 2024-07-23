@@ -52,6 +52,10 @@ class DifferentialEvolution:
         display=False,
         **kwargs,
     ):
+        if isinstance(model, Simulator):
+            raise TypeError(
+                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
+            )
         self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
@@ -68,24 +72,14 @@ class DifferentialEvolution:
             data, self.ppt_identifier
         )
 
-        # if isinstance(data, pd.api.typing.DataFrameGroupBy):
-        #     self.groups = list(data.groups.keys())
-        #     self.participants = data.get_group(self.groups[0])
-        #     self.__pandas__ = True
-        # if isinstance(data, list):
-        #     self.participants = data[0]
-        #     self.__pandas__ = False
-        # if isinstance(data, pd.DataFrame) and self.ppt_identifier is not None:
-        #     self.data = data.groupby(self.ppt_identifier)
-        #     self.groups = list(self.data.groups.keys())
-        #     self.participants = self.data.get_group(self.groups[0])
-        #     self.__pandas__ = True
-
-        if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameters.free()
-        if isinstance(model, Simulator):
+        self.parameter_names = self.model.parameters.free()
+        bounds = self.model.parameters.bounds()
+        bounds = np.asarray(bounds).T
+        bounds = list(map(tuple, bounds))
+        self.bounds = bounds
+        if not self.parameter_names:
             raise ValueError(
-                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
+                "The model does not contain any free parameters. Please check the model parameters."
             )
 
         self.__parallel__ = parallel
@@ -95,28 +89,18 @@ class DifferentialEvolution:
         if cl is None and parallel:
             self.cl = mp.cpu_count()
 
-        if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameters.free()
-            bounds = self.model.parameters.bounds()
-            bounds = np.asarray(bounds).T
-            bounds = list(map(tuple, bounds))
-            self.bounds = bounds
-        if isinstance(model, Simulator):
-            raise ValueError(
-                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
-            )
-
     def optimise(self):
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __task(participant, **args):
             """
-            Utility function to wrap fitting the model to each individual and organise the output.
+            Utility function to wrap fitting the model to each individual for parallel processing and organise the output.
             """
 
             participant_dc, observed, ppt = decompose(

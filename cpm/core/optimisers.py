@@ -1,8 +1,26 @@
 import numpy as np
 import pandas as pd
+import numdifftools as nd
 import copy
 
-__all__ = ["objective"]
+__all__ = ["objective", "prepare_data", "numerical_hessian"]
+
+
+def numerical_hessian(func=None, params=None, hessian=None):
+    """Calculate numerically the hessian matrix of func with respect to ``params``.
+
+    Args:
+        func: Function without arguments that depends on ``params``
+        params: Parameters that ``func`` implicitly depends on and with respect to which the
+            derivatives will be taken.
+
+    Returns:
+        Hessian matrix
+    """
+
+    hesse_func = nd.Hessian(func, step=1e-4, method="forward")
+    computed_hessian = hesse_func(params)
+    return computed_hessian
 
 
 def objective(pars, function, data, loss, prior=False, **args):

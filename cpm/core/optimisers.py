@@ -50,7 +50,7 @@ def objective(pars, function, data, loss, prior=False, **args):
         The metric value is being returned.
 
     """
-    function.reset(pars)
+    function.reset(parameters=pars)
     function.run()
     predicted = function.dependent
     observed = copy.deepcopy(data)

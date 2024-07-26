@@ -82,7 +82,7 @@ class Simulator:
             self.simulation.append(output.copy())
             del evaluate, output
 
-        self.simulation = np.array(self.simulation)
+        self.simulation = np.array(self.simulation, dtype=object)
         self.__run__ = True
         return None
 

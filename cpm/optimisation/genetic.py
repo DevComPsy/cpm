@@ -183,9 +183,7 @@ class DifferentialEvolution:
             output = pd.concat([output, current], axis=0)
 
         if details:
-            metrics = detailed_pandas_compiler(
-                self.details, method="differential_evolution"
-            )
+            metrics = detailed_pandas_compiler(self.details)
             output.reset_index(drop=True, inplace=True)
             metrics.reset_index(drop=True, inplace=True)
             output = pd.concat([output, metrics], axis=1)

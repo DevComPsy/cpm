@@ -1,6 +1,11 @@
 # Data formats
 
-How should your data look like? `cpm` is optimised for a specific data format, which is a list of dictionaries. Each dictionary represents a single participant. The key-value pairs in the dictionary are the names of the variables your model and the optimisation routines will need to simulate data and find the best-fitting parameters.
+How should your data look like? `cpm` is optimised for specific data formats, which can be either a pandas.DataFrame or a list of dictionaries. 
+For most models that use `cpm.generators.Wrapper`, it is a pandas.DataFrame, where each row should be a trial or state in the experiment or environment.
+For `cpm.generators.Simulator` or methods in `cpm.optimisation`, the data should be a grouped pandas.DataFrame, where we fit the model to each groups.
+
+If RAM is of concern, we recommend to use dictionaries. This is because dictionaries have smaller memory footprint than pandas.DataFrame.
+Each dictionary represents a single participant. The key-value pairs in the dictionary are the names of the variables your model and the optimisation routines will need to simulate data and find the best-fitting parameters.
 
 Imagine you have four stimuli in a given experiment, where on every trial they appear in a combination of two. Data then should be in the following format:
 

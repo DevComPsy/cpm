@@ -126,7 +126,11 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="data-formats">Data formats</h1>
-<p>How should your data look like? <code>cpm</code> is optimised for a specific data format, which is a list of dictionaries. Each dictionary represents a single participant. The key-value pairs in the dictionary are the names of the variables your model and the optimisation routines will need to simulate data and find the best-fitting parameters.</p>
+<p>How should your data look like? <code>cpm</code> is optimised for specific data formats, which can be either a pandas.DataFrame or a list of dictionaries. 
+For most models that use <code>cpm.generators.Wrapper</code>, it is a pandas.DataFrame, where each row should be a trial or state in the experiment or environment.
+For <code>cpm.generators.Simulator</code> or methods in <code>cpm.optimisation</code>, the data should be a grouped pandas.DataFrame, where we fit the model to each groups.</p>
+<p>If RAM is of concern, we recommend to use dictionaries. This is because dictionaries have smaller memory footprint than pandas.DataFrame.
+Each dictionary represents a single participant. The key-value pairs in the dictionary are the names of the variables your model and the optimisation routines will need to simulate data and find the best-fitting parameters.</p>
 <p>Imagine you have four stimuli in a given experiment, where on every trial they appear in a combination of two. Data then should be in the following format:</p>
 <pre><code class="language-python">participant = {
     &quot;trials&quot;: np.array(

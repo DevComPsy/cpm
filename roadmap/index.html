@@ -8,7 +8,7 @@
     <title>Roadmap - CPM library</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
         <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
         <link href="../style.css" rel="stylesheet" />
     
@@ -19,17 +19,18 @@
         var mkdocs_page_url = null;
       </script>
     
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
     <!--[if lt IE 9]>
       <script src="../js/html5shiv.min.js"></script>
     <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/markdown.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/makefile.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/markdown.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/makefile.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -41,7 +42,7 @@
           <a href=".." class="icon icon-home"> CPM library
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
@@ -56,7 +57,7 @@
                 </li>
               </ul>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Roadmap</a>
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Roadmap</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#performance-improvement">Performance improvement</a>
     </li>
@@ -75,19 +76,15 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started/">Getting Started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" >How-To</a>
-    <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../tutorials/data-format/">Data formats</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../tutorials/parameters/">Specify your parameters</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../tutorials/defining-model/">Build your model</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../tutorials/fitting/">Fitting your models to data</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../tutorials/troubleshooting/">Troubleshooting</a>
-                </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/data-format/">Data formats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/parameters/">Specify your parameters</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/defining-model/">Build your model</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/fitting/">Fitting your models to data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/troubleshooting/">Troubleshooting</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -125,13 +122,13 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Roadmap</li>
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li><li>Roadmap</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
   <hr/>
 </div>
+
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
@@ -199,15 +196,14 @@ If you have an idea for a new feature, please open an issue to discuss it.</p>
     
   </span>
 </div>
-    <script src="../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "..";</script>
-    <script src="../js/theme_extra.js"></script>
-    <script src="../js/theme.js"></script>
-      <script src="../search/main.js"></script>
-    <script>
-        jQuery(function () {
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
             SphinxRtdTheme.Navigation.enable(true);
-        });
+        };
     </script>
 
 </body>

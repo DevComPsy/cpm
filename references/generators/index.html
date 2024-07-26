@@ -8,28 +8,29 @@
     <title>cpm.generators - CPM library</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
         <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
         <link href="../../style.css" rel="stylesheet" />
     
       <script>
         // Current page data
         var mkdocs_page_name = "cpm.generators";
-        var mkdocs_page_input_path = "references/generators.md";
+        var mkdocs_page_input_path = "references\\generators.md";
         var mkdocs_page_url = null;
       </script>
     
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
     <!--[if lt IE 9]>
       <script src="../../js/html5shiv.min.js"></script>
     <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/markdown.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/makefile.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/markdown.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/makefile.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -41,7 +42,7 @@
           <a href="../.." class="icon icon-home"> CPM library
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
@@ -63,19 +64,15 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../tutorials/getting-started/">Getting Started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" >How-To</a>
-    <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
-                </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -89,65 +86,77 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../models/">cpm.models</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.generators</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">cpm.generators</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#cpm.generators.Value">Value</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Value.PDF">PDF</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Value--notes">Notes</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Value.copy">copy</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Value.PDF">PDF()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Value.fill">fill</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Value.copy">copy()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Value.sample">sample</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Value.fill">fill()</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.generators.parameters.Value.fill--notes">Notes</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Value.update_prior">update_prior</a>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Value.sample">sample()</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Value.update_prior">update_prior()</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpm.generators.Parameters">Parameters</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Parameters.PDF">PDF</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Parameters.PDF">PDF()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Parameters.bounds">bounds</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Parameters.bounds">bounds()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Parameters.free">free</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Parameters.free">free()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Parameters.keys">keys</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Parameters.keys">keys()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Parameters.sample">sample</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Parameters.sample">sample()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Parameters.update">update</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Parameters.update">update()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Parameters.update_prior">update_prior</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.parameters.Parameters.update_prior">update_prior()</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpm.generators.Wrapper">Wrapper</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper.export">export</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper--notes">Notes</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper.reset">reset</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.wrapper.Wrapper.export">export()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper.run">run</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.wrapper.Wrapper.reset">reset()</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.generators.wrapper.Wrapper.reset--notes">Notes</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper.save">save</a>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.wrapper.Wrapper.run">run()</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.wrapper.Wrapper.save">save()</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpm.generators.Simulator">Simulator</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Simulator.export">export</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.simulator.Simulator.export">export()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Simulator.generate">generate</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.simulator.Simulator.generate">generate()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Simulator.reset">reset</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.simulator.Simulator.reset">reset()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Simulator.run">run</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.simulator.Simulator.run">run()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Simulator.save">save</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.simulator.Simulator.save">save()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Simulator.update">update</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.simulator.Simulator.update">update()</a>
     </li>
         </ul>
     </li>
@@ -175,14 +184,14 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">API reference</li>
-      <li class="breadcrumb-item active">cpm.generators</li>
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>API reference &raquo;</li><li>cpm.generators</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
   <hr/>
 </div>
+
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
@@ -194,7 +203,7 @@
 
 
 <h2 id="cpm.generators.Value" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -204,113 +213,104 @@
   
       <p>The <code>Value</code> class is a wrapper around a float value, with additional details such as the prior distribution, lower and upper bounds. It supports all basic mathematical operations and can be used as a regular float with the parameter value as operand.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>value</code></b>
-                  (<code>float</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The value of the parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>lower</code></b>
-                  (<code>float</code>, default:
-                      <code>0</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The lower bound of the parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>upper</code></b>
-                  (<code>float</code>, default:
-                      <code>1</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The upper bound of the parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>prior</code></b>
-                  (<code>string or object</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>If a string, it should be one of continuous distributions from <code>scipy.stats</code>.
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>value</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td><p>The value of the parameter.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>lower</code></td>
+          <td>
+                <code>float, optional</code>
+          </td>
+          <td><p>The lower bound of the parameter.</p></td>
+          <td>
+                <code>0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>upper</code></td>
+          <td>
+                <code>float, optional</code>
+          </td>
+          <td><p>The upper bound of the parameter.</p></td>
+          <td>
+                <code>1</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>prior</code></td>
+          <td>
+                <code>string or object, optional</code>
+          </td>
+          <td><p>If a string, it should be one of continuous distributions from <code>scipy.stats</code>.
 See the <a href="https://docs.scipy.org/doc/scipy/reference/stats.html">scipy documentation</a> for more details.
-The default is 'normal'.
+The default is None.
 If an object, it should be or contain a callable function representing the prior distribution of the parameter with methods similar to <code>scipy.stats</code> distributions.
-See Notes for more details.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>args</code></b>
-                  (<code>dict</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>A dictionary of arguments for the prior distribution function.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<details class="note" open>
-  <summary>Notes</summary>
-  <p>We currently implement the following continuous distributions from <code>scipy.stats</code> corresponding to the <code>prior</code> argument:</p>
+See Notes for more details.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>args</code></td>
+          <td>
+                <code>dict, optional</code>
+          </td>
+          <td><p>A dictionary of arguments for the prior distribution function.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <h4 id="cpm.generators.Value--notes">Notes</h4>
+<p>We currently implement the following continuous distributions from <code>scipy.stats</code> corresponding to the <code>prior</code> argument:</p>
 <ul>
 <li>'uniform'</li>
 <li>'truncated_normal'</li>
 <li>'beta'</li>
 <li>'gamma'</li>
 <li>'truncated_exponential'</li>
+<li>'norm'</li>
 </ul>
 <p>Because these distributions are inherited from <code>scipy.stats</code>, see the <a href="https://docs.scipy.org/doc/scipy/reference/stats.html">scipy documentation</a> for more details on how to update variables of the distribution.</p>
-</details>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code><a class="autorefs autorefs-internal" title="cpm.generators.parameters.Value" href="#cpm.generators.Value">Value</a></code>
-            –
-            <div class="doc-md-description">
-              <p>A Value object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float with the parameter value as operand.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td><p>A Value object, where each attribute is one of the arguments provided for the function. It support all basic mathematical operations and can be used as a regular float with the parameter value as operand.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
+
 
   
 
@@ -324,13 +324,12 @@ See Notes for more details.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Value.PDF" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">PDF</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Value.PDF" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">PDF</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -339,41 +338,34 @@ See Notes for more details.</p>
   
       <p>Return the prior distribution of the parameter.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code>float</code>
-            –
-            <div class="doc-md-description">
-              <p>The probability of the parameter value under the prior distribution. If <code>log</code> is True, the log probability is returned.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td><p>The probability of the parameter value under the prior distribution. If <code>log</code> is True, the log probability is returned.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Value.copy" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">copy</span><span class="p">()</span></code>
+<h3 id="cpm.generators.parameters.Value.copy" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">copy</span><span class="p">()</span></code>
 
 </h3>
 
@@ -382,41 +374,34 @@ See Notes for more details.</p>
   
       <p>Return a copy of the parameter.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code><a class="autorefs autorefs-internal" title="cpm.generators.parameters.Value" href="#cpm.generators.Value">Value</a></code>
-            –
-            <div class="doc-md-description">
-              <p>A copy of the parameter.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td><p>A copy of the parameter.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Value.fill" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">fill</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Value.fill" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">fill</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></code>
 
 </h3>
 
@@ -425,46 +410,42 @@ See Notes for more details.</p>
   
       <p>Replace the value of the parameter with a new value.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>value</code></td>
+          <td>
+                <code>float or array_like</code>
+          </td>
+          <td><p>The new value of the parameter.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <h5 id="cpm.generators.parameters.Value.fill--notes">Notes</h5>
+<p>If the parameter is an array, it should be a list of values. If the parameter is an array, and the new value is a single value, it will be broadcasted to the shape of the array.</p>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>value</code></b>
-                  (<code>float or array_like</code>)
-              –
-              <div class="doc-md-description">
-                <p>The new value of the parameter.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<details class="note" open>
-  <summary>Notes</summary>
-  <p>If the parameter is an array, it should be a list of values. If the parameter is an array, and the new value is a single value, it will be broadcasted to the shape of the array.</p>
-</details>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Value.sample" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">sample</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">jump</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Value.sample" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">sample</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">jump</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
@@ -473,41 +454,34 @@ See Notes for more details.</p>
   
       <p>Sample and update the parameter value from its prior distribution.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>sample</code></td>          <td>
+                <code>float</code>
+          </td>
+          <td><p>A sample from the prior distribution of the parameter.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>sample</code></b>(                <code>float</code>
-)            –
-            <div class="doc-md-description">
-              <p>A sample from the prior distribution of the parameter.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Value.update_prior" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">update_prior</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Value.update_prior" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">update_prior</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -516,33 +490,30 @@ See Notes for more details.</p>
   
       <p>Update the prior distribution of the parameter. Currently it is only implemented for truncated normal distributions.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>Keyword arguments representing the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the <code>scipy.stats</code> documentation or the <code>prior.kwds</code> attribute.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>**kwargs</code></b>
-                  (<code>dict</code>, default:
-                      <code>{}</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Keyword arguments representing the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the <code>scipy.stats</code> documentation or the <code>prior.kwds</code> attribute.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
@@ -552,7 +523,6 @@ See Notes for more details.</p>
   </div>
 
   </div>
-
 
 </div>
 
@@ -561,7 +531,7 @@ See Notes for more details.</p>
 
 
 <h2 id="cpm.generators.Parameters" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Parameters</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Parameters</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -572,61 +542,50 @@ See Notes for more details.</p>
       <p>A class representing a set of parameters.
 It takes keyword arguments representing the parameters with their values and wraps them into a python object.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>Keyword arguments representing the parameters.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>**kwargs</code></b>
-                  (<code>dict</code>, default:
-                      <code>{}</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Keyword arguments representing the parameters.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code><a class="autorefs autorefs-internal" title="cpm.generators.parameters.Parameters" href="#cpm.generators.Parameters">Parameters</a></code>
-            –
-            <div class="doc-md-description">
-              <p>A Parameters object, where each attributes is one of the keyword arguments
-provided for the function wrapped by the Value class.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td><p>A Parameters object, where each attributes is one of the keyword arguments
+provided for the function wrapped by the Value class.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<p><span class="doc-section-title">Examples:</span></p>
+<p><strong>Examples:</strong></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.generators</span> <span class="kn">import</span> <span class="n">Parameters</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">parameters</span> <span class="o">=</span> <span class="n">Parameters</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
@@ -652,6 +611,7 @@ provided for the function wrapped by the Value class.</p>
 </code></pre></div>
 
 
+
   
 
   <div class="doc doc-children">
@@ -664,56 +624,48 @@ provided for the function wrapped by the Value class.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Parameters.PDF" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">PDF</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Parameters.PDF" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">PDF</span><span class="p">(</span><span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
 
   <div class="doc doc-contents ">
   
-      <p>Return the prior distribution of the parameters.</p>
+      <p>Return the prior probability density of the parameter values.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code>float</code>
-            –
-            <div class="doc-md-description">
-              <p>The probability of the parameter set under the prior distribution for each parameter. If <code>log</code> is True, the log probability is returned. When the PDF is 0, it returns the maximum value of a float. If "log" is True, it returns the log of the maximum value of a float.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td><p>The summed probability density of the parameter set under the prior distribution for each parameter. If <code>log</code> is True, the log probability is returned. When the PDF is 0, it returns the smallest positive float value. If <code>log</code> is True and the log probability is negative infinity, it returns the most negative float value.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Parameters.bounds" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">bounds</span><span class="p">()</span></code>
+<h3 id="cpm.generators.parameters.Parameters.bounds" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">bounds</span><span class="p">()</span></code>
 
 </h3>
 
@@ -722,41 +674,34 @@ provided for the function wrapped by the Value class.</p>
   
       <p>Returns a tuple with lower (first element) and upper (second element) bounds for parameters with defined priors.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>lower, upper</code>
+          </td>
+          <td><p>A tuple of lower and upper parameter bounds</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-                <code>lower, upper: tuples</code>
-            –
-            <div class="doc-md-description">
-              <p>A tuple of lower and upper parameter bounds</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Parameters.free" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">free</span><span class="p">()</span></code>
+<h3 id="cpm.generators.parameters.Parameters.free" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">free</span><span class="p">()</span></code>
 
 </h3>
 
@@ -765,41 +710,34 @@ provided for the function wrapped by the Value class.</p>
   
       <p>Return a dictionary of all parameters with a prior distribution.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>free</code></td>          <td>
+                <code>dict</code>
+          </td>
+          <td><p>A dictionary of all parameters with a prior distribution.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>free</code></b>(                <code>dict</code>
-)            –
-            <div class="doc-md-description">
-              <p>A dictionary of all parameters with a prior distribution.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Parameters.keys" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">keys</span><span class="p">()</span></code>
+<h3 id="cpm.generators.parameters.Parameters.keys" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">keys</span><span class="p">()</span></code>
 
 </h3>
 
@@ -808,84 +746,70 @@ provided for the function wrapped by the Value class.</p>
   
       <p>Return a list of all the keys in the parameters dictionary.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>keys</code></td>          <td>
+                <code>list</code>
+          </td>
+          <td><p>A list of all the keys in the parameters dictionary.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>keys</code></b>(                <code>list</code>
-)            –
-            <div class="doc-md-description">
-              <p>A list of all the keys in the parameters dictionary.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Parameters.sample" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">sample</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">jump</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Parameters.sample" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">sample</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">jump</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h3>
 
 
   <div class="doc doc-contents ">
   
-      <p>Sample and update parameter valuesthe parameters from their prior distribution.</p>
+      <p>Sample and update parameter values from their prior distribution.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>sample</code></td>          <td>
+                <code>dict</code>
+          </td>
+          <td><p>A dictionary of the sampled parameters.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>sample</code></b>(                <code>dict</code>
-)            –
-            <div class="doc-md-description">
-              <p>A dictionary of the sampled parameters.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Parameters.update" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Parameters.update" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -894,44 +818,40 @@ provided for the function wrapped by the Value class.</p>
   
       <p>Update the parameters with new values.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>Keyword arguments representing the parameters.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>**kwargs</code></b>
-                  (<code>dict</code>, default:
-                      <code>{}</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Keyword arguments representing the parameters.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Parameters.update_prior" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">update_prior</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<h3 id="cpm.generators.parameters.Parameters.update_prior" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">update_prior</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -940,33 +860,30 @@ provided for the function wrapped by the Value class.</p>
   
       <p>Update the prior distribution of all parameters.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>Keyword arguments representing the parameters of the prior distribution. For each parameter, the keyword should be the name of the parameter and the value should be a dictionary of the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the <code>scipy.stats</code> documentation or the <code>prior.kwds</code> attribute.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>**kwargs</code></b>
-                  (<code>dict</code>, default:
-                      <code>{}</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Keyword arguments representing the parameters of the prior distribution. For each parameter, the keyword should be the name of the parameter and the value should be a dictionary of the parameters of the prior distribution. If you are unsure what the names are for the parameters of the prior distribution, you can check the <code>scipy.stats</code> documentation or the <code>prior.kwds</code> attribute.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
@@ -976,7 +893,6 @@ provided for the function wrapped by the Value class.</p>
   </div>
 
   </div>
-
 
 </div>
 
@@ -985,7 +901,7 @@ provided for the function wrapped by the Value class.</p>
 
 
 <h2 id="cpm.generators.Wrapper" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Wrapper</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Wrapper</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -995,86 +911,77 @@ provided for the function wrapped by the Value class.</p>
   
       <p>A <code>Wrapper</code> class for a model function in the CPM toolbox. It is designed to run a model for a <strong>single</strong> experiment (participant) and store the output in a format that can be used for further analysis.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+                <code>function</code>
+          </td>
+          <td><p>The model function that calculates the output(s) of the model for a single trial. See Notes for more information. See Notes for more information.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>data</code></td>
+          <td>
+                <code>pandas.DataFrame or dict</code>
+          </td>
+          <td><p>If a <code>pandas.DataFrame</code>, it must contain information about each trial in the experiment that serves as an input to the model. Each trial is a complete row.
+If a <code>dictionary</code>, it must contains information about the each state in the environment or each trial in the experiment - all input to the model that are not parameters.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>parameters</code></td>
+          <td>
+                <code>Parameters object</code>
+          </td>
+          <td><p>The parameters object for the model that contains all parameters (and initial states) for the model. See Notes on how it is updated internally.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>model</code></b>
-                  (<code>function</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The model function that calculates the output(s) of the model for a single trial. See Notes for more information. See Notes for more information.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>data</code></b>
-                  (<code>dict</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>A dictionary containing the data for the model.This is a dictionary that contains information about the each state in the environment or each trial in the experiment - all input to the model that are not parameters.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>parameters</code></b>
-                  (<code>Parameters object</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameters object for the model that contains all parameters (and initial states) for the model. See Notes on how it is updated internally.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>Wrapper</code></b>(                <code>object</code>
-)            –
-            <div class="doc-md-description">
-              <p>A Wrapper object.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
-<details class="note" open>
-  <summary>Notes</summary>
-  <p>The model function should take two arguments: <code>parameters</code> and <code>trial</code>. The <code>parameters</code> argument should be a <a class="autorefs autorefs-internal" href="#cpm.generators.Parameters">Parameter</a> object specifying the model parameters. The <code>trial</code> argument should be a dictionary containing the data for a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:</p>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>Wrapper</code></td>          <td>
+                <code>object</code>
+          </td>
+          <td><p>A Wrapper object.</p></td>
+        </tr>
+    </tbody>
+  </table>
+      <h4 id="cpm.generators.Wrapper--notes">Notes</h4>
+<p>The model function should take two arguments: <code>parameters</code> and <code>trial</code>. The <code>parameters</code> argument should be a <a class="autorefs autorefs-internal" href="#cpm.generators.Parameters">Parameter</a> object specifying the model parameters. The <code>trial</code> argument should be a dictionary or <code>pd.Series</code> containing all input to the model on a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:</p>
 <ul>
 <li>'dependent': Any dependent variables calculated by the model that will be used for the loss function.</li>
 </ul>
 <p>If a model output contains any keys that are also present in parameters, it updates those in the parameters based on the model output.</p>
 <p>Information on how to compile the model can be found in the [Tutorials - Build your model][/tutorials/defining-model] module.</p>
-</details>
+
+
 
   
 
@@ -1088,13 +995,12 @@ provided for the function wrapped by the Value class.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Wrapper.export" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+<h3 id="cpm.generators.wrapper.Wrapper.export" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1103,42 +1009,35 @@ provided for the function wrapped by the Value class.</p>
   
       <p>Export the trial-level simulation details.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
+          </td>
+          <td><p>A dataframe containing the model output for each participant and trial.
+If the output variable is organised as an array with more than one dimension, the output will be flattened.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-                <code><span title="pandas.DataFrame">DataFrame</span></code>
-            –
-            <div class="doc-md-description">
-              <p>A dataframe containing the model output for each participant and trial.
-If the output variable is organised as an array with more than one dimension, the output will be flattened.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Wrapper.reset" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">reset</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="cpm.generators.wrapper.Wrapper.reset" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">reset</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1147,42 +1046,35 @@ If the output variable is organised as an array with more than one dimension, th
   
       <p>Reset the model.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>parameters</code></b>
-                  (<code>(dict, array_like or <a class="autorefs autorefs-internal" title="cpm.generators.parameters.Parameters" href="#cpm.generators.Parameters">Parameters</a>)</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameters to reset the model with.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<details class="note" open>
-  <summary>Notes</summary>
-  <p>When resetting the model, and <code>parameters</code> is None, reset model to initial state.
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>parameters</code></td>
+          <td>
+                <code>dict, array_like, pd.Series or Parameters, optional</code>
+          </td>
+          <td><p>The parameters to reset the model with.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <h5 id="cpm.generators.wrapper.Wrapper.reset--notes">Notes</h5>
+<p>When resetting the model, and <code>parameters</code> is None, reset model to initial state.
 If parameter is <code>array_like</code>, it resets the only the parameters in the order they are provided,
 where the last parameter updated is the element in parameters corresponding to len(parameters).</p>
-</details>
 
-
-<p><span class="doc-section-title">Examples:</span></p>
+<p><strong>Examples:</strong></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">Wrapper</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">mine</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameters</span> <span class="o">=</span> <span class="n">params</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
@@ -1193,41 +1085,34 @@ where the last parameter updated is the element in parameters corresponding to l
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </code></pre></div>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code>None</code>
-            –
-            <div class="doc-md-description">
-              
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Wrapper.run" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">run</span><span class="p">()</span></code>
+<h3 id="cpm.generators.wrapper.Wrapper.run" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">run</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1236,41 +1121,34 @@ where the last parameter updated is the element in parameters corresponding to l
   
       <p>Run the model.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code>None</code>
-            –
-            <div class="doc-md-description">
-              
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Wrapper.save" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="cpm.generators.wrapper.Wrapper.save" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1279,60 +1157,49 @@ where the last parameter updated is the element in parameters corresponding to l
   
       <p>Save the model.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>filename</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The name of the file to save the results to.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>filename</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The name of the file to save the results to.</p></td>
+          <td>
                 <code>None</code>
-            –
-            <div class="doc-md-description">
-              
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>None</code>
+          </td>
+          <td></td>
+        </tr>
+    </tbody>
+  </table>
 
-<p><span class="doc-section-title">Examples:</span></p>
+<p><strong>Examples:</strong></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">Wrapper</span><span class="p">(</span><span class="n">model</span> <span class="o">=</span> <span class="n">mine</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span> <span class="n">parameters</span> <span class="o">=</span> <span class="n">params</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;simulation&#39;</span><span class="p">)</span>
@@ -1352,7 +1219,6 @@ where the last parameter updated is the element in parameters corresponding to l
 
   </div>
 
-
 </div>
 
 <div class="doc doc-object doc-class">
@@ -1360,7 +1226,7 @@ where the last parameter updated is the element in parameters corresponding to l
 
 
 <h2 id="cpm.generators.Simulator" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Simulator</span><span class="p">(</span><span class="n">wrapper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">Simulator</span><span class="p">(</span><span class="n">wrapper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1370,77 +1236,71 @@ where the last parameter updated is the element in parameters corresponding to l
   
       <p>A <code>Simulator</code> class for a model in the CPM toolbox. It is designed to run a model for <strong>multiple</strong> participants and store the output in a format that can be used for further analysis.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>wrapper</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="cpm.generators.wrapper.Wrapper" href="#cpm.generators.Wrapper">Wrapper</a></code>
+          </td>
+          <td><p>An initialised Wrapper object for the model.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>data</code></td>
+          <td>
+                <code>pandas.core.groupby.generic.DataFrameGroupBy or list of dictionaries</code>
+          </td>
+          <td><p>The data required for the simulation.
+If it is a pandas.core.groupby.generic.DataFrameGroupBy, as returned by <code>pandas.DataFrame.groupby()</code>, each group must contain the data (or environment) for a single participant.
+If it is a list of dictionaries, each dictionary must contain the data (or environment) for a single participant.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>parameters</code></td>
+          <td>
+                <code>Parameters, pd.DataFrame, pd.Series or list</code>
+          </td>
+          <td><p>The parameters required for the simulation. It can be a Parameters object or a list of dictionaries whose length is equal to data. If it is a Parameters object, Simulator will use the same parameters for all simulations. It is a list of dictionaries, it will use match the parameters with data, so that for example parameters[6] will be used for the simulation of data[6].</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>simulator</code></td>          <td>
+                <code><a class="autorefs autorefs-internal" title="cpm.generators.simulator.Simulator" href="#cpm.generators.Simulator">Simulator</a></code>
+          </td>
+          <td><p>A Simulator object.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
 
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>wrapper</code></b>
-                  (<code><a class="autorefs autorefs-internal" title="cpm.generators.wrapper.Wrapper" href="#cpm.generators.Wrapper">Wrapper</a></code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>An initialised Wrapper object for the model.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>data</code></b>
-                  (<code>list</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The data required for the simulation. It must be a list of dictionaries, where each dictionary contains the data (or environment) for a single participant.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>parameters</code></b>
-                  (<code><a class="autorefs autorefs-internal" title="cpm.generators.parameters.Parameters" href="#cpm.generators.Parameters">Parameters</a> or list</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameters required for the simulation. It can be a Parameters object or a list of dictionaries whose length is equal to data. If it is a Parameters object, Simulator will use the same parameters for all simulations. It is a list of dictionaries, it will use match the parameters with data, so that for example parameters[6] will be used for the simulation of data[6].</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>simulator</code></b>(                <code><a class="autorefs autorefs-internal" title="cpm.generators.simulator.Simulator" href="#cpm.generators.Simulator">Simulator</a></code>
-)            –
-            <div class="doc-md-description">
-              <p>A Simulator object.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
 
   
 
@@ -1454,13 +1314,12 @@ where the last parameter updated is the element in parameters corresponding to l
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Simulator.export" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+<h3 id="cpm.generators.simulator.Simulator.export" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1469,42 +1328,35 @@ where the last parameter updated is the element in parameters corresponding to l
   
       <p>Return the trial- and participant-level information about the simulation.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>policies</code></td>          <td>
+                <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
+          </td>
+          <td><p>A dataframe containing the the model output for each participant and trial.
+If the output variable is organised as an array with more than one dimension, the output will be flattened.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>policies</code></b>(                <code><span title="pandas.DataFrame">DataFrame</span></code>
-)            –
-            <div class="doc-md-description">
-              <p>A dataframe containing the the model output for each participant and trial.
-If the output variable is organised as an array with more than one dimension, the output will be flattened.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Simulator.generate" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">generate</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s1">&#39;dependent&#39;</span><span class="p">)</span></code>
+<h3 id="cpm.generators.simulator.Simulator.generate" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">generate</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="s1">&#39;dependent&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1513,65 +1365,57 @@ If the output variable is organised as an array with more than one dimension, th
   
       <p>Generate data for parameter recovery, etc.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>variable</code></td>
+          <td>
+          </td>
+          <td><p>Name of the variable to pull out from model output.</p></td>
+          <td>
+                <code>&#39;dependent&#39;</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>results</code></td>          <td>
+                <code>numpy.<span title="numpy.ndarray">ndarray</span></code>
+          </td>
+          <td><p>An array of dictionaries containing the results of the simulation.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>variable</code></b>
-              –
-              <div class="doc-md-description">
-                <p>Name of the variable to pull out from model output.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>results</code></b>(                <code><span title="numpy.ndarray">ndarray</span></code>
-)            –
-            <div class="doc-md-description">
-              <p>An array of dictionaries containing the results of the simulation.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Simulator.reset" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">reset</span><span class="p">()</span></code>
+<h3 id="cpm.generators.simulator.Simulator.reset" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">reset</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1584,13 +1428,12 @@ If the output variable is organised as an array with more than one dimension, th
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Simulator.run" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">run</span><span class="p">()</span></code>
+<h3 id="cpm.generators.simulator.Simulator.run" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">run</span><span class="p">()</span></code>
 
 </h3>
 
@@ -1599,41 +1442,34 @@ If the output variable is organised as an array with more than one dimension, th
   
       <p>Runs the simulation.</p>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>experiment</code></td>          <td>
+                <code>A list containing the results of the simulation.</code>
+          </td>
+          <td></td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>experiment</code></b>(                <code>A list containing the results of the simulation.</code>
-)            –
-            <div class="doc-md-description">
-              
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Simulator.save" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="cpm.generators.simulator.Simulator.save" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1642,44 +1478,40 @@ If the output variable is organised as an array with more than one dimension, th
   
       <p>Saves the simulation results.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>filename</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The name of the file to save the results to.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>filename</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The name of the file to save the results to.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h3 id="cpm.generators.Simulator.update" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">update</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="cpm.generators.simulator.Simulator.update" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">update</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1688,33 +1520,30 @@ If the output variable is organised as an array with more than one dimension, th
   
       <p>Updates the parameters of the simulation.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>parameters</code></td>
+          <td>
+                <code>object</code>
+          </td>
+          <td><p>The parameters to be updated.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>parameters</code></b>
-                  (<code>object</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameters to be updated.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
@@ -1724,7 +1553,6 @@ If the output variable is organised as an array with more than one dimension, th
   </div>
 
   </div>
-
 
 </div>
               
@@ -1762,15 +1590,14 @@ If the output variable is organised as an array with more than one dimension, th
     
   </span>
 </div>
-    <script src="../../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "../..";</script>
-    <script src="../../js/theme_extra.js"></script>
-    <script src="../../js/theme.js"></script>
-      <script src="../../search/main.js"></script>
-    <script>
-        jQuery(function () {
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
             SphinxRtdTheme.Navigation.enable(true);
-        });
+        };
     </script>
 
 </body>

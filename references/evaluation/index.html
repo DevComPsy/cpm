@@ -8,28 +8,29 @@
     <title>cpm.evaluation - CPM library</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
         <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
         <link href="../../style.css" rel="stylesheet" />
     
       <script>
         // Current page data
         var mkdocs_page_name = "cpm.evaluation";
-        var mkdocs_page_input_path = "references/evaluation.md";
+        var mkdocs_page_input_path = "references\\evaluation.md";
         var mkdocs_page_url = null;
       </script>
     
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
     <!--[if lt IE 9]>
       <script src="../../js/html5shiv.min.js"></script>
     <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/markdown.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/makefile.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/markdown.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/makefile.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -41,7 +42,7 @@
           <a href="../.." class="icon icon-home"> CPM library
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
@@ -63,19 +64,15 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../tutorials/getting-started/">Getting Started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" >How-To</a>
-    <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
-                </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -95,23 +92,23 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../hierarchical/">cpm.hierarchical</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.evaluation</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">cpm.evaluation</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#cpm.evaluation.ParameterRecovery">ParameterRecovery</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.ParameterRecovery.extract">extract</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.parameter.ParameterRecovery.extract">extract()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.ParameterRecovery.recover">recover</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.parameter.ParameterRecovery.recover">recover()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.ParameterRecovery.save">save</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.parameter.ParameterRecovery.save">save()</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpmevaluationstrategies">cpm.evaluation.strategies</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.strategies.grid">grid</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.strategies.grid">grid()</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.strategies.normal">normal</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.evaluation.strategies.normal">normal()</a>
     </li>
         </ul>
     </li>
@@ -133,14 +130,14 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">API reference</li>
-      <li class="breadcrumb-item active">cpm.evaluation</li>
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>API reference &raquo;</li><li>cpm.evaluation</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
   <hr/>
 </div>
+
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
@@ -152,7 +149,7 @@
 
 
 <h3 id="cpm.evaluation.ParameterRecovery" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">ParameterRecovery</span><span class="p">(</span><span class="n">simulator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimiser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategies</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="s1">&#39;dependent&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">ParameterRecovery</span><span class="p">(</span><span class="n">simulator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimiser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategies</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="s1">&#39;dependent&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -162,86 +159,81 @@
   
       <p>Class for performing parameter recovery analysis.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>simulator</code></td>
+          <td>
+                <code>Simulator</code>
+          </td>
+          <td><p>The simulator object.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>optimiser</code></td>
+          <td>
+                <code>object</code>
+          </td>
+          <td><p>The optimisation algorithm.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>loss</code></td>
+          <td>
+                <code><span title="cpm.evaluation.parameter.ParameterRecovery.function">function</span></code>
+          </td>
+          <td><p>The loss function used for optimisation. It usually takes in the model prediction (output) and the observed data (human responses). We only support minimisation functions.</p></td>
+          <td>
+                <code>minimise.LogLikelihood.bernoulli</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>strategy</code></td>
+          <td>
+                <code>object</code>
+          </td>
+          <td><p>The strategy for generating parameter values.</p></td>
+          <td>
+                <code>strategies.grid</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>iteration</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td><p>The number of iterations for the parameter recovery process.</p></td>
+          <td>
+                <code>1000</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>Additional keyword arguments.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>simulator</code></b>
-                  (<code>Simulator</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The simulator object.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>optimiser</code></b>
-                  (<code>object</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The optimisation algorithm.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>loss</code></b>
-                  (<code><span title="cpm.evaluation.parameter.ParameterRecovery.function">function</span></code>, default:
-                      <code><a class="autorefs autorefs-internal" title="cpm.optimisation.minimise.LogLikelihood.bernoulli" href="../optimisation/#cpm.optimisation.minimise.LogLikelihood.bernoulli">bernoulli</a></code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The loss function used for optimisation. It usually takes in the model prediction (output) and the observed data (human responses). We only support minimisation functions.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>strategy</code></b>
-                  (<code>object</code>, default:
-                      <code><a class="autorefs autorefs-internal" title="cpm.evaluation.strategies.grid" href="#cpm.evaluation.strategies.grid">grid</a></code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The strategy for generating parameter values.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>iteration</code></b>
-                  (<code>int</code>, default:
-                      <code>1000</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The number of iterations for the parameter recovery process.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>**kwargs</code></b>
-                  (<code>dict</code>, default:
-                      <code>{}</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Additional keyword arguments.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<p><span class="doc-section-title">Examples:</span></p>
+<p><strong>Examples:</strong></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.evaluation</span> <span class="kn">import</span> <span class="n">ParameterRecovery</span><span class="p">,</span> <span class="n">strategies</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.applications</span> <span class="kn">import</span> <span class="n">DeltaRule</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.optimisation</span> <span class="kn">import</span> <span class="n">minimise</span>
@@ -261,6 +253,7 @@
 </code></pre></div>
 
 
+
   
 
   <div class="doc doc-children">
@@ -273,13 +266,12 @@
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.evaluation.ParameterRecovery.extract" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">extract</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h4 id="cpm.evaluation.parameter.ParameterRecovery.extract" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">extract</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h4>
 
@@ -288,65 +280,57 @@
   
       <p>Extract the recovered and original parameter values.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>key</code></td>
+          <td>
+          </td>
+          <td><p>The key specifying the parameter value to extract.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>numpy.<span title="numpy.ndarray">ndarray</span></code>
+          </td>
+          <td><p>The extracted parameter values.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>key</code></b>
-              –
-              <div class="doc-md-description">
-                <p>The key specifying the parameter value to extract.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-                <code><span title="numpy.ndarray">ndarray</span></code>
-            –
-            <div class="doc-md-description">
-              <p>The extracted parameter values.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.evaluation.ParameterRecovery.recover" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">recover</span><span class="p">()</span></code>
+<h4 id="cpm.evaluation.parameter.ParameterRecovery.recover" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">recover</span><span class="p">()</span></code>
 
 </h4>
 
@@ -364,13 +348,12 @@ process is repeated for a specified number of iterations.</p>
 
 </div>
 
-
 <div class="doc doc-object doc-function">
 
 
 
-<h4 id="cpm.evaluation.ParameterRecovery.save" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h4 id="cpm.evaluation.parameter.ParameterRecovery.save" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h4>
 
@@ -379,57 +362,48 @@ process is repeated for a specified number of iterations.</p>
   
       <p>Save the output of the parameter recovery process.</p>
 
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>filename</code></b>
-                  (<code>str</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The filename to save the output to, which includes the path.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>filename</code></td>
+          <td>
+                <code>str, optional</code>
+          </td>
+          <td><p>The filename to save the output to, which includes the path.</p></td>
+          <td>
                 <code>None</code>
-            –
-            <div class="doc-md-description">
-              
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>None</code>
+          </td>
+          <td></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
@@ -440,9 +414,7 @@ process is repeated for a specified number of iterations.</p>
 
   </div>
 
-
 </div><h2 id="cpmevaluationstrategies">cpm.evaluation.strategies</h2>
-
 
 
 <div class="doc doc-object doc-function">
@@ -450,7 +422,7 @@ process is repeated for a specified number of iterations.</p>
 
 
 <h4 id="cpm.evaluation.strategies.grid" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">strategies</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">template</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">population</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">strategies</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">template</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">population</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h4>
 
@@ -459,98 +431,88 @@ process is repeated for a specified number of iterations.</p>
   
       <p>Create a grid of parameters using a uniform distribution.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>template</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>The parameters.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bounds</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td><p>The parameter bounds.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>population</code></td>
+          <td>
+                <code>int, optional</code>
+          </td>
+          <td><p>The number of parameter sets to create. If not provided, default value is 1000.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict, optional</code>
+          </td>
+          <td><p>Additional keyword arguments.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>grid</code></td>          <td>
+                <code>numpy.<span title="numpy.ndarray">ndarray</span></code>
+          </td>
+          <td><p>The grid of parameters.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>template</code></b>
-                  (<code>dict</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameters.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>bounds</code></b>
-                  (<code>list</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The parameter bounds.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>population</code></b>
-                  (<code>int</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The number of parameter sets to create. If not provided, default value is 1000.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>**kwargs</code></b>
-                  (<code>dict</code>, default:
-                      <code>{}</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Additional keyword arguments.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>grid</code></b>(                <code><span title="numpy.ndarray">ndarray</span></code>
-)            –
-            <div class="doc-md-description">
-              <p>The grid of parameters.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h4 id="cpm.evaluation.strategies.normal" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">strategies</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">strategies</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h4>
 
@@ -559,73 +521,68 @@ process is repeated for a specified number of iterations.</p>
   
       <p>Create a grid of parameters using a normal distribution.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>params</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>The parameters.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bounds</code></td>
+          <td>
+                <code>list</code>
+          </td>
+          <td><p>The upper bounds for each parameter.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>iterations</code></td>
+          <td>
+                <code>int, optional</code>
+          </td>
+          <td><p>The number of parameter sets to create. If not provided, default value is 1000.</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>grid</code></td>          <td>
+                <code>numpy.<span title="numpy.ndarray">ndarray</span></code>
+          </td>
+          <td><p>The grid of parameters.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>params</code></b>
-                  (<code>dict</code>)
-              –
-              <div class="doc-md-description">
-                <p>The parameters.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>bounds</code></b>
-                  (<code>list</code>)
-              –
-              <div class="doc-md-description">
-                <p>The upper bounds for each parameter.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>iterations</code></b>
-                  (<code>int</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The number of parameter sets to create. If not provided, default value is 1000.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>grid</code></b>(                <code><span title="numpy.ndarray">ndarray</span></code>
-)            –
-            <div class="doc-md-description">
-              <p>The grid of parameters.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
@@ -664,15 +621,14 @@ process is repeated for a specified number of iterations.</p>
     
   </span>
 </div>
-    <script src="../../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "../..";</script>
-    <script src="../../js/theme_extra.js"></script>
-    <script src="../../js/theme.js"></script>
-      <script src="../../search/main.js"></script>
-    <script>
-        jQuery(function () {
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
             SphinxRtdTheme.Navigation.enable(true);
-        });
+        };
     </script>
 
 </body>

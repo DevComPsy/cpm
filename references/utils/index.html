@@ -8,28 +8,29 @@
     <title>cpm.utils - CPM library</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
         <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
         <link href="../../style.css" rel="stylesheet" />
     
       <script>
         // Current page data
         var mkdocs_page_name = "cpm.utils";
-        var mkdocs_page_input_path = "references/utils.md";
+        var mkdocs_page_input_path = "references\\utils.md";
         var mkdocs_page_url = null;
       </script>
     
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
     <!--[if lt IE 9]>
       <script src="../../js/html5shiv.min.js"></script>
     <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/markdown.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/makefile.min.js"></script>
-      <script>hljs.highlightAll();</script> 
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/markdown.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/makefile.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -41,7 +42,7 @@
           <a href="../.." class="icon icon-home"> CPM library
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
@@ -63,19 +64,15 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../tutorials/getting-started/">Getting Started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" >How-To</a>
-    <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
-                </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -97,13 +94,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../evaluation/">cpm.evaluation</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.utils</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">cpm.utils</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#cpm.utils.pandas_to_dict">pandas_to_dict</a>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.utils.pandas_to_dict">pandas_to_dict()</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#cpm.utils.dict_to_pandas">dict_to_pandas</a>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.utils.dict_to_pandas">dict_to_pandas()</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#cpm.utils.load">load</a>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.utils.load">load()</a>
     </li>
     </ul>
                   </li>
@@ -121,19 +118,18 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">API reference</li>
-      <li class="breadcrumb-item active">cpm.utils</li>
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>API reference &raquo;</li><li>cpm.utils</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
   <hr/>
 </div>
+
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
                 <h1 id="cpmutils">cpm.utils</h1>
-
 
 
 <div class="doc doc-object doc-function">
@@ -141,7 +137,7 @@
 
 
 <h2 id="cpm.utils.pandas_to_dict" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">pandas_to_dict</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">participant</span><span class="o">=</span><span class="s1">&#39;ppt&#39;</span><span class="p">,</span> <span class="n">stimuli</span><span class="o">=</span><span class="s1">&#39;stimulus&#39;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="s1">&#39;feedback&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">pandas_to_dict</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">participant</span><span class="o">=</span><span class="s1">&#39;ppt&#39;</span><span class="p">,</span> <span class="n">stimuli</span><span class="o">=</span><span class="s1">&#39;stimulus&#39;</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="s1">&#39;feedback&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -153,99 +149,89 @@
 each feedback, and a column for a participant identifier. Each row should be
 a single trial, and each participant should have a unique number in the participant column.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>df</code></td>
+          <td>
+                <code>pandas dataframe</code>
+          </td>
+          <td><p>The dataframe to convert</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>stimuli</code></td>
+          <td>
+                <code>str, optional</code>
+          </td>
+          <td><p>The prefix for each stimulus column in the pandas DataFrame, by default "stimulus".</p></td>
+          <td>
+                <code>&#39;stimulus&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>participant</code></td>
+          <td>
+                <code>str, optional</code>
+          </td>
+          <td><p>The column name for the participant number, by default "ppt".</p></td>
+          <td>
+                <code>&#39;ppt&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict, optional</code>
+          </td>
+          <td><p>Any other keyword arguments to pass to the pandas DataFrame.</p></td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>df</code></b>
-                  (<code>pandas dataframe</code>, default:
-                      <code>None</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The dataframe to convert</p>
-              </div>
-            </li>
-            <li>
-              <b><code>stimuli</code></b>
-                  (<code>str</code>, default:
-                      <code>&#39;stimulus&#39;</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The prefix for each stimulus column in the pandas DataFrame, by default "stimulus".</p>
-              </div>
-            </li>
-            <li>
-              <b><code>participant</code></b>
-                  (<code>str</code>, default:
-                      <code>&#39;ppt&#39;</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>The column name for the participant number, by default "ppt".</p>
-              </div>
-            </li>
-            <li>
-              <b><code>**kwargs</code></b>
-                  (<code>dict</code>, default:
-                      <code>{}</code>
-)
-              –
-              <div class="doc-md-description">
-                <p>Any other keyword arguments to pass to the pandas DataFrame.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code>list</code>
-            –
-            <div class="doc-md-description">
-              <p>A list of dictionaries, each dictionary containing the stimuli and
-feedback for a single participant.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td><p>A list of dictionaries, each dictionary containing the stimuli and
+feedback for a single participant.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h2 id="cpm.utils.dict_to_pandas" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">dict_to_pandas</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">dict_to_pandas</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span></code>
 
 </h2>
 
@@ -254,66 +240,58 @@ feedback for a single participant.</p>
   
       <p>Convert a dictionary to a pandas dataframe.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>dict</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td><p>The dictionary to convert.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>pandas</code></td>          <td>
+                <code>dataframe</code>
+          </td>
+          <td><p>The pandas dataframe converted from dict.</p></td>
+        </tr>
+    </tbody>
+  </table>
 
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>dict</code></b>
-                  (<code>dict</code>)
-              –
-              <div class="doc-md-description">
-                <p>The dictionary to convert.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
-<b><code>pandas</code></b>(                <code>dataframe</code>
-)            –
-            <div class="doc-md-description">
-              <p>The pandas dataframe converted from dict.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
   </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
 
 <h2 id="cpm.utils.load" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span></code>
 
 </h2>
 
@@ -322,55 +300,48 @@ feedback for a single participant.</p>
   
       <p>Load a file from disk.</p>
 
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>file</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td><p>The file to load.</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>file</code></b>
-                  (<code>str</code>)
-              –
-              <div class="doc-md-description">
-                <p>The file to load.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-    <th class="field-name">Returns:</th>
-    <td class="field-body">
-      <ul class="first simple">
-          <li>
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
                 <code>object</code>
-            –
-            <div class="doc-md-description">
-              <p>The object loaded from the file.</p>
-            </div>
-          </li>
-      </ul>
-    </td>
-    </tr>
-  </tbody>
-</table>
+          </td>
+          <td><p>The object loaded from the file.</p></td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
@@ -406,15 +377,14 @@ feedback for a single participant.</p>
     
   </span>
 </div>
-    <script src="../../js/jquery-3.6.0.min.js"></script>
-    <script>var base_url = "../..";</script>
-    <script src="../../js/theme_extra.js"></script>
-    <script src="../../js/theme.js"></script>
-      <script src="../../search/main.js"></script>
-    <script>
-        jQuery(function () {
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
             SphinxRtdTheme.Navigation.enable(true);
-        });
+        };
     </script>
 
 </body>

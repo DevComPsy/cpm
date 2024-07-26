@@ -34,5 +34,6 @@ If you have an idea for a new feature, please open an issue to discuss it.
 Two main types of features we planned are:
 
 1. Expansion of the models classes. There are many model components out in the literature and we would like to add as many of them to the library as possible.
+2. Add pre-built models to the library as ready-to-deploy applications.
 2. Hierarchical and MCMC methods for model fitting.
 3. Introducing new classes to scale your simulations from local to distributed computing.

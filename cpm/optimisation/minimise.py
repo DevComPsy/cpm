@@ -189,7 +189,7 @@ class Bayesian:
         Parameters
         ----------
         likelihood : float
-            The likelihood value.
+            The log likelihood value.
         n : int
             The number of data points.
         k : int
@@ -210,7 +210,7 @@ class Bayesian:
         Parameters
         ----------
         likelihood : float
-            The likelihood value.
+            The log likelihood value.
         n : int
             The number of data points.
         k : int

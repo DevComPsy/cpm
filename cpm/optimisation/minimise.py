@@ -72,16 +72,16 @@ class LogLikelihood:
         Returns
         -------
         float
-            The log likelihood or negative log likelihood.
+            The summed log likelihood or negative log likelihood.
 
         Notes
         -----
 
         `predicted` and `observed` must have the same shape.
         `observed` is a binary variable, so it can only take the values 0 or 1.
-        Both `predicted` and `observed` must be 1D arrays.
-
-        `log(0)` is undefined, so the log likelihood is set to the value of np.log(1e-100).
+        `predicted` must be a value between 0 and 1.
+        Values are clipped to avoid log(0) and log(1).
+        If we encounter any non-finite values, we set any log likelihood to the value of np.log(1e-100).
 
         Examples
         --------
@@ -94,7 +94,10 @@ class LogLikelihood:
         """
         limit = np.log(1e-200)
         bound = np.finfo(np.float64).min
-        LL = bernoulli.logpmf(k=observed.flatten(), p=predicted.flatten())
+        probabilities = predicted.flatten()
+        np.clip(probabilities, 1e-100, 1 - 1e-100, out=probabilities)
+
+        LL = bernoulli.logpmf(k=observed.flatten(), p=probabilities)
         LL[LL < bound] = limit  # Set the lower bound to avoid overflow
         LL = np.sum(LL)
         if negative:
@@ -117,7 +120,7 @@ class LogLikelihood:
         Returns
         -------
         float
-            The log likelihood or negative log likelihood.
+            The summed log likelihood or negative log likelihood.
 
         Examples
         --------
@@ -154,7 +157,7 @@ class Distance:
         float
             The sum of squared errors.
         """
-        sse = np.sum((predicted - observed) ** 2)
+        sse = np.sum((predicted.flatten() - observed.flatten()) ** 2)
         return sse
 
     def MSE(predicted, observed, **kwargs):
@@ -173,7 +176,7 @@ class Distance:
         float
             The Euclidean distance.
         """
-        euclidean = np.sqrt(np.mean((predicted - observed) ** 2))
+        euclidean = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2))
         return euclidean
 
 

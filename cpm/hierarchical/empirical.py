@@ -273,7 +273,7 @@ class EmpiricalBayes:
             # and then sum them up for an overall measure
             log_model_evidence = log_posterior + penalty
             # clip the log model evidence to avoid numerical instability
-            log_model_evidence[np.nonfinite(log_model_evidence)] = -1e6
+            log_model_evidence[~np.isfinite(log_model_evidence)] = -1e6
             # sum the log model evidence across participants
             # it is a log-converted version of Equation 8 in Gershman (2016)
             summed_lme = log_model_evidence.sum()

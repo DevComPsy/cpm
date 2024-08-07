@@ -30,7 +30,7 @@ class EmpiricalBayes:
     It is also important to note that we will require the Hessian matrix of second derivatives of the **negative log posterior** (Gershman, 2016, p. 3).
     This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
 
-    In the current implementation, wetry to calculate the second derivative of the negative log posterior density function according to the following algorithm:
+    In the current implementation, we try to calculate the second derivative of the negative log posterior density function according to the following algorithm:
 
     1. Attempt to use [Cholesky decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition).
     2. If fails, attempt to use [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition).
@@ -43,6 +43,7 @@ class EmpiricalBayes:
 
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
     - When calculating the within-subject variance via the Hessian matrix, the algorithm sets any non-finite or non-positive values to NaN.
+    - If the second derivative of the negative log posterior density function is not finite, we set the log determinant to -1e6.
 
     References
     ----------
@@ -271,6 +272,8 @@ class EmpiricalBayes:
             # calculate the participant-wise log model evidence as the penalised log posterior density,
             # and then sum them up for an overall measure
             log_model_evidence = log_posterior + penalty
+            # clip the log model evidence to avoid numerical instability
+            log_model_evidence[~np.isfinite(log_model_evidence)] = -1e6
             # sum the log model evidence across participants
             # it is a log-converted version of Equation 8 in Gershman (2016)
             summed_lme = log_model_evidence.sum()

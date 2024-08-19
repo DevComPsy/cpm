@@ -139,12 +139,15 @@ class Parameters:
         for _, value in self.__dict__.items():
             if value.prior is not None:
                 prior += value.PDF(log=True)
+
         if np.isneginf(prior):
-            prior = np.finfo(np.float64).min
+            prior = np.finfo(np.float64).tiny
+
         if not log:
             prior = np.exp(prior)
             if prior <= 0:
                 prior = np.finfo(np.float64).tiny
+
         return prior
 
     def update_prior(self, **kwargs):

@@ -1,132 +1,42 @@
-from cpm.generators import Parameters, Wrapper, Value
-
-# import components we want to use
-from cpm.models.utils import Nominal
-from cpm.models.learning import DeltaRule
-from cpm.models.decision import Sigmoid
-
-# import some useful stuff
-import numpy as np
-
-
-## create a set of parameters
-## the parameter class is only used for the Wrapper
-## other classes and modules will convert the parameters to this class automatically
-parameters = Parameters(
-    # freely varying parameters are indicated by specifying priors
-    alpha=Value(
-        value=0.5,
-        lower=1e-10,
-        upper=1,
-        prior="truncated_normal",
-        args={"mean": 0.5, "sd": 0.25},
-    ),
-    temperature=Value(
-        value=1,
-        lower=1e-10,
-        upper=10,
-        prior="truncated_normal",
-        args={"mean": 5, "sd": 2.5},
-    ),
-    values=np.array([[0.25, 0.25, 0.25, 0.25]]),
-)
-
-
-## create a single trial as a dictionary
-trial = {
-    "trials": np.array([1, 2]),
-    "feedback": np.array([1]),
-    "attention": np.array([1, 0]),  ## not used in the model
-    "misc": np.array([1, 0]),  ## not used in the model
-}
-
-
-## define a quick model
-def model(parameters, trial):
-    ## import parameters
-    alpha = parameters.alpha
-    temperature = parameters.temperature
-    ## import variables
-    weights = parameters.values
-
-    ## import trial
-    stimulus = trial.get("trials")
-    stimulus = Nominal(target=stimulus, bits=4)
-    feedback = trial.get("feedback")
-
-    ## specify the computations for a given trial
-    ## multiply weights with stimulis vector
-    active = stimulus * weights
-    ## this is a mock-up policy
-    policy = Sigmoid(temperature=temperature, beta=0.5, activations=active).compute()
-    ## learning
-    error = DeltaRule(
-        weights=active, feedback=feedback, alpha=alpha, input=stimulus
-    ).compute()
-    weights += error
-    output = {
-        "policy": np.array([policy]),
-        "values": weights,
-        "dependent": np.array([policy]),
-    }
-    return output
-
-
-def test():
-    model(parameters, trial)
-
-
+import argparse
 import timeit
 
-print(timeit.timeit("test()", setup="from __main__ import test", number=10000))
-print(timeit.timeit("test()", globals=locals(), number=1))
+PARALELL_TEMPLATE = """
+from cpm.utils import pandas_to_dict
+import numpy as np
+import pandas as pd
 
-## create some data
-## could be in a separate script
-experiment = []
-for i in range(200):
-    ppt = {
-        "ppt": i,
-        "trials": np.array(
-            [
-                [2, 3],
-                [1, 4],
-                [3, 2],
-                [4, 1],
-                [2, 3],
-                [2, 3],
-                [1, 4],
-                [3, 2],
-                [4, 1],
-                [2, 3],
-            ]
-        ),
-        "feedback": np.random.randint(2, size=(10, 1)),
-        "observed": np.random.randint(2, size=(10, 1)),
-    }
-    experiment.append(ppt)
+from src.fitting import fitting
+from src.model import model_setup
 
+data = pd.read_csv("simulated_data.csv")
 
-## reset wrapper for no reason other than tidying
-## Wrapper can only take a single dictionary as data, so experiment[0] is used
-wrap = Wrapper(model=model, parameters=parameters, data=experiment[0])
-
-
-from cpm.optimisation import minimise, Fmin
-
-## initialise the optimisation object
-Fit = Fmin(
-    model=wrap,
-    data=experiment,
-    initial_guess=[0.32, 0.788],
-    minimisation=minimise.LogLikelihood.bernoulli,
-    parallel=False,  # parallel True will use all available cores
+experiment = pandas_to_dict(
+    data,
+    participant="ppt",
+    stimuli="stimulus",
+    feedback="reward",
+    observed="responses",
+    trial_number="trial",
 )
+sd_start = np.random.uniform(0.1, 1, 2) * np.array([1, 10])
+mean_start = np.random.uniform(0, 1, 2) * np.array([1, 10])
+parameters, learning_model = model_setup(
+    experiment[0], mean=mean_start, sd=sd_start, generate=False
+)
+"""
 
-# run the optimisation
-Fit.optimise()
+if __name__ == "__main__":
 
-## export data where each row is a participant
-Fit.export()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-rs", "--repeats", type=int, default=5)
 
-Fit.parameters
+    args = parser.parse_args()
+
+    cmd = "fitting(wrapper=learning_model, data=experiment, parallel=True)"
+
+    timeit.timeit(
+        cmd,
+        setup=PARALELL_TEMPLATE,
+        number=args.repeats,
+    )

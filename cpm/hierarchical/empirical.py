@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
+from ..core.plots import convergence_diagnostics
 
 
 class EmpiricalBayes:
@@ -352,3 +353,9 @@ class EmpiricalBayes:
             The estimated group-level hyperparameters for each iteration and chain.
         """
         return self.hyperparameters
+
+    def diagnostics(self, show=True, save=False, path=None):
+        """
+        Returns the convergence diagnostics plots for the group-level hyperparameters.
+        """
+        convergence_diagnostics(self.hyperparameters, show=show, save=save, path=path)

@@ -1,6 +1,7 @@
 import multiprocess as mp
 import ipyparallel as ipp
-from mpi4py import MPI
+import os
+import socket
 
 import numpy as np
 import os
@@ -34,132 +35,113 @@ def in_slurm():
     return "SLURM_JOB_ID" in os.environ
 
 
-def detect_cores(backend="multiprocess"):
+def detect_nodes():
     """
-    This function detects the number of cores available for parallel processing.
-
-    Parameters
-    ----------
-    backend : str
-        The backend to use for parallel processing. Options are 'multiprocess' and 'ipyparallel'.
+    This function detects the number of nodes in the current slurm job.
 
     Returns
     -------
     int
-        The number of cores available for parallel processing.
+        The number of nodes in the current slurm job.
     """
-    if backend == "multiprocess":
-        return mp.cpu_count()
-    elif backend == "ipyparallel":
-        if in_ipynb():
-            try:
-                cluster = ipp.Cluster(
-                    n=4
-                )  # Create a cluster with 4 engines (adjust the number as needed)
-                cluster.start_and_connect_sync()
-                rc = cluster.client
-            except:
-                return 1
-        else:
-            return 1
-    elif backend == "mpi":
-        comm = MPI.COMM_WORLD
-        return comm.Get_size()
-    else:
-        return 1
+    return int(os.environ.get("SLURM_JOB_NUM_NODES", 1))
 
 
-def detect_mpi():
+def execute_ipyparallel(job, data):
     """
-    This function detects if MPI is available for parallel processing.
-
-    Returns
-    -------
-    bool
-        True if MPI is available, False otherwise.
-    """
-    return MPI.COMM_WORLD.Get_size() > 1
-
-
-def detect_backend():
-    """
-    This function detects the backend to use for parallel processing.
-
-    Returns
-    -------
-    str
-        The backend to use for parallel processing. Options are 'multiprocess', 'ipyparallel', 'mpi', and 'serial'.
-    """
-    if detect_mpi():
-        return "mpi"
-    elif detect_cores("ipyparallel") > 1:
-        return "ipyparallel"
-    elif detect_cores("multiprocess") > 1:
-        return "multiprocess"
-    else:
-        return "serial"
-
-
-def parallel_map(func, iterable, backend=None, cl=None):
-    """
-    This function applies a function to each element of an iterable in parallel.
+    This function executes a job in parallel using ipyparallel.
 
     Parameters
     ----------
-    func : function
-        The function to apply to each element of the iterable.
-    iterable : iterable
-        The iterable to apply the function to.
-    backend : str
-        The backend to use for parallel processing. Options are 'multiprocess', 'ipyparallel', 'mpi', and 'serial'.
-    cl : int
-        The number of cores to use for parallel processing.
+    job : function
+        The function to be executed in parallel.
+    data : list
+        The list of data to be processed in parallel.
 
     Returns
     -------
     list
-        The list of results from applying the function to each element of the iterable.
+        The result of the job executed in parallel.
     """
-    if backend is None:
-        backend = detect_backend()
+    if not in_ipynb():
+        raise Exception("This function should only be called from an ipython notebook.")
 
-    if backend == "multiprocess":
-        with mp.Pool(cl) as pool:
-            return pool.map(func, iterable)
-    elif backend == "ipyparallel":
-        if in_ipynb():
-            cluster = ipp.Cluster(n=cl)  # Create a cluster with 'cl' cores
-            cluster.start_and_connect_sync()
-            rc = cluster.client
-            return rc[:].map_sync(func, iterable)
-    elif backend == "mpi":
-        ## divide the work between nodes and cores
-        comm = MPI.COMM_WORLD
-        size = comm.Get_size()
-        rank = comm.Get_rank()
-        n = len(iterable)
+    c = ipp.Client()
+    dview = c[:]
+    dview.block = True
+    dview.push({"data": data})
+    dview.push({"job": job})
+    dview.execute("result = [job(d) for d in data]")
+    result = dview.pull("result", block=True)
+    return result
 
-        ## calculate the number of elements to process
-        chunk = n // size
-        start = rank * chunk
-        end = start + chunk
-        if rank == size - 1:
-            end = n
 
-        ## process the elements
-        results = []
-        for i in range(start, end):
-            results.append(func(iterable[i]))
+def execute_multiprocess(job, data):
+    """
+    This function executes a job in parallel using multiprocess.
 
-        ## gather the results
-        results = comm.gather(results, root=0)
+    Parameters
+    ----------
+    job : function
+        The function to be executed in parallel.
+    data : list
+        The list of data to be processed in parallel.
 
-        ## return the results
-        if rank == 0:
-            return [item for sublist in results for item in sublist]
-        else:
-            return None
-    elif backend == "serial":
-        return list(map(func, iterable))
-    else:
-        return [func(i) for i in iterable]
+    Returns
+    -------
+    list
+        The result of the job executed in parallel.
+    """
+    if in_ipynb():
+        raise Exception("This function should not be called from an ipython notebook.")
+
+    with mp.Pool() as pool:
+        result = pool.map(job, data)
+    return result
+
+
+def execute_serial(job, data):
+    """
+    This function executes a job in serial.
+
+    Parameters
+    ----------
+    job : function
+        The function to be executed in serial.
+    data : list
+        The list of data to be processed in serial.
+
+    Returns
+    -------
+    list
+        The result of the job executed in serial.
+    """
+    results = list(map(job, data))
+    return results
+
+
+def distribute_across_nodes(job, data):
+    """
+    This function distributes a job across multiple nodes in a slurm job.
+
+    Parameters
+    ----------
+    job : function
+        The function to be executed in parallel.
+    data : list or pandas.DataFrame.groupby()
+        The data to be processed in parallel.
+
+    Returns
+    -------
+    list
+        The result of the job executed in parallel.
+    """
+    if not in_slurm():
+        raise Exception("This function should only be called from a slurm job.")
+
+    if detect_nodes() > 1:
+        return execute_multiprocess(job, data)
+
+    number_of_nodes = detect_nodes()
+    # TODO: Implement this function
+    # TODO: when pandas, distribute different then when list

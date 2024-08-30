@@ -98,6 +98,10 @@ class DifferentialEvolution:
         None
         """
 
+        loss = self.loss
+        model = self.model
+        prior = self.prior
+
         def __task(participant, **args):
             """
             Utility function to wrap fitting the model to each individual for parallel processing and organise the output.
@@ -121,10 +125,6 @@ class DifferentialEvolution:
             result.ppt = ppt
 
             return result
-
-        loss = self.loss
-        model = self.model
-        prior = self.prior
 
         if self.__parallel__:
             with mp.Pool(self.cl) as pool:

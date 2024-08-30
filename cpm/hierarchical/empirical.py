@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
+from ..core.diagnostics import convergence_diagnostics_plots
 
 
 class EmpiricalBayes:
@@ -19,6 +20,8 @@ class EmpiricalBayes:
         The tolerance for convergence. Default is 1e-6.
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
+    quiet : bool, optional
+        Whether to suppress the output. Default is False.
 
     Notes
     -----
@@ -30,7 +33,7 @@ class EmpiricalBayes:
     It is also important to note that we will require the Hessian matrix of second derivatives of the **negative log posterior** (Gershman, 2016, p. 3).
     This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
 
-    In the current implementation, wetry to calculate the second derivative of the negative log posterior density function according to the following algorithm:
+    In the current implementation, we try to calculate the second derivative of the negative log posterior density function according to the following algorithm:
 
     1. Attempt to use [Cholesky decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition).
     2. If fails, attempt to use [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition).
@@ -43,6 +46,7 @@ class EmpiricalBayes:
 
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
     - When calculating the within-subject variance via the Hessian matrix, the algorithm sets any non-finite or non-positive values to NaN.
+    - If the second derivative of the negative log posterior density function is not finite, we set the log determinant to -1e6.
 
     References
     ----------
@@ -81,6 +85,7 @@ class EmpiricalBayes:
         iteration=1000,
         tolerance=1e-6,
         chain=4,
+        quiet=False,
         **kwargs,
     ):
         self.function = copy.deepcopy(optimiser.model)
@@ -95,6 +100,8 @@ class EmpiricalBayes:
         self.__number_of_parameters__ = len(self.optimiser.model.parameters.free())
         self.__bounds__ = self.optimiser.model.parameters.bounds()
 
+        self.quiet = quiet
+
         self.kwargs = kwargs
 
         self.hyperparameters = pd.DataFrame()
@@ -103,7 +110,7 @@ class EmpiricalBayes:
     def step(self):
         self.optimiser.optimise()
         hessian = []
-        for i, n in enumerate(self.optimiser.fit):
+        for _, n in enumerate(self.optimiser.fit):
             hessian.append(n.get("hessian"))
 
         hessian = np.asarray(hessian)
@@ -271,6 +278,8 @@ class EmpiricalBayes:
             # calculate the participant-wise log model evidence as the penalised log posterior density,
             # and then sum them up for an overall measure
             log_model_evidence = log_posterior + penalty
+            # clip the log model evidence to avoid numerical instability
+            log_model_evidence[~np.isfinite(log_model_evidence)] = -1e6
             # sum the log model evidence across participants
             # it is a log-converted version of Equation 8 in Gershman (2016)
             summed_lme = log_model_evidence.sum()
@@ -299,7 +308,8 @@ class EmpiricalBayes:
                 hyper["reject"] = summed_lme < lme_old
                 self.hyperparameters = pd.concat([self.hyperparameters, hyper])
 
-            print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
+            if self.quiet is False:
+                print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
 
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
@@ -320,9 +330,26 @@ class EmpiricalBayes:
         This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains.
 
         """
+        # use the updated population-level parameters to update the priors on
+        # model parameters, for next round of participant-wise MAP estimation
+        self.optimiser.model.parameters.update_prior(**population_updates)
         output = []
         for chain in range(self.chain):
-            print(f"Chain: {chain + 1}")
+            ## select a random starting point for each chain
+            if chain > 0:
+                population_updates = {}
+                for i, name in enumerate(parameter_names):
+                    population_updates[name] = {
+                        "mean": np.random.Generator.beta(2, 2) * self.__bounds__[1][i],
+                        "sd": np.random.Generator.beta(2, 2)
+                        * (self.__bounds__[1][i] / 2),
+                    }
+                # use the updated population-level parameters to update the priors on
+                # model parameters, for next round of participant-wise MAP estimation
+                self.optimiser.model.parameters.update_prior(**population_updates)
+
+            if self.quiet is False:
+                print(f"Chain: {chain + 1}")
             results = self.stair(chain_index=chain)
             output.append(copy.deepcopy(results))
         self.output = output
@@ -349,3 +376,25 @@ class EmpiricalBayes:
             The estimated group-level hyperparameters for each iteration and chain.
         """
         return self.hyperparameters
+
+    def diagnostics(self, show=True, save=False, path=None):
+        """
+        Returns the convergence diagnostics plots for the group-level hyperparameters.
+
+        Parameters
+        ----------
+        show : bool, optional
+            Whether to show the plots. Default is True.
+        save : bool, optional
+            Whether to save the plots. Default is False.
+        path : str, optional
+            The path to save the plots. Default is None.
+
+        Notes
+        -----
+        The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
+        It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.
+        """
+        convergence_diagnostics_plots(
+            self.hyperparameters, show=show, save=save, path=path
+        )

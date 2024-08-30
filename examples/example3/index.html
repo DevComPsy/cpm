@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Example 4: Multidimensional reinforcement learning in a k-armed bandit problem - CPM library</title>
+    <title>Example 3: Estimating Empirical Priors - CPM library</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
@@ -14,7 +14,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Example 4: Multidimensional reinforcement learning in a k-armed bandit problem";
+        var mkdocs_page_name = "Example 3: Estimating Empirical Priors";
         var mkdocs_page_input_path = "examples\\example3.ipynb";
         var mkdocs_page_url = null;
       </script>
@@ -81,6 +81,14 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../example2/">Example 2: Reinforcement learning with a two-armed bandit.</a>
                   </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Example 3: Estimating Empirical Priors</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#import-the-data">Import the data</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#the-model">The model</a>
+    </li>
+    </ul>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul>
@@ -111,7 +119,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>Examples &raquo;</li><li>Example 4: Multidimensional reinforcement learning in a k-armed bandit problem</li>
+          <li>Examples &raquo;</li><li>Example 3: Estimating Empirical Priors</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -1158,7 +1166,42 @@ Licensed under the Apache License, Version 2.0.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="example-4-multidimensional-reinforcement-learning-in-a-k-armed-bandit-problem">Example 4: Multidimensional reinforcement learning in a k-armed bandit problem<a class="anchor-link" href="#example-4-multidimensional-reinforcement-learning-in-a-k-armed-bandit-problem">&#182;</a></h1>
+<h1 id="example-3-estimating-empirical-priors">Example 3: Estimating Empirical Priors<a class="anchor-link" href="#example-3-estimating-empirical-priors">&#182;</a></h1><p>In the following example, we will walkthrough how to estimate empirical priors for reinforcement learning model based on Gershman (2016).
+We will apply this for the 2-armed bandit task we looked at in the previous example.</p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Let us look at what each column represents:</p>
+<ul>
+<li><code>index</code>: variable to identify each row - this variable is clutter.</li>
+<li><code>left</code>: the stimulus presented on the left side.</li>
+<li><code>right</code>: the stimulus presented on the right side.</li>
+<li><code>reward_left</code>: the reward received when the left stimulus is selected.</li>
+<li><code>reward_right</code>: the reward received when the right stimulus is selected.</li>
+<li><code>ppt</code>: the participant number.</li>
+<li><code>responses</code>: the response of the participant (1 for right, 0 for left).</li>
+</ul>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="import-the-data">Import the data<a class="anchor-link" href="#import-the-data">&#182;</a></h2><p>First, we will import the data and get it ready for the toolbox.</p>
+
 </div>
 </div>
 </div>
@@ -1183,9 +1226,23 @@ Licensed under the Apache License, Version 2.0.
                 </div>
             </clipboard-copy>
         </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span>
+            <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.cm</span> <span class="k">as</span> <span class="nn">cmx</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">prettyformatter</span> <span class="kn">import</span> <span class="n">pprint</span>
+
+<span class="n">experiment</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;bandit_small.csv&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">experiment</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt"></div>
+<div id="cell-1" class="clipboard-copy-txt">import matplotlib.cm as cmx
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+from prettyformatter import pprint
+
+experiment = pd.read_csv('bandit_small.csv', header=0)
+experiment.head(10)</div>
     
         </div>
     </div>
@@ -1193,6 +1250,90 @@ Licensed under the Apache License, Version 2.0.
 </div>
 </div>
 
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Here, we will quickly add a column <code>observed</code> to specify for the toolbox, what is the dependent variable we actually want to predict.</p>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+        
+        
+        <div class="CodeMirror cm-s-jupyter">
+        <div class="zeroclipboard-container">
+            <clipboard-copy for="cell-2">
+            <div>
+                <span class="notice" hidden>Copied!</span>
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
+                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
+                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
+                </svg>
+                </div>
+            </clipboard-copy>
+        </div>
+            <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">experiment</span><span class="p">[</span><span class="s1">&#39;observed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">experiment</span><span class="p">[</span><span class="s1">&#39;responses&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+</pre></div>
+<div id="cell-2" class="clipboard-copy-txt">experiment['observed'] = experiment['responses'] - 1</div>
+    
+        </div>
+    </div>
+
+</div>
+</div>
+
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="the-model">The model<a class="anchor-link" href="#the-model">&#182;</a></h2><p>Let us quickly recap through the model we will use.</p>
+<p>Each stimulus has an associated value, which is the expected reward that can be obtained from selecting that stimulus.</p>
+<p>Let $Q(a)$ be the estimated value of action $a$.
+On each trial, $t$, there are two stimuli present, so that $Q(a)$ could be $Q(\text{left})$ or $Q(\text{right})$, where the corresponding Q-values are derived from the associated value of the stimuli present on left or right.
+More formally, we can say that the expected value of the action $a$ selected at time $t$ is given by:</p>
+$$
+Q_t(a) = \mathbb{E}[R_t | A_t = a]
+$$<p>where $R_t$ is the reward received at time $t$, and $A_t$ is the action selected at time $t$.</p>
+<p>On each trial $t$, the Softmax policy will select an action (left or right) based on the following policy:</p>
+$$
+P(a_t) = \frac{e^{Q_{a,t} \epsilon}}{\sum_{i = 1}^{k}{e^{Q_{i,t} \epsilon}}}
+$$<p>where $\epsilon$ is the inverse temperature parameter, and $Q_{a,t}$ is the estimated value of action $a$ at time $t$.
+$k$ is the number of actions available, and in our case, $k = 2$.
+So, on each trial, the model will select an action (left or right) based on the following policy:</p>
+$$
+A_t = \begin{cases}
+\text{left} &amp; \text{with probability } P(a_{\text{left}}) \\
+\text{right} &amp; \text{with probability } P(a_{\text{right}})
+\end{cases}
+$$<p>where $A_t$ is the action selected at time $t$, and $Q_t(a)$ is the estimated value of action $a$ at time $t$.</p>
+<p>The model will calculate the prediction error according to the following learning rule:</p>
+$$
+\Delta Q_t(A_t) = \alpha \times \Big[ R_t - Q_t(A_t) \Big]
+$$<p>where $\alpha$ is the learning rate, and $R_t$ is the reward received at time $t$.
+Note that this rule is often reported as the Rescorla-Wagner learning rule, where for each action/outcome, the prediction error is the difference between the reward received and the sum of all values present on each trial for that action.
+In our case, we only have one value for each action, so the Rescorla-Wagner learning rule is reduced to the Bush and Mosteller separable error term.
+Q-values are then updated as follows:</p>
+$$
+Q_{t+1}(A_t) = Q_t(A_t) + \Delta Q_t(A_t)
+$$
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1203,7 +1344,7 @@ Licensed under the Apache License, Version 2.0.
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../example2/" class="btn btn-neutral float-left" title="Example 2: Reinforcement learning with a two-armed bandit."><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../../references/evaluation/" class="btn btn-neutral float-right" title="cpm.evaluation">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../references/models/" class="btn btn-neutral float-right" title="cpm.models">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -1229,7 +1370,7 @@ Licensed under the Apache License, Version 2.0.
       <span><a href="../example2/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../references/evaluation/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../../references/models/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

@@ -103,6 +103,8 @@
     </li>
     </ul>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../example3/">Example 3: Estimating Empirical Priors</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul>
@@ -1613,6 +1615,7 @@ Let us specify the parameters for the model.</p>
         <span class="n">prior</span><span class="o">=</span><span class="s2">&quot;truncated_normal&quot;</span><span class="p">,</span>
         <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">},</span>
     <span class="p">),</span>
+    <span class="c1"># everything without a prior is part of the initial state of the model or fixed constructs (e.g. exemplars in general-context models of categorization)</span>
     <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]))</span>
 </pre></div>
 <div id="cell-3" class="clipboard-copy-txt">from cpm.generators import Parameters, Value
@@ -1633,6 +1636,7 @@ parameters = Parameters(
         prior="truncated_normal",
         args={"mean": 5, "sd": 2.5},
     ),
+    # everything without a prior is part of the initial state of the model or fixed constructs (e.g. exemplars in general-context models of categorization)
     values = np.array([0.25, 0.25, 0.25, 0.25]))</div>
     
         </div>
@@ -2189,7 +2193,7 @@ output.tail()</div>
     <span class="n">ppt_identifier</span><span class="o">=</span><span class="s2">&quot;ppt&quot;</span><span class="p">,</span>
     <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="c1"># everything below is optional and passed directly to scipy.optimize.differential_evolution</span>
+    <span class="c1"># everything below is optional and passed directly to the scipy implementation of the optimiser</span>
     <span class="n">approx_grad</span><span class="o">=</span><span class="kc">True</span>
 
 <span class="p">)</span>
@@ -2207,7 +2211,7 @@ fit = FminBound(
     ppt_identifier="ppt",
     display=False,
     number_of_starts=5,
-    # everything below is optional and passed directly to scipy.optimize.differential_evolution
+    # everything below is optional and passed directly to the scipy implementation of the optimiser
     approx_grad=True
 
 )
@@ -3519,7 +3523,7 @@ class="
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../example1/" class="btn btn-neutral float-left" title="Example 1: An associative learning model and blocking"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../../references/models/" class="btn btn-neutral float-right" title="cpm.models">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../example3/" class="btn btn-neutral float-right" title="Example 3: Estimating Empirical Priors">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -3545,7 +3549,7 @@ class="
       <span><a href="../example1/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../references/models/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../example3/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

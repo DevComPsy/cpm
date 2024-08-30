@@ -81,6 +81,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/example2/">Example 2: Reinforcement learning with a two-armed bandit.</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example3/">Example 3: Estimating Empirical Priors</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul class="current">
@@ -1647,15 +1649,16 @@ Please see that <a href="https://acerbilab.github.io/pybads/api/options/bads_opt
           <td>
                 <code>float</code>
           </td>
-          <td><p>The log likelihood or negative log likelihood.</p></td>
+          <td><p>The summed log likelihood or negative log likelihood.</p></td>
         </tr>
     </tbody>
   </table>
       <h6 id="cpm.optimisation.minimise.LogLikelihood.bernoulli--notes">Notes</h6>
 <p><code>predicted</code> and <code>observed</code> must have the same shape.
 <code>observed</code> is a binary variable, so it can only take the values 0 or 1.
-Both <code>predicted</code> and <code>observed</code> must be 1D arrays.</p>
-<p><code>log(0)</code> is undefined, so the log likelihood is set to the value of np.log(1e-100).</p>
+<code>predicted</code> must be a value between 0 and 1.
+Values are clipped to avoid log(0) and log(1).
+If we encounter any non-finite values, we set any log likelihood to the value of np.log(1e-100).</p>
 
 <p><strong>Examples:</strong></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -1835,7 +1838,7 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
           <td>
                 <code>float</code>
           </td>
-          <td><p>The log likelihood or negative log likelihood.</p></td>
+          <td><p>The summed log likelihood or negative log likelihood.</p></td>
         </tr>
     </tbody>
   </table>
@@ -2092,7 +2095,7 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
           <td>
                 <code>float</code>
           </td>
-          <td><p>The likelihood value.</p></td>
+          <td><p>The log likelihood value.</p></td>
           <td>
               <em>required</em>
           </td>
@@ -2172,7 +2175,7 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
           <td>
                 <code>float</code>
           </td>
-          <td><p>The likelihood value.</p></td>
+          <td><p>The log likelihood value.</p></td>
           <td>
               <em>required</em>
           </td>

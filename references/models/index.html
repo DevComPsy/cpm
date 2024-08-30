@@ -81,6 +81,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/example2/">Example 2: Reinforcement learning with a two-armed bandit.</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example3/">Example 3: Estimating Empirical Priors</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul class="current">
@@ -1452,7 +1454,7 @@ are normalised to sum to 1 when generating a discrete choice.</p>
 
 
 <h3 id="cpm.models.decision.Softmax" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">Softmax</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">Softmax</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1482,7 +1484,7 @@ are normalised to sum to 1 when generating a discrete choice.</p>
           </td>
           <td><p>The inverse temperature parameter for the softmax computation.</p></td>
           <td>
-                <code>0.5</code>
+                <code>None</code>
           </td>
         </tr>
         <tr>
@@ -1492,7 +1494,7 @@ are normalised to sum to 1 when generating a discrete choice.</p>
           </td>
           <td><p>The irreducible noise parameter for the softmax computation.</p></td>
           <td>
-                <code>0</code>
+                <code>None</code>
           </td>
         </tr>
         <tr>
@@ -1515,6 +1517,8 @@ As beta approaches positive infinity, choices becomes more deterministic,
 such that the choice option with the greatest activation is more likely to be chosen - it approximates a step function.
 By contrast, as beta approaches zero, choices becomes random (i.e., the probabilities the choice options are approximately equal)
 and therefore independent of the options' activations.</p>
+<p><code>activations</code> must be a 2D array, where each row represents an outcome and each column represents a stimulus or other arbitrary features and variables.
+If multiple values are provided for each outcome, the softmax function will sum these values up.</p>
 <p>Note that if you have one value for each outcome (i.e. a classical bandit-like problem), and you represent it as a 1D
 array, you must reshape it in the format specified for activations. So that if you have 3 stimuli
 which all are actionable, <code>[0.1, 0.5, 0.22]</code>, you should have a 2D array of shape (3, 1), <code>[[0.1], [0.5], [0.22]]</code>.
@@ -2735,7 +2739,7 @@ It has the same shape as the weights input argument.</p></td>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../examples/example2/" class="btn btn-neutral float-left" title="Example 2: Reinforcement learning with a two-armed bandit."><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../examples/example3/" class="btn btn-neutral float-left" title="Example 3: Estimating Empirical Priors"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../generators/" class="btn btn-neutral float-right" title="cpm.generators">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -2759,7 +2763,7 @@ It has the same shape as the weights input argument.</p></td>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../examples/example2/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../../examples/example3/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../generators/" style="color: #fcfcfc">Next &raquo;</a></span>

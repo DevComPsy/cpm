@@ -7,7 +7,7 @@ from scipy.special import digamma
 from scipy.stats import t as students_t
 
 from ..generators import Parameters
-from ..core.plots import convergence_diagnostics
+from ..core.diagnostics import convergence_diagnostics
 
 
 class VariationalBayes:
@@ -57,6 +57,7 @@ class VariationalBayes:
         chain=4,
         hyperpriors=None,
         convergence="parameters",
+        quiet=False,
         **kwargs,
     ):
         # write input arguments to self
@@ -93,6 +94,8 @@ class VariationalBayes:
             )
         else:
             self.hyperpriors = hyperpriors
+
+        self.__quiet__ = quiet
         self.kwargs = kwargs
 
         # write some further objects to self:
@@ -461,7 +464,8 @@ class VariationalBayes:
             Whether the algorithm has converged.
         """
 
-        print(f"Iteration: {iter_idx + 1}, LME: {lme_new}")
+        if self.__quiet__ is False:
+            print(f"Iteration: {iter_idx + 1}, LME: {lme_new}")
 
         lme_satisfied = False
         param_satisfied = False
@@ -562,7 +566,8 @@ class VariationalBayes:
         """
         output = []
         for chain in range(self.chain):
-            print(f"Chain: {chain + 1}")
+            if self.__quiet__ is False:
+                print(f"Chain: {chain + 1}")
             results = self.run_vb(chain_index=chain)
             output.append(copy.deepcopy(results))
         self.output = output

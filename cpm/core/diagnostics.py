@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 
-def convergence_diagnostics(hyperparameters, show=True, save=False, path=None):
+def convergence_diagnostics_plots(hyperparameters, show=True, save=False, path=None):
     # hyperparameters have columns: parameter, iteration, chain, lme, mean, and sd
     ## Plot the convergence diagnostics
     """
@@ -92,3 +92,64 @@ def convergence_diagnostics(hyperparameters, show=True, save=False, path=None):
         plt.show()
     else:
         return fig
+
+
+def gelman_rubin(hyperparameters):
+    """
+    This function calculates the Gelman-Rubin statistic for the hyperparameters of the model.
+    The hyperparameters should have the following columns: parameter, iteration, chain, lme, mean, and sd.
+
+    """
+    parameters = hyperparameters.parameter.unique()
+    rhat = pd.DataFrame(columns=["parameter", "rhat"])
+
+    for names in parameters:
+        means = hyperparameters.loc[hyperparameters.parameter == names, "mean"]
+        means = means.values.reshape(-1, len(hyperparameters.chain.unique()))
+
+        B = means.mean(axis=1).var()
+        W = means.var(axis=1).mean()
+        V = (1 - 1 / len(hyperparameters.chain.unique_)) * W + 1 / len(
+            hyperparameters.chain.unique_
+        ) * B
+        rhat = rhat.append(
+            {
+                "parameter": names,
+                "rhat": np.sqrt(V / W),
+            },
+            ignore_index=True,
+        )
+
+    return rhat
+
+
+def psrf(hyperparameters):
+    """
+    This function calculates the potential scale reduction factor for the hyperparameters of the model.
+    The hyperparameters should have the following columns: parameter, iteration, chain, lme, mean, and sd.
+
+    """
+    rhat = gelman_rubin(hyperparameters)
+    psrf = pd.DataFrame(columns=["parameter", "hyperparameters", "psrf"])
+
+    for names in rhat.parameter.unique():
+        for variables in ["mean", "sd"]:
+            rhat_values = rhat.loc[
+                (rhat.parameter == names) & (rhat.hyperparameters == variables), "rhat"
+            ]
+            psrf_value = np.sqrt(np.mean(rhat_values**2))
+            rr = (
+                pd.Series(
+                    {
+                        "parameter": names,
+                        "hyperparameters": variables,
+                        "psrf": psrf_value,
+                    },
+                )
+                .to_frame()
+                .T
+            )
+
+            psrf = pd.concat([psrf, rr], axis=0)
+
+    return psrf

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
-from ..core.diagnostics import convergence_diagnostics_plots, gelman_rubin, psrf, 
+from ..core.diagnostics import convergence_diagnostics_plots
 
 
 class EmpiricalBayes:

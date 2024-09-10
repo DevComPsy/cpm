@@ -7,7 +7,7 @@ from scipy.special import digamma
 from scipy.stats import t as students_t
 
 from ..generators import Parameters
-from ..core.diagnostics import convergence_diagnostics
+from ..core.diagnostics import convergence_diagnostics_plots
 
 
 class VariationalBayes:

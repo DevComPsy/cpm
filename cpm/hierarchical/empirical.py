@@ -332,7 +332,6 @@ class EmpiricalBayes:
         """
         # use the updated population-level parameters to update the priors on
         # model parameters, for next round of participant-wise MAP estimation
-        self.optimiser.model.parameters.update_prior(**population_updates)
         output = []
         for chain in range(self.chain):
             ## select a random starting point for each chain

@@ -333,15 +333,17 @@ class EmpiricalBayes:
         # use the updated population-level parameters to update the priors on
         # model parameters, for next round of participant-wise MAP estimation
         output = []
+        parameter_names = self.optimiser.model.parameters.free()
+        rng = np.random.default_rng()
+
         for chain in range(self.chain):
             ## select a random starting point for each chain
             if chain > 0:
                 population_updates = {}
                 for i, name in enumerate(parameter_names):
                     population_updates[name] = {
-                        "mean": np.random.Generator.beta(2, 2) * self.__bounds__[1][i],
-                        "sd": np.random.Generator.beta(2, 2)
-                        * (self.__bounds__[1][i] / 2),
+                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
+                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
                     }
                 # use the updated population-level parameters to update the priors on
                 # model parameters, for next round of participant-wise MAP estimation

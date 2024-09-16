@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
-from ..core.diagnostics import convergence_diagnostics_plots, gelman_rubin, psrf, 
+from ..core.diagnostics import convergence_diagnostics_plots
 
 
 class EmpiricalBayes:
@@ -327,22 +327,23 @@ class EmpiricalBayes:
 
     def optimise(self):
         """
-        This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains.
+        This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains with random starting points for the priors.
 
         """
         # use the updated population-level parameters to update the priors on
         # model parameters, for next round of participant-wise MAP estimation
-        self.optimiser.model.parameters.update_prior(**population_updates)
         output = []
+        parameter_names = self.optimiser.model.parameters.free()
+        rng = np.random.default_rng()
+
         for chain in range(self.chain):
             ## select a random starting point for each chain
             if chain > 0:
                 population_updates = {}
                 for i, name in enumerate(parameter_names):
                     population_updates[name] = {
-                        "mean": np.random.Generator.beta(2, 2) * self.__bounds__[1][i],
-                        "sd": np.random.Generator.beta(2, 2)
-                        * (self.__bounds__[1][i] / 2),
+                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
+                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
                     }
                 # use the updated population-level parameters to update the priors on
                 # model parameters, for next round of participant-wise MAP estimation

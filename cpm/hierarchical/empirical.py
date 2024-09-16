@@ -327,7 +327,7 @@ class EmpiricalBayes:
 
     def optimise(self):
         """
-        This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains.
+        This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains with random starting points for the priors.
 
         """
         # use the updated population-level parameters to update the priors on

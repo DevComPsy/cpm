@@ -330,8 +330,7 @@ class EmpiricalBayes:
         This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains with random starting points for the priors.
 
         """
-        # use the updated population-level parameters to update the priors on
-        # model parameters, for next round of participant-wise MAP estimation
+
         output = []
         parameter_names = self.optimiser.model.parameters.free()
         rng = np.random.default_rng()
@@ -345,8 +344,6 @@ class EmpiricalBayes:
                         "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
                         "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
                     }
-                # use the updated population-level parameters to update the priors on
-                # model parameters, for next round of participant-wise MAP estimation
                 self.optimiser.model.parameters.update_prior(**population_updates)
 
             if self.quiet is False:
@@ -366,17 +363,6 @@ class EmpiricalBayes:
             The estimated individual-level parameters for each iteration and chain.
         """
         return self.fit
-
-    def priors(self):
-        """
-        Returns the estimated group-level hyperparameters (priors) for each iteration and chain.
-
-        Returns
-        -------
-        pandas.DataFrame
-            The estimated group-level hyperparameters for each iteration and chain.
-        """
-        return self.hyperparameters
 
     def diagnostics(self, show=True, save=False, path=None):
         """

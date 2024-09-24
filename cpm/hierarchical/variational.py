@@ -565,7 +565,20 @@ class VariationalBayes:
 
         """
         output = []
+        parameter_names = self.optimiser.model.parameters.free()
+        rng = np.random.default_rng()
+
         for chain in range(self.chain):
+            ## select a random starting point for each chain to avoid local minima
+            if chain > 0:
+                population_updates = {}
+                for i, name in enumerate(parameter_names):
+                    population_updates[name] = {
+                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
+                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
+                    }
+                self.optimiser.model.parameters.update_prior(**population_updates)
+
             if self.__quiet__ is False:
                 print(f"Chain: {chain + 1}")
             results = self.run_vb(chain_index=chain)
@@ -647,4 +660,6 @@ class VariationalBayes:
         The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
         It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.
         """
-        convergence_diagnostics(self.hyperparameters, show=show, save=save, path=path)
+        convergence_diagnostics_plots(
+            self.hyperparameters, show=show, save=save, path=path
+        )

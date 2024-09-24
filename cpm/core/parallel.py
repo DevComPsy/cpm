@@ -1,10 +1,8 @@
 import multiprocess as mp
 import ipyparallel as ipp
-import os
-import socket
+import dill
 
-import numpy as np
-import os
+__all__ = ["detect_cores", "execute_parallel"]
 
 
 def in_ipynb():
@@ -23,125 +21,76 @@ def in_ipynb():
         return False
 
 
-def in_slurm():
+def detect_cores():
     """
-    This function detects if the code is running in a slurm job or not.
-
-    Returns
-    -------
-    bool
-        True if the code is running in a slurm job, False otherwise.
-    """
-    return "SLURM_JOB_ID" in os.environ
-
-
-def detect_nodes():
-    """
-    This function detects the number of nodes in the current slurm job.
+    Detect the number of cores available for parallel processing.
 
     Returns
     -------
     int
-        The number of nodes in the current slurm job.
-    """
-    return int(os.environ.get("SLURM_JOB_NUM_NODES", 1))
-
-
-def execute_ipyparallel(job, data):
-    """
-    This function executes a job in parallel using ipyparallel.
-
-    Parameters
-    ----------
-    job : function
-        The function to be executed in parallel.
-    data : list
-        The list of data to be processed in parallel.
-
-    Returns
-    -------
-    list
-        The result of the job executed in parallel.
-    """
-    if not in_ipynb():
-        raise Exception("This function should only be called from an ipython notebook.")
-
-    c = ipp.Client()
-    dview = c[:]
-    dview.block = True
-    dview.push({"data": data})
-    dview.push({"job": job})
-    dview.execute("result = [job(d) for d in data]")
-    result = dview.pull("result", block=True)
-    return result
-
-
-def execute_multiprocess(job, data):
-    """
-    This function executes a job in parallel using multiprocess.
-
-    Parameters
-    ----------
-    job : function
-        The function to be executed in parallel.
-    data : list
-        The list of data to be processed in parallel.
-
-    Returns
-    -------
-    list
-        The result of the job executed in parallel.
+        The number of cores available for parallel processing.
     """
     if in_ipynb():
-        raise Exception("This function should not be called from an ipython notebook.")
-
-    with mp.Pool() as pool:
-        result = pool.map(job, data)
-    return result
+        return ipp.Client().ids
+    else:
+        return mp.cpu_count()
 
 
-def execute_serial(job, data):
+def detect_parallel_method():
     """
-    This function executes a job in serial.
+    Detect the parallel execution method based on the environment.
+
+    Returns
+    -------
+    str
+        The detected parallel execution method.
+    """
+    if in_ipynb():
+        return "ipyparallel"
+    else:
+        return "multiprocess"
+
+
+def execute_parallel(job, data, method=None, cl=None, libraries=["numpy", "pandas"]):
+    """
+    Execute a job in parallel using the specified method.
 
     Parameters
     ----------
     job : function
-        The function to be executed in serial.
-    data : list
-        The list of data to be processed in serial.
+        The job to execute.
+    data : iterable
+        The data to process.
+    method : str, optional
+        The parallel execution method. Options are 'ipyparallel' and 'multiprocess'.
+        If None, the method is determined based on the environment.
+    cl : int, optional
+        The number of cores to use for parallel processing.
+    libraries : list, optional
+        A list of modules to import before executing the job. The name must correspond to the module name as it was imported in the main script.
 
     Returns
     -------
-    list
-        The result of the job executed in serial.
+    result
+        The result of the parallel execution.
     """
-    results = list(map(job, data))
-    return results
+    if method is None:
+        method = detect_parallel_method()
 
+    if method == "ipyparallel":
+        cluster = ipp.Cluster(n=cl)  # Create a cluster with 'cl' cores
+        rc = cluster.start_and_connect_sync()
+        rc[:].use_dill()
 
-def distribute_across_nodes(job, data):
-    """
-    This function distributes a job across multiple nodes in a slurm job.
+        @ipp.require(*libraries)
+        def wrapped_job(*args, **kwargs):
+            for lib in libraries:
+                exec(f"import {lib}")
+            return job(*args, **kwargs)
 
-    Parameters
-    ----------
-    job : function
-        The function to be executed in parallel.
-    data : list or pandas.DataFrame.groupby()
-        The data to be processed in parallel.
-
-    Returns
-    -------
-    list
-        The result of the job executed in parallel.
-    """
-    if not in_slurm():
-        raise Exception("This function should only be called from a slurm job.")
-
-    if detect_nodes() > 1:
-        return execute_multiprocess(job, data)
-
-    number_of_nodes = detect_nodes()
-    # TODO: Implement this function
-    # TODO: when pandas, distribute different then when list
+        return rc[:].map_sync(wrapped_job, data)
+    elif method == "multiprocess":
+        with mp.Pool(cl) as pool:
+            return pool.map(job, data)
+    else:
+        raise ValueError(f"Unknown parallel execution method: {method}")

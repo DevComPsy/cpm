@@ -9,6 +9,7 @@ from . import minimise
 from ..core.data import decompose, detailed_pandas_compiler, extract_params_from_fit
 from ..generators import Simulator, Wrapper
 from ..core.optimisers import objective, prepare_data
+from ..core.parallel import detect_cores, execute_parallel
 
 
 class DifferentialEvolution:
@@ -30,6 +31,8 @@ class DifferentialEvolution:
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    libraries : list, optional
+        The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
@@ -48,6 +51,7 @@ class DifferentialEvolution:
         prior=False,
         parallel=False,
         cl=None,
+        libraries=["numpy", "pandas"],
         ppt_identifier=None,
         display=False,
         **kwargs,
@@ -83,11 +87,12 @@ class DifferentialEvolution:
             )
 
         self.__parallel__ = parallel
+        self.__libraries__ = libraries
 
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
-            self.cl = mp.cpu_count()
+            self.cl = detect_cores()
 
     def optimise(self):
         """
@@ -127,8 +132,13 @@ class DifferentialEvolution:
             return result
 
         if self.__parallel__:
-            with mp.Pool(self.cl) as pool:
-                results = pool.map(__task, self.data)
+            results = execute_parallel(
+                job=__task,
+                data=self.data,
+                method=None,
+                cl=self.cl,
+                libraries=self.__libraries__,
+            )
         else:
             results = list(map(__task, self.data))
 

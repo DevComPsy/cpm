@@ -3,6 +3,8 @@ from ..core.generators import generate_guesses
 from ..core.optimisers import objective, numerical_hessian, prepare_data
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
+from ..core.parallel import detect_cores, execute_parallel
+
 
 from pybads import BADS
 import numpy as np
@@ -34,6 +36,8 @@ class Bads:
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    libraries : list, optional
+        The libraries required for the parallel processing with `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`.
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
@@ -60,6 +64,7 @@ class Bads:
         initial_guess=None,
         parallel=False,
         cl=None,
+        libraries=["numpy", "pandas"],
         ppt_identifier=None,
         **kwargs,
     ):
@@ -97,13 +102,14 @@ class Bads:
         )
 
         self.__parallel__ = parallel
+        self.__libraries__ = libraries
         self.__current_guess__ = self.initial_guess[0]
         self.__bounds__ = self.model.parameters.bounds()
 
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
-            self.cl = mp.cpu_count()
+            self.cl = detect_cores()
 
     def optimise(self):
         """
@@ -188,8 +194,13 @@ class Bads:
             )
             self.__current_guess__ = self.initial_guess[i]
             if self.__parallel__:
-                with mp.Pool(self.cl) as pool:
-                    results = pool.map(__task, self.data)
+                results = execute_parallel(
+                    job=__task,
+                    data=self.data,
+                    method=None,
+                    cl=self.cl,
+                    libraries=self.__libraries__,
+                )
             else:
                 results = list(map(__task, self.data))
 

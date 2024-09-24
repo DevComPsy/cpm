@@ -7,6 +7,7 @@ from scipy.special import digamma
 from scipy.stats import t as students_t
 
 from ..generators import Parameters
+from ..core.diagnostics import convergence_diagnostics_plots
 
 
 class VariationalBayes:
@@ -56,6 +57,7 @@ class VariationalBayes:
         chain=4,
         hyperpriors=None,
         convergence="parameters",
+        quiet=False,
         **kwargs,
     ):
         # write input arguments to self
@@ -92,6 +94,8 @@ class VariationalBayes:
             )
         else:
             self.hyperpriors = hyperpriors
+
+        self.__quiet__ = quiet
         self.kwargs = kwargs
 
         # write some further objects to self:
@@ -460,7 +464,8 @@ class VariationalBayes:
             Whether the algorithm has converged.
         """
 
-        print(f"Iteration: {iter_idx + 1}, LME: {lme_new}")
+        if self.__quiet__ is False:
+            print(f"Iteration: {iter_idx + 1}, LME: {lme_new}")
 
         lme_satisfied = False
         param_satisfied = False
@@ -560,8 +565,22 @@ class VariationalBayes:
 
         """
         output = []
+        parameter_names = self.optimiser.model.parameters.free()
+        rng = np.random.default_rng()
+
         for chain in range(self.chain):
-            print(f"Chain: {chain + 1}")
+            ## select a random starting point for each chain to avoid local minima
+            if chain > 0:
+                population_updates = {}
+                for i, name in enumerate(parameter_names):
+                    population_updates[name] = {
+                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
+                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
+                    }
+                self.optimiser.model.parameters.update_prior(**population_updates)
+
+            if self.__quiet__ is False:
+                print(f"Chain: {chain + 1}")
             results = self.run_vb(chain_index=chain)
             output.append(copy.deepcopy(results))
         self.output = output
@@ -617,8 +636,30 @@ class VariationalBayes:
             x=(-1 * np.abs(t_df["t_stat"])), df=(2 * self.__nu__)
         )
 
-        # TODO check if this is a sensible approach, or if we get issues with
+        # TODO: check if this is a sensible approach, or if we get issues with
         # overwriting an existing dataframe
         self.mu_stats = pd.concat([self.mu_stats, t_df])
 
         return t_df
+
+    def diagnostics(self, show=True, save=False, path=None):
+        """
+        Returns the convergence diagnostics plots for the group-level hyperparameters.
+
+        Parameters
+        ----------
+        show : bool, optional
+            Whether to show the plots. Default is True.
+        save : bool, optional
+            Whether to save the plots. Default is False.
+        path : str, optional
+            The path to save the plots. Default is None.
+
+        Notes
+        -----
+        The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
+        It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.
+        """
+        convergence_diagnostics_plots(
+            self.hyperparameters, show=show, save=save, path=path
+        )

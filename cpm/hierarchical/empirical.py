@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
+from ..core.diagnostics import convergence_diagnostics_plots
 
 
 class EmpiricalBayes:
@@ -19,6 +20,8 @@ class EmpiricalBayes:
         The tolerance for convergence. Default is 1e-6.
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
+    quiet : bool, optional
+        Whether to suppress the output. Default is False.
 
     Notes
     -----
@@ -82,6 +85,7 @@ class EmpiricalBayes:
         iteration=1000,
         tolerance=1e-6,
         chain=4,
+        quiet=False,
         **kwargs,
     ):
         self.function = copy.deepcopy(optimiser.model)
@@ -96,6 +100,8 @@ class EmpiricalBayes:
         self.__number_of_parameters__ = len(self.optimiser.model.parameters.free())
         self.__bounds__ = self.optimiser.model.parameters.bounds()
 
+        self.quiet = quiet
+
         self.kwargs = kwargs
 
         self.hyperparameters = pd.DataFrame()
@@ -104,7 +110,7 @@ class EmpiricalBayes:
     def step(self):
         self.optimiser.optimise()
         hessian = []
-        for i, n in enumerate(self.optimiser.fit):
+        for _, n in enumerate(self.optimiser.fit):
             hessian.append(n.get("hessian"))
 
         hessian = np.asarray(hessian)
@@ -302,7 +308,8 @@ class EmpiricalBayes:
                 hyper["reject"] = summed_lme < lme_old
                 self.hyperparameters = pd.concat([self.hyperparameters, hyper])
 
-            print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
+            if self.quiet is False:
+                print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
 
             if iteration > 1:
                 if np.abs(summed_lme - lme_old) < self.tolerance:
@@ -320,12 +327,27 @@ class EmpiricalBayes:
 
     def optimise(self):
         """
-        This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains.
+        This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains with random starting points for the priors.
 
         """
+
         output = []
+        parameter_names = self.optimiser.model.parameters.free()
+        rng = np.random.default_rng()
+
         for chain in range(self.chain):
-            print(f"Chain: {chain + 1}")
+            ## select a random starting point for each chain
+            if chain > 0:
+                population_updates = {}
+                for i, name in enumerate(parameter_names):
+                    population_updates[name] = {
+                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
+                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
+                    }
+                self.optimiser.model.parameters.update_prior(**population_updates)
+
+            if self.quiet is False:
+                print(f"Chain: {chain + 1}")
             results = self.stair(chain_index=chain)
             output.append(copy.deepcopy(results))
         self.output = output
@@ -342,13 +364,24 @@ class EmpiricalBayes:
         """
         return self.fit
 
-    def priors(self):
+    def diagnostics(self, show=True, save=False, path=None):
         """
-        Returns the estimated group-level hyperparameters (priors) for each iteration and chain.
+        Returns the convergence diagnostics plots for the group-level hyperparameters.
 
-        Returns
-        -------
-        pandas.DataFrame
-            The estimated group-level hyperparameters for each iteration and chain.
+        Parameters
+        ----------
+        show : bool, optional
+            Whether to show the plots. Default is True.
+        save : bool, optional
+            Whether to save the plots. Default is False.
+        path : str, optional
+            The path to save the plots. Default is None.
+
+        Notes
+        -----
+        The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
+        It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.
         """
-        return self.hyperparameters
+        convergence_diagnostics_plots(
+            self.hyperparameters, show=show, save=save, path=path
+        )

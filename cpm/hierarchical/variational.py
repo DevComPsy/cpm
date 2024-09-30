@@ -341,7 +341,8 @@ class VariationalBayes:
         empirical_variances = mean_squares - square_means
         # also create empirical estimates of standard deviations (square root
         # of empirical variances), ensuring variances are not smaller than 1e-6
-        empirical_SDs = np.sqrt(np.clip(empirical_variances, a_min=1e-6, a_max=None))
+        np.clip(empirical_variances, a_min=1e-6, a_max=None, out=empirical_variances)
+        empirical_SDs = np.sqrt(empirical_variances)
 
         # TODO: ensure that shapes of `empirical_means` and `self.hyperpriors.a0`
         # are consistent
@@ -371,11 +372,10 @@ class VariationalBayes:
 
         # now we need to convert these estimates of population-level precisions
         # into usable estimates of standard deviations.
-        # to this end, we (1) take the inverse of the estimated precisions to
-        # get estimated variances, (2) ensure the estimated variances are not
-        # unreasonably small (using 1e-6 as lower threshold), (3) take the
+        # to this end, we ensure the estimated variances are not
+        # unreasonably small (using 1e-6 as lower threshold), and take the
         # square root of the estimated variances to get estimated SDs.
-        E_sd = np.sqrt(np.clip((1 / E_tau), a_min=1e-6, a_max=None))
+        E_sd = np.sqrt(np.clip(E_tau, a_min=1e-6, a_max=None))
 
         # also compute "hierarchical errorbars" - basically standard errors of
         # the estimates of the population-level means, which can be used
@@ -415,7 +415,7 @@ class VariationalBayes:
             hyper["mean"] = E_mu[i]
             hyper["mean_se"] = E_mu_error[i]
             hyper["sd"] = E_sd[i]
-            hyper["iteration"] = iter_idx + 1
+            hyper["iteration"] = iter_idx
             hyper["chain"] = chain_idx
             hyper["lme"] = lme
             self.hyperparameters = pd.concat([self.hyperparameters, hyper])
@@ -581,7 +581,7 @@ class VariationalBayes:
 
             if self.__quiet__ is False:
                 print(f"Chain: {chain + 1}")
-            results = self.run_vb(chain_index=chain)
+            results = self.run_vb(chain_index=chain + 1)
             output.append(copy.deepcopy(results))
         self.output = output
         return None

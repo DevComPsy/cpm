@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 6312ad99: more thorough computation of inverse Hessian matrix and log determinant of Hessian matrix
 - 289cde73: made update_priors usable for both normal and truncated normal priors
 - ec2a181c: Implementing Piray's Variational Bayes method
+- 2d0c716d: Added convergence diagnostic plots for hierarchical methods
 
 ### Changed
 

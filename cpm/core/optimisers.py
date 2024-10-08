@@ -23,7 +23,7 @@ def numerical_hessian(func=None, params=None, hessian=None):
     return computed_hessian
 
 
-def objective(pars, function, data, loss, prior=False, **args):
+def objective(pars, function, data, loss, prior=False):
     """
     The `objective` function calculates a metric by comparing predicted values with
     observed values.
@@ -52,9 +52,9 @@ def objective(pars, function, data, loss, prior=False, **args):
     """
     function.reset(parameters=pars)
     function.run()
-    predicted = function.dependent
+    predicted = copy.deepcopy(function.dependent)
     observed = copy.deepcopy(data)
-    metric = loss(predicted, observed, **args)
+    metric = loss(predicted=predicted, observed=observed)
     del predicted, observed
     if np.isnan(metric) or np.isinf(metric):
         metric = 1e10

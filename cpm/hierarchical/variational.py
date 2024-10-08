@@ -12,7 +12,7 @@ from ..core.diagnostics import convergence_diagnostics_plots
 
 class VariationalBayes:
     """
-    Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods.
+    Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods, a reduced version of the Hierarchical Bayesian Inference (HBI) algorithm proposed by Piray et al. (2019), to exclude model comparison and selection.
 
     Parameters
     ----------
@@ -29,13 +29,33 @@ class VariationalBayes:
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
     hyperpriors: dict, optional
-        A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau).
+        A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.
     convergence : str, optional
         The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.
 
     Notes
     -----
 
+    The hyperprios are as follows:
+
+    - `a0` : array-like
+        Vector of means of the normal prior on the population-level means, mu.
+    - `b` : float
+        Scalar value that is multiplied with population-level precisions, tau, to determine the standard deviations of the normal prior on the population-level means, mu.
+    - `v` : float
+        Scalar value that is used to determine the shape parameter (nu) of the gamma prior on population-level precisions, tau.
+    - `s` : array-like
+        Vector of values that serve as lower bounds on the scale parameters (sigma) of the gamma prior on population-level precisions, tau.
+
+    With the number of parameters as N, the default values are as follows:
+
+    - `a0` : np.zeros(N)
+    - `b` : 1
+    - `v` : 0.5
+    - `s` : np.repeat(0.01, N)
+
+
+    The convergence criterion can be set to 'lme' or 'parameters'. If set to 'lme', the algorithm will stop when the log model evidence converges. If set to 'parameters', the algorithm will stop when the "normalized" means of the population-level parameters converge.
 
     References
     ----------
@@ -93,7 +113,7 @@ class VariationalBayes:
                 s=np.repeat(0.01, self.__n_param__),
             )
         else:
-            self.hyperpriors = hyperpriors
+            self.hyperpriors = Parameters(**hyperpriors)
 
         self.__quiet__ = quiet
         self.kwargs = kwargs
@@ -341,7 +361,8 @@ class VariationalBayes:
         empirical_variances = mean_squares - square_means
         # also create empirical estimates of standard deviations (square root
         # of empirical variances), ensuring variances are not smaller than 1e-6
-        empirical_SDs = np.sqrt(np.clip(empirical_variances, a_min=1e-6, a_max=None))
+        np.clip(empirical_variances, a_min=1e-6, a_max=None, out=empirical_variances)
+        empirical_SDs = np.sqrt(empirical_variances)
 
         # TODO: ensure that shapes of `empirical_means` and `self.hyperpriors.a0`
         # are consistent
@@ -371,11 +392,10 @@ class VariationalBayes:
 
         # now we need to convert these estimates of population-level precisions
         # into usable estimates of standard deviations.
-        # to this end, we (1) take the inverse of the estimated precisions to
-        # get estimated variances, (2) ensure the estimated variances are not
-        # unreasonably small (using 1e-6 as lower threshold), (3) take the
+        # to this end, we ensure the estimated variances are not
+        # unreasonably small (using 1e-6 as lower threshold), and take the
         # square root of the estimated variances to get estimated SDs.
-        E_sd = np.sqrt(np.clip((1 / E_tau), a_min=1e-6, a_max=None))
+        E_sd = np.sqrt(np.clip(E_tau, a_min=1e-6, a_max=None))
 
         # also compute "hierarchical errorbars" - basically standard errors of
         # the estimates of the population-level means, which can be used
@@ -415,7 +435,7 @@ class VariationalBayes:
             hyper["mean"] = E_mu[i]
             hyper["mean_se"] = E_mu_error[i]
             hyper["sd"] = E_sd[i]
-            hyper["iteration"] = iter_idx + 1
+            hyper["iteration"] = iter_idx
             hyper["chain"] = chain_idx
             hyper["lme"] = lme
             self.hyperparameters = pd.concat([self.hyperparameters, hyper])
@@ -581,7 +601,7 @@ class VariationalBayes:
 
             if self.__quiet__ is False:
                 print(f"Chain: {chain + 1}")
-            results = self.run_vb(chain_index=chain)
+            results = self.run_vb(chain_index=chain + 1)
             output.append(copy.deepcopy(results))
         self.output = output
         return None

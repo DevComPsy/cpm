@@ -12,7 +12,7 @@ from ..core.diagnostics import convergence_diagnostics_plots
 
 class VariationalBayes:
     """
-    Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods.
+    Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods, a reduced version of the Hierarchical Bayesian Inference (HBI) algorithm proposed by Piray et al. (2019), to exclude model comparison and selection.
 
     Parameters
     ----------
@@ -29,13 +29,33 @@ class VariationalBayes:
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
     hyperpriors: dict, optional
-        A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau).
+        A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.
     convergence : str, optional
         The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.
 
     Notes
     -----
 
+    The hyperprios are as follows:
+
+    - `a0` : array-like
+        Vector of means of the normal prior on the population-level means, mu.
+    - `b` : float
+        Scalar value that is multiplied with population-level precisions, tau, to determine the standard deviations of the normal prior on the population-level means, mu.
+    - `v` : float
+        Scalar value that is used to determine the shape parameter (nu) of the gamma prior on population-level precisions, tau.
+    - `s` : array-like
+        Vector of values that serve as lower bounds on the scale parameters (sigma) of the gamma prior on population-level precisions, tau.
+
+    With the number of parameters as N, the default values are as follows:
+
+    - `a0` : np.zeros(N)
+    - `b` : 1
+    - `v` : 0.5
+    - `s` : np.repeat(0.01, N)
+
+
+    The convergence criterion can be set to 'lme' or 'parameters'. If set to 'lme', the algorithm will stop when the log model evidence converges. If set to 'parameters', the algorithm will stop when the "normalized" means of the population-level parameters converge.
 
     References
     ----------
@@ -93,7 +113,7 @@ class VariationalBayes:
                 s=np.repeat(0.01, self.__n_param__),
             )
         else:
-            self.hyperpriors = hyperpriors
+            self.hyperpriors = Parameters(**hyperpriors)
 
         self.__quiet__ = quiet
         self.kwargs = kwargs

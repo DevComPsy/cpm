@@ -9,13 +9,8 @@ Some specific areas we are looking to improve are:
 * Using `numba` to speed up the code and allow compilation of classes with [@jitclass](https://numba.pydata.org/numba-doc/dev/user/jitclass.html).
 * Reduce code duplication and improve code organization.
 * Improve the performance of the `cpm.generators` module to speed up simulations.
-* Improve memory usage and reduce the number of copies of the data.
-* Improve the data compilation process to speed up the majority of data cleaning happening in the modules.
-
-## Scaling from local to distributed
-
-The big performance-improvement goal is to scale from local to distributed computing.
-If you have experience with scaling python libraries, we would really appreciate your help.
+* Improve shared memory usage and reduce the number of copies of the data.
+* Improve the data compilation process to speed up the majority of data cleaning happening in the modules during runs and exports.
 
 ## Documentation
 
@@ -31,9 +26,9 @@ We would like to improve the testing coverage of the code.
 We are always looking for new features to add to the library.
 If you have an idea for a new feature, please open an issue to discuss it.
 
-Two main types of features we planned are:
+We already have a list of low-hanging fruit features that we would like to add:
 
 1. Expansion of the models classes. There are many model components out in the literature and we would like to add as many of them to the library as possible.
+2. Add model selection module, where we will incorporate model selection criteria and methods, which are also compatible with the hierarchical estimation approaches we already implemented.
 2. Add pre-built models to the library as ready-to-deploy applications.
-2. Hierarchical and MCMC methods for model fitting.
-3. Introducing new classes to scale your simulations from local to distributed computing.
+2. New and more efficitent Hierarchical and MCMC methods for model fitting (e.g. Variational Bayes Monte Carlo, Particle filtering).

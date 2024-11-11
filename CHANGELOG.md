@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix multi-outcome log-likelihood calculation in `cpm.optimisation.minimise.LogLikehood.categorical` method
+
+## [Unreleased] <=0.18.4
+
 ### Added
 
 - d42e0689: Fmin can incorporate priors into its log likelihood function

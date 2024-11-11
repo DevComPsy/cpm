@@ -2,7 +2,29 @@ import multiprocess as mp
 import ipyparallel as ipp
 import dill
 
-__all__ = ["detect_cores", "execute_parallel"]
+__all__ = ["detect_cores", "execute_parallel", "detect_parallel_method", "in_ipynb"]
+
+
+def ipyparallel_pandas_to_list(dataframe):
+    """
+    Convert a pandas DataFrame to a list of dictionaries.
+
+    Parameters
+    ----------
+    dataframe : pandas.DataFrame.groupby
+        The grouped DataFrame to convert.
+
+    Returns
+    -------
+    list
+        A list of tuples, where each element has the:
+        - key: the group key
+        - value: the group data as pandas DataFrame
+    """
+    output = []
+    for key, value in dataframe:
+        output.append((key, value))
+    return output
 
 
 def in_ipynb():
@@ -30,10 +52,7 @@ def detect_cores():
     int
         The number of cores available for parallel processing.
     """
-    if in_ipynb():
-        return ipp.Client().ids
-    else:
-        return mp.cpu_count()
+    return mp.cpu_count()
 
 
 def detect_parallel_method():
@@ -51,7 +70,9 @@ def detect_parallel_method():
         return "multiprocess"
 
 
-def execute_parallel(job, data, method=None, cl=None, libraries=["numpy", "pandas"]):
+def execute_parallel(
+    job, data, method=None, cl=None, pandas=True, libraries=["numpy", "pandas"]
+):
     """
     Execute a job in parallel using the specified method.
 
@@ -74,12 +95,17 @@ def execute_parallel(job, data, method=None, cl=None, libraries=["numpy", "panda
     result
         The result of the parallel execution.
     """
+    if pandas:
+        data = ipyparallel_pandas_to_list(data)
+
     if method is None:
         method = detect_parallel_method()
+        print(f"Detected parallel execution method: {method}")
 
     if method == "ipyparallel":
         cluster = ipp.Cluster(n=cl)  # Create a cluster with 'cl' cores
         rc = cluster.start_and_connect_sync()
+        rc.wait_for_engines(n=cl)
         rc[:].use_dill()
 
         @ipp.require(*libraries)

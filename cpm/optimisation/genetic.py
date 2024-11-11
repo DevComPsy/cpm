@@ -137,6 +137,7 @@ class DifferentialEvolution:
                 data=self.data,
                 method=None,
                 cl=self.cl,
+                pandas=self.__pandas__,
                 libraries=self.__libraries__,
             )
         else:

@@ -198,6 +198,7 @@ class Bads:
                     job=__task,
                     data=self.data,
                     method=None,
+                    pandas=self.__pandas__,
                     cl=self.cl,
                     libraries=self.__libraries__,
                 )

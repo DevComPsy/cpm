@@ -177,6 +177,7 @@ class Fmin:
                 results = execute_parallel(
                     job=__task,
                     data=self.data,
+                    pandas=self.__pandas__,
                     method=None,
                     cl=self.cl,
                     libraries=self.__libraries__,
@@ -421,6 +422,7 @@ class FminBound:
                     data=self.data,
                     method=None,
                     cl=self.cl,
+                    pandas=self.__pandas__,
                     libraries=self.__libraries__,
                 )
             else:

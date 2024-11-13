@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix multi-outcome log-likelihood calculation in `cpm.optimisation.minimise.LogLikehood.categorical` method
+
+## [Unreleased] <=0.18.4
+
 ### Added
 
 - d42e0689: Fmin can incorporate priors into its log likelihood function
@@ -66,3 +72,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 988b77a4: fix variational bayes data type error
 - 67df33c3: fix empirical bayes assigning values to objects before creating them
 - 62f92b16: fix initial guesses cannot generate starting guesses for parameter with non-finite or nan bounds
+- 88d056ff: fix a bug where undeclared variables caused issue in Empirical Bayes
+- b094aca9: fix inverted SD in the variational bayes method - remove as it is unnecessary

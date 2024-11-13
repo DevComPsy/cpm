@@ -24,7 +24,11 @@ def convergence_diagnostics_plots(hyperparameters, show=True, save=False, path=N
     fig, axs = plt.subplot_mosaic(mosaic, figsize=(12, 8))
 
     for chain in hyperparameters.chain.unique():
-        lme = hyperparameters.loc[hyperparameters.chain == chain, "lme"]
+        lme = hyperparameters.loc[
+            (hyperparameters.chain == chain)
+            & (hyperparameters.parameter == parameters[0]),
+            "lme",
+        ]
         iteration = np.arange(len(lme))
         axs["lme"].plot(iteration, lme)
 

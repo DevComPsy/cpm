@@ -1,3 +1,4 @@
+from ast import Not
 import numpy as np
 import pandas as pd
 import copy
@@ -186,3 +187,112 @@ class Wrapper:
             filename = "simulation"
         pkl.dump(self, open(filename + ".pkl", "wb"))
         return None
+
+
+
+class MetaSignalDetectionWrapper(Wrapper):
+
+    def __init__(self, model=None, data=None, parameters=None):
+        self.model = model
+        self.data = data
+        self.parameters = copy.deepcopy(parameters)
+        self.values = np.zeros(1)
+        if "values" in self.parameters.__dict__.keys():
+            self.values = self.parameters.values
+        self.simulation = None
+        self.data = data
+        # determine the number of trials
+        self.__len__, self.__pandas__ = determine_data_length(data)
+
+        self.dependent = None
+        self.parameter_names = list(parameters.keys())
+        self.parameter_sizes = {key: parameters[key].value.size if isinstance(parameters[key].value, np.ndarray) else 1 for key in parameters.keys()}
+
+        self.__run__ = False
+        self.__init_parameters__ = copy.deepcopy(parameters)
+    
+    def run(self):
+        """
+        Run the model.
+
+        Returns
+        -------
+        None
+
+        """
+        ## run the model
+        output = self.model(parameters=self.parameters)
+        self.simulation = output.copy()
+
+        ## update your dependent variables
+        self.dependent = output.get("dependent").copy()
+
+        ## update variables present in both parameters and model output
+        self.parameters.update(
+            **{
+                key: value
+                for key, value in output.items()
+                if key in self.parameters.keys()
+            }
+        )
+
+        self.__run__ = True
+        return None
+    
+    def reset(self, parameters=None, data=None):
+        """
+        Reset the model.
+
+        Parameters
+        ----------
+        parameters : dict, array_like, pd.Series or Parameters, optional
+            The parameters to reset the model with.
+
+        Notes
+        -----
+        When resetting the model, and `parameters` is None, reset model to initial state.
+        If parameter is `array_like`, it resets the only the parameters in the order they are provided,
+        where the last parameter updated is the element in parameters corresponding to len(parameters).
+
+        Examples
+        --------
+        >>> x = Wrapper(model = mine, data = data, parameters = params)
+        >>> x.run()
+        >>> x.reset(parameters = [0.1, 1])
+        >>> x.run()
+        >>> x.reset(parameters = {'alpha': 0.1, 'temperature': 1})
+        >>> x.run()
+        >>> x.reset(parameters = np.array([0.1, 1, 0.5]))
+        >>> x.run()
+
+        Returns
+        -------
+        None
+
+        """
+        if self.__run__:
+            self.dependent = None
+            self.simulation = None
+            self.parameters = copy.deepcopy(self.__init_parameters__)
+            self.__run__ = False
+        # if dict, update using parameters update method
+        if isinstance(parameters, dict) or isinstance(parameters, pd.Series):
+            raise NotImplementedError("Dictionary update not implemented for MetaSignalDetectionWrapper")
+            self.parameters.update(**parameters)
+        # if list, update the parameters in for keys in range of 0:len(parameters)
+        if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
+            offset = 0
+            for idx, keys in enumerate(self.parameter_names):
+                if self.parameter_sizes[keys] > 1:
+                    value = parameters[self.parameter_names.index(keys)+offset:self.parameter_names.index(keys)+offset+self.parameter_sizes[keys]]
+                else:
+                    value = parameters[self.parameter_names.index(keys)+offset]
+                self.parameters.update(**{keys: value})
+                if idx + offset + 1 == len(parameters):
+                    break
+        if data is not None:
+            self.data = data
+            self.__len__, self.__pandas__ = determine_data_length(data)
+        return None
+    
+    

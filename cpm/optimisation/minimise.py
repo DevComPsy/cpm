@@ -1,4 +1,5 @@
-from scipy.stats import norm, bernoulli
+from ast import List
+from scipy.stats import norm, bernoulli, multinomial
 import numpy as np
 
 __all__ = ["LogLikelihood", "Bayesian", "CrossEntropy"]
@@ -140,6 +141,36 @@ class LogLikelihood:
         if negative:
             LL = -1 * LL
         return LL
+    
+    def multinomial(predicted, observed, negative=True, **kwargs):
+        """
+        Compute the log likelihood of the predicted values given the observed values for multinomial data.
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+        negative : bool, optional
+            Flag indicating whether to return the negative log likelihood.
+
+        Returns
+        -------
+        float
+            The summed log likelihood or negative log likelihood.
+
+        Examples
+        --------
+        """
+        if isinstance(observed, np.ndarray) and len(observed) == 1:
+            observed = np.array(observed[0], dtype=float)
+        assert predicted.shape == observed.shape, "The predicted and observed values must have the same shape."
+        LL = np.sum([multinomial.logpmf(observed[i], n=observed[i].sum(), p=predicted[i]) for i in range(observed.shape[0])])
+        if negative:
+            LL = -1 * LL
+        return LL
+        
 
 
 class Distance:

@@ -122,8 +122,18 @@ class Parameters:
         lower, upper = [], []
         for _, value in self.__dict__.items():
             if value.prior is not None:
-                lower.append(value.lower)
-                upper.append(value.upper)
+                if isinstance(value.value, np.ndarray):
+                    if isinstance(value.lower, np.ndarray) or isinstance(value.lower, list):
+                        lower.extend(value.lower)
+                    else:
+                        lower.extend([value.lower] * value.value.size)
+                    if isinstance(value.upper, np.ndarray) or isinstance(value.upper, list):
+                        upper.extend(value.upper)
+                    else:
+                        upper.extend([value.upper] * value.value.size)
+                else:
+                    lower.append(value.lower)
+                    upper.append(value.upper)
         return lower, upper
 
     def PDF(self, log=False):
@@ -173,11 +183,13 @@ class Parameters:
         for i in range(size):
             sample = {}
             for key, value in self.__dict__.items():
+                if isinstance(value.value, np.ndarray):
+                    shape = value.value.shape
                 if value.prior is not None:
                     if jump:
-                        sample[key] = value.prior.rvs(loc=value.value)
+                        sample[key] = value.prior.rvs(loc=value.value, size=shape)
                     else:
-                        sample[key] = value.prior.rvs()
+                        sample[key] = value.prior.rvs(size=shape)
             output.append(sample)
         return output
 
@@ -193,7 +205,12 @@ class Parameters:
         free = []
         for key, value in self.__dict__.items():
             if value.prior is not None:
-                free.append(key)
+                if isinstance(value.value, np.ndarray):
+                    for i in range(value.value.ndim):
+                        for j in range(value.value.shape[i]):
+                            free.append(f"{key}_arrayelem_{i}{j}")
+                else:
+                    free.append(key)
         return free
 
 
@@ -444,10 +461,10 @@ class Value:
             A sample from the prior distribution of the parameter.
         """
         if jump:
-            new = self.prior.rvs(loc=self.value)
+            new = self.prior.rvs(loc=self.value, size=self.value.shape)
             self.fill(new)
         else:
-            new = self.prior.rvs()
+            new = self.prior.rvs(size=self.value.shape)
             self.fill(new)
 
     def update_prior(self, **kwargs):

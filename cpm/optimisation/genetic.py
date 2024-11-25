@@ -2,7 +2,7 @@ from scipy.optimize import differential_evolution
 import pandas as pd
 import numpy as np
 import copy
-import multiprocess as mp
+import multiprocessing as mp
 
 
 from . import minimise

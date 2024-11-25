@@ -151,9 +151,6 @@ class Bads:
                 )
                 return fval
 
-            print("guess", self.__current_guess__)
-            print("bounds", self.__bounds__[0])
-            print("bounds", self.__bounds__[1])
             optimizer = BADS(
                 fun=target,
                 x0=self.__current_guess__,

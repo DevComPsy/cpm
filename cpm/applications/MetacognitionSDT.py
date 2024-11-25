@@ -30,10 +30,10 @@ def metacognitionSDT_initparams(data = None, binned_data = None, nbins = 4, s = 
         ),
         t2c1 = Value(
             value = helper.t2c1,
-            lower = np.where(np.linspace(-2, 2, 2*nbins-2) < 0, -100, 0),
-            upper = np.where(np.linspace(-2, 2, 2*nbins-2) > 0, 100, 0),
+            lower = np.where(np.linspace(-2, 2, 2*nbins-2) < 0, -3*helper.d1, 0),
+            upper = np.where(np.linspace(-2, 2, 2*nbins-2) > 0, 3*helper.d1, 0),
             prior = multivariate_normal,
-            args = {"mean": np.delete(np.linspace(-2, 2, 2*nbins-1), nbins), "cov": np.eye(2*nbins-2)},
+            args = {"mean": np.delete(np.linspace(-3*helper.d1, 3*helper.d1, 2*nbins-1), nbins), "cov": np.eye(2*nbins-2)},
         ),
         t1c1 = helper.t1c1,
         s = s,

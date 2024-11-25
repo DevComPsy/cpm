@@ -59,14 +59,11 @@ class MetaSignalDetectionHelper:
                 self.nR_S2[:self.nbins][::-1],
         ])
 
-        print(observed)
         
         df = pd.DataFrame({
             'nbins': [self.nbins],
             'observed': [observed],
         })
-
-        print(df)
 
         return df
     

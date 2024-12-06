@@ -8,4 +8,4 @@ from .simulator import Simulator
 from .wrapper import Wrapper
 from .parameters import Parameters, Value, LogParameters
 
-del simulator, wrapper, parameters
+del wrapper, parameters

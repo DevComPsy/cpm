@@ -1,6 +1,6 @@
 from . import minimise
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import objective, numerical_hessian, prepare_data, LinearConstraint
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 
@@ -61,6 +61,8 @@ class Bads:
         parallel=False,
         cl=None,
         ppt_identifier=None,
+        constraints=None,
+        constraint_penalty=1e6,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -69,6 +71,8 @@ class Bads:
         self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
             data, self.ppt_identifier
         )
+        self.constraints = [constraints] if isinstance(constraints, LinearConstraint) else constraints
+        self.constraint_penalty = constraint_penalty
 
         self.loss = minimisation
         self.prior = prior
@@ -148,6 +152,8 @@ class Bads:
                     data=observed,
                     loss=loss,
                     prior=self.prior,
+                    constraints=self.constraints,
+                    penalty=self.constraint_penalty,
                 )
                 return fval
 

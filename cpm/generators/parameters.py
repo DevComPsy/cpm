@@ -1,3 +1,4 @@
+from math import prod
 import numpy as np
 import copy
 from scipy.stats import (
@@ -206,9 +207,10 @@ class Parameters:
         for key, value in self.__dict__.items():
             if value.prior is not None:
                 if isinstance(value.value, np.ndarray):
-                    for i in range(value.value.ndim):
-                        for j in range(value.value.shape[i]):
-                            free.append(f"{key}_arrayelem_{i}{j}")
+                    for i in range(prod(value.value.shape)):
+                        index = np.unravel_index(i, value.value.shape)
+                        indexstring = "x".join([str(j) for j in index])
+                        free.append(f"{key}_arrayelem_{indexstring}")
                 else:
                     free.append(key)
         return free

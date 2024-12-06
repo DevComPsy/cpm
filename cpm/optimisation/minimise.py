@@ -142,7 +142,7 @@ class LogLikelihood:
             LL = -1 * LL
         return LL
     
-    def multinomial(predicted, observed, negative=True, **kwargs):
+    def multinomial(predicted, observed, negative=True, clip=1e-10, **kwargs):
         """
         Compute the log likelihood of the predicted values given the observed values for multinomial data.
 
@@ -165,11 +165,32 @@ class LogLikelihood:
         """
         if isinstance(observed, np.ndarray) and len(observed) == 1:
             observed = np.array(observed[0], dtype=float)
+        else:
+            observed = np.array(observed, dtype=float)
+        predicted, observed = np.squeeze(predicted), np.squeeze(observed)
         assert predicted.shape == observed.shape, "The predicted and observed values must have the same shape."
+        assert predicted.sum(axis=-1).all() == 1, "The predicted values must sum to 1."
+        predicted = np.clip(predicted, clip, np.inf) # Avoid log(0)
+        predicted = predicted / predicted.sum(axis=-1, keepdims=True)
         LL = np.sum([multinomial.logpmf(observed[i], n=observed[i].sum(), p=predicted[i]) for i in range(observed.shape[0])])
         if negative:
             LL = -1 * LL
         return LL
+    
+    def multinomial_float(predicted, observed, negative=True, clip=1e-10,**kwargs):
+        if isinstance(observed, np.ndarray) and len(observed) == 1:
+            observed = np.array(observed[0], dtype=float)
+        else:
+            observed = np.array(observed, dtype=float)
+        predicted, observed = np.squeeze(predicted), np.squeeze(observed)
+        assert predicted.shape == observed.shape, "The predicted and observed values must have the same shape."
+        predicted = np.clip(predicted, clip, np.inf) # Avoid log(0)
+        LL = np.sum(observed.flatten() * np.log(predicted.flatten()))
+        if negative:
+            LL = -1 * LL
+        return LL
+        
+
         
 
 

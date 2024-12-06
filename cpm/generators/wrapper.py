@@ -1,8 +1,8 @@
-from ast import Not
 import numpy as np
 import pandas as pd
 import copy
 import pickle as pkl
+from scipy.stats import norm
 
 ## import local modules
 from .parameters import Parameters, Value
@@ -190,26 +190,41 @@ class Wrapper:
 
 
 
-class MetaSignalDetectionWrapper(Wrapper):
+class MetaSignalDetectionWrapper:
 
     def __init__(self, model=None, data=None, parameters=None):
         self.model = model
         self.data = data
-        self.parameters = copy.deepcopy(parameters)
-        self.values = np.zeros(1)
-        if "values" in self.parameters.__dict__.keys():
-            self.values = self.parameters.values
+        self.__init_parameters__ = copy.deepcopy(parameters)
+
+        # check if parameters is provided as a dictionary with participants as keys
+        if not isinstance(parameters, Parameters):
+            assert isinstance(parameters, dict), "Parameters must be a dictionary with participants as keys if not a Parameters object."
+            assert all([isinstance(p, Parameters) for p in parameters.values()]), "All entries in the dictionary must be Parameters objects."
+            self.multiple_ppts = True
+            first_ppt = list(parameters.keys())[0]
+            self.ppt = first_ppt
+        else:
+            self.multiple_ppts = False
+            self.ppt = None
+        self.parameters = parameters
+        
+        # self.values = np.zeros(1)
+        # if "values" in self.parameters.__dict__.keys():
+        #     self.values = self.parameters.values
         self.simulation = None
         self.data = data
         # determine the number of trials
         self.__len__, self.__pandas__ = determine_data_length(data)
 
-        self.dependent = None
-        self.parameter_names = list(parameters.keys())
-        self.parameter_sizes = {key: parameters[key].value.size if isinstance(parameters[key].value, np.ndarray) else 1 for key in parameters.keys()}
+        self.dependent = {} if self.multiple_ppts else None
+        self.parameter_names = list(self.parameters[self.ppt].keys()) if self.multiple_ppts else list(self.parameters.keys())
+        self.parameter_sizes = {
+            key: self.parameters[self.ppt][key].value.size if isinstance(self.parameters[self.ppt][key].value, np.ndarray) else 1 
+            for key in self.parameters[self.ppt].keys()
+            }
 
         self.__run__ = False
-        self.__init_parameters__ = copy.deepcopy(parameters)
     
     def run(self):
         """
@@ -221,11 +236,14 @@ class MetaSignalDetectionWrapper(Wrapper):
 
         """
         ## run the model
-        output = self.model(parameters=self.parameters)
+        output = self.model(parameters=self.parameters[self.ppt]) if self.multiple_ppts else self.model(parameters=self.parameters)
         self.simulation = output.copy()
 
         ## update your dependent variables
-        self.dependent = output.get("dependent").copy()
+        if self.multiple_ppts:
+            self.dependent[self.ppt] = output.get("dependent").copy()
+        else:
+            self.dependent = output.get("dependent").copy()
 
         ## update variables present in both parameters and model output
         self.parameters.update(
@@ -239,7 +257,7 @@ class MetaSignalDetectionWrapper(Wrapper):
         self.__run__ = True
         return None
     
-    def reset(self, parameters=None, data=None):
+    def reset(self, parameters=None, data=None, ppt=None):
         """
         Reset the model.
 
@@ -270,24 +288,32 @@ class MetaSignalDetectionWrapper(Wrapper):
         None
 
         """
+        self.ppt = ppt if ppt is not None else self.ppt
         if self.__run__:
-            self.dependent = None
+            self.dependent = {} if self.multiple_ppts else None
             self.simulation = None
-            self.parameters = copy.deepcopy(self.__init_parameters__)
+            self.parameters = self.__init_parameters__
             self.__run__ = False
+        if isinstance(parameters, Parameters):
+            self.parameters[self.ppt] = parameters
         # if dict, update using parameters update method
-        if isinstance(parameters, dict) or isinstance(parameters, pd.Series):
-            raise NotImplementedError("Dictionary update not implemented for MetaSignalDetectionWrapper")
-            self.parameters.update(**parameters)
+        if isinstance(parameters, dict):
+            if isinstance(parameters[self.ppt], Parameters):
+                self.parameters[self.ppt].update(**parameters[self.ppt])
+            else:
+                raise NotImplementedError("Dictionary update not implemented for MetaSignalDetectionWrapper")
+            if isinstance(parameters, pd.Series):
+                raise NotImplementedError("Series update not implemented for MetaSignalDetectionWrapper")
         # if list, update the parameters in for keys in range of 0:len(parameters)
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
             offset = 0
             for idx, keys in enumerate(self.parameter_names):
                 if self.parameter_sizes[keys] > 1:
                     value = parameters[self.parameter_names.index(keys)+offset:self.parameter_names.index(keys)+offset+self.parameter_sizes[keys]]
+                    offset += self.parameter_sizes[keys] - 1
                 else:
                     value = parameters[self.parameter_names.index(keys)+offset]
-                self.parameters.update(**{keys: value})
+                self.parameters[self.ppt].update(**{keys: value}) if self.multiple_ppts else self.parameters.update(**{keys: value})
                 if idx + offset + 1 == len(parameters):
                     break
         if data is not None:
@@ -295,4 +321,47 @@ class MetaSignalDetectionWrapper(Wrapper):
             self.__len__, self.__pandas__ = determine_data_length(data)
         return None
     
+    def sample_ppt(self, num_trials = None, num_samples=100, ppt=None):
+
+        assert ppt is not None, "ppt must be provided for MetaSignalDetectionWrapper"
+
+        if num_trials is not None:
+            assert NotImplementedError("num_trials argument not implemented for MetaSignalDetectionWrapper")
+
+        stimulus = self.data['stimulus'].values
+
+        d1 = self.parameters[ppt].d1
+        t1c1 = self.parameters[ppt].t1c1
+        meta_d1 = self.parameters[ppt].meta_d1.value
+        t2c1 = self.parameters[ppt].t2c1.value
+        nbins = self.parameters[ppt].nbins
+
+        t2c1 = np.concatenate([
+            [-np.inf],
+            t2c1[:nbins-1],
+            [0],
+            t2c1[nbins-1:],
+            [np.inf],
+        ])
+
+        constant_criterion = t1c1 * meta_d1 / d1
+        mu_S1 = -meta_d1 / 2 - constant_criterion
+        mu_S2 = meta_d1 / 2 - constant_criterion
+
+        s_S1 = norm.rvs(mu_S1, 1, size=(num_samples, (stimulus == 0).sum()))
+        s_S2 = norm.rvs(mu_S2, 1, size=(num_samples, (stimulus == 1).sum()))
+
+        nR_S1 = np.zeros((num_samples, 2*nbins))
+        nR_S2 = np.zeros((num_samples, 2*nbins))
+
+        for i in range(num_samples):
+            nR_S1[i] = np.histogram(s_S1[i], bins=t2c1)[0]
+            nR_S2[i] = np.histogram(s_S2[i], bins=t2c1)[0]
+        
+        return nR_S1, nR_S2
+
+
+
+
+
     

@@ -96,10 +96,9 @@ def determine_data_length(data):
         # find the maximum number of trials
         __len__ = np.max([shape[0] for shape in shape])
         __pandas__ = False
-    if isinstance(data, pd.DataFrame):
+    if isinstance(data, pd.DataFrame) or isinstance(data, pd.api.typing.DataFrameGroupBy):
         __len__ = len(data)
         __pandas__ = True
-
     return __len__, __pandas__
 
 
@@ -170,6 +169,8 @@ def decompose(participant=None, pandas=False, identifier=None):
     """
     if pandas:
         ppt, data = participant
+        if isinstance(ppt, tuple):
+            ppt = ppt[0]
         observed = data.observed.to_numpy()
     else:
         ppt = None

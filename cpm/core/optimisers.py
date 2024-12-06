@@ -1,9 +1,35 @@
+from pprint import pp
 import numpy as np
 import pandas as pd
 import numdifftools as nd
 import copy
 
 __all__ = ["objective", "prepare_data", "numerical_hessian"]
+
+
+class LinearConstraint:
+
+    def __init__(self, A, b, type="ineq"):
+        self.A = A
+        self.b = b
+        self.type = type
+    
+    def __call__(self, x):
+        return np.dot(self.A, x) - self.b
+    
+    def fulfills(self, x):
+        if self.type == "ineq":
+            return (self(x) >= 0).all()
+        elif self.type == "eq":
+            return (self(x) == 0).all()
+    
+    def residual(self, x):
+        if self.type == "ineq":
+            return np.linalg.norm(np.minimum(0, self(x)))
+        elif self.type == "eq":
+            return np.linalg.norm(self(x))
+
+    
 
 
 def numerical_hessian(func=None, params=None, hessian=None):
@@ -23,7 +49,7 @@ def numerical_hessian(func=None, params=None, hessian=None):
     return computed_hessian
 
 
-def objective(pars, function, data, loss, prior=False):
+def objective(pars, function, data, loss, prior=False, constraints=None, penalty=1e6, ppt=None):
     """
     The `objective` function calculates a metric by comparing predicted values with
     observed values.
@@ -50,9 +76,12 @@ def objective(pars, function, data, loss, prior=False):
         The metric value is being returned.
 
     """
+    if isinstance(pars, dict):
+        assert ppt is not None, "ppt must be provided if pars is a dictionary."
+        pars = pars[ppt]
     function.reset(parameters=pars)
     function.run()
-    predicted = copy.deepcopy(function.dependent)
+    predicted = copy.deepcopy(function.dependent[ppt]) if ppt is not None else copy.deepcopy(function.dependent)
     observed = copy.deepcopy(data)
     metric = loss(predicted=predicted, observed=observed)
     del predicted, observed
@@ -61,6 +90,11 @@ def objective(pars, function, data, loss, prior=False):
     if prior:
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
+    if constraints is not None:
+        for constraint in constraints:
+            if not constraint.fulfills(pars):
+                metric += penalty * (constraint.residual(pars) + 1)
+                break
     return metric
 
 
@@ -78,7 +112,6 @@ def prepare_data(data, identifier):
     -------
         The data, participants, groups and __pandas__ are being returned.
     """
-
     if isinstance(data, pd.api.typing.DataFrameGroupBy):
         groups = list(data.groups.keys())
         participants = data.get_group(groups[0])

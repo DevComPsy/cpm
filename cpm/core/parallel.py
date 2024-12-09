@@ -100,7 +100,6 @@ def execute_parallel(
 
     if method is None:
         method = detect_parallel_method()
-        print(f"Detected parallel execution method: {method}")
 
     if method == "ipyparallel":
         cluster = ipp.Cluster(n=cl)  # Create a cluster with 'cl' cores

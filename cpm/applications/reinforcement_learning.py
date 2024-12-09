@@ -19,7 +19,7 @@ class RLRW(Wrapper):
     dimensions: int
         The number of distinct stimuli present in the data.
     parameters_settings: list-like
-        The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters.
+        The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters and for the default settings.
 
     Notes
     -----
@@ -28,7 +28,7 @@ class RLRW(Wrapper):
     - choice: the choice of the participant from the available options, starting from 0.
     - reward_n: the reward given after each options, where n is the option available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
 
-    parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound.
+    parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 1 and an upper bound of 10.
 
     References
     ----------
@@ -41,6 +41,7 @@ class RLRW(Wrapper):
     ):
         if parameters_settings is None:
             parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
+            print("No parameters specified, using default parameters.")
         parameters = Parameters(
             # freely varying parameters are indicated by specifying priors
             alpha=Value(

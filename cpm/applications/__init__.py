@@ -1,2 +1,1 @@
-from . import reinforcement_learning
-
+from .reinforcement_learning import RLRW

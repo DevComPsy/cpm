@@ -22,7 +22,7 @@ doclink = """
 Documentation
 -------------
 
-The full documentation is at http://cpm.rtfd.org."""
+The full documentation is at https://devcompsy.github.io/cpm/."""
 history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(

@@ -1,13 +1,15 @@
 from ..core.generators import generate_guesses
 from ..core.optimisers import objective, numerical_hessian, prepare_data
 from ..core.data import detailed_pandas_compiler, decompose
+from ..core.parallel import detect_cores, execute_parallel
 from ..generators import Simulator, Wrapper
 
 from scipy.optimize import fmin, fmin_l_bfgs_b
+
 import numpy as np
 import pandas as pd
-import copy
 import multiprocess as mp
+import copy
 
 __all__ = ["Fmin", "FminBound"]
 
@@ -35,6 +37,8 @@ class Fmin:
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    libraries : list, optional
+        The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`.
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
@@ -56,6 +60,7 @@ class Fmin:
         minimisation=None,
         cl=None,
         parallel=False,
+        libraries=["numpy", "pandas"],
         prior=False,
         number_of_starts=1,
         ppt_identifier=None,
@@ -99,11 +104,12 @@ class Fmin:
 
         self.__parallel__ = parallel
         self.__current_guess__ = self.initial_guess[0]
+        self.__libraries__ = libraries
 
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
-            self.cl = mp.cpu_count()
+            self.cl = detect_cores()
 
     def optimise(self):
         """
@@ -168,8 +174,14 @@ class Fmin:
             )
             self.__current_guess__ = self.initial_guess[i]
             if self.__parallel__:
-                with mp.Pool(self.cl) as pool:
-                    results = pool.map(__task, self.data)
+                results = execute_parallel(
+                    job=__task,
+                    data=self.data,
+                    pandas=self.__pandas__,
+                    method=None,
+                    cl=self.cl,
+                    libraries=self.__libraries__,
+                )
             else:
                 results = list(map(__task, self.data))
 
@@ -265,6 +277,8 @@ class FminBound:
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    libraries : list, optional
+        The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`.
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
@@ -287,6 +301,7 @@ class FminBound:
         minimisation=None,
         cl=None,
         parallel=False,
+        libraries=["numpy", "pandas"],
         prior=False,
         ppt_identifier=None,
         display=False,
@@ -329,11 +344,12 @@ class FminBound:
 
         self.__parallel__ = parallel
         self.__current_guess__ = self.initial_guess[0]
+        self.__libraries__ = libraries
 
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
-            self.cl = mp.cpu_count()
+            self.cl = detect_cores()
 
     def optimise(self, display=True):
         """
@@ -401,8 +417,14 @@ class FminBound:
             )
             self.__current_guess__ = self.initial_guess[i]
             if self.__parallel__:
-                with mp.Pool(self.cl) as pool:
-                    results = pool.map(__task, self.data)
+                results = execute_parallel(
+                    job=__task,
+                    data=self.data,
+                    method=None,
+                    cl=self.cl,
+                    pandas=self.__pandas__,
+                    libraries=self.__libraries__,
+                )
             else:
                 results = list(map(__task, self.data))
 

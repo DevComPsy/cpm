@@ -9,9 +9,9 @@ try:
 except ImportError:
     from distutils.core import setup
 
-# Load requirements from txt file
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
+# # Load requirements from txt file
+# with open("requirements.txt") as f:
+#     requirements = f.read().splitlines()
 
 if sys.argv[-1] == "publish":
     os.system("python setup.py sdist upload")
@@ -27,7 +27,7 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.18.5",
+    version="0.19.0",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     author="Lenard Dome, Frank Hezemans, Andrew Webb, Tobias Hauser",
@@ -42,8 +42,10 @@ setup(
         "SciPy>=1.11.4",  # Scientific functions
         "pandas>=2.1.4",  # Data structures & analysis
         "multiprocess>=0.70.16",  # Multiprocessing
+        "ipyparallel>=8.8.0",  # IPython parallel
         "numdifftools>=0.9.41",  # Numerical differentiation
         "pybads>=1.0.4",  # Bayesian Directed Search
+        "dill>=0.3.8",  # Serialization
     ],
     license="AGPLv3",
     zip_safe=False,

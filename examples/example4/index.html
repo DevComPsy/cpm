@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Example 3: Estimating Empirical Priors - CPM library</title>
+    <title>Example 4: Scaling to the cluster - CPM library</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
@@ -14,8 +14,8 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Example 3: Estimating Empirical Priors";
-        var mkdocs_page_input_path = "examples\\example3.ipynb";
+        var mkdocs_page_name = "Example 4: Scaling to the cluster";
+        var mkdocs_page_input_path = "examples\\example4.ipynb";
         var mkdocs_page_url = null;
       </script>
     
@@ -81,25 +81,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../example2/">Example 2: Reinforcement learning with a two-armed bandit.</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Example 3: Estimating Empirical Priors</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#import-the-data">Import the data</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#the-model">The model</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#simulate-the-data">Simulate the data</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#compare-the-hierarchical-vs-non-hierarchical-model">Compare the hierarchical vs non-hierarchical model</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#non-hierarchical-model">Non-hierarchical model</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#hierarchical-model">Hierarchical model</a>
-    </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../example4/">Example 4: Scaling to the cluster</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Example 4: Scaling to the cluster</a>
+    <ul class="current">
+    </ul>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
@@ -133,7 +119,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>Examples &raquo;</li><li>Example 3: Estimating Empirical Priors</li>
+          <li>Examples &raquo;</li><li>Example 4: Scaling to the cluster</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -1180,41 +1166,13 @@ Licensed under the Apache License, Version 2.0.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="example-3-estimating-empirical-priors">Example 3: Estimating Empirical Priors<a class="anchor-link" href="#example-3-estimating-empirical-priors">&#182;</a></h1><p>In the following example, we will walkthrough how to estimate empirical priors for reinforcement learning model based on Gershman (2016).
-We will apply this for the 2-armed bandit task we looked at in the previous example.</p>
-
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Let us look at what each column represents:</p>
-<ul>
-<li><code>index</code>: variable to identify each row - this variable is clutter.</li>
-<li><code>left</code>: the stimulus presented on the left side.</li>
-<li><code>right</code>: the stimulus presented on the right side.</li>
-<li><code>reward_left</code>: the reward received when the left stimulus is selected.</li>
-<li><code>reward_right</code>: the reward received when the right stimulus is selected.</li>
-<li><code>ppt</code>: the participant number.</li>
-<li><code>responses</code>: the response of the participant (1 for right, 0 for left).</li>
-</ul>
-
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="import-the-data">Import the data<a class="anchor-link" href="#import-the-data">&#182;</a></h2><p>First, we will import the data and get it ready for the toolbox.</p>
+<h2 id="example-4-scale-to-hypercomputing-cluster">Example 4: scale to hypercomputing cluster<a class="anchor-link" href="#example-4-scale-to-hypercomputing-cluster">&#182;</a></h2><p>CPM does not have a built-in support for hypercomputing clusters, but it is possible to scale the fitting to a cluster by running the script on each node of the cluster.
+On many occasions, where we have a sufficiently large dataset, we may want to fit the model on a hypercomputing cluster to speed up the process.
+Here, we will explore how to do this using the <code>sockets</code>, a built-in library in Python.</p>
+<p>This is a crude approach, but it will suit for all day-to-day purposes.
+What we essentially do, is to divide the data into chunks and fit each chunk on a different node of the cluster.
+This requires an executable script that can be run on each node of the cluster and can be submitted to a slurm cluster.
+An example script is provided below, let's call it <code>my_job.py</code>:</p>
 
 </div>
 </div>
@@ -1225,7 +1183,7 @@ We will apply this for the 2-armed bandit task we looked at in the previous exam
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[23]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
         
         
         <div class="CodeMirror cm-s-jupyter">
@@ -1240,844 +1198,81 @@ We will apply this for the 2-armed bandit task we looked at in the previous exam
                 </div>
             </clipboard-copy>
         </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.cm</span> <span class="k">as</span> <span class="nn">cmx</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">prettyformatter</span> <span class="kn">import</span> <span class="n">pprint</span>
+            <div class="highlight-ipynb hl-python"><pre><span></span><span class="ch">#!/usr/bin/env python3.12</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">socket</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="n">experiment</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;bandit_small.csv&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">experiment</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;bandit_small.csv&#39;</span><span class="p">)</span>
+
+    <span class="c1">## subset data into chunks</span>
+    <span class="n">ppt_to_chunks</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">ppt</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+    <span class="c1"># Get the number of nodes available</span>
+    <span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;SLURM_JOB_NUM_NODES&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># Nodes will always be one as we are running this on a single node</span>
+    <span class="c1"># Remove the following line if you want to run this on multiple nodes</span>
+    <span class="n">num_nodes</span> <span class="o">=</span> <span class="mi">4</span>
+
+    <span class="n">chunks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">ppt_to_chunks</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">)</span>
+
+    <span class="c1"># Get the hostname of the node</span>
+    <span class="n">node_name</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
+
+    <span class="c1"># Get the SLURM task ID</span>
+    <span class="n">task_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;SLURM_PROCID&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+    <span class="c1"># Some useful information to print</span>
+    <span class="c1"># print(f&quot;Node: {node_name}, Task ID: {task_id}&quot;)</span>
+
+    <span class="c1"># Get the chunk of data that this node will work on</span>
+    <span class="n">ppt_to_nodes</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">ppt</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">chunks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Shape of the current data: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="n">ppt_to_nodes</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, which is </span><span class="si">{</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">ppt_to_nodes</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="s2">% of the complete data allocated to a single node.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Below you can do your job with the data</span>
+    <span class="c1"># do_something(data[ppt_to_nodes])</span>
 </pre></div>
-<div id="cell-1" class="clipboard-copy-txt">import matplotlib.cm as cmx
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-from prettyformatter import pprint
+<div id="cell-1" class="clipboard-copy-txt">#!/usr/bin/env python3.12
+if __name__ == "__main__":
+    import numpy as np
+    import socket
+    import os
+    import pandas as pd
 
-experiment = pd.read_csv('bandit_small.csv', header=0)
-experiment.head(10)</div>
-    
-        </div>
-    </div>
+    data = pd.read_csv('bandit_small.csv')
 
-</div>
-</div>
+    ## subset data into chunks
+    ppt_to_chunks = data.ppt.unique()
 
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
+    # Get the number of nodes available
+    num_nodes = int(os.getenv("SLURM_JOB_NUM_NODES", 1))
 
+    # Nodes will always be one as we are running this on a single node
+    # Remove the following line if you want to run this on multiple nodes
+    num_nodes = 4
 
-<div class="jp-OutputArea jp-Cell-outputArea">
+    chunks = np.array_split(ppt_to_chunks, num_nodes)
 
-<div class="jp-OutputArea-child">
+    # Get the hostname of the node
+    node_name = socket.gethostname()
 
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[1]:</div>
+    # Get the SLURM task ID
+    task_id = int(os.getenv("SLURM_PROCID", 0))
 
+    # Some useful information to print
+    # print(f"Node: {node_name}, Task ID: {task_id}")
 
+    # Get the chunk of data that this node will work on
+    ppt_to_nodes = data.ppt.isin(chunks[0])
 
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
+    print(f"Shape of the current data: {data[ppt_to_nodes].shape}, which is {(data[ppt_to_nodes].shape[0] / data.shape[0])*100}% of the complete data allocated to a single node.")
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>index</th>
-      <th>ppt</th>
-      <th>trial</th>
-      <th>stimulus_left</th>
-      <th>stimulus_right</th>
-      <th>reward_left</th>
-      <th>reward_right</th>
-      <th>responses</th>
-      <th>feedback</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>1</td>
-      <td>1</td>
-      <td>2</td>
-      <td>4</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>1</td>
-      <td>1</td>
-      <td>2</td>
-      <td>2</td>
-      <td>4</td>
-      <td>1</td>
-      <td>1</td>
-      <td>2</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2</td>
-      <td>1</td>
-      <td>3</td>
-      <td>2</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>3</td>
-      <td>1</td>
-      <td>4</td>
-      <td>2</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>2</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>4</td>
-      <td>1</td>
-      <td>5</td>
-      <td>1</td>
-      <td>4</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>5</td>
-      <td>1</td>
-      <td>6</td>
-      <td>4</td>
-      <td>3</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>6</td>
-      <td>1</td>
-      <td>7</td>
-      <td>3</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>7</td>
-      <td>1</td>
-      <td>8</td>
-      <td>3</td>
-      <td>2</td>
-      <td>0</td>
-      <td>0</td>
-      <td>2</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>8</td>
-      <td>1</td>
-      <td>9</td>
-      <td>1</td>
-      <td>4</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>9</td>
-      <td>1</td>
-      <td>10</td>
-      <td>2</td>
-      <td>3</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Here, we will quickly add a column <code>observed</code> to specify for the toolbox, what is the dependent variable we actually want to predict.</p>
-
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-2">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">experiment</span><span class="p">[</span><span class="s1">&#39;observed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">experiment</span><span class="p">[</span><span class="s1">&#39;responses&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
-</pre></div>
-<div id="cell-2" class="clipboard-copy-txt">experiment['observed'] = experiment['responses'] - 1</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="the-model">The model<a class="anchor-link" href="#the-model">&#182;</a></h2><p>Let us quickly recap through the model we will use.</p>
-<p>Each stimulus has an associated value, which is the expected reward that can be obtained from selecting that stimulus.</p>
-<p>Let $Q(a)$ be the estimated value of action $a$.
-On each trial, $t$, there are two stimuli present, so that $Q(a)$ could be $Q(\text{left})$ or $Q(\text{right})$, where the corresponding Q-values are derived from the associated value of the stimuli present on left or right.
-More formally, we can say that the expected value of the action $a$ selected at time $t$ is given by:</p>
-$$
-Q_t(a) = \mathbb{E}[R_t | A_t = a]
-$$<p>where $R_t$ is the reward received at time $t$, and $A_t$ is the action selected at time $t$.</p>
-<p>On each trial $t$, the Softmax policy will select an action (left or right) based on the following policy:</p>
-$$
-P(a_t) = \frac{e^{Q_{a,t} \epsilon}}{\sum_{i = 1}^{k}{e^{Q_{i,t} \epsilon}}}
-$$<p>where $\epsilon$ is the inverse temperature parameter, and $Q_{a,t}$ is the estimated value of action $a$ at time $t$.
-$k$ is the number of actions available, and in our case, $k = 2$.
-So, on each trial, the model will select an action (left or right) based on the following policy:</p>
-$$
-A_t = \begin{cases}
-\text{left} &amp; \text{with probability } P(a_{\text{left}}) \\
-\text{right} &amp; \text{with probability } P(a_{\text{right}})
-\end{cases}
-$$<p>where $A_t$ is the action selected at time $t$, and $Q_t(a)$ is the estimated value of action $a$ at time $t$.</p>
-<p>The model will calculate the prediction error according to the following learning rule:</p>
-$$
-\Delta Q_t(A_t) = \alpha \times \Big[ R_t - Q_t(A_t) \Big]
-$$<p>where $\alpha$ is the learning rate, and $R_t$ is the reward received at time $t$.
-Note that this rule is often reported as the Rescorla-Wagner learning rule, where for each action/outcome, the prediction error is the difference between the reward received and the sum of all values present on each trial for that action.
-In our case, we only have one value for each action, so the Rescorla-Wagner learning rule is reduced to the Bush and Mosteller separable error term.
-Q-values are then updated as follows:</p>
-$$
-Q_{t+1}(A_t) = Q_t(A_t) + \Delta Q_t(A_t)
-$$
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-3">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">cpm.generators</span> <span class="kn">import</span> <span class="n">Parameters</span><span class="p">,</span> <span class="n">Value</span>
-
-<span class="c1">## define our parameters</span>
-<span class="n">parameters</span> <span class="o">=</span> <span class="n">Parameters</span><span class="p">(</span>
-    <span class="c1"># freely varying parameters are indicated by specifying priors</span>
-    <span class="n">alpha</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">lower</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
-        <span class="n">upper</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">prior</span><span class="o">=</span><span class="s2">&quot;truncated_normal&quot;</span><span class="p">,</span>
-        <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="mf">0.20</span><span class="p">},</span> <span class="c1"># we pick some random values here for the true prior</span>
-    <span class="p">),</span>
-    <span class="n">temperature</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">upper</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-        <span class="n">prior</span><span class="o">=</span><span class="s2">&quot;truncated_normal&quot;</span><span class="p">,</span>
-        <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">},</span> <span class="c1"># we pick some random values here for the true prior</span>
-    <span class="p">),</span>
-    <span class="c1"># everything without a prior is part of the initial state of the model or fixed constructs (e.g. exemplars in general-context models of categorization)</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]))</span>
-</pre></div>
-<div id="cell-3" class="clipboard-copy-txt">from cpm.generators import Parameters, Value
-
-## define our parameters
-parameters = Parameters(
-    # freely varying parameters are indicated by specifying priors
-    alpha=Value(
-        value=0.5,
-        lower=1e-10,
-        upper=1,
-        prior="truncated_normal",
-        args={"mean": 0.6, "sd": 0.20}, # we pick some random values here for the true prior
-    ),
-    temperature=Value(
-        value=1,
-        lower=0,
-        upper=10,
-        prior="truncated_normal",
-        args={"mean": 2, "sd": 2.5}, # we pick some random values here for the true prior
-    ),
-    # everything without a prior is part of the initial state of the model or fixed constructs (e.g. exemplars in general-context models of categorization)
-    values = np.array([0.25, 0.25, 0.25, 0.25]))</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[35]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-4">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">cpm.models</span> <span class="kn">import</span> <span class="n">learning</span><span class="p">,</span> <span class="n">decision</span><span class="p">,</span> <span class="n">utils</span>
-
-<span class="c1">## define our models</span>
-<span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">trial</span><span class="p">):</span>
-    <span class="c1"># pull out the parameters</span>
-    <span class="n">alpha</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">alpha</span>
-    <span class="n">temperature</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">temperature</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1"># copy essentially prevents us from accidentally overwriting the original values</span>
-    <span class="c1"># pull out the trial information</span>
-    <span class="n">stimulus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">trial</span><span class="o">.</span><span class="n">stimulus_left</span><span class="p">,</span> <span class="n">trial</span><span class="o">.</span><span class="n">stimulus_right</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-    <span class="n">feedback</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">trial</span><span class="o">.</span><span class="n">reward_left</span><span class="p">,</span> <span class="n">trial</span><span class="o">.</span><span class="n">reward_right</span><span class="p">])</span>
-    <span class="n">human_choice</span> <span class="o">=</span> <span class="n">trial</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="c1"># convert to 0-indexing</span>
-    <span class="n">mute</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># mute learning for all cues not presented</span>
-
-    <span class="c1"># activate the value of each available action</span>
-    <span class="c1"># here there are two possible actions, that can take up on 4 different values</span>
-    <span class="c1"># so we subset the values to only include the ones that are activated...</span>
-    <span class="c1"># ...according to which stimuli was presented</span>
-    <span class="n">activation</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">stimulus</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="c1"># convert the activations to a 2x1 matrix, where rows are actions/outcomes</span>
-    <span class="n">activations</span> <span class="o">=</span> <span class="n">activation</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="c1"># calculate a policy based on the activations</span>
-    <span class="n">response</span> <span class="o">=</span> <span class="n">decision</span><span class="o">.</span><span class="n">Softmax</span><span class="p">(</span><span class="n">activations</span><span class="o">=</span><span class="n">activations</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">)</span>
-    <span class="n">response</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span> <span class="c1"># compute the policy</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">policies</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-        <span class="c1"># if the policy is NaN for a given action, then we need to set it to 1</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NaN in policy with parameters: </span><span class="si">{</span><span class="n">alpha</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">epsilon</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">policies</span><span class="p">)</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">policies</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">policies</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
-
-    <span class="n">model_choice</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">choice</span><span class="p">()</span> <span class="c1"># get the choice based on the policy</span>
-    <span class="n">reward</span> <span class="o">=</span> <span class="n">feedback</span><span class="p">[</span><span class="n">human_choice</span><span class="p">]</span> <span class="c1"># get the reward of the chosen action</span>
-    <span class="c1"># update the value of the chosen action</span>
-    <span class="n">mute</span><span class="p">[</span><span class="n">stimulus</span><span class="p">[</span><span class="n">human_choice</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># unmute the learning for the chosen action</span>
-    <span class="n">teacher</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">reward</span><span class="p">])</span>
-    <span class="n">update</span> <span class="o">=</span> <span class="n">learning</span><span class="o">.</span><span class="n">SeparableRule</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="n">teacher</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="n">mute</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
-    <span class="n">update</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
-    <span class="n">values</span> <span class="o">+=</span> <span class="n">update</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-    <span class="c1">## compile output</span>
-    <span class="n">output</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;trial&quot;</span>    <span class="p">:</span> <span class="n">trial</span><span class="o">.</span><span class="n">trial</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>               <span class="c1"># trial number</span>
-        <span class="s2">&quot;policy&quot;</span>   <span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">policies</span><span class="p">,</span>         <span class="c1"># policies</span>
-        <span class="s2">&quot;response&quot;</span> <span class="p">:</span> <span class="n">model_choice</span><span class="p">,</span>              <span class="c1"># choice based on the policy</span>
-        <span class="s2">&quot;reward&quot;</span>   <span class="p">:</span> <span class="n">reward</span><span class="p">,</span>                    <span class="c1"># reward of the chosen action</span>
-        <span class="s2">&quot;values&quot;</span>   <span class="p">:</span> <span class="n">values</span><span class="p">,</span>                    <span class="c1"># updated values</span>
-        <span class="s2">&quot;change&quot;</span>   <span class="p">:</span> <span class="n">update</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span>            <span class="c1"># change in the values</span>
-        <span class="s2">&quot;activation&quot;</span> <span class="p">:</span> <span class="n">activations</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span>     <span class="c1"># activation of the values</span>
-        <span class="s2">&quot;dependent&quot;</span>  <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">response</span><span class="o">.</span><span class="n">policies</span><span class="p">[</span><span class="mi">1</span><span class="p">]]),</span>        <span class="c1"># dependent variable</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="n">output</span>
-</pre></div>
-<div id="cell-4" class="clipboard-copy-txt">from cpm.models import learning, decision, utils
-
-## define our models
-def model(parameters, trial):
-    # pull out the parameters
-    alpha = parameters.alpha
-    temperature = parameters.temperature
-    values = np.array(parameters.values) # copy essentially prevents us from accidentally overwriting the original values
-    # pull out the trial information
-    stimulus = np.array([trial.stimulus_left, trial.stimulus_right]).astype(int)
-    feedback = np.array([trial.reward_left, trial.reward_right])
-    human_choice = trial.responses.astype(int) - 1 # convert to 0-indexing
-    mute = np.zeros(4)  # mute learning for all cues not presented
-
-    # activate the value of each available action
-    # here there are two possible actions, that can take up on 4 different values
-    # so we subset the values to only include the ones that are activated...
-    # ...according to which stimuli was presented
-    activation = values[stimulus - 1]
-    # convert the activations to a 2x1 matrix, where rows are actions/outcomes
-    activations = activation.reshape(2, 1)
-    # calculate a policy based on the activations
-    response = decision.Softmax(activations=activations, temperature=temperature)
-    response.compute() # compute the policy
-    if np.isnan(response.policies).any():
-        # if the policy is NaN for a given action, then we need to set it to 1
-        print(f"NaN in policy with parameters: {alpha.value}, {epsilon.value}\n")
-        print(response.policies)
-        response.policies[np.isnan(response.policies)] = 1
-
-    model_choice = response.choice() # get the choice based on the policy
-    reward = feedback[human_choice] # get the reward of the chosen action
-    # update the value of the chosen action
-    mute[stimulus[human_choice] - 1] = 1 # unmute the learning for the chosen action
-    teacher = np.array([reward])
-    update = learning.SeparableRule(weights=values, feedback=teacher, input=mute, alpha=alpha)
-    update.compute()
-    values += update.weights.flatten()
-    ## compile output
-    output = {
-        "trial"    : trial.trial.astype(int),               # trial number
-        "policy"   : response.policies,         # policies
-        "response" : model_choice,              # choice based on the policy
-        "reward"   : reward,                    # reward of the chosen action
-        "values"   : values,                    # updated values
-        "change"   : update.weights,            # change in the values
-        "activation" : activations.flatten(),     # activation of the values
-        "dependent"  : np.array([response.policies[1]]),        # dependent variable
-    }
-    return output</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[36]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-5">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1">## set up wrappers and run the model to check for bugs</span>
-<span class="kn">from</span> <span class="nn">cpm.generators</span> <span class="kn">import</span> <span class="n">Simulator</span><span class="p">,</span> <span class="n">Wrapper</span>
-
-<span class="n">wrapper</span> <span class="o">=</span> <span class="n">Wrapper</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">experiment</span><span class="p">[</span><span class="n">experiment</span><span class="o">.</span><span class="n">ppt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span>
-<span class="n">wrapper</span><span class="o">.</span><span class="n">run</span><span class="p">()</span> <span class="c1"># run the model</span>
-
-<span class="n">output</span> <span class="o">=</span> <span class="n">wrapper</span><span class="o">.</span><span class="n">export</span><span class="p">()</span> <span class="c1"># export sim data into pandas dataframe</span>
-<span class="n">output</span><span class="o">.</span><span class="n">tail</span><span class="p">()</span> <span class="c1"># check for output</span>
-</pre></div>
-<div id="cell-5" class="clipboard-copy-txt">## set up wrappers and run the model to check for bugs
-from cpm.generators import Simulator, Wrapper
-
-wrapper = Wrapper(model=model, parameters=parameters, data=experiment[experiment.ppt == 1])
-wrapper.run() # run the model
-
-output = wrapper.export() # export sim data into pandas dataframe
-output.tail() # check for output</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[36]:</div>
-
-
-
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>trial_0</th>
-      <th>policy_0</th>
-      <th>policy_1</th>
-      <th>response_0</th>
-      <th>reward_0</th>
-      <th>values_0</th>
-      <th>values_1</th>
-      <th>values_2</th>
-      <th>values_3</th>
-      <th>change_0</th>
-      <th>change_1</th>
-      <th>change_2</th>
-      <th>change_3</th>
-      <th>activation_0</th>
-      <th>activation_1</th>
-      <th>dependent_0</th>
-      <th>ppt</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>91</th>
-      <td>92</td>
-      <td>0.622632</td>
-      <td>0.377368</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0.751955</td>
-      <td>0.625610</td>
-      <td>0.464693</td>
-      <td>0.953123</td>
-      <td>0.0</td>
-      <td>0.374390</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.751955</td>
-      <td>0.251221</td>
-      <td>0.377368</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>92</th>
-      <td>93</td>
-      <td>0.418846</td>
-      <td>0.581154</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0.751955</td>
-      <td>0.625610</td>
-      <td>0.464693</td>
-      <td>0.976562</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.023438</td>
-      <td>0.625610</td>
-      <td>0.953123</td>
-      <td>0.581154</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>93</th>
-      <td>94</td>
-      <td>0.444083</td>
-      <td>0.555917</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0.751955</td>
-      <td>0.625610</td>
-      <td>0.464693</td>
-      <td>0.488281</td>
-      <td>-0.0</td>
-      <td>-0.000000</td>
-      <td>-0.0</td>
-      <td>-0.488281</td>
-      <td>0.751955</td>
-      <td>0.976562</td>
-      <td>0.555917</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>94</th>
-      <td>95</td>
-      <td>0.494103</td>
-      <td>0.505897</td>
-      <td>0</td>
-      <td>1</td>
-      <td>0.751955</td>
-      <td>0.625610</td>
-      <td>0.464693</td>
-      <td>0.744140</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.255860</td>
-      <td>0.464693</td>
-      <td>0.488281</td>
-      <td>0.505897</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>95</th>
-      <td>96</td>
-      <td>0.470402</td>
-      <td>0.529598</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0.751955</td>
-      <td>0.312805</td>
-      <td>0.464693</td>
-      <td>0.744140</td>
-      <td>-0.0</td>
-      <td>-0.312805</td>
-      <td>-0.0</td>
-      <td>-0.000000</td>
-      <td>0.625610</td>
-      <td>0.744140</td>
-      <td>0.529598</td>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="simulate-the-data">Simulate the data<a class="anchor-link" href="#simulate-the-data">&#182;</a></h2><p>In this section, we will generate some data from the model we defined above.
-We will use the toolbox to simulate the data and then estimate the empirical priors from the simulated data.</p>
-
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[37]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-6">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">true</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">experiment</span><span class="o">.</span><span class="n">ppt</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># sample a set of parameters</span>
-
-<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">wrapper</span><span class="o">=</span><span class="n">wrapper</span><span class="p">,</span>
-                      <span class="n">data</span><span class="o">=</span><span class="n">experiment</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;ppt&quot;</span><span class="p">),</span>
-                      <span class="n">parameters</span><span class="o">=</span><span class="n">true</span><span class="p">,</span>
-                      <span class="p">)</span> <span class="c1"># data grouped by participants</span>
-<span class="n">simulator</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-
-<span class="n">generated</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">export</span><span class="p">()</span>
-<span class="n">experiment</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">generated</span><span class="o">.</span><span class="n">response_0</span>
-</pre></div>
-<div id="cell-6" class="clipboard-copy-txt">true = parameters.sample(experiment.ppt.unique().shape[0]) # sample a set of parameters
-
-simulator = Simulator(wrapper=wrapper,
-                      data=experiment.groupby("ppt"),
-                      parameters=true,
-                      ) # data grouped by participants
-simulator.run()
-
-generated = simulator.export()
-experiment.response = generated.response_0</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="compare-the-hierarchical-vs-non-hierarchical-model">Compare the hierarchical vs non-hierarchical model<a class="anchor-link" href="#compare-the-hierarchical-vs-non-hierarchical-model">&#182;</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="non-hierarchical-model">Non-hierarchical model<a class="anchor-link" href="#non-hierarchical-model">&#182;</a></h3>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[38]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-7">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1">## Set up the fits</span>
-<span class="kn">from</span> <span class="nn">cpm.optimisation</span> <span class="kn">import</span> <span class="n">minimise</span><span class="p">,</span> <span class="n">FminBound</span>
-
-<span class="n">fit</span> <span class="o">=</span> <span class="n">FminBound</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">wrapper</span><span class="p">,</span>  <span class="c1"># Wrapper class with the model we specified from before</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">experiment</span><span class="p">,</span>  <span class="c1"># the data as a list of dictionaries</span>
-    <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span>
-    <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">cl</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-    <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">ppt_identifier</span><span class="o">=</span><span class="s2">&quot;ppt&quot;</span><span class="p">,</span>
-    <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="c1"># everything below is optional and passed directly to the scipy implementation of the optimiser</span>
-    <span class="n">approx_grad</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-<span class="n">fit</span><span class="o">.</span><span class="n">optimise</span><span class="p">()</span>
-</pre></div>
-<div id="cell-7" class="clipboard-copy-txt">## Set up the fits
-from cpm.optimisation import minimise, FminBound
-
-fit = FminBound(
-    model=wrapper,  # Wrapper class with the model we specified from before
-    data=experiment,  # the data as a list of dictionaries
-    minimisation=minimise.LogLikelihood.bernoulli,
-    parallel=True,
-    cl=12,
-    prior=False,
-    ppt_identifier="ppt",
-    display=False,
-    number_of_starts=5,
-    # everything below is optional and passed directly to the scipy implementation of the optimiser
-    approx_grad=True
-)
-fit.optimise()</div>
+    # Below you can do your job with the data
+    # do_something(data[ppt_to_nodes])</div>
     
         </div>
     </div>
@@ -2099,11 +1294,7 @@ fit.optimise()</div>
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Starting optimization 1/5 from [0.77293809 8.83377865]
-Starting optimization 2/5 from [0.69491486 3.20509607]
-Starting optimization 3/5 from [0.26290708 1.03676315]
-Starting optimization 4/5 from [0.92148411 1.55283665]
-Starting optimization 5/5 from [0.16935103 0.90270228]
+<pre>Shape of the current data: (576, 9), which is 25.0% of the complete data allocated to a single node.
 </pre>
 </div>
 </div>
@@ -2120,7 +1311,9 @@ Starting optimization 5/5 from [0.16935103 0.90270228]
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="hierarchical-model">Hierarchical model<a class="anchor-link" href="#hierarchical-model">&#182;</a></h2>
+<p>Once the script is ready, we will usually have to write a bash script that will submit the job to the cluster.
+See an example below:</p>
+
 </div>
 </div>
 </div>
@@ -2135,7 +1328,7 @@ Starting optimization 5/5 from [0.16935103 0.90270228]
         
         <div class="CodeMirror cm-s-jupyter">
         <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-8">
+            <clipboard-copy for="cell-2">
             <div>
                 <span class="notice" hidden>Copied!</span>
                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
@@ -2145,47 +1338,157 @@ Starting optimization 5/5 from [0.16935103 0.90270228]
                 </div>
             </clipboard-copy>
         </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1">## we now set up the hierarchical fitting</span>
-<span class="kn">from</span> <span class="nn">cpm.hierarchical</span> <span class="kn">import</span> <span class="n">EmpiricalBayes</span> <span class="k">as</span> <span class="n">hierarchical</span>
+            <div class="highlight-ipynb hl-python"><pre><span></span><span class="ch">#!/bin/bash -l</span>
 
-<span class="n">fit_with_prior</span> <span class="o">=</span> <span class="n">FminBound</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">wrapper</span><span class="p">,</span>  <span class="c1"># Wrapper class with the model we specified from before</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">experiment</span><span class="p">,</span>  <span class="c1"># the data as a list of dictionaries</span>
-    <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span>
-    <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">cl</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-    <span class="n">prior</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">ppt_identifier</span><span class="o">=</span><span class="s2">&quot;ppt&quot;</span><span class="p">,</span>
-    <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="c1"># everything below is optional and passed directly to the scipy implementation of the optimiser</span>
-    <span class="n">approx_grad</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-<span class="n">eb</span> <span class="o">=</span> <span class="n">hierarchical</span><span class="p">(</span><span class="n">optimiser</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="c1"># disable numpy errors - there is some out-of-bounds errors in the softmax function that we can ignore</span>
-<span class="n">np</span><span class="o">.</span><span class="n">seterr</span><span class="p">(</span><span class="nb">all</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-<span class="n">eb</span><span class="o">.</span><span class="n">optimise</span><span class="p">()</span>
+<span class="c1">#### Define some basic SLURM properties for this job - there can be many more!</span>
+<span class="c1">#SBATCH --job-name=my_simulation # Replace with your job name</span>
+<span class="c1">#SBATCH --nodes=4 # Replace with the number of nodes you need</span>
+<span class="c1">#SBATCH --partition compute</span>
+<span class="c1">#SBATCH --output=%x_%j.out</span>
+<span class="c1">#SBATCH --error=%x_%j.err</span>
+<span class="c1">#SBATCH --ntasks-per-node=1</span>
+<span class="c1">#SBATCH --cpus-per-task=64 # Replace with the number of cores you need</span>
+<span class="c1">#SBATCH --time=48:00:00 # Replace with the time you need, the format is hour:minutes:seconds</span>
+
+<span class="c1">#### This block shows how you would create a working directory to store your job data:</span>
+<span class="c1"># Define and create a unique scratch directory for this job:</span>
+<span class="n">SCRATCH_DIRECTORY</span><span class="o">=/</span><span class="err">$</span><span class="p">{</span><span class="n">USER</span><span class="p">}</span><span class="o">/</span><span class="err">$</span><span class="p">{</span><span class="n">SLURM_JOBID</span><span class="p">}</span>
+<span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="err">$</span><span class="p">{</span><span class="n">SCRATCH_DIRECTORY</span><span class="p">}</span><span class="o">/</span><span class="n">results</span>
+<span class="k">if</span> <span class="p">[</span> <span class="err">$?</span> <span class="o">-</span><span class="n">ne</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="n">echo</span> <span class="s2">&quot;Failed to create scratch directory&quot;</span>
+    <span class="n">exit</span> <span class="mi">1</span>
+<span class="n">fi</span>
+
+<span class="n">cd</span> <span class="err">$</span><span class="p">{</span><span class="n">SCRATCH_DIRECTORY</span><span class="p">}</span>
+<span class="k">if</span> <span class="p">[</span> <span class="err">$?</span> <span class="o">-</span><span class="n">ne</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="n">echo</span> <span class="s2">&quot;Failed to change directory to scratch directory&quot;</span>
+    <span class="n">exit</span> <span class="mi">1</span>
+<span class="n">fi</span>
+
+<span class="c1"># Note: ${SLURM_SUBMIT_DIR} contains the path where you started the job</span>
+
+<span class="c1"># You can copy everything you need to the scratch directory</span>
+<span class="c1"># ${SLURM_SUBMIT_DIR} points to the path where this script was submitted from</span>
+<span class="n">cp</span> <span class="o">-</span><span class="n">r</span> <span class="err">$</span><span class="p">{</span><span class="n">SLURM_SUBMIT_DIR</span><span class="p">}</span><span class="o">/*</span> <span class="err">$</span><span class="p">{</span><span class="n">SCRATCH_DIRECTORY</span><span class="p">}</span>
+<span class="k">if</span> <span class="p">[</span> <span class="err">$?</span> <span class="o">-</span><span class="n">ne</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="n">echo</span> <span class="s2">&quot;Failed to copy files to scratch directory&quot;</span>
+    <span class="n">exit</span> <span class="mi">1</span>
+<span class="n">fi</span>
+
+<span class="c1">#### Do the actual work:</span>
+<span class="c1"># Make sure we have singularity available</span>
+<span class="n">module</span> <span class="n">load</span> <span class="n">python</span>
+<span class="k">if</span> <span class="p">[</span> <span class="err">$?</span> <span class="o">-</span><span class="n">ne</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="n">echo</span> <span class="s2">&quot;Failed to load Python module&quot;</span>
+    <span class="n">exit</span> <span class="mi">1</span>
+<span class="n">fi</span>
+
+<span class="c1"># Debugging output to verify paths and environment variables</span>
+<span class="n">echo</span> <span class="s2">&quot;Scratch directory: $</span><span class="si">{SCRATCH_DIRECTORY}</span><span class="s2">&quot;</span>
+<span class="n">echo</span> <span class="s2">&quot;Submit directory: $</span><span class="si">{SLURM_SUBMIT_DIR}</span><span class="s2">&quot;</span>
+
+<span class="c1"># Run the simulation using Singularity</span>
+<span class="n">srun</span> <span class="n">python</span> <span class="n">my_job</span><span class="o">.</span><span class="n">py</span>
+<span class="k">if</span> <span class="p">[</span> <span class="err">$?</span> <span class="o">-</span><span class="n">ne</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="n">echo</span> <span class="s2">&quot;Singularity execution failed&quot;</span>
+    <span class="n">exit</span> <span class="mi">1</span>
+<span class="n">fi</span>
+
+<span class="c1"># Note the hostname command in there - this will print the compute node&#39;s name into the output, making it easier to understand what&#39;s going on</span>
+<span class="n">echo</span> <span class="s2">&quot;Compute node: $(hostname)&quot;</span>
+
+<span class="c1"># After the job is done we copy our output back to $SLURM_SUBMIT_DIR</span>
+<span class="n">cp</span> <span class="o">-</span><span class="n">r</span> <span class="err">$</span><span class="p">{</span><span class="n">SCRATCH_DIRECTORY</span><span class="p">}</span><span class="o">/</span><span class="n">results</span> <span class="err">$</span><span class="p">{</span><span class="n">SLURM_SUBMIT_DIR</span><span class="p">}</span>
+<span class="k">if</span> <span class="p">[</span> <span class="err">$?</span> <span class="o">-</span><span class="n">ne</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="n">echo</span> <span class="s2">&quot;Failed to copy results back to submit directory&quot;</span>
+    <span class="n">exit</span> <span class="mi">1</span>
+<span class="n">fi</span>
+
+<span class="c1">#### This is how you would clean up the working directory (after copying any important files back!):</span>
+<span class="n">cd</span> <span class="err">$</span><span class="p">{</span><span class="n">SLURM_SUBMIT_DIR</span><span class="p">}</span>
+<span class="n">rm</span> <span class="o">-</span><span class="n">rf</span> <span class="err">$</span><span class="p">{</span><span class="n">SCRATCH_DIRECTORY</span><span class="p">}</span>
+<span class="k">if</span> <span class="p">[</span> <span class="err">$?</span> <span class="o">-</span><span class="n">ne</span> <span class="mi">0</span> <span class="p">];</span> <span class="n">then</span>
+    <span class="n">echo</span> <span class="s2">&quot;Failed to clean up scratch directory&quot;</span>
+    <span class="n">exit</span> <span class="mi">1</span>
+<span class="n">fi</span>
+
+<span class="n">exit</span> <span class="mi">0</span>
 </pre></div>
-<div id="cell-8" class="clipboard-copy-txt">## we now set up the hierarchical fitting
-from cpm.hierarchical import EmpiricalBayes as hierarchical
+<div id="cell-2" class="clipboard-copy-txt">#!/bin/bash -l
 
-fit_with_prior = FminBound(
-    model=wrapper,  # Wrapper class with the model we specified from before
-    data=experiment,  # the data as a list of dictionaries
-    minimisation=minimise.LogLikelihood.bernoulli,
-    parallel=True,
-    cl=12,
-    prior=True,
-    ppt_identifier="ppt",
-    display=False,
-    number_of_starts=5,
-    # everything below is optional and passed directly to the scipy implementation of the optimiser
-    approx_grad=True
-)
-eb = hierarchical(optimiser=fit, iteration=20, chain=2)
-# disable numpy errors - there is some out-of-bounds errors in the softmax function that we can ignore
-np.seterr(all="ignore")
-eb.optimise()</div>
+#### Define some basic SLURM properties for this job - there can be many more!
+#SBATCH --job-name=my_simulation # Replace with your job name
+#SBATCH --nodes=4 # Replace with the number of nodes you need
+#SBATCH --partition compute
+#SBATCH --output=%x_%j.out
+#SBATCH --error=%x_%j.err
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=64 # Replace with the number of cores you need
+#SBATCH --time=48:00:00 # Replace with the time you need, the format is hour:minutes:seconds
+
+#### This block shows how you would create a working directory to store your job data:
+# Define and create a unique scratch directory for this job:
+SCRATCH_DIRECTORY=/${USER}/${SLURM_JOBID}
+mkdir -p ${SCRATCH_DIRECTORY}/results
+if [ $? -ne 0 ]; then
+    echo "Failed to create scratch directory"
+    exit 1
+fi
+
+cd ${SCRATCH_DIRECTORY}
+if [ $? -ne 0 ]; then
+    echo "Failed to change directory to scratch directory"
+    exit 1
+fi
+
+# Note: ${SLURM_SUBMIT_DIR} contains the path where you started the job
+
+# You can copy everything you need to the scratch directory
+# ${SLURM_SUBMIT_DIR} points to the path where this script was submitted from
+cp -r ${SLURM_SUBMIT_DIR}/* ${SCRATCH_DIRECTORY}
+if [ $? -ne 0 ]; then
+    echo "Failed to copy files to scratch directory"
+    exit 1
+fi
+
+#### Do the actual work:
+# Make sure we have singularity available
+module load python
+if [ $? -ne 0 ]; then
+    echo "Failed to load Python module"
+    exit 1
+fi
+
+# Debugging output to verify paths and environment variables
+echo "Scratch directory: ${SCRATCH_DIRECTORY}"
+echo "Submit directory: ${SLURM_SUBMIT_DIR}"
+
+# Run the simulation using Singularity
+srun python my_job.py
+if [ $? -ne 0 ]; then
+    echo "Singularity execution failed"
+    exit 1
+fi
+
+# Note the hostname command in there - this will print the compute node's name into the output, making it easier to understand what's going on
+echo "Compute node: $(hostname)"
+
+# After the job is done we copy our output back to $SLURM_SUBMIT_DIR
+cp -r ${SCRATCH_DIRECTORY}/results ${SLURM_SUBMIT_DIR}
+if [ $? -ne 0 ]; then
+    echo "Failed to copy results back to submit directory"
+    exit 1
+fi
+
+#### This is how you would clean up the working directory (after copying any important files back!):
+cd ${SLURM_SUBMIT_DIR}
+rm -rf ${SCRATCH_DIRECTORY}
+if [ $? -ne 0 ]; then
+    echo "Failed to clean up scratch directory"
+    exit 1
+fi
+
+exit 0</div>
     
         </div>
     </div>
@@ -2201,393 +1504,12 @@ eb.optimise()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Next, we will extract the best performing hyperparameters for the priors and reinitialise the model.</p>
-
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[43]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-9">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">hyperparameters</span> <span class="o">=</span> <span class="n">eb</span><span class="o">.</span><span class="n">hyperparameters</span>
-<span class="n">hyper</span> <span class="o">=</span> <span class="n">hyperparameters</span><span class="p">[</span><span class="n">hyperparameters</span><span class="o">.</span><span class="n">lme</span> <span class="o">==</span> <span class="n">hyperparameters</span><span class="o">.</span><span class="n">lme</span><span class="o">.</span><span class="n">max</span><span class="p">()]</span>
-<span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="n">hyper</span><span class="p">[</span><span class="n">hyper</span><span class="o">.</span><span class="n">parameter</span> <span class="o">==</span> <span class="s2">&quot;alpha&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()[</span><span class="s1">&#39;mean&#39;</span><span class="p">],</span>
-         <span class="n">hyper</span><span class="p">[</span><span class="n">hyper</span><span class="o">.</span><span class="n">parameter</span> <span class="o">==</span> <span class="s2">&quot;temperature&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()[</span><span class="s1">&#39;mean&#39;</span><span class="p">]]</span>
-
-<span class="n">ssd</span> <span class="o">=</span> <span class="p">[</span><span class="n">hyper</span><span class="p">[</span><span class="n">hyper</span><span class="o">.</span><span class="n">parameter</span> <span class="o">==</span> <span class="s2">&quot;alpha&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()[</span><span class="s1">&#39;sd&#39;</span><span class="p">],</span>
-       <span class="n">hyper</span><span class="p">[</span><span class="n">hyper</span><span class="o">.</span><span class="n">parameter</span> <span class="o">==</span> <span class="s2">&quot;temperature&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()[</span><span class="s1">&#39;sd&#39;</span><span class="p">]]</span>
+<p>This then can be submitted to the cluster using the <code>sbatch</code> command.</p>
+<div class="highlight"><pre><span></span>sbatch<span class="w"> </span>my_job.sh
 </pre></div>
-<div id="cell-9" class="clipboard-copy-txt">hyperparameters = eb.hyperparameters
-hyper = hyperparameters[hyperparameters.lme == hyperparameters.lme.max()]
-means = [hyper[hyper.parameter == "alpha"].squeeze()['mean'],
-         hyper[hyper.parameter == "temperature"].squeeze()['mean']]
-
-ssd = [hyper[hyper.parameter == "alpha"].squeeze()['sd'],
-       hyper[hyper.parameter == "temperature"].squeeze()['sd']]</div>
-    
-        </div>
-    </div>
 
 </div>
 </div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[45]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-10">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Means for learning rate and decision scaling: &quot;</span><span class="p">,</span> <span class="n">means</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Standard deviations for learning rate and decision scaling: &quot;</span><span class="p">,</span> <span class="n">ssd</span><span class="p">)</span>
-</pre></div>
-<div id="cell-10" class="clipboard-copy-txt">print("Means for learning rate and decision scaling: ", means)
-print("Standard deviations for learning rate and decision scaling: ", ssd)</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Means for learning rate and decision scaling:  [0.22831061532758423, 4.853229413338457]
-Standard deviations for learning rate and decision scaling:  [0.3236249576170432, 5.416253176902918]
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[46]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-11">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1">## redefine parameters</span>
-<span class="n">estimated_parameters</span> <span class="o">=</span> <span class="n">Parameters</span><span class="p">(</span>
-    <span class="c1"># freely varying parameters are indicated by specifying priors</span>
-    <span class="n">alpha</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="n">lower</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
-        <span class="n">upper</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">prior</span><span class="o">=</span><span class="s2">&quot;truncated_normal&quot;</span><span class="p">,</span>
-        <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">means</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="n">ssd</span><span class="p">[</span><span class="mi">0</span><span class="p">]},</span>
-    <span class="p">),</span>
-    <span class="n">temperature</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">upper</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-        <span class="n">prior</span><span class="o">=</span><span class="s2">&quot;truncated_normal&quot;</span><span class="p">,</span>
-        <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">means</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="n">ssd</span><span class="p">[</span><span class="mi">1</span><span class="p">]},</span>
-    <span class="p">),</span>
-    <span class="c1"># everything without a prior is part of the initial state of the model or fixed constructs (e.g. exemplars in general-context models of categorization)</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]))</span>
-
-<span class="c1">## reinitialise the model</span>
-<span class="n">wrapper_with_prior</span> <span class="o">=</span> <span class="n">Wrapper</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">estimated_parameters</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">experiment</span><span class="p">[</span><span class="n">experiment</span><span class="o">.</span><span class="n">ppt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span>
-<span class="n">fit_with_prior</span> <span class="o">=</span> <span class="n">FminBound</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">wrapper</span><span class="p">,</span>  <span class="c1"># Wrapper class with the model we specified from before</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">experiment</span><span class="p">,</span>  <span class="c1"># the data as a list of dictionaries</span>
-    <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span>
-    <span class="n">prior</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">ppt_identifier</span><span class="o">=</span><span class="s2">&quot;ppt&quot;</span><span class="p">,</span>
-    <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="c1"># everything below is optional and passed directly to the scipy implementation of the optimiser</span>
-    <span class="n">approx_grad</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-<span class="n">fit_with_prior</span><span class="o">.</span><span class="n">optimise</span><span class="p">()</span>
-</pre></div>
-<div id="cell-11" class="clipboard-copy-txt">## redefine parameters
-estimated_parameters = Parameters(
-    # freely varying parameters are indicated by specifying priors
-    alpha=Value(
-        value=0.5,
-        lower=1e-10,
-        upper=1,
-        prior="truncated_normal",
-        args={"mean": means[0], "sd": ssd[0]},
-    ),
-    temperature=Value(
-        value=1,
-        lower=0,
-        upper=10,
-        prior="truncated_normal",
-        args={"mean": means[1], "sd": ssd[1]},
-    ),
-    # everything without a prior is part of the initial state of the model or fixed constructs (e.g. exemplars in general-context models of categorization)
-    values = np.array([0.25, 0.25, 0.25, 0.25]))
-
-## reinitialise the model
-wrapper_with_prior = Wrapper(model=model, parameters=estimated_parameters, data=experiment[experiment.ppt == 1])
-fit_with_prior = FminBound(
-    model=wrapper,  # Wrapper class with the model we specified from before
-    data=experiment,  # the data as a list of dictionaries
-    minimisation=minimise.LogLikelihood.bernoulli,
-    prior=True,
-    ppt_identifier="ppt",
-    display=False,
-    number_of_starts=5,
-    # everything below is optional and passed directly to the scipy implementation of the optimiser
-    approx_grad=True
-)
-fit_with_prior.optimise()</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Starting optimization 1/5 from [0.78815561 7.93228204]
-Starting optimization 2/5 from [0.4303583  3.20883126]
-Starting optimization 3/5 from [0.21701328 3.86037493]
-Starting optimization 4/5 from [0.58961099 5.0231542 ]
-Starting optimization 5/5 from [0.71350608 8.76892116]
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[47]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-12">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">cpm.utils</span> <span class="kn">import</span> <span class="n">dict_to_pandas</span><span class="p">,</span> <span class="n">pandas_to_dict</span>
-
-<span class="n">non_hierarchical</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">export</span><span class="p">()</span>
-<span class="n">with_hierarchical</span> <span class="o">=</span> <span class="n">fit_with_prior</span><span class="o">.</span><span class="n">export</span><span class="p">()</span>
-
-<span class="n">original</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dict_to_pandas</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">true</span><span class="p">))</span>
-</pre></div>
-<div id="cell-12" class="clipboard-copy-txt">from cpm.utils import dict_to_pandas, pandas_to_dict
-
-non_hierarchical = fit.export()
-with_hierarchical = fit_with_prior.export()
-
-original = pd.concat(map(lambda x: dict_to_pandas(x), true))</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[60]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-13">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">sse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">original</span><span class="o">.</span><span class="n">alpha</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">-</span> <span class="n">non_hierarchical</span><span class="o">.</span><span class="n">x_0</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Non-hierarchical SSE for parameter recovery: &quot;</span><span class="p">,</span> <span class="n">sse</span><span class="p">)</span>
-</pre></div>
-<div id="cell-13" class="clipboard-copy-txt">sse = np.sum(np.square(original.alpha.to_numpy() - non_hierarchical.x_0.to_numpy()))
-print("Non-hierarchical SSE for parameter recovery: ", sse)</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Non-hierarchical SSE for parameter recovery:  6.600148553649561
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[61]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-        
-        
-        <div class="CodeMirror cm-s-jupyter">
-        <div class="zeroclipboard-container">
-            <clipboard-copy for="cell-14">
-            <div>
-                <span class="notice" hidden>Copied!</span>
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" version="1.1"  data-view-component="true" class="clipboard-copy-icon">
-                    <path fill="currentColor" fill-rule="evenodd" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"></path>
-                    <path fill="currentColor" fill-rule="evenodd" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"></path>
-                </svg>
-                </div>
-            </clipboard-copy>
-        </div>
-            <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">sse_with_prior</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">original</span><span class="o">.</span><span class="n">alpha</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="o">-</span> <span class="n">with_hierarchical</span><span class="o">.</span><span class="n">x_0</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hierarchical SSE for parameter recovery: &quot;</span><span class="p">,</span> <span class="n">sse_with_prior</span><span class="p">)</span>
-</pre></div>
-<div id="cell-14" class="clipboard-copy-txt">sse_with_prior = np.sum(np.square(original.alpha.to_numpy() - with_hierarchical.x_0.to_numpy()))
-print("Hierarchical SSE for parameter recovery: ", sse_with_prior)</div>
-    
-        </div>
-    </div>
-
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Hierarchical SSE for parameter recovery:  3.111205764611528
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
 </div>
 </div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
@@ -2596,7 +1518,8 @@ print("Hierarchical SSE for parameter recovery: ", sse_with_prior)</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Overall, hierarchical models recovered better due to the additional constraints priors imposed on them.</p>
+<p>That is all, now we have upscaled our simulations to a hypercomputing cluster.
+Happy coding!</p>
 
 </div>
 </div>
@@ -2609,8 +1532,8 @@ print("Hierarchical SSE for parameter recovery: ", sse_with_prior)</div>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../example2/" class="btn btn-neutral float-left" title="Example 2: Reinforcement learning with a two-armed bandit."><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../example4/" class="btn btn-neutral float-right" title="Example 4: Scaling to the cluster">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../example3/" class="btn btn-neutral float-left" title="Example 3: Estimating Empirical Priors"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../references/applications/" class="btn btn-neutral float-right" title="cpm.applications">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -2633,10 +1556,10 @@ print("Hierarchical SSE for parameter recovery: ", sse_with_prior)</div>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../example2/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../example3/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../example4/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../../references/applications/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

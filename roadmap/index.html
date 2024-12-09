@@ -61,8 +61,6 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#performance-improvement">Performance improvement</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#scaling-from-local-to-distributed">Scaling from local to distributed</a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a>
@@ -95,9 +93,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../examples/example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/example4/">Example 4: Scaling to the cluster</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../references/applications/">cpm.applications</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../references/models/">cpm.models</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../references/generators/">cpm.generators</a>
@@ -106,7 +108,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../references/hierarchical/">cpm.hierarchical</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/evaluation/">cpm.evaluation</a>
+                  <li class="toctree-l1"><a class="" href="../evaluation.md">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../references/utils/">cpm.utils</a>
                   </li>
@@ -142,12 +144,9 @@
 <li>Using <code>numba</code> to speed up the code and allow compilation of classes with <a href="https://numba.pydata.org/numba-doc/dev/user/jitclass.html">@jitclass</a>.</li>
 <li>Reduce code duplication and improve code organization.</li>
 <li>Improve the performance of the <code>cpm.generators</code> module to speed up simulations.</li>
-<li>Improve memory usage and reduce the number of copies of the data.</li>
-<li>Improve the data compilation process to speed up the majority of data cleaning happening in the modules.</li>
+<li>Improve shared memory usage and reduce the number of copies of the data.</li>
+<li>Improve the data compilation process to speed up the majority of data cleaning happening in the modules during runs and exports.</li>
 </ul>
-<h2 id="scaling-from-local-to-distributed">Scaling from local to distributed</h2>
-<p>The big performance-improvement goal is to scale from local to distributed computing.
-If you have experience with scaling python libraries, we would really appreciate your help.</p>
 <h2 id="documentation">Documentation</h2>
 <p>We would like to expand the documentation to include more examples and tutorials.
 We imagine that these will at some point migrate to their own repository, but for now, they will be part of the main documentation.</p>
@@ -156,12 +155,12 @@ We imagine that these will at some point migrate to their own repository, but fo
 <h2 id="new-features">New features</h2>
 <p>We are always looking for new features to add to the library.
 If you have an idea for a new feature, please open an issue to discuss it.</p>
-<p>Two main types of features we planned are:</p>
+<p>We already have a list of low-hanging fruit features that we would like to add:</p>
 <ol>
 <li>Expansion of the models classes. There are many model components out in the literature and we would like to add as many of them to the library as possible.</li>
+<li>Add model selection module, where we will incorporate model selection criteria and methods, which are also compatible with the hierarchical estimation approaches we already implemented.</li>
 <li>Add pre-built models to the library as ready-to-deploy applications.</li>
-<li>Hierarchical and MCMC methods for model fitting.</li>
-<li>Introducing new classes to scale your simulations from local to distributed computing.</li>
+<li>New and more efficitent Hierarchical and MCMC methods for model fitting (e.g. Variational Bayes Monte Carlo, Particle filtering).</li>
 </ol>
               
             </div>

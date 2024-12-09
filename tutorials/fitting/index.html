@@ -82,6 +82,8 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#walkthrough">Walkthrough</a>
     </li>
+    <li class="toctree-l3"><a class="reference internal" href="#importerror-dll-load-failed-while-importing-arrays-the-paging-file-is-too-small-for-this-operation-to-complete-python-multiprocess">ImportError: DLL load failed while importing arrays: The paging file is too small for this operation to complete. python multiprocess</a>
+    </li>
         </ul>
     </li>
     </ul>
@@ -97,9 +99,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example4/">Example 4: Scaling to the cluster</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../references/applications/">cpm.applications</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/models/">cpm.models</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/generators/">cpm.generators</a>
@@ -108,7 +114,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/hierarchical/">cpm.hierarchical</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../references/evaluation/">cpm.evaluation</a>
+                  <li class="toctree-l1"><a class="" href="../../evaluation.md">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../references/utils/">cpm.utils</a>
                   </li>
@@ -332,6 +338,10 @@ You can structure your <code>main.py</code> as follows:</p>
 <p>If you have this sorted, you can execute the <code>main.py</code> file from the command line, and the parallelisation should work as expected.</p>
 <pre><code class="language-bash">python src/main.py
 </code></pre>
+<h3 id="importerror-dll-load-failed-while-importing-arrays-the-paging-file-is-too-small-for-this-operation-to-complete-python-multiprocess">ImportError: DLL load failed while importing arrays: The paging file is too small for this operation to complete. python multiprocess</h3>
+<p>This error is due to the fact that the Windows operating system has a limit on the number of processes that can be spawned.
+Possible solution are (1) to increase the size of the paging file; (2) to decrease the number of processes spawned; or (3) to use a different operating system via <code>docker</code>.
+<code>cpm</code> provides a ready-to-ue <code>docker</code> container via <a href="https://hub.docker.com/repository/docker/lenarddome/dcp-cpm-latest-dev/general">DockerHub</a>, which you can use to run your code.</p>
               
             </div>
           </div><footer>

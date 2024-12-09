@@ -83,9 +83,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example4/">Example 4: Scaling to the cluster</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../applications/">cpm.applications</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../models/">cpm.models</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../generators/">cpm.generators</a>
@@ -109,8 +113,6 @@
     <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.optimise">optimise()</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.parameters">parameters()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.priors">priors()</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.stair">stair()</a>
     </li>
@@ -144,7 +146,7 @@
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../evaluation/">cpm.evaluation</a>
+                  <li class="toctree-l1"><a class="" href="../../evaluation.md">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../utils/">cpm.utils</a>
                   </li>
@@ -401,7 +403,7 @@ It also shows the distribution of the means and the standard deviations of the g
 
   <div class="doc doc-contents ">
   
-      <p>This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains.</p>
+      <p>This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains with random starting points for the priors.</p>
 
   </div>
 
@@ -435,42 +437,6 @@ It also shows the distribution of the means and the standard deviations of the g
                 <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
           </td>
           <td><p>The estimated individual-level parameters for each iteration and chain.</p></td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h3 id="cpm.hierarchical.empirical.EmpiricalBayes.priors" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">priors</span><span class="p">()</span></code>
-
-</h3>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Returns the estimated group-level hyperparameters (priors) for each iteration and chain.</p>
-
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
-          </td>
-          <td><p>The estimated group-level hyperparameters for each iteration and chain.</p></td>
         </tr>
     </tbody>
   </table>
@@ -536,7 +502,7 @@ It also shows the distribution of the means and the standard deviations of the g
   <div class="doc doc-contents first">
 
   
-      <p>Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods.</p>
+      <p>Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods, a reduced version of the Hierarchical Bayesian Inference (HBI) algorithm proposed by Piray et al. (2019), to exclude model comparison and selection.</p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -613,7 +579,7 @@ It also shows the distribution of the means and the standard deviations of the g
           <td><code>hyperpriors</code></td>
           <td>
           </td>
-          <td><p>A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau).</p></td>
+          <td><p>A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.</p></td>
           <td>
                 <code>None</code>
           </td>
@@ -631,6 +597,25 @@ It also shows the distribution of the means and the standard deviations of the g
     </tbody>
   </table>
       <h4 id="cpm.hierarchical.VariationalBayes--notes">Notes</h4>
+<p>The hyperprios are as follows:</p>
+<ul>
+<li><code>a0</code> : array-like
+    Vector of means of the normal prior on the population-level means, mu.</li>
+<li><code>b</code> : float
+    Scalar value that is multiplied with population-level precisions, tau, to determine the standard deviations of the normal prior on the population-level means, mu.</li>
+<li><code>v</code> : float
+    Scalar value that is used to determine the shape parameter (nu) of the gamma prior on population-level precisions, tau.</li>
+<li><code>s</code> : array-like
+    Vector of values that serve as lower bounds on the scale parameters (sigma) of the gamma prior on population-level precisions, tau.</li>
+</ul>
+<p>With the number of parameters as N, the default values are as follows:</p>
+<ul>
+<li><code>a0</code> : np.zeros(N)</li>
+<li><code>b</code> : 1</li>
+<li><code>v</code> : 0.5</li>
+<li><code>s</code> : np.repeat(0.01, N)</li>
+</ul>
+<p>The convergence criterion can be set to 'lme' or 'parameters'. If set to 'lme', the algorithm will stop when the log model evidence converges. If set to 'parameters', the algorithm will stop when the "normalized" means of the population-level parameters converge.</p>
 <h4 id="cpm.hierarchical.VariationalBayes--references">References</h4>
 <p>Piray, P., Dezfouli, A., Heskes, T., Frank, M. J., &amp; Daw, N. D. (2019). Hierarchical Bayesian inference for concurrent model fitting and comparison for group studies. PLoS computational biology, 15(6), e1007043.</p>
 
@@ -1168,7 +1153,7 @@ It also shows the distribution of the means and the standard deviations of the g
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../optimisation/" class="btn btn-neutral float-left" title="cpm.optimisation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../evaluation/" class="btn btn-neutral float-right" title="cpm.evaluation">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../utils/" class="btn btn-neutral float-right" title="cpm.utils">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -1194,7 +1179,7 @@ It also shows the distribution of the means and the standard deviations of the g
       <span><a href="../optimisation/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../evaluation/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../utils/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

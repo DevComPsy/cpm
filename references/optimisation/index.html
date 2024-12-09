@@ -83,9 +83,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example4/">Example 4: Scaling to the cluster</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API reference</span></p>
               <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../applications/">cpm.applications</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../models/">cpm.models</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../generators/">cpm.generators</a>
@@ -190,7 +194,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../hierarchical/">cpm.hierarchical</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../evaluation/">cpm.evaluation</a>
+                  <li class="toctree-l1"><a class="" href="../../evaluation.md">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../utils/">cpm.utils</a>
                   </li>
@@ -227,7 +231,7 @@
 
 
 <h2 id="cpm.optimisation.DifferentialEvolution" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">DifferentialEvolution</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">DifferentialEvolution</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">],</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -306,6 +310,16 @@
 If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p></td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>libraries</code></td>
+          <td>
+                <code>list, optional</code>
+          </td>
+          <td><p>The libraries to import for parallel processing for <code>ipyparallel</code> with the IPython kernel. Default is <code>["numpy", "pandas"]</code></p></td>
+          <td>
+                <code>[&#39;numpy&#39;, &#39;pandas&#39;]</code>
           </td>
         </tr>
         <tr>
@@ -479,7 +493,7 @@ If you want to investigate it, please use the <code>details</code> attribute.</p
 
 
 <h2 id="cpm.optimisation.Fmin" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Fmin</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Fmin</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">],</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -578,6 +592,16 @@ If you want to investigate it, please use the <code>details</code> attribute.</p
 If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p></td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>libraries</code></td>
+          <td>
+                <code>list, optional</code>
+          </td>
+          <td><p>The libraries to import for parallel processing for <code>ipyparallel</code> with the IPython kernel. Default is <code>["numpy", "pandas"]</code>.</p></td>
+          <td>
+                <code>[&#39;numpy&#39;, &#39;pandas&#39;]</code>
           </td>
         </tr>
         <tr>
@@ -749,7 +773,7 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 
 <h2 id="cpm.optimisation.FminBound" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">FminBound</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">FminBound</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">],</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -848,6 +872,16 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p></td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>libraries</code></td>
+          <td>
+                <code>list, optional</code>
+          </td>
+          <td><p>The libraries to import for parallel processing for <code>ipyparallel</code> with the IPython kernel. Default is <code>["numpy", "pandas"]</code>.</p></td>
+          <td>
+                <code>[&#39;numpy&#39;, &#39;pandas&#39;]</code>
           </td>
         </tr>
         <tr>
@@ -1019,7 +1053,7 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 
 <h2 id="cpm.optimisation.Minimize" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;Nelder-Mead&#39;</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;Nelder-Mead&#39;</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">],</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1109,6 +1143,16 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p></td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>libraries</code></td>
+          <td>
+                <code>list, optional</code>
+          </td>
+          <td><p>The libraries to import for parallel processing for <code>ipyparallel</code> with the IPython kernel. Default is <code>["numpy", "pandas"]</code></p></td>
+          <td>
+                <code>[&#39;numpy&#39;, &#39;pandas&#39;]</code>
           </td>
         </tr>
         <tr>
@@ -1280,7 +1324,7 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 
 
 <h2 id="cpm.optimisation.Bads" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Bads</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">continuous</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">optimisation</span><span class="o">.</span><span class="n">Bads</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimisation</span><span class="o">=</span><span class="n">minimise</span><span class="o">.</span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">continuous</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">number_of_starts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">initial_guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">],</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1379,6 +1423,16 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
 If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set to <code>True</code>, the number of cores is set to the number of cores available on the machine.</p></td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>libraries</code></td>
+          <td>
+                <code>list, optional</code>
+          </td>
+          <td><p>The libraries required for the parallel processing with <code>ipyparallel</code> with the IPython kernel. Default is <code>["numpy", "pandas"]</code>.</p></td>
+          <td>
+                <code>[&#39;numpy&#39;, &#39;pandas&#39;]</code>
           </td>
         </tr>
         <tr>
@@ -1751,13 +1805,13 @@ If we encounter any non-finite values, we set any log likelihood to the value of
   </table>
       <h6 id="cpm.optimisation.minimise.LogLikelihood.categorical--notes">Notes</h6>
 <p><code>predicted</code> and <code>observed</code> must have the same shape.
-<code>observed</code> is a binary variable, so it can only take the values 0 or 1.
+<code>observed</code> is a vector of integers starting from 0 (first possible response), where each integer corresponds to the observed value.
 If there are two choice options, then observed would have a shape of (n, 2) and predicted would have a shape of (n, 2).
 On each row of <code>observed</code>, the array would have a 1 in the column corresponding to the observed value and a 0 in the other column.</p>
 
 <p><strong>Examples:</strong></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">predicted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">LogLikelihood</span><span class="o">.</span><span class="n">categorical</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
 <span class="go">1.7350011354094463</span>

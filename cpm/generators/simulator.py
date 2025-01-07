@@ -51,9 +51,13 @@ class Simulator:
             self.groups = list(self.data.groups.keys())
         else:
             self.groups = np.arange(len(self.data))
-
         self.parameters = cast_parameters(parameters, len(self.groups))
         self.parameter_names = self.wrapper.parameter_names
+
+        if len(self.groups) != len(parameters):
+            raise ValueError(
+                "The number of groups in the data and parameters should be equal."
+            )
 
         self.simulation = []
         self.generated = []

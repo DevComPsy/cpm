@@ -18,7 +18,7 @@ from . import models
 from . import applications
 from . import optimisation
 from . import hierarchical
-from . import evaluation
 from . import utils
+from . import datasets
 
 del os, sys, warnings, logging

@@ -1,4 +1,5 @@
 import numpy as np
+from ..generators import Value
 
 __all__ = [
     "Softmax",
@@ -34,6 +35,9 @@ class Softmax:
     By contrast, as beta approaches zero, choices becomes random (i.e., the probabilities the choice options are approximately equal)
     and therefore independent of the options' activations.
 
+    `activations` must be a 2D array, where each row represents an outcome and each column represents a stimulus or other arbitrary features and variables.
+    If multiple values are provided for each outcome, the softmax function will sum these values up.
+
     Note that if you have one value for each outcome (i.e. a classical bandit-like problem), and you represent it as a 1D
     array, you must reshape it in the format specified for activations. So that if you have 3 stimuli
     which all are actionable, `[0.1, 0.5, 0.22]`, you should have a 2D array of shape (3, 1), `[[0.1], [0.5], [0.22]]`.
@@ -63,15 +67,19 @@ class Softmax:
     array([0.45352133, 0.54647867])
     """
 
-    def __init__(self, temperature=0.5, xi=0, activations=None, **kwargs):
+    def __init__(self, temperature=None, xi=None, activations=None, **kwargs):
         """ """
         self.temperature = temperature
+        if isinstance(self.temperature, Value):
+            self.temperature = self.temperature.value
         self.xi = xi
+        if isinstance(self.xi, Value):
+            self.xi = self.xi.value
         if activations is not None:
             self.activations = activations.copy()
         else:
             self.activations = np.zeros(1)
-        self.policies = []
+        self.policies = np.zeros(self.activations.shape[0])
         self.shape = self.activations.shape
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
@@ -93,7 +101,7 @@ class Softmax:
             )
         self.policies = output
         self.__run__ = True
-        return output
+        return self.policies
 
     def irreducible_noise(self):
         """
@@ -142,7 +150,7 @@ class Softmax:
         """
         if not self.__run__:
             self.compute()
-        return np.random.choice(self.shape[0], p=self.policies)
+        return np.random.choice(self.shape[0], p=self.policies.flatten())
 
     def __repr__(self):
         return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations})"

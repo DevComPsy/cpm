@@ -2,5 +2,6 @@ nav:
     - cpm.models: models.md
     - cpm.generators: generators.md
     - cpm.optimisation: optimisation.md
+    - cpm.hierarchical: hierarchical.md
     - cpm.evaluation: evaluation.md
     - cpm.utils: utils.md

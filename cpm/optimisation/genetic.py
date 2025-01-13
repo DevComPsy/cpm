@@ -2,54 +2,14 @@ from scipy.optimize import differential_evolution
 import pandas as pd
 import numpy as np
 import copy
-import warnings
 import multiprocess as mp
 
 
 from . import minimise
-from . import utils
+from ..core.data import decompose, detailed_pandas_compiler, extract_params_from_fit
 from ..generators import Simulator, Wrapper
-
-
-def minimum(pars, function, data, loss, prior=False, **args):
-    """
-    The `minimise` function calculates a metric by comparing predicted values with
-    observed values.
-
-    Parameters
-    ----------
-    pars
-        The `pars` parameter is a dictionary that contains the parameters for the
-        function that needs to be minimized.
-    function
-        The `function` parameter is the function that needs to be minimized.
-    data
-        The `data` parameter is the data that is used to compare the predicted values
-        with the observed values.
-    loss
-        The `loss` parameter is the loss function that is used to calculate the metric
-        value.
-    args
-        The `args` parameter is a dictionary that contains additional parameters that
-        are used in the loss function.
-
-    Returns
-    -------
-        The metric value is being returned.
-
-    """
-    function.reset(pars)
-    function.run()
-    predicted = function.dependent
-    observed = copy.deepcopy(data)
-    metric = loss(predicted, observed, **args)
-    del predicted, observed
-    if np.isnan(metric) or np.isinf(metric):
-        metric = 1e10
-    if prior:
-        prior_pars = function.parameters.PDF(log=True)
-        metric += -prior_pars
-    return metric
+from ..core.optimisers import objective, prepare_data
+from ..core.parallel import detect_cores, execute_parallel
 
 
 class DifferentialEvolution:
@@ -58,10 +18,10 @@ class DifferentialEvolution:
 
     Parameters
     ----------
-    model : object
+    model : cpm.generators.Wrapper
         The model to be optimized.
-    data : object
-        The data used for optimization. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
+    data : pd.DataFrame, pd.DataFrameGroupBy, list
+        The data used for optimization. If a pd.Dataframe, it is grouped by the `ppt_identifier`. If it is a pd.DataFrameGroupby, groups are assumed to be participants. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.bernoulli`. See the `minimise` module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.
     prior: bool
@@ -71,6 +31,8 @@ class DifferentialEvolution:
     cl : int
         The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
+    libraries : list, optional
+        The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
@@ -78,7 +40,7 @@ class DifferentialEvolution:
 
     Notes
     -----
-    The `data` parameter is an array of dictionaries, where each dictionary contains the data for a single participant. The dictionary should contain the keys needed to simulate behaviour using the model, such as trials and feedback. The dictionary should also contain the observed data for the participant, titled 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable the model `Wrapper`.
+    The data parameter must contain all input to the model, including the observed data. The data parameter can be a pandas DataFrame, a pandas DataFrameGroupBy object, or a list of dictionaries. If the data parameter is a pandas DataFrame, it is assumed that the data needs to be grouped by the participant identifier, `ppt_identifier`. If the data parameter is a pandas DataFrameGroupBy object, the groups are assumed to be participants. If the data parameter is a list of dictionaries, each dictionary should contain the data for a single participant, including information about the experiment and the results. The observed data for each participant should be included in the dictionary under the key or column 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model Wrapper.
     """
 
     def __init__(
@@ -89,10 +51,15 @@ class DifferentialEvolution:
         prior=False,
         parallel=False,
         cl=None,
+        libraries=["numpy", "pandas"],
         ppt_identifier=None,
         display=False,
         **kwargs,
     ):
+        if isinstance(model, Simulator):
+            raise TypeError(
+                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
+            )
         self.model = copy.deepcopy(model)
         self.data = data
         self.loss = minimisation
@@ -100,75 +67,88 @@ class DifferentialEvolution:
         self.fit = []
         self.details = []
         self.parameters = []
-        self.participant = data[0]
+
         self.display = display
         self.ppt_identifier = ppt_identifier
         self.prior = prior
 
-        if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameters.free()
-        if isinstance(model, Simulator):
+        self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
+            data, self.ppt_identifier
+        )
+
+        self.parameter_names = self.model.parameters.free()
+        bounds = self.model.parameters.bounds()
+        bounds = np.asarray(bounds).T
+        bounds = list(map(tuple, bounds))
+        self.bounds = bounds
+        if not self.parameter_names:
             raise ValueError(
-                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
+                "The model does not contain any free parameters. Please check the model parameters."
             )
 
         self.__parallel__ = parallel
+        self.__libraries__ = libraries
 
         if cl is not None:
             self.cl = cl
         if cl is None and parallel:
-            self.cl = mp.cpu_count()
-
-        if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameters.free()
-            bounds = self.model.parameters.bounds()
-            bounds = np.asarray(bounds).T
-            bounds = list(map(tuple, bounds))
-            self.bounds = bounds
-        if isinstance(model, Simulator):
-            raise ValueError(
-                "The DifferentialEvolution algorithm is not compatible with the Simulator object."
-            )
+            self.cl = detect_cores()
 
     def optimise(self):
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
-
-        def __task(participant, **args):
-
-            model.reset(data=participant)
-
-            result = differential_evolution(
-                func=minimum,
-                bounds=self.bounds,
-                args=((model, participant.get("observed"), loss, prior)),
-                **self.kwargs,
-            )
-            if self.ppt_identifier is not None:
-                result.ppt = participant.get(self.ppt_identifier)
-            return result
 
         loss = self.loss
         model = self.model
         prior = self.prior
 
+        def __task(participant, **args):
+            """
+            Utility function to wrap fitting the model to each individual for parallel processing and organise the output.
+            """
+
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+
+            model.reset(data=participant_dc)
+
+            result = differential_evolution(
+                func=objective,
+                bounds=self.bounds,
+                args=((model, observed, loss, prior)),
+                **self.kwargs,
+            )
+
+            result.ppt = ppt
+
+            return result
+
         if self.__parallel__:
-            with mp.Pool(self.cl) as pool:
-                results = pool.map(__task, self.data)
+            results = execute_parallel(
+                job=__task,
+                data=self.data,
+                method=None,
+                cl=self.cl,
+                pandas=self.__pandas__,
+                libraries=self.__libraries__,
+            )
         else:
             results = list(map(__task, self.data))
 
         self.details = copy.deepcopy(results)
+
         for result in results:
             self.parameters.append(
                 copy.deepcopy(
-                    utils.extract_params_from_fit(
-                        data=result.x, keys=self.parameter_names
-                    )
+                    extract_params_from_fit(data=result.x, keys=self.parameter_names)
                 )
             )
             self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result.fun)})
@@ -214,9 +194,7 @@ class DifferentialEvolution:
             output = pd.concat([output, current], axis=0)
 
         if details:
-            metrics = utils.detailed_pandas_compiler(
-                self.details, method="differential_evolution"
-            )
+            metrics = detailed_pandas_compiler(self.details)
             output.reset_index(drop=True, inplace=True)
             metrics.reset_index(drop=True, inplace=True)
             output = pd.concat([output, metrics], axis=1)

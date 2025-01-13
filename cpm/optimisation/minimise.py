@@ -34,20 +34,26 @@ class LogLikelihood:
         -----
 
         `predicted` and `observed` must have the same shape.
-        `observed` is a binary variable, so it can only take the values 0 or 1.
+        `observed` is a vector of integers starting from 0 (first possible response), where each integer corresponds to the observed value.
         If there are two choice options, then observed would have a shape of (n, 2) and predicted would have a shape of (n, 2).
         On each row of `observed`, the array would have a 1 in the column corresponding to the observed value and a 0 in the other column.
 
         Examples
         --------
         >>> import numpy as np
-        >>> observed = np.array([[1, 0], [0, 1], [1, 0], [0, 1]])
+        >>> observed = np.array([0, 1, 0, 1])
         >>> predicted = np.array([[0.7, 0.3], [0.3, 0.7], [0.6, 0.4], [0.4, 0.6]])
         >>> LogLikelihood.categorical(predicted, observed)
         1.7350011354094463
         """
-        values = np.array(predicted * observed).flatten()
+        observed_format = np.apply_along_axis(
+            lambda x: np.eye(observed.max() + 1)[x], 0, observed
+        )
+        observed_format = np.concatenate(observed_format, axis=0).reshape(-1, 2)
+        values = np.array(predicted * observed_format).flatten()
         values = values[values != 0]
+        values = values.sum(axis=1)
+        np.clip(values, 1e-100, 1 - 1e-100, out=values)
         # Compute the negative log likelihood
         LL = np.sum(np.log(values))
         if negative:
@@ -72,16 +78,16 @@ class LogLikelihood:
         Returns
         -------
         float
-            The log likelihood or negative log likelihood.
+            The summed log likelihood or negative log likelihood.
 
         Notes
         -----
 
         `predicted` and `observed` must have the same shape.
         `observed` is a binary variable, so it can only take the values 0 or 1.
-        Both `predicted` and `observed` must be 1D arrays.
-
-        `log(0)` is undefined, so the log likelihood is set to the value of np.log(1e-100).
+        `predicted` must be a value between 0 and 1.
+        Values are clipped to avoid log(0) and log(1).
+        If we encounter any non-finite values, we set any log likelihood to the value of np.log(1e-100).
 
         Examples
         --------
@@ -94,7 +100,10 @@ class LogLikelihood:
         """
         limit = np.log(1e-200)
         bound = np.finfo(np.float64).min
-        LL = bernoulli.logpmf(k=observed.flatten(), p=predicted.flatten())
+        probabilities = predicted.flatten()
+        np.clip(probabilities, 1e-100, 1 - 1e-100, out=probabilities)
+
+        LL = bernoulli.logpmf(k=observed.flatten(), p=probabilities)
         LL[LL < bound] = limit  # Set the lower bound to avoid overflow
         LL = np.sum(LL)
         if negative:
@@ -117,7 +126,7 @@ class LogLikelihood:
         Returns
         -------
         float
-            The log likelihood or negative log likelihood.
+            The summed log likelihood or negative log likelihood.
 
         Examples
         --------
@@ -154,7 +163,7 @@ class Distance:
         float
             The sum of squared errors.
         """
-        sse = np.sum((predicted - observed) ** 2)
+        sse = np.sum((predicted.flatten() - observed.flatten()) ** 2)
         return sse
 
     def MSE(predicted, observed, **kwargs):
@@ -173,7 +182,7 @@ class Distance:
         float
             The Euclidean distance.
         """
-        euclidean = np.sqrt(np.mean((predicted - observed) ** 2))
+        euclidean = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2))
         return euclidean
 
 
@@ -189,7 +198,7 @@ class Bayesian:
         Parameters
         ----------
         likelihood : float
-            The likelihood value.
+            The log likelihood value.
         n : int
             The number of data points.
         k : int
@@ -210,7 +219,7 @@ class Bayesian:
         Parameters
         ----------
         likelihood : float
-            The likelihood value.
+            The log likelihood value.
         n : int
             The number of data points.
         k : int

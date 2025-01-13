@@ -3,7 +3,7 @@ from cpm.generators import Wrapper, Parameters, Value
 import cpm
 import numpy
 import pandas
-import copy
+import warnings
 import ipyparallel as ipp  ## for parallel computing with ipython (specific for Jupyter Notebook)
 
 
@@ -44,7 +44,7 @@ class RLRW(Wrapper):
 
     - choice: the choice of the participant from the available options, starting from 0.
     - arm_n: the stimulus identifier for each option (arms in the bandit task), where n is the option available on a given trial. If there are more than one options, the stimulus identifier should be specified as separate columns of arm_1, arm_2, arm_3, etc. or arm_left, arm_middle, arm_right, etc.
-    - reward_n: the reward given after each options, where n is the option available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
+    - reward_n: the reward given after each options, where n is the corresponding arm of the bandit available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
 
     parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 1 and an upper bound of 10.
 
@@ -59,7 +59,7 @@ class RLRW(Wrapper):
     ):
         if parameters_settings is None:
             parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
-            print("No parameters specified, using default parameters.")
+            warnings.warn("No parameters specified, using default parameters.")
         parameters = Parameters(
             # freely varying parameters are indicated by specifying priors
             alpha=Value(
@@ -84,9 +84,7 @@ class RLRW(Wrapper):
             # pull out the parameters
             alpha = parameters.alpha
             temperature = parameters.temperature
-            values = numpy.array(
-                parameters.values
-            )  # copy essentially prevents us from accidentally overwriting the original values
+            values = numpy.array(parameters.values)
             ## first we get the bandits and their corresponding stimulus identifier
             arm_names = [
                 col for col in trial.index if "arm" in col
@@ -96,9 +94,12 @@ class RLRW(Wrapper):
             )  ## stimulus identifier for each arm of the bandit
             k_arms = arms.shape[0]  ## number of arms
             dims = values.shape[0]  ## number of stimuli
-            choice = trial.choice.astype(int)
+            choice = trial.response.astype(int)
+            reward_names = [
+                col for col in trial.index if "reward" in col
+            ]  ## get column names beginning with stimulus
             feedback = numpy.array(
-                [trial[f"reward_{i}"] for i in numpy.arange(1, len(arms) + 1)]
+                [trial[i] for i in reward_names]
             )  ## compile reward vector
             ## get the activations for each arm given q-values for each stimulus
             activations = numpy.array([values[i - 1] for i in arms])
@@ -151,7 +152,8 @@ class RLRW(Wrapper):
 from cpm.datasets import load_bandit_data
 
 twoarm = load_bandit_data()
-twoarm["choice"] = twoarm["responses"] - 1
+# twoarm["response"] = twoarm["response"] - 1
+# twoarm.to_csv('bandit_small.csv')
 dd = RLRW(data=twoarm, dimensions=4)
 dd.run()
 dd.export()

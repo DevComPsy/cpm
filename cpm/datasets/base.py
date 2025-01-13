@@ -48,12 +48,12 @@ def load_bandit_data():
     The dataset will include the following columns:
 
         - `index`: variable to identify each row - this variable is clutter.
-        - `left`: the stimulus presented on the left side.
-        - `right`: the stimulus presented on the right side.
+        - `arm_left`: the stimulus presented on the left side.
+        - `arm_right`: the stimulus presented on the right side.
         - `reward_left`: the reward received when the left stimulus is selected.
         - `reward_right`: the reward received when the right stimulus is selected.
         - `ppt`: the participant number.
-        - `responses`: the response of the participant (1 for right, 0 for left).
+        - `response`: the response of the participant (1 for right, 0 for left).
     """
     return load_csv("bandit_small.csv")
 

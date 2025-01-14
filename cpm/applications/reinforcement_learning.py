@@ -3,14 +3,14 @@ from cpm.generators import Wrapper, Parameters, Value
 import cpm
 import numpy
 import pandas
-import copy
+import warnings
 import ipyparallel as ipp  ## for parallel computing with ipython (specific for Jupyter Notebook)
 
 
 class RLRW(Wrapper):
     """
-    The class implements a simple reinforcement learning model for a multi-armed bandit task using a standard update rule calculating prediction error and a Softmax decision rule.
-    The model is an n-dimensional implementation of model 3 from Wilson and Collins (2019).
+    The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
+    The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019).
 
     Parameters
     ----------
@@ -21,12 +21,30 @@ class RLRW(Wrapper):
     parameters_settings: list-like
         The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters and for the default settings.
 
+    Returns
+    -------
+    cpm.generators.Wrapper
+        A cpm.generators.Wrapper object.
+
+    Examples
+    --------
+    >>> import numpy
+    >>> import pandas
+    >>> from cpm.applications import RLRW
+    >>> from cpm.datasets import load_bandit_data
+
+    >>> twoarm = load_bandit_data()
+    >>> model = RLRW(data=data, dimensions=4)
+    >>> model.run()
+
+
     Notes
     -----
     Data must contain the following columns:
 
     - choice: the choice of the participant from the available options, starting from 0.
-    - reward_n: the reward given after each options, where n is the option available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
+    - arm_n: the stimulus identifier for each option (arms in the bandit task), where n is the option available on a given trial. If there are more than one options, the stimulus identifier should be specified as separate columns of arm_1, arm_2, arm_3, etc. or arm_left, arm_middle, arm_right, etc.
+    - reward_n: the reward given after each options, where n is the corresponding arm of the bandit available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
 
     parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 1 and an upper bound of 10.
 
@@ -41,7 +59,7 @@ class RLRW(Wrapper):
     ):
         if parameters_settings is None:
             parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
-            print("No parameters specified, using default parameters.")
+            warnings.warn("No parameters specified, using default parameters.")
         parameters = Parameters(
             # freely varying parameters are indicated by specifying priors
             alpha=Value(
@@ -66,50 +84,64 @@ class RLRW(Wrapper):
             # pull out the parameters
             alpha = parameters.alpha
             temperature = parameters.temperature
-            values = numpy.array(
-                parameters.values
-            )  # copy essentially prevents us from accidentally overwriting the original values
-            dims = values.shape[0]
-            choice = trial.choice.astype(int)
+            values = numpy.array(parameters.values)
+            ## first we get the bandits and their corresponding stimulus identifier
+            arm_names = [
+                col for col in trial.index if "arm" in col
+            ]  ## get column names beginning with stimulus
+            arms = numpy.array(
+                [trial[i] for i in arm_names]
+            )  ## stimulus identifier for each arm of the bandit
+            k_arms = arms.shape[0]  ## number of arms
+            dims = values.shape[0]  ## number of stimuli
+            choice = trial.response.astype(int)
+            reward_names = [
+                col for col in trial.index if "reward" in col
+            ]  ## get column names beginning with stimulus
             feedback = numpy.array(
-                [trial[f"reward_{i}"] for i in numpy.arange(1, dims + 1)]
+                [trial[i] for i in reward_names]
             )  ## compile reward vector
-
-            mute = numpy.zeros(dims)
-            activations = values.reshape(dims, 1)
+            ## get the activations for each arm given q-values for each stimulus
+            activations = numpy.array([values[i - 1] for i in arms])
+            activations = activations.reshape(k_arms, 1)
+            ## compute softmax
             response = cpm.models.decision.Softmax(
                 activations=activations, temperature=temperature
             )
             response.compute()
-
+            ## check for NaN in policy
             if numpy.isnan(response.policies).any():
-                # if the policy is NaN for a given action, then we need to set it to 1
-                print(
-                    f"NaN in policy with parameters: {alpha.value}, {temperature.value}\n"
+                # if the policy is NaN for a given action, then we need to set it to 1 to avoid numerical issues
+                warnings.warn(
+                    f"NaN in policy with parameters: {alpha.value}, {temperature.value}, \nand with policy: {response.policies}\n"
                 )
-                print(response.policies)
                 response.policies[numpy.isnan(response.policies)] = 1
             # if generate is true, generate a response from softmax probabilities
             if generate:
                 choice = response.choice()
-            # \ update the values
+            ## match choice to stimulus identifier
+            stim_choice = arms[choice] - 1
+            # update the values for that stimulus
             mute = numpy.zeros(dims)
-            mute[choice] = 1  ## determine the
-            teacher = feedback[choice]
+            mute[stim_choice] = (
+                1  ## determine which stimulus' q-values we need to update
+            )
+            teacher = feedback[choice]  ## get reward for that bandit
             update = cpm.models.learning.SeparableRule(
                 weights=values, feedback=[teacher], input=mute, alpha=alpha
             )
             update.compute()
 
             values += update.weights.flatten()
-
             ## compile output
             output = {
                 "policy": response.policies,  # policies
                 "reward": teacher,  # reward of the chosen action
                 "values": values,  # updated values
                 "change": update.weights,  # change in the values - prediction error
-                "dependent": numpy.array([response.policies[1]]),  # dependent variable
+                "dependent": numpy.array(
+                    [response.policies[1]]
+                ),  # dependent variable P(choosing the right | stimuli on right)
             }
             return output
 

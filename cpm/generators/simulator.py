@@ -66,9 +66,6 @@ class Simulator:
         """
         Runs the simulation.
 
-        Returns
-        -------
-        experiment: A list containing the results of the simulation.
         """
 
         for i in range(len(self.groups)):
@@ -96,7 +93,7 @@ class Simulator:
 
         Returns
         ------
-        policies : pandas.DataFrame
+        pandas.DataFrame
             A dataframe containing the the model output for each participant and trial.
             If the output variable is organised as an array with more than one dimension, the output will be flattened.
         """
@@ -105,11 +102,6 @@ class Simulator:
     def update(self, parameters=None):
         """
         Updates the parameters of the simulation.
-
-        Parameters
-        ----------
-        parameters : object
-            The parameters to be updated.
         """
         if isinstance(parameters, Parameters):
             raise TypeError("Parameters must be a dictionary or array_like.")
@@ -131,10 +123,6 @@ class Simulator:
         variable: str
             Name of the variable to pull out from model output.
 
-        Returns
-        ------
-        results: numpy.ndarray
-            An array of dictionaries containing the results of the simulation.
         """
         append = []
         for ppt in self.simulation:

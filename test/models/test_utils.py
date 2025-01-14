@@ -41,5 +41,13 @@ def test_nominal_zero_bits():
         Nominal(target=target, bits=bits)
 
 
+def test_nominal_large_bits():
+    target = np.array([1, 2, 3])
+    bits = 100
+    expected_output = np.zeros(bits)
+    expected_output[:3] = 1
+    assert np.array_equal(Nominal(target=target, bits=bits), expected_output)
+
+
 if __name__ == "__main__":
     pytest.main()

@@ -39,12 +39,14 @@ def test_simulator_run():
         {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}
     )
     parameters = Parameters(alpha=Value(0.1, prior="norm"))
-    wrapper = Wrapper(model=dummy_model, data=data, parameters=parameters)
+    wrapper = Wrapper(
+        model=dummy_model, data=data[data.ppt == 1], parameters=parameters
+    )
     simulator = Simulator(
         wrapper=wrapper, data=data.groupby("ppt"), parameters=parameters.sample(3)
     )
     simulator.run()
-    assert len(simulator.simulation) == 1, "Simulation not run correctly"
+    assert len(simulator.simulation) == 3, "Simulation not run correctly"
     assert len(simulator.simulation[0]) == 3, "Simulation output length is incorrect"
 
 
@@ -53,14 +55,16 @@ def test_simulator_export():
         {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}
     )
     parameters = Parameters(alpha=Value(0.1, prior="norm"))
-    wrapper = Wrapper(model=dummy_model, data=data, parameters=parameters)
+    wrapper = Wrapper(
+        model=dummy_model, data=data[data.ppt == 1], parameters=parameters
+    )
     simulator = Simulator(
         wrapper=wrapper, data=data.groupby("ppt"), parameters=parameters.sample(3)
     )
     simulator.run()
     exported_data = simulator.export()
     assert isinstance(exported_data, pd.DataFrame), "Exported data is not a DataFrame"
-    assert len(exported_data) == 3, "Exported data length is incorrect"
+    assert exported_data.shape == (9, 2), "Exported data length is incorrect"
 
 
 def test_simulator_reset():
@@ -91,7 +95,7 @@ def test_simulator_generate():
     )
     simulator.run()
     simulator.generate(variable="dependent")
-    assert len(simulator.generated) == 1, "Generated data length is incorrect"
+    assert len(simulator.generated) == 3, "Generated data length is incorrect"
 
 
 if __name__ == "__main__":

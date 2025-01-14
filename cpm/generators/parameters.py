@@ -382,6 +382,12 @@ class Value:
     def __int__(self) -> int:
         return int(self.value)
 
+    def __gt__(self, other):
+        return self.value > other
+
+    def __ge__(self, other):
+        return self.value >= other
+
     def __len__(self):
         return len(self.value)
 

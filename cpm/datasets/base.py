@@ -47,7 +47,6 @@ def load_bandit_data():
     -----
     The dataset will include the following columns:
 
-        - `index`: variable to identify each row - this variable is clutter.
         - `ppt`: the participant number.
         - `trial`: the trial number.
         - `arm_left`: the stimulus presented on the left side.

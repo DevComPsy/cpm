@@ -79,7 +79,7 @@ class RLRW(Wrapper):
             values=numpy.ones(dimensions) / dimensions,
         )
 
-        # @ipp.require("numpy")
+        @ipp.require("numpy")
         def model(parameters, trial, generate=generate):
             # pull out the parameters
             alpha = parameters.alpha
@@ -112,10 +112,9 @@ class RLRW(Wrapper):
             ## check for NaN in policy
             if numpy.isnan(response.policies).any():
                 # if the policy is NaN for a given action, then we need to set it to 1 to avoid numerical issues
-                print(
-                    f"NaN in policy with parameters: {alpha.value}, {temperature.value}\n"
+                warnings.warn(
+                    f"NaN in policy with parameters: {alpha.value}, {temperature.value}, \nand with policy: {response.policies}\n"
                 )
-                print(response.policies)
                 response.policies[numpy.isnan(response.policies)] = 1
             # if generate is true, generate a response from softmax probabilities
             if generate:
@@ -147,13 +146,3 @@ class RLRW(Wrapper):
             return output
 
         super().__init__(data=data, model=model, parameters=parameters)
-
-
-from cpm.datasets import load_bandit_data
-
-twoarm = load_bandit_data()
-# twoarm["response"] = twoarm["response"] - 1
-# twoarm.to_csv('bandit_small.csv')
-dd = RLRW(data=twoarm, dimensions=4)
-dd.run()
-dd.export()

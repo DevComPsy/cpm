@@ -121,3 +121,7 @@ def test_model_warnings(setup_data):
         ), "Warning message mismatch"
 
     print("test_model_warnings passed")
+
+
+if __name__ == "__main__":
+    pytest.main()

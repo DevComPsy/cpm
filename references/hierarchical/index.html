@@ -8,29 +8,28 @@
     <title>cpm.hierarchical - CPM library</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
         <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
         <link href="../../style.css" rel="stylesheet" />
     
       <script>
         // Current page data
         var mkdocs_page_name = "cpm.hierarchical";
-        var mkdocs_page_input_path = "references\\hierarchical.md";
+        var mkdocs_page_input_path = "references/hierarchical.md";
         var mkdocs_page_url = null;
       </script>
     
-    <script src="../../js/jquery-3.6.0.min.js" defer></script>
     <!--[if lt IE 9]>
       <script src="../../js/html5shiv.min.js"></script>
     <![endif]-->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/python.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/bash.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/json.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/markdown.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/makefile.min.js"></script>
-      <script>hljs.initHighlightingOnLoad();</script> 
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/markdown.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/makefile.min.js"></script>
+      <script>hljs.highlightAll();</script> 
 </head>
 
 <body class="wy-body-for-nav" role="document">
@@ -42,7 +41,7 @@
           <a href="../.." class="icon icon-home"> CPM library
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
@@ -96,57 +95,39 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../optimisation/">cpm.optimisation</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">cpm.hierarchical</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.hierarchical</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#cpm.hierarchical.EmpiricalBayes">EmpiricalBayes</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.EmpiricalBayes--notes">Notes</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.EmpiricalBayes.diagnostics">diagnostics</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.EmpiricalBayes--references">References</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.EmpiricalBayes.optimise">optimise</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.diagnostics">diagnostics()</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.diagnostics--notes">Notes</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.EmpiricalBayes.parameters">parameters</a>
     </li>
-        </ul>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.optimise">optimise()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.parameters">parameters()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.empirical.EmpiricalBayes.stair">stair()</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.EmpiricalBayes.stair">stair</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes">VariationalBayes</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes--notes">Notes</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes.check_convergence">check_convergence</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes--references">References</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes.diagnostics">diagnostics</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.check_convergence">check_convergence()</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes.get_lme">get_lme</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.diagnostics">diagnostics()</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.diagnostics--notes">Notes</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes.optimise">optimise</a>
     </li>
-        </ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes.run_vb">run_vb</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.get_lme">get_lme()</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes.ttest">ttest</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.optimise">optimise()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.run_vb">run_vb()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.ttest">ttest()</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.variational.VariationalBayes.update_population">update_population()</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.hierarchical.VariationalBayes.update_population">update_population</a>
     </li>
         </ul>
     </li>
     </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="" href="../../evaluation.md">cpm.evaluation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../utils/">cpm.utils</a>
                   </li>
@@ -164,14 +145,14 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-          <li>API reference &raquo;</li><li>cpm.hierarchical</li>
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API reference</li>
+      <li class="breadcrumb-item active">cpm.hierarchical</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
   <hr/>
 </div>
-
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
@@ -183,91 +164,96 @@
 
 
 <h2 id="cpm.hierarchical.EmpiricalBayes" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">hierarchical</span><span class="o">.</span><span class="n">EmpiricalBayes</span><span class="p">(</span><span class="n">optimiser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;minimise&#39;</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">hierarchical</span><span class="o">.</span><span class="n">EmpiricalBayes</span><span class="p">(</span><span class="n">optimiser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;minimise&#39;</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
 
-  <div class="doc doc-contents first">
+    <div class="doc doc-contents first">
 
-  
-      <p>Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>optimiser</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>objective</code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td><p>The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level <em>a posteriori</em> parameter estimates.</p></td>
-          <td>
-                <code>&#39;minimise&#39;</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>iteration</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The maximum number of iterations. Default is 1000.</p></td>
-          <td>
-                <code>1000</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tolerance</code></td>
-          <td>
-                <code>float, optional</code>
-          </td>
-          <td><p>The tolerance for convergence. Default is 1e-6.</p></td>
-          <td>
-                <code>1e-06</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>chain</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The number of random parameter initialisations. Default is 4.</p></td>
-          <td>
-                <code>4</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>quiet</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Whether to suppress the output. Default is False.</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-      <h4 id="cpm.hierarchical.EmpiricalBayes--notes">Notes</h4>
-<p>The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. For the complete description of the method, please see Gershman (2016).</p>
+        <p>Implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>optimiser</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>objective</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;minimise&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level <em>a posteriori</em> parameter estimates.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>iteration</code></b>
+                  (<code>int</code>, default:
+                      <code>1000</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The maximum number of iterations. Default is 1000.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>tolerance</code></b>
+                  (<code>float</code>, default:
+                      <code>1e-06</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The tolerance for convergence. Default is 1e-6.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>chain</code></b>
+                  (<code>int</code>, default:
+                      <code>4</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of random parameter initialisations. Default is 4.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>quiet</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to suppress the output. Default is False.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. For the complete description of the method, please see Gershman (2016).</p>
 <p>The fitting function must return the <a href="https://en.wikipedia.org/wiki/Hessian_matrix">Hessian matrix</a> of the optimisation.
 The Hessian matrix is then used in establishing the within-subject variance of the parameters.
 It is also important to note that we will require the Hessian matrix of second derivatives of the <strong>negative log posterior</strong> (Gershman, 2016, p. 3).
@@ -286,13 +272,17 @@ This requires us to minimise or maximise the log posterior density as opposed to
 <li>When calculating the within-subject variance via the Hessian matrix, the algorithm sets any non-finite or non-positive values to NaN.</li>
 <li>If the second derivative of the negative log posterior density function is not finite, we set the log determinant to -1e6.</li>
 </ul>
-<h4 id="cpm.hierarchical.EmpiricalBayes--references">References</h4>
-<p>Gershman, S. J. (2016). Empirical priors for reinforcement learning models. Journal of Mathematical Psychology, 71, 1-6.</p>
+</details>
 
-<p><strong>Examples:</strong></p>
-    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.optimisation</span> <span class="kn">import</span> <span class="n">EmpiricalBayes</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.models</span> <span class="kn">import</span> <span class="n">DeltaRule</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">cpm.optimisation</span> <span class="kn">import</span> <span class="n">FminBound</span><span class="p">,</span> <span class="n">minimise</span>
+<details class="references" open>
+  <summary>References</summary>
+  <p>Gershman, S. J. (2016). Empirical priors for reinforcement learning models. Journal of Mathematical Psychology, 71, 1-6.</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.optimisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpiricalBayes</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeltaRule</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.optimisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FminBound</span><span class="p">,</span> <span class="n">minimise</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">DeltaRule</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">optimiser</span> <span class="o">=</span> <span class="n">FminBound</span><span class="p">(</span>
@@ -314,7 +304,11 @@ This requires us to minimise or maximise the log posterior density as opposed to
 
 
 
-  
+
+
+
+
+
 
   <div class="doc doc-children">
 
@@ -329,155 +323,166 @@ This requires us to minimise or maximise the log posterior density as opposed to
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.empirical.EmpiricalBayes.diagnostics" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">diagnostics</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="cpm.hierarchical.EmpiricalBayes.diagnostics" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">diagnostics</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Returns the convergence diagnostics plots for the group-level hyperparameters.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>show</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Whether to show the plots. Default is True.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>save</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Whether to save the plots. Default is False.</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>path</code></td>
-          <td>
-                <code>str, optional</code>
-          </td>
-          <td><p>The path to save the plots. Default is None.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-      <h5 id="cpm.hierarchical.empirical.EmpiricalBayes.diagnostics--notes">Notes</h5>
-<p>The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
+        <p>Returns the convergence diagnostics plots for the group-level hyperparameters.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>show</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to show the plots. Default is True.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>save</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to save the plots. Default is False.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>path</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The path to save the plots. Default is None.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
 It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.</p>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h3 id="cpm.hierarchical.empirical.EmpiricalBayes.optimise" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
-
-</h3>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains with random starting points for the priors.</p>
-
-  </div>
+</details>
+    </div>
 
 </div>
 
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.empirical.EmpiricalBayes.parameters" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">parameters</span><span class="p">()</span></code>
+<h3 id="cpm.hierarchical.EmpiricalBayes.optimise" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Returns the estimated individual-level parameters for each iteration and chain.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
-          </td>
-          <td><p>The estimated individual-level parameters for each iteration and chain.</p></td>
-        </tr>
-    </tbody>
-  </table>
+        <p>This method runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially the main function that runs the algorithm for multiple chains with random starting points for the priors.</p>
 
-  </div>
+    </div>
 
 </div>
 
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.empirical.EmpiricalBayes.stair" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">stair</span><span class="p">(</span><span class="n">chain_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+<h3 id="cpm.hierarchical.EmpiricalBayes.parameters" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">parameters</span><span class="p">()</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>The main function that runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially a single chain.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>dict</code>
-          </td>
-          <td><p>A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.</p></td>
-        </tr>
-    </tbody>
-  </table>
+        <p>Returns the estimated individual-level parameters for each iteration and chain.</p>
 
-  </div>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The estimated individual-level parameters for each iteration and chain.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cpm.hierarchical.EmpiricalBayes.stair" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">stair</span><span class="p">(</span><span class="n">chain_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The main function that runs the Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. This is essentially a single chain.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code>dict</code>
+              –
+              <div class="doc-md-description">
+                <p>A dictionary containing the log model evidence, the hyperparameters of the group-level distributions, and the parameters of the model.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
 
 </div>
 
@@ -485,7 +490,7 @@ It also shows the distribution of the means and the standard deviations of the g
 
   </div>
 
-  </div>
+    </div>
 
 </div>
 
@@ -494,110 +499,113 @@ It also shows the distribution of the means and the standard deviations of the g
 
 
 <h2 id="cpm.hierarchical.VariationalBayes" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">hierarchical</span><span class="o">.</span><span class="n">VariationalBayes</span><span class="p">(</span><span class="n">optimiser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;minimise&#39;</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tolerance_lme</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">tolerance_param</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">hyperpriors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">convergence</span><span class="o">=</span><span class="s1">&#39;parameters&#39;</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">hierarchical</span><span class="o">.</span><span class="n">VariationalBayes</span><span class="p">(</span><span class="n">optimiser</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="s1">&#39;minimise&#39;</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">tolerance_lme</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">tolerance_param</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">chain</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">hyperpriors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">convergence</span><span class="o">=</span><span class="s1">&#39;parameters&#39;</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
 
-  <div class="doc doc-contents first">
+    <div class="doc doc-contents first">
 
-  
-      <p>Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods, a reduced version of the Hierarchical Bayesian Inference (HBI) algorithm proposed by Piray et al. (2019), to exclude model comparison and selection.</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>optimiser</code></td>
-          <td>
-                <code>object</code>
-          </td>
-          <td><p>The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>objective</code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td><p>The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level <em>a posteriori</em> parameter estimates.</p></td>
-          <td>
-                <code>&#39;minimise&#39;</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>iteration</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The maximum number of iterations. Default is 1000.</p></td>
-          <td>
-                <code>50</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tolerance_lme</code></td>
-          <td>
-                <code>float, optional</code>
-          </td>
-          <td><p>The tolerance for convergence with respect to the log model evidence. Default is 1e-3.</p></td>
-          <td>
-                <code>0.001</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>tolerance_param</code></td>
-          <td>
-                <code>float, optional</code>
-          </td>
-          <td><p>The tolerance for convergence with respect to the "normalized" means of parameters. Default is 1e-3.</p></td>
-          <td>
-                <code>0.001</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>chain</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The number of random parameter initialisations. Default is 4.</p></td>
-          <td>
-                <code>4</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>hyperpriors</code></td>
-          <td>
-          </td>
-          <td><p>A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>convergence</code></td>
-          <td>
-                <code>str, optional</code>
-          </td>
-          <td><p>The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.</p></td>
-          <td>
-                <code>&#39;parameters&#39;</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-      <h4 id="cpm.hierarchical.VariationalBayes--notes">Notes</h4>
-<p>The hyperprios are as follows:</p>
+        <p>Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods, a reduced version of the Hierarchical Bayesian Inference (HBI) algorithm proposed by Piray et al. (2019), to exclude model comparison and selection.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>optimiser</code></b>
+                  (<code>object</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>objective</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;minimise&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level <em>a posteriori</em> parameter estimates.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>iteration</code></b>
+                  (<code>int</code>, default:
+                      <code>50</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The maximum number of iterations. Default is 1000.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>tolerance_lme</code></b>
+                  (<code>float</code>, default:
+                      <code>0.001</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The tolerance for convergence with respect to the log model evidence. Default is 1e-3.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>tolerance_param</code></b>
+                  (<code>float</code>, default:
+                      <code>0.001</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The tolerance for convergence with respect to the "normalized" means of parameters. Default is 1e-3.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>chain</code></b>
+                  (<code>int</code>, default:
+                      <code>4</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The number of random parameter initialisations. Default is 4.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>hyperpriors</code></b>
+              –
+              <div class="doc-md-description">
+                <p>A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>convergence</code></b>
+                  (<code>str</code>, default:
+                      <code>&#39;parameters&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The hyperprios are as follows:</p>
 <ul>
 <li><code>a0</code> : array-like
     Vector of means of the normal prior on the population-level means, mu.</li>
@@ -616,15 +624,23 @@ It also shows the distribution of the means and the standard deviations of the g
 <li><code>s</code> : np.repeat(0.01, N)</li>
 </ul>
 <p>The convergence criterion can be set to 'lme' or 'parameters'. If set to 'lme', the algorithm will stop when the log model evidence converges. If set to 'parameters', the algorithm will stop when the "normalized" means of the population-level parameters converge.</p>
-<h4 id="cpm.hierarchical.VariationalBayes--references">References</h4>
-<p>Piray, P., Dezfouli, A., Heskes, T., Frank, M. J., &amp; Daw, N. D. (2019). Hierarchical Bayesian inference for concurrent model fitting and comparison for group studies. PLoS computational biology, 15(6), e1007043.</p>
+</details>
 
-<p><strong>Examples:</strong></p>
+<details class="references" open>
+  <summary>References</summary>
+  <p>Piray, P., Dezfouli, A., Heskes, T., Frank, M. J., &amp; Daw, N. D. (2019). Hierarchical Bayesian inference for concurrent model fitting and comparison for group studies. PLoS computational biology, 15(6), e1007043.</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
     
 
 
 
-  
+
+
+
+
+
 
   <div class="doc doc-children">
 
@@ -639,505 +655,522 @@ It also shows the distribution of the means and the standard deviations of the g
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.variational.VariationalBayes.check_convergence" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">check_convergence</span><span class="p">(</span><span class="n">lme_new</span><span class="p">,</span> <span class="n">lme_old</span><span class="p">,</span> <span class="n">param_snr_new</span><span class="p">,</span> <span class="n">param_snr_old</span><span class="p">,</span> <span class="n">iter_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">use_lme</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_param</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+<h3 id="cpm.hierarchical.VariationalBayes.check_convergence" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">check_convergence</span><span class="p">(</span><span class="n">lme_new</span><span class="p">,</span> <span class="n">lme_old</span><span class="p">,</span> <span class="n">param_snr_new</span><span class="p">,</span> <span class="n">param_snr_old</span><span class="p">,</span> <span class="n">iter_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">use_lme</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_param</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Function to check if the algorithm has converged.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>lme_new</code></td>
-          <td>
-                <code>float</code>
-          </td>
-          <td><p>The new log model evidence.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>lme_old</code></td>
-          <td>
-                <code>float</code>
-          </td>
-          <td><p>The old log model evidence.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>param_snr_new</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The new standardised estimates of population-level means.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>param_snr_old</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>The old standardised estimates of population-level means.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>iter_idx</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The iteration index. Default is 0.</p></td>
-          <td>
-                <code>0</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>use_lme</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Whether to use the log model evidence for checking convergence. Default is True.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>use_param</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Whether to use the standardised estimates of population-level means for checking convergence. Default is True.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+        <p>Function to check if the algorithm has converged.</p>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-<th>Name</th>        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-<td><code>convergence</code></td>          <td>
-                <code>bool</code>
-          </td>
-          <td><p>Whether the algorithm has converged.</p></td>
-        </tr>
-    </tbody>
-  </table>
 
-  </div>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>lme_new</code></b>
+                  (<code>float</code>)
+              –
+              <div class="doc-md-description">
+                <p>The new log model evidence.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>lme_old</code></b>
+                  (<code>float</code>)
+              –
+              <div class="doc-md-description">
+                <p>The old log model evidence.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>param_snr_new</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The new standardised estimates of population-level means.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>param_snr_old</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>The old standardised estimates of population-level means.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>iter_idx</code></b>
+                  (<code>int</code>, default:
+                      <code>0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The iteration index. Default is 0.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>use_lme</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to use the log model evidence for checking convergence. Default is True.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>use_param</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to use the standardised estimates of population-level means for checking convergence. Default is True.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>convergence</code></b>(                  <code>bool</code>
+)              –
+              <div class="doc-md-description">
+                <p>Whether the algorithm has converged.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
 
 </div>
 
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.variational.VariationalBayes.diagnostics" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">diagnostics</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="cpm.hierarchical.VariationalBayes.diagnostics" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">diagnostics</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Returns the convergence diagnostics plots for the group-level hyperparameters.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>show</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Whether to show the plots. Default is True.</p></td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>save</code></td>
-          <td>
-                <code>bool, optional</code>
-          </td>
-          <td><p>Whether to save the plots. Default is False.</p></td>
-          <td>
-                <code>False</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>path</code></td>
-          <td>
-                <code>str, optional</code>
-          </td>
-          <td><p>The path to save the plots. Default is None.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-      <h5 id="cpm.hierarchical.variational.VariationalBayes.diagnostics--notes">Notes</h5>
-<p>The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
+        <p>Returns the convergence diagnostics plots for the group-level hyperparameters.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>show</code></b>
+                  (<code>bool</code>, default:
+                      <code>True</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to show the plots. Default is True.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>save</code></b>
+                  (<code>bool</code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Whether to save the plots. Default is False.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>path</code></b>
+                  (<code>str</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The path to save the plots. Default is None.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
 It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.</p>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h3 id="cpm.hierarchical.variational.VariationalBayes.get_lme" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_lme</span><span class="p">(</span><span class="n">log_post</span><span class="p">,</span> <span class="n">hessian</span><span class="p">)</span></code>
-
-</h3>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Function to approximate the participant-wise log model evidence using Laplace's approximation.</p>
-
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>log_post</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>Participant-wise value of log posterior density function at the mode (i.e., MAP parameter estimates).</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>hessian</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>Participant-wise Hessian matrix of log posterior density function evaluated at the mode (i.e., MAP parameter estimates).</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-<th>Name</th>        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-<td><code>lme</code></td>          <td>
-                <code>array</code>
-          </td>
-          <td><p>Participant-wise log model evidence.</p></td>
-        </tr>
-        <tr>
-<td><code>lme_sum</code></td>          <td>
-                <code>float</code>
-          </td>
-          <td><p>Summed log model evidence.</p></td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+</details>
+    </div>
 
 </div>
 
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.variational.VariationalBayes.optimise" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+<h3 id="cpm.hierarchical.VariationalBayes.get_lme" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_lme</span><span class="p">(</span><span class="n">log_post</span><span class="p">,</span> <span class="n">hessian</span><span class="p">)</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Run the Variational Bayes algorithm for multiple chains.</p>
+    <div class="doc doc-contents ">
 
-  </div>
+        <p>Function to approximate the participant-wise log model evidence using Laplace's approximation.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>log_post</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>Participant-wise value of log posterior density function at the mode (i.e., MAP parameter estimates).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>hessian</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>Participant-wise Hessian matrix of log posterior density function evaluated at the mode (i.e., MAP parameter estimates).</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>lme</code></b>(                  <code>array</code>
+)              –
+              <div class="doc-md-description">
+                <p>Participant-wise log model evidence.</p>
+              </div>
+            </li>
+            <li>
+<b><code>lme_sum</code></b>(                  <code>float</code>
+)              –
+              <div class="doc-md-description">
+                <p>Summed log model evidence.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
 
 </div>
 
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.variational.VariationalBayes.run_vb" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">run_vb</span><span class="p">(</span><span class="n">chain_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+<h3 id="cpm.hierarchical.VariationalBayes.optimise" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Run the hierarchical Bayesian inference algorithm.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>chain_index</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The chain index. Default is 0.</p></td>
-          <td>
-                <code>0</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+        <p>Run the Variational Bayes algorithm for multiple chains.</p>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-<th>Name</th>        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-<td><code>output</code></td>          <td>
-                <code>dict</code>
-          </td>
-          <td><p>Dictionary of results.</p></td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
 
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.variational.VariationalBayes.ttest" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">ttest</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="cpm.hierarchical.VariationalBayes.run_vb" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">run_vb</span><span class="p">(</span><span class="n">chain_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Perform a one-sample Student's t-test on the estimated values of population-level means with respect to given null hypothesis values.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>null</code></td>
-          <td>
-                <code>dict or pd.DataFrame</code>
-          </td>
-          <td><p>The null hypothesis values for the population-level means for each parameters.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+        <p>Run the hierarchical Bayesian inference algorithm.</p>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-<th>Name</th>        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-<td><code>t_df</code></td>          <td>
-                <code><span title="pandas">pd</span>.<span title="pandas.DataFrame">DataFrame</span></code>
-          </td>
-          <td><p>The results of the t-test.</p></td>
-        </tr>
-    </tbody>
-  </table>
 
-  </div>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>chain_index</code></b>
+                  (<code>int</code>, default:
+                      <code>0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The chain index. Default is 0.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>output</code></b>(                  <code>dict</code>
+)              –
+              <div class="doc-md-description">
+                <p>Dictionary of results.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
 
 </div>
 
 <div class="doc doc-object doc-function">
 
 
-
-<h3 id="cpm.hierarchical.variational.VariationalBayes.update_population" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">update_population</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">hessian</span><span class="p">,</span> <span class="n">lme</span><span class="p">,</span> <span class="n">iter_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">chain_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+<h3 id="cpm.hierarchical.VariationalBayes.ttest" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ttest</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
 
-  <div class="doc doc-contents ">
-  
-      <p>Function to update the population-level parameters based on the results of participant-wise optimisation.</p>
+    <div class="doc doc-contents ">
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>param</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>Participant-wise parameter estimates.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>hessian</code></td>
-          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>Participant-wise Hessian matrices of the log posterior density function evaluated at the mode (i.e., MAP parameter estimates).</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>lme</code></td>
-          <td>
-                <code>float</code>
-          </td>
-          <td><p>Summed log model evidence.</p></td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr>
-          <td><code>iter_idx</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The iteration index. Default is 0.</p></td>
-          <td>
-                <code>0</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>chain_idx</code></td>
-          <td>
-                <code>int, optional</code>
-          </td>
-          <td><p>The chain index. Default is 0.</p></td>
-          <td>
-                <code>0</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+        <p>Perform a one-sample Student's t-test on the estimated values of population-level means with respect to given null hypothesis values.</p>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-<th>Name</th>        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-<td><code>population_updates</code></td>          <td>
-                <code>dict</code>
-          </td>
-          <td><p>Dictionary of updated population-level parameters.</p></td>
-        </tr>
-        <tr>
-<td><code>param_snr</code></td>          <td>
-                <code>array-like</code>
-          </td>
-          <td><p>Standardised estimates of population-level means.</p></td>
-        </tr>
-    </tbody>
-  </table>
 
-  </div>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>null</code></b>
+                  (<code>dict or <span title="pandas.DataFrame">DataFrame</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The null hypothesis values for the population-level means for each parameters.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>t_df</code></b>(                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+)              –
+              <div class="doc-md-description">
+                <p>The results of the t-test.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cpm.hierarchical.VariationalBayes.update_population" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">update_population</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">hessian</span><span class="p">,</span> <span class="n">lme</span><span class="p">,</span> <span class="n">iter_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">chain_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Function to update the population-level parameters based on the results of participant-wise optimisation.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>param</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>Participant-wise parameter estimates.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>hessian</code></b>
+                  (<code>array - like</code>)
+              –
+              <div class="doc-md-description">
+                <p>Participant-wise Hessian matrices of the log posterior density function evaluated at the mode (i.e., MAP parameter estimates).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>lme</code></b>
+                  (<code>float</code>)
+              –
+              <div class="doc-md-description">
+                <p>Summed log model evidence.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>iter_idx</code></b>
+                  (<code>int</code>, default:
+                      <code>0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The iteration index. Default is 0.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>chain_idx</code></b>
+                  (<code>int</code>, default:
+                      <code>0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The chain index. Default is 0.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>population_updates</code></b>(                  <code>dict</code>
+)              –
+              <div class="doc-md-description">
+                <p>Dictionary of updated population-level parameters.</p>
+              </div>
+            </li>
+            <li>
+<b><code>param_snr</code></b>(                  <code>array - like</code>
+)              –
+              <div class="doc-md-description">
+                <p>Standardised estimates of population-level means.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+    </div>
 
 </div>
 
@@ -1145,7 +1178,7 @@ It also shows the distribution of the means and the standard deviations of the g
 
   </div>
 
-  </div>
+    </div>
 
 </div>
               
@@ -1183,14 +1216,15 @@ It also shows the distribution of the means and the standard deviations of the g
     
   </span>
 </div>
-    <script>var base_url = '../..';</script>
-    <script src="../../js/theme_extra.js" defer></script>
-    <script src="../../js/theme.js" defer></script>
-      <script src="../../search/main.js" defer></script>
-    <script defer>
-        window.onload = function () {
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
             SphinxRtdTheme.Navigation.enable(true);
-        };
+        });
     </script>
 
 </body>

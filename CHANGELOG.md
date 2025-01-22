@@ -8,9 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Detect parallel method to use given environment (support for parallelisation on Jupyter Notebooks)
+- Provide a complete n-dimensional and k-arm reinforcement learning model for multi-armed bandit tasks in applications
+- Add support for '>' and '<' operator in Value type
+
 ### Fixed
 
 - Fix multi-outcome log-likelihood calculation in `cpm.optimisation.minimise.LogLikehood.categorical` method
+- Fix pandas groupby method for parallelization when in Jupyter Notebook
+- Fix magnitude is not taking effect in Nominal
+- Fix choice kernel choice should check whether computations still need to carry out
 
 ## [Unreleased] <=0.18.4
 

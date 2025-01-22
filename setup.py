@@ -22,12 +22,12 @@ doclink = """
 Documentation
 -------------
 
-The full documentation is at http://cpm.rtfd.org."""
+The full documentation is at https://devcompsy.github.io/cpm/."""
 history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.19.0",
+    version="0.21.4",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     author="Lenard Dome, Frank Hezemans, Andrew Webb, Tobias Hauser",

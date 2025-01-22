@@ -398,6 +398,7 @@ class ChoiceKernel:
         if activations is None:
             self.activations = np.zeros(1)
         self.shape = self.kernel.shape
+        self.run = False
 
     def compute(self):
         output = np.zeros(self.shape[0])
@@ -409,21 +410,13 @@ class ChoiceKernel:
         denominator = np.sum(np.exp(np.sum(values, axis=1) * kernels))
         output = nominator / denominator
         self.policies = output
+        self.run = True
         return output
 
     def choice(self):
+        if not self.run:
+            self.compute()
         return np.random.choice(self.shape[0], p=self.policies)
-
-    def config(self):
-        config = {
-            "temperature_activations": self.temperature_a,
-            "temperature_kernel": self.temperature_k,
-            "activations": self.activations,
-            "kernel": self.kernel,
-            "name": self.__class__.__name__,
-            "type": "decision",
-        }
-        return config
 
     def __repr__(self):
         return f"{self.__class__.__name__}(temperature_activations={self.temperature_a}, temperature_kernel={self.temperature_k}, activations={self.activations}, kernel={self.kernel})"

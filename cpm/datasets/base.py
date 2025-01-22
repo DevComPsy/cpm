@@ -58,16 +58,31 @@ def load_bandit_data():
     return load_csv("bandit_small.csv")
 
 
-# def load_another_dataset():
-#     """
-#     Load another dataset from a CSV file.
+def load_risky_choices():
+    """
+    Load the risky choices dataset from a CSV file.
 
-#     Returns
-#     -------
-#     pd.DataFrame
-#         A pandas DataFrame containing the data from the CSV file.
-#     """
-#     return load_csv("another_dataset.csv")
+    Returns
+    -------
+    pd.DataFrame
+        A pandas DataFrame containing the risky choices data.
 
+    Examples
+    --------
+    >>> data = load_risky_choices()
+    >>> print(data.head())
 
-# Add more functions for other CSV files as needed
+    Notes
+    -----
+    The dataset will include the following columns:
+
+        - `ppt`: the participant number.
+        - `safe_magnitudes`: the magnitudes of the safe option.
+        - `risky_magnitudes_1`, `risky_magnitudes_2`: the magnitudes of the risky options.
+        - `safe_prob`: the probability of the safe option.
+        - `risky_prob_1`, `risky_prob_2`: the probabilities of the risky options.
+        - `choice`: the choice of the participant (1 for risky, 0 for safe).
+        - `chose_left`: whether the participant chose the left option (1 for left, 0 for right).
+
+    """
+    return load_csv("risky_choices.csv")

@@ -3,7 +3,7 @@ from cpm.generators import Wrapper, Parameters, Value
 import cpm
 import numpy
 import pandas
-import copy
+import warnings
 import ipyparallel as ipp  ## for parallel computing with ipython (specific for Jupyter Notebook)
 
 
@@ -41,7 +41,7 @@ class RLRW(Wrapper):
     ):
         if parameters_settings is None:
             parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
-            print("No parameters specified, using default parameters.")
+            warnings.warn("No parameters specified, using default parameters.")
         parameters = Parameters(
             # freely varying parameters are indicated by specifying priors
             alpha=Value(

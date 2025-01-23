@@ -29,10 +29,7 @@ class Scavenger:
         Parameters
         ----------
         filepath : str
-            The path to the CSV file to be processed.
-
-        data : pd.DataFrame
-            The data to be processed.
+            The path to the CSV file to be processed. The column names in the data must subscribe to a prespecified convention, see Notes.
 
         Example
         ----------
@@ -40,6 +37,22 @@ class Scavenger:
         >>> scavenger = Scavenger("/example/2025-01-10_Scavenger.xlsx")
         >>> scavenger.metrics()
         >>> scavenger.codebook()
+
+        Notes
+        -----
+        The columns required in data:
+
+        - **A_EV**: expected value of choosing option A
+        - **B_EV**: expected value of choosing option B
+        - **A_perc**: Percent visible to user for option A
+        - **B_perc**: Percent visible to user for option B
+        - **A_magn**: Trial Values for option A
+        - **B_magn**: Trial Values for option B
+        - **EV_diff_chosen**: Expected value difference between option A and B
+        - **chosen**: 1 if option A chosen, 2 if option B chosen
+        - **chosen_left**: 1 if option A chosen, 0 if option B chosen
+        - **t_loss_all**: 1 if loss trial, 0 if win trial
+        - **t_abg_all**: 1 if ambiguous trial, 0 if non-ambiguous trial
         """
 
         ## check file extension
@@ -66,7 +79,7 @@ class Scavenger:
 
     def metrics(self):
         """
-        Compute various descriptive statistics. See Notes for more information of the exact descriptive statistics we calculate.
+        Compute various descriptive statistics. See the `codebook` attribute for more information of the exact descriptive statistics we calculate.
 
         Parameters
         ----------
@@ -77,23 +90,6 @@ class Scavenger:
         -------
         results : pd.DataFrame
             A DataFrame containing the computed metrics.
-
-        Notes
-        -----
-
-        We provide a codebook for the calculated descriptive statistics:
-
-        - **A_EV**: expected value of choosing option A
-        - **B_EV**: expected value of choosing option B
-        - **A_perc**: Percent visible to user for option A
-        - **B_perc**: Percent visible to user for option B
-        - **A_magn**: Trial Values for option A
-        - **B_magn**: Trial Values for option B
-        - **EV_diff_chosen**: Expected value difference between option A and B
-        - **chosen**: 1 if option A chosen, 2 if option B chosen
-        - **chosen_left**: 1 if option A chosen, 0 if option B chosen
-        - **t_loss_all**: 1 if loss trial, 0 if win trial
-        - **t_abg_all**: 1 if ambiguous trial, 0 if non-ambiguous trial
 
         Warns
         -----
@@ -347,6 +343,3 @@ class Scavenger:
         Return a codebook describing the metrics.
         """
         return self.codebook
-
-
-x = Scavenger("./example/2025-01-10_Scavenger_correct.xlsx")

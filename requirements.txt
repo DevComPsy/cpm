@@ -43,7 +43,7 @@ mkdocstrings[python]
     #   -r docs/requirements.in
     #   mkdocstrings-python
 mkdocstrings-python
-mkdocs-jupyter
+mkdocs-jupyter==0.24.7
     # via -r docs/requirements.in
 packaging==21.3
     # via mkdocs

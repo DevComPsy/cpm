@@ -1,0 +1,7 @@
+nav:
+    - Home: index.md
+    - About: about.md
+    - Roadmap: roadmap.md
+    - User Guide: tutorials
+    - Examples: examples
+    - API reference: references

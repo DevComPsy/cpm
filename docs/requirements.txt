@@ -12,7 +12,7 @@ griffe==0.22.0
     # via mkdocstrings-python
 importlib-metadata==4.12.0
     # via mkdocs
-jinja2==3.1.2
+jinja2>=3.1.5
     # via
     #   mkdocs
     #   mkdocstrings
@@ -47,7 +47,7 @@ mkdocs-jupyter
     # via -r docs/requirements.in
 packaging==21.3
     # via mkdocs
-pymdown-extensions==9.5
+pymdown-extensions>=10.0
     # via mkdocstrings
 pyparsing==3.0.9
     # via packaging
@@ -63,7 +63,7 @@ six==1.16.0
     # via python-dateutil
 watchdog==2.1.9
     # via mkdocs
-zipp==3.8.0
+zipp>=3.19.0
     # via importlib-metadata
 mkdocs-awesome-pages-plugin==2.9.2
     # via -r docs/requirements.in

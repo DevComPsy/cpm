@@ -31,7 +31,7 @@ markupsafe==2.1.1
     #   mkdocstrings
 mergedeep==1.3.4
     # via mkdocs
-mkdocs==1.3.0
+mkdocs>=1.6.1
     # via
     #   -r docs/requirements.in
     #   mkdocs-autorefs
@@ -43,7 +43,7 @@ mkdocstrings[python]
     #   -r docs/requirements.in
     #   mkdocstrings-python
 mkdocstrings-python
-mkdocs-jupyter
+mkdocs-jupyter==0.24.7
     # via -r docs/requirements.in
 packaging==21.3
     # via mkdocs

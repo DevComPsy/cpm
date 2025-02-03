@@ -78,23 +78,70 @@ class Scavenger:
         }
 
     def metrics(self):
+
         """
-        Compute various descriptive statistics. See the `codebook` attribute for more information of the exact descriptive statistics we calculate.
+        Compute metrics from the loaded data: expected values of rewards when choosing safe vs. risky options, percentages of 
+        risky and safe wins/losses as well as total optimal choices. 
 
         Parameters
         ----------
         data : pd.DataFrame
             Data from all users and trials to be processed.
 
-        Returns
+        Returns 
         -------
         results : pd.DataFrame
             A DataFrame containing the computed metrics.
+
+        A_EV: expected value of choosing option A
+        B_EV: expected value of choosing option B
+        EV_diff_chosen: Expected value difference between option A and B
+        chosen: 1 if option A chosen, 2 if option B chosen
+        t_loss_all: 1 if loss trial, 0 if win trial
+        t_abg_all: 1 if ambiguous trial, 0 if non-ambiguous trial,
+        win_risk: Proportion of wins for risky choices,
+        loss_risk: Proportion of losses for risky choices, 
+        win_risk_abg: Proportion of risky wins in ambiguous trials, 
+        win_risk_NoAbg: Proportion of risky wins in non-ambiguous trials, 
+        loss_risk_abg: Proportion of risky losses in ambiguous trials,
+        loss_risk_NoAbg: Proportion of risky losses in non-ambiguous trials,
+        optimal_all: Proportion of optimal choices, 
+        optimal_win: Proportion of optimal choices in wins,
+        optimal_loss: Proportion of optimal choices in losses,
+        optimal_all_abg: Proportion of optimal choices in ambiguous trials,
+        optimal_win_abg: Proportion of optimal choices in win trials in ambiguous trials,
+        optimal_loss_abg: Proportion of optimal choices in loss trials in ambiguous trials
+
+        
+        Notes
+        -----
+
+        In the game users can choose between two options with uncertain reward or loss probabilities. They reiceve information about reward probabilities for two choise options and can choose either the safe or risky option. 
+        The data is split into two categories and options, A and B. Option A is choosing the safe option, i.e. the one which has more reward, which is labeled with 1 in "chosen" and Option B is choosing the risky option, labeled with 2 in "chosen". 
+        Risk values are transfromed to 0 (no risk) and 1 (risky).
+        
+        We differentiate between the percentages of winning reward visible to the users in the task vs. actual percentages. 
+        A_perc is the percent visible to the user for the safe option A, B_perc is the percent visible to the user for risky option B.
+        A_magn is the trial reward or loss values for option A, B_magn is the trial reward or loss values for option B.
+
+        If visible percentages do not add up to 1 the trial is labeled as ambiguous.
+
+        We calculate the expected value of the safe option A and the risky option B and then use these values to calculate the loss trials in which expected values are < 0.
+        Percentages of loss and win trials are calculated for risky choice trials (by objetive risk, option B) and number of optimal choices are calculated for all trials, win trials and loss trials.
+
 
         Warns
         -----
         UserWarning
             Provides a warning for `np.linalg.LinAlgError` in logistic regression from `statsmodels` for a given user when a singular matrix error occurs.
+
+     
+
+        References
+        ----------
+
+        Habicht J, Dubois M, Michely J and Hauser TU. Do propranolol and amisulpride modulate confidence in risk-taking? Wellcome Open Res 2022, 7:23.
+
 
         """
 

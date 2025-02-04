@@ -329,6 +329,7 @@ class MetaSignalDetectionWrapper:
             assert NotImplementedError("num_trials argument not implemented for MetaSignalDetectionWrapper")
 
         stimulus = self.data['stimulus'].values
+        stimulus = np.random.randint(2, size=num_trials)
 
         d1 = self.parameters[ppt].d1
         t1c1 = self.parameters[ppt].t1c1

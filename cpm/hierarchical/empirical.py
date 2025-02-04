@@ -97,8 +97,11 @@ class EmpiricalBayes:
         self.objective = (
             objective  # whether the optimiser looks for the minimum or maximum
         )
-        self.__number_of_parameters__ = len(self.optimiser.model.parameters.free())
-        self.__bounds__ = self.optimiser.model.parameters.bounds()
+        params = self.optimiser.model.parameters
+        self.__parameters__ = params if hasattr(params, "free") else params[list(params.keys())[0]]
+        names = self.__parameters__.free()
+        self.__number_of_parameters__ = len(names)
+        self.__bounds__ = self.__parameters__.bounds()
 
         self.quiet = quiet
 
@@ -200,7 +203,7 @@ class EmpiricalBayes:
                 hessian = -1 * hessian
 
             # organise parameter estimates in an array
-            parameter_names = self.optimiser.model.parameters.free()
+            parameter_names = self.__parameters__.free()
             param = np.zeros(
                 (len(parameters), len(parameter_names))
             )  # shape: ppt x params
@@ -265,7 +268,12 @@ class EmpiricalBayes:
                 }
             # use the updated population-level parameters to update the priors on
             # model parameters, for next round of participant-wise MAP estimation
-            self.optimiser.model.parameters.update_prior(**population_updates)
+            params = self.__parameters__
+            if hasattr(params, "update_prior"):
+                params.update_prior(**population_updates)
+            else:
+                for key in params.keys():
+                    params[key].update_prior(**population_updates)
 
             # Equation 6 in Gershman (2016) provides the formula for the log model evidence
             # how to approximate the log model evidence (lme) a.k.a. marginal likelihood:
@@ -320,7 +328,7 @@ class EmpiricalBayes:
         output = {
             "lme": lmes,
             "hyperparameters": population_updates,
-            "parameters": self.optimiser.model.parameters,
+            "parameters": self.__parameters__,
         }
 
         return output
@@ -332,7 +340,8 @@ class EmpiricalBayes:
         """
 
         output = []
-        parameter_names = self.optimiser.model.parameters.free()
+        params = self.__parameters__
+        parameter_names = params.free() if hasattr(params, "free") else params[list(params.keys())[0]].free()
         rng = np.random.default_rng()
 
         for chain in range(self.chain):
@@ -344,7 +353,7 @@ class EmpiricalBayes:
                         "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
                         "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
                     }
-                self.optimiser.model.parameters.update_prior(**population_updates)
+                self.__parameters__.update_prior(**population_updates)
 
             if self.quiet is False:
                 print(f"Chain: {chain + 1}")

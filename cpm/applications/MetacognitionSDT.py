@@ -28,7 +28,7 @@ def metacognitionSDT_initparams(data = None, binned_data = None, nbins = 4, s = 
             value = helper.d1[idx],
             lower = -1.5,
             upper = 3.5,
-            prior = "gaussian",
+            prior = "norm",
             args = {"mean": 1, "std": 2},
         ),
         t2c1 = Value(

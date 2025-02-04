@@ -15,7 +15,7 @@ from ..optimisation import FminBound
 
 class MetaSignalDetectionSimulator:
     
-    def __init__(self, wrapper=None, data=None, parameters=None, solver="fminbound", parallel=False, ppt_identifier="ppt"):
+    def __init__(self, wrapper=None, data=None, parameters=None, solver="fminbound", parallel=False, ppt_identifier="ppt", num_trials=None):
         self.model = wrapper
         self.data = data
         assert solver == "fminbound", "Only fminbound is supported for now."
@@ -39,6 +39,8 @@ class MetaSignalDetectionSimulator:
 
         self.parameters = cast_parameters(parameters, len(self.groups))
         self.parameter_names = self.model.parameter_names
+
+        self.num_trials = num_trials
 
         self.simulation = {}
         self.generated = {}
@@ -70,13 +72,16 @@ class MetaSignalDetectionSimulator:
     
     def sample(self, num_trials=None, num_samples=100):
 
+        nt= {}
         if num_trials is None:
-            num_trials= {}
             for i, ppt in enumerate(self.groups):
                 ppt_data = unpack_participants(
                     self.data, i, self.groups, pandas=self.__pandas__
                 )
-                num_trials[ppt] = len(ppt_data)
+                nt[ppt] = len(ppt_data)
+        else:
+            for ppt in self.groups:
+                nt[ppt] = num_trials
 
         evaluate = copy.deepcopy(self.model)
         evaluate.reset(parameters=self.parameters[self.groups[0]], data=self.data, ppt = self.groups[0])
@@ -85,7 +90,7 @@ class MetaSignalDetectionSimulator:
         nR_S1 = np.zeros((len(self.groups), num_samples, 2*self.nbins))
         nR_S2 = np.zeros((len(self.groups), num_samples, 2*self.nbins))
 
-        for idx, (ppt, num_trials) in enumerate(num_trials.items()):
+        for idx, (ppt, nt) in enumerate(nt.items()):
             self.model.reset()
             evaluate = copy.deepcopy(self.model)
             ppt_data = unpack_participants(
@@ -95,7 +100,7 @@ class MetaSignalDetectionSimulator:
                 self.parameters, idx, self.groups, pandas=self.__parameter__pandas__
             ) if not self.__parameter__dict__ else self.parameters[ppt]
             evaluate.reset(parameters=ppt_parameter, data=ppt_data)
-            nR_S1[idx], nR_S2[idx] = evaluate.sample_ppt(num_trials=num_trials, num_samples=num_samples, ppt=ppt)
+            nR_S1[idx], nR_S2[idx] = evaluate.sample_ppt(num_trials=nt, num_samples=num_samples, ppt=ppt)
 
         generated = []
         for ppt_idx, ppt in enumerate(self.groups):
@@ -121,7 +126,7 @@ class MetaSignalDetectionSimulator:
         self.num_samples = num_samples
 
         self.predict()
-        self.sample(num_samples=num_samples)
+        self.sample(num_samples=num_samples, num_trials=self.num_trials)
 
         data_pandas = self.generated
 

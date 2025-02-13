@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import copy
 from scipy.stats import (
     truncnorm,
@@ -68,9 +69,6 @@ class Parameters:
         self.__dict__[key] = value
 
     def __call__(self):
-        return self.__dict__
-
-    def export(self):
         return self.__dict__
 
     def __copy__(self):
@@ -195,6 +193,31 @@ class Parameters:
             if value.prior is not None:
                 free.append(key)
         return free
+
+    def export(self):
+        """
+        Return all freely-varying parameters and their accompanying lower and upper bounds, and prior distributions.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A table of all freely-varying parameters and their accompanying lower and upper bounds, and prior distributions. Each row is a parameter, and the columns are the lower bound, upper bound, prior distribution, and the parameters of the prior distribution.
+        """
+        table = pd.DataFrame()
+        for key, value in self.__dict__.items():
+            if value.prior is not None:
+                output = pd.Series(
+                    {
+                        "lower": value.lower,
+                        "upper": value.upper,
+                        "prior_fun": value.prior,
+                        **value.prior.kwds,
+                    }
+                )
+                output = output.to_frame().T
+                table = pd.concat([table, output], axis=0)
+        table.index = self.free()
+        return table
 
 
 class Value:

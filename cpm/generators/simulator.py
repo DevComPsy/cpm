@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import copy
 import pickle as pkl
+import warnings
 
 from .parameters import Parameters
 from ..core.data import unpack_participants
@@ -59,12 +60,16 @@ class Simulator:
                 "The number of groups in the data and parameters should be equal."
             )
 
-        self.simulation = []
+        self.simulation = pd.DataFrame()
         self.generated = []
 
     def run(self):
         """
         Runs the simulation.
+
+        Note
+        ----
+        Data is sorted according to the group IDs as ordered by pandas.
 
         """
 
@@ -79,17 +84,26 @@ class Simulator:
             )
             evaluate.reset(parameters=ppt_parameter, data=ppt_data)
             evaluate.run()
-            output = copy.deepcopy(evaluate.simulation)
-            self.simulation.append(output.copy())
+            output = copy.deepcopy(evaluate.export())
+            output["ppt"] = self.groups[i]
+            self.simulation = pd.concat([self.simulation, output], axis=0)
             del evaluate, output
 
-        self.simulation = np.array(self.simulation, dtype=object)
+        self.simulation.reset_index(drop=True, inplace=True)
         self.__run__ = True
         return None
 
-    def export(self):
+    def export(self, save=False, path=None):
         """
         Return the trial- and participant-level information about the simulation.
+
+        Parameters
+        ----------
+
+        save : bool
+            If True, the output will be saved to a file.
+        path : str
+            The path to save the output to.
 
         Returns
         ------
@@ -97,7 +111,15 @@ class Simulator:
             A dataframe containing the the model output for each participant and trial.
             If the output variable is organised as an array with more than one dimension, the output will be flattened.
         """
-        return simulation_export(self.simulation)
+        ## check whether the simulation has been run
+        if not self.__run__:
+            raise ValueError("The simulation has not been run yet.")
+        ## export the simulation to file
+        if save:
+            if path is None:
+                raise ValueError("Please provide a path to save the output.")
+            self.simulation.to_csv(path)
+        return self.simulation
 
     def update(self, parameters=None):
         """

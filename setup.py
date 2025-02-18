@@ -36,6 +36,7 @@ setup(
     packages=find_packages(),
     # package_dir={"cpm": "cpm"},
     include_package_data=True,
+    package_data={"cpm": ["**/*.csv"]},
     python_requires=">3.11.0",
     install_requires=[
         "numpy>=1.26.0",  # Numerical functions

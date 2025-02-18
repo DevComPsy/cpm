@@ -12,6 +12,9 @@ __all__ = ['MetaSignalDetectionHelper', 'MetaSignalDetectionModel']
 
 
 class MetaSignalDetectionHelper:
+    """
+    Helper class for models calculating meta-d based on Signal Detection Theory. It computes the necessary parameters for the MetaSignalDetectionModel class.
+    """
 
     def __init__(self, data = None, nbins = 4, s = 1, fncdf = norm.cdf, fninv = norm.ppf, apply_adjustment = False, adjustment_val = None, ppt_identifier ="ppt"):
 
@@ -285,3 +288,4 @@ class MetaSignalDetectionModel:
         probs = np.array([prC_rS1, prI_rS1, prC_rS2, prI_rS2])
 
         return probs
+

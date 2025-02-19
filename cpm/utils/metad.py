@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import Union, Tuple, Dict
+from typing import Union
 
 
 def discrete_ratings(
@@ -137,6 +137,30 @@ def trials2counts(stimulus_identifier, response, rating, n_ratings, padding=True
         List of responses, where each element corresponds to one of the stimulus identifiers. Must start from 0.
     rating : list-like
         List of confidence ratings, where each element corresponds to elements in stimulus_identifier.
+    n_ratings : int
+        The number of discrete ratings, must be larger than 0 and smaller or equal to the highest value in rating.
+    padding : bool or double
+        If True, padding is added to avoid zeros in the response counts. The default value is 1 / (2 * n_ratings).
+        If False, no padding is added. If a double is provided, it is used as padding.
+
+    Returns
+    -------
+    counts : np.ndarray
+        A numpy array with the response counts for each stimulus type and for each ratings. Each row is a stimulus type and each column is a rating, such that stimulus type 0, rating 2 with response 2 is counts[0, 2 * n_ratings + 2]. Note that counting starts from 0.
+
+    Examples
+    -------
+    >>> import numpy as np
+    >>> from cpm.utils.metad import discrete_ratings, trials2counts
+    >>> n = 1000
+    >>> dimensions = 4
+    >>> stimulus_identifier = np.random.randint(0, dimensions, n)
+    >>> response = np.random.randint(0, dimensions, n)
+    >>> rating = np.random.normal(0, 1, n)
+    >>> discrete = discrete_ratings(rating, nbins=4)
+    >>> n_ratings = 4
+    >>> trials2counts(stimulus_identifier=stimulus_identifier, response=response, rating=discrete, n_ratings=n_ratings, padding=False)
+
     """
     ## check for valid inputs, and force everything to numpy.array
     stimulus_identifier = np.array(stimulus_identifier)
@@ -149,33 +173,12 @@ def trials2counts(stimulus_identifier, response, rating, n_ratings, padding=True
         if padding == True:
             padding = 1 / (2 * n_ratings)
     # check for valid inputs
-    if not (len(stimulus_identifier) == len(response)) or (
+    if not (len(stimulus_identifier) == len(response)) or not (
         len(stimulus_identifier) == len(rating)
     ):
-        raise (
+        raise ValueError(
             "stimulus_identifier, response, and rating input vectors must have the same lengths"
         )
-
-    """ filter bad trials """
-    tempstim = []
-    tempresp = []
-    tempratg = []
-    for s, rp, rt in zip(stimulus_identifier, response, rating):
-        if (
-            (s == 0 or s == 1)
-            and (rp == 0 or rp == 1)
-            and (rt >= 1 and rt <= n_ratings)
-        ):
-            tempstim.append(s)
-            tempresp.append(rp)
-            tempratg.append(rt)
-    stimulus_identifier = tempstim
-    response = tempresp
-    rating = tempratg
-
-    ## create numpy array to store response counts
-    ## rows for each stimulus type
-    ## columns for each discrete rating that repeats for number of stimulus type
 
     number_of_stimuli = stimulus_identifier.max() + 1
     number_of_discrete_ratings = n_ratings
@@ -187,53 +190,17 @@ def trials2counts(stimulus_identifier, response, rating, n_ratings, padding=True
         indices = np.where(stimulus_identifier == stim)
         stim_ratings = rating[indices]
         stim_responses = response[indices]
-        for rates in np.arange(n_ratings):
-            for resp in np.arange(n_responses):
-
-                pass
-
-    nR_S1 = []
-    nR_S2 = []
-
-    # S1 responses
-    for r in range(n_ratings, 0, -1):
-        cs1, cs2 = 0, 0
-        for s, rp, rt in zip(stimulus_identifier, response, rating):
-            if s == 0 and rp == 0 and rt == r:
-                cs1 += 1
-            if s == 1 and rp == 0 and rt == r:
-                cs2 += 1
-        nR_S1.append(cs1)
-        nR_S2.append(cs2)
-
-    # S2 responses
-    for r in range(1, n_ratings + 1, 1):
-        cs1, cs2 = 0, 0
-        for s, rp, rt in zip(stimulus_identifier, response, rating):
-            if s == 0 and rp == 1 and rt == r:
-                cs1 += 1
-            if s == 1 and rp == 1 and rt == r:
-                cs2 += 1
-        nR_S1.append(cs1)
-        nR_S2.append(cs2)
-
+        for resp in np.arange(n_responses):
+            response_indices = np.where(stim_responses == resp)
+            response_ratings = stim_ratings[response_indices]
+            response_counts = np.zeros(n_ratings)
+            response_unique = np.unique(response_ratings, return_counts=True)
+            for rates in np.arange(len(response_unique[0])):
+                response_counts[int(response_unique[0][rates]) - 1] = response_unique[
+                    1
+                ][rates]
+            counts[stim, resp * n_ratings : (resp + 1) * n_ratings] = response_counts
     # pad response counts to avoid zeros
     if padding > 0:
-        nR_S1 = [n + padding for n in nR_S1]
-        nR_S2 = [n + padding for n in nR_S2]
-
-    return nR_S1, nR_S2
-
-
-n = 10
-stimulus_identifier = np.random.randint(0, 2, n)
-response = np.random.randint(0, 2, n)
-rating = np.random.uniform(0, 1, n)
-discrete = discrete_ratings(rating, nbins=4)
-
-nRatings = 4
-
-nR_S1, nR_S2 = trials2counts(stimulus_identifier, response, discrete, nRatings, 1)
-print(np.array(nR_S1).astype(int))
-print(np.array(nR_S2).astype(int))
-print(np.sum(nR_S1) + np.sum(nR_S2) - 2)
+        counts += padding
+    return counts

@@ -1,16 +1,20 @@
-# modelling-toolbox
+# cpm
+
+cpm is a fundamental package for Computational Psychiatry. It is designed to provide a set of tools for researchers and clinicians to analyze and model data in the field of Computational Psychiatry.
+
+:warning: The package is under active development and is therefore currently in a beta version. :warning:
 
 ## Install from GitHub
 
 In order to install the package from GitHub, run the following command:
 
 ```bash
-pip install git+https://github.com/DevComPsy/modelling-toolbox.git
+pip install git+https://github.com/DevComPsy/cpm.git
 ```
 
 ## Documentation
 
-The documentation can be viewed here: [link](https://devcompsy.github.io/modelling-toolbox/).
+The documentation can be viewed here: [link](https://devcompsy.github.io/cpm/).
 
 ### Development of documentation
 

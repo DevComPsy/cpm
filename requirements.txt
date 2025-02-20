@@ -1,5 +1,0 @@
-numpy>=1.26.0           # Numerical functions
-SciPy>=1.11.4           # Scientific functions
-pandas>=2.1.4           # Data structures & analysis
-# pickle>=0.7.4           # Python object serialization (Standard Python Library - Not needed for Python 3)
-# copy>=0.1.2             # Shallow and deep copy operations (Standard Python Library - Not needed for Python 3)

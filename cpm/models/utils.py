@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def Nominal(target=None, magnitude=None, bits=None):
+def Nominal(target=None, magnitude=1, bits=None):
     """
     Converts a target value to a binary representation using a specified number of bits.
 
@@ -44,5 +44,5 @@ def Nominal(target=None, magnitude=None, bits=None):
         output[target - 1] = magnitude
     else:
         for i in target:
-            output[i - 1] = 1
+            output[i - 1] = 1 * magnitude
         return output

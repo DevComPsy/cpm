@@ -105,6 +105,9 @@ def cast_parameters(parameters, sample=None):
             )
         if isinstance(parameters, list):
             output = [copy.deepcopy(parameters) for i in range(1, sample + 1)]
+            ## control for weird dimensions
+            if len(output) > sample:
+                output = output[0]
         if isinstance(parameters, Parameters):
             output = parameters.sample(sample)
         warnings.warn(

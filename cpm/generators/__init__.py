@@ -7,5 +7,3 @@ __all__ = ["Wrapper", "Simulator", "Parameters", "Value", "LogParameters"]
 from .simulator import Simulator
 from .wrapper import Wrapper
 from .parameters import Parameters, Value, LogParameters
-
-del wrapper, parameters

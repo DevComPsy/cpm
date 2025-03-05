@@ -75,21 +75,3 @@ def dict_to_pandas(dict):
         else:
             output[key] = pd.Series(value.tolist())
     return output
-
-
-def load(file):
-    """
-    Load a file from disk.
-
-    Parameters
-    ----------
-    file : str
-        The file to load.
-
-    Returns
-    -------
-    object
-        The object loaded from the file.
-    """
-    with open(file, "rb") as f:
-        return pkl.load(f)

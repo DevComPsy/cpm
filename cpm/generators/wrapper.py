@@ -24,7 +24,6 @@ class Wrapper:
     parameters : Parameters object
         The parameters object for the model that contains all parameters (and initial states) for the model. See Notes on how it is updated internally.
 
-
     Returns
     -------
     Wrapper : object

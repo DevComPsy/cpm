@@ -1,8 +1,9 @@
 from . import minimise
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data, LinearConstraint
+from ..core.optimisers import objective, numerical_hessian, prepare_data
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
+from ..utils.optimisation import LinearConstraint
 from ..core.parallel import detect_cores, execute_parallel
 
 
@@ -76,7 +77,9 @@ class Bads:
         self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
             data, self.ppt_identifier
         )
-        self.constraints = [constraints] if isinstance(constraints, LinearConstraint) else constraints
+        self.constraints = (
+            [constraints] if isinstance(constraints, LinearConstraint) else constraints
+        )
         self.constraint_penalty = constraint_penalty
 
         self.loss = minimisation

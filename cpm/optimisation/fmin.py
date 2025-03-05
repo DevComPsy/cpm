@@ -3,7 +3,7 @@ from ..core.optimisers import objective, numerical_hessian, prepare_data
 from ..core.data import detailed_pandas_compiler, decompose
 from ..core.parallel import detect_cores, execute_parallel
 from ..generators import Simulator, Wrapper
-from ..generators.wrapper import MetaSignalDetectionWrapper
+from ..applications.signal_detection import MetaD
 
 from scipy.optimize import fmin, fmin_l_bfgs_b
 
@@ -91,8 +91,12 @@ class Fmin:
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
-        elif isinstance(model, MetaSignalDetectionWrapper):
-            self.parameter_names = self.model.parameters[self.model.ppt].free() if self.model.multiple_ppts else self.model.parameters.free()
+        elif isinstance(model, MetaD):
+            self.parameter_names = (
+                self.model.parameters[self.model.ppt].free()
+                if self.model.multiple_ppts
+                else self.model.parameters.free()
+            )
         if not self.parameter_names:
             raise ValueError(
                 "The model does not contain any free parameters. Please check the model parameters."
@@ -101,8 +105,8 @@ class Fmin:
             raise TypeError(
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
-        
-        if isinstance(model, MetaSignalDetectionWrapper) and self.model.multiple_ppts:
+
+        if isinstance(model, MetaD) and self.model.multiple_ppts:
             bounds = self.model.parameters[self.model.ppt].bounds()
         else:
             bounds = self.model.parameters.bounds()
@@ -148,10 +152,22 @@ class Fmin:
                 identifier=self.ppt_identifier,
             )
 
-            model.reset(data=participant_dc, ppt=ppt) if isinstance(model, MetaSignalDetectionWrapper) else model.reset(data=participant_dc)
+            (
+                model.reset(data=participant_dc, ppt=ppt)
+                if isinstance(model, MetaD)
+                else model.reset(data=participant_dc)
+            )
 
             result = fmin(
-                lambda x, model, observed, loss, prior: objective(x, model, observed, loss, prior, constraints=self.constraints, penalty=self.constraint_penalty),
+                lambda x, model, observed, loss, prior: objective(
+                    x,
+                    model,
+                    observed,
+                    loss,
+                    prior,
+                    constraints=self.constraints,
+                    penalty=self.constraint_penalty,
+                ),
                 x0=self.__current_guess__,
                 args=(model, observed, loss, prior),
                 disp=self.display,
@@ -243,7 +259,7 @@ class Fmin:
         self.details = []
         self.parameters = []
         if initial_guess:
-            if isinstance(model, MetaSignalDetectionWrapper) and self.model.multiple_ppts:
+            if isinstance(model, MetaD) and self.model.multiple_ppts:
                 bounds = self.model.parameters[self.model.ppt].bounds()
             else:
                 bounds = self.model.parameters.bounds()
@@ -346,8 +362,12 @@ class FminBound:
 
         if isinstance(model, Wrapper):
             self.parameter_names = self.model.parameters.free()
-        elif isinstance(model, MetaSignalDetectionWrapper):
-            self.parameter_names = self.model.parameters[self.model.ppt].free() if self.model.multiple_ppts else self.model.parameters.free()
+        elif isinstance(model, MetaD):
+            self.parameter_names = (
+                self.model.parameters[self.model.ppt].free()
+                if self.model.multiple_ppts
+                else self.model.parameters.free()
+            )
         if not self.parameter_names:
             raise ValueError(
                 "The model does not contain any free parameters. Please check the model parameters."
@@ -356,8 +376,8 @@ class FminBound:
             raise ValueError(
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
-        
-        if isinstance(model, MetaSignalDetectionWrapper) and self.model.multiple_ppts:
+
+        if isinstance(model, MetaD) and self.model.multiple_ppts:
             bounds = self.model.parameters[self.model.ppt].bounds()
         else:
             bounds = self.model.parameters.bounds()
@@ -377,7 +397,7 @@ class FminBound:
             self.cl = cl
         if cl is None and parallel:
             self.cl = detect_cores()
-        
+
         self.verbose = verbose
 
     def optimise(self, display=True):
@@ -398,7 +418,7 @@ class FminBound:
             out["fun"] = out.pop("f")
             return out
 
-        if isinstance(self.model, MetaSignalDetectionWrapper) and self.model.multiple_ppts:
+        if isinstance(self.model, MetaD) and self.model.multiple_ppts:
             bounds = self.model.parameters[self.model.ppt].bounds()
         else:
             bounds = self.model.parameters.bounds()
@@ -416,10 +436,23 @@ class FminBound:
                 identifier=self.ppt_identifier,
             )
 
-            model.reset(data=participant_dc, ppt=ppt) if (model.multiple_ppts) else model.reset(data=participant_dc) 
+            (
+                model.reset(data=participant_dc, ppt=ppt)
+                if (model.multiple_ppts)
+                else model.reset(data=participant_dc)
+            )
 
             result = fmin_l_bfgs_b(
-                lambda x, model, observed, loss, prior: objective(x, model, observed, loss, prior, constraints=self.constraints, penalty=self.constraint_penalty, ppt=ppt),
+                lambda x, model, observed, loss, prior: objective(
+                    x,
+                    model,
+                    observed,
+                    loss,
+                    prior,
+                    constraints=self.constraints,
+                    penalty=self.constraint_penalty,
+                    ppt=ppt,
+                ),
                 x0=self.__current_guess__,
                 bounds=bounds,
                 args=(model, observed, loss, prior),
@@ -445,9 +478,13 @@ class FminBound:
             return output.copy()
 
         for i in range(len(self.initial_guess)):
-            print(
-                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
-            ) if self.verbose else None
+            (
+                print(
+                    f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+                )
+                if self.verbose
+                else None
+            )
             self.__current_guess__ = self.initial_guess[i]
             if self.__parallel__:
                 results = execute_parallel(
@@ -508,7 +545,7 @@ class FminBound:
         self.details = []
         self.parameters = []
         if initial_guess:
-            if isinstance(self.model, MetaSignalDetectionWrapper) and self.model.multiple_ppts:
+            if isinstance(self.model, MetaD) and self.model.multiple_ppts:
                 bounds = self.model.parameters[self.model.ppt].bounds()
             else:
                 bounds = self.model.parameters.bounds()

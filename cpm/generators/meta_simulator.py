@@ -3,8 +3,8 @@ import pandas as pd
 import copy
 import pickle as pkl
 
-from cpm.core.optimisers import LinearConstraint
-from cpm.optimisation.minimise import LogLikelihood
+from cpm.utils.optimisation import LinearConstraint
+from ..optimisation.minimise import LogLikelihood
 
 from .parameters import Parameters
 from ..core.data import unpack_participants

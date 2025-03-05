@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Union
 
 
-def discrete_ratings(
+def discretise_ratings(
     ratings: Union[list, np.ndarray],
     nbins: int = 4,
     ignore_invalid: bool = False,

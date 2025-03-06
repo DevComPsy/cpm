@@ -126,7 +126,13 @@ def bin_ratings(
 
 
 def count_bins(
-    stimulus_identifier, response, rating, n_ratings, padding=True, pandas=True
+    stimulus_identifier,
+    response,
+    rating,
+    n_ratings,
+    padding=True,
+    pandas=True,
+    scale=False,
 ):
     """
     Convert discretized confidence ratings (usually sorted into bins) into response counts for each stimulus type.
@@ -144,6 +150,7 @@ def count_bins(
     padding : bool or double
         If True, padding is added to avoid zeros in the response counts. The default value is 1 / (2 * n_ratings).
         If False, no padding is added. If a double is provided, it is used as padding.
+    scale : bool
 
     Returns
     -------
@@ -155,13 +162,30 @@ def count_bins(
     >>> import numpy as np
     >>> from cpm.utils.metad import discrete_ratings, trials2counts
     >>> n = 1000
-    >>> dimensions = 4
+    >>> dimensions = 2
     >>> stimulus_identifier = np.random.randint(0, dimensions, n)
     >>> response = np.random.randint(0, dimensions, n)
     >>> rating = np.random.normal(0, 1, n)
     >>> discrete = bin_ratings(rating, nbins=4)
     >>> n_ratings = 4
     >>> count_bins(stimulus_identifier=stimulus_identifier, response=response, rating=discrete, n_ratings=n_ratings, padding=False)
+            counts  stimulus  response
+    0     58.0         0         0
+    1     50.0         0         0
+    2     66.0         0         0
+    3     64.0         0         0
+    4     65.0         0         1
+    5     71.0         0         1
+    6     55.0         0         1
+    7     48.0         0         1
+    8     64.0         1         0
+    9     61.0         1         0
+    10    61.0         1         0
+    11    71.0         1         0
+    12    63.0         1         1
+    13    68.0         1         1
+    14    68.0         1         1
+    15    67.0         1         1
 
     """
     ## check for valid inputs, and force everything to numpy.array
@@ -192,6 +216,7 @@ def count_bins(
         indices = np.where(stimulus_identifier == stim)
         stim_ratings = rating[indices]
         stim_responses = response[indices]
+        denominator = np.sum(stim_ratings)
         for resp in np.arange(n_responses):
             response_indices = np.where(stim_responses == resp)
             response_ratings = stim_ratings[response_indices]
@@ -201,6 +226,8 @@ def count_bins(
                 response_counts[int(response_unique[0][rates]) - 1] = response_unique[
                     1
                 ][rates]
+            if scale:
+                response_counts /= denominator
             counts[stim, resp * n_ratings : (resp + 1) * n_ratings] = response_counts
     # pad response counts to avoid zeros
     if padding > 0:

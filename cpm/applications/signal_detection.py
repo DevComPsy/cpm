@@ -186,7 +186,6 @@ def metad_generator(parameters, **kwargs):
             np.asarray(probability_correct_stimulus_two).flatten(),
             np.asarray(probability_incorrect_stimulus_two).flatten(),
         ],
-        copy=None,
     )
     output = {
         "dependent": probabilities.flatten(),
@@ -228,7 +227,7 @@ def d_prime_calculator(data):
 
 class MetaD:
 
-    def __init__(self, data=None, dimensions=2, bins=4, ratings=100):
+    def __init__(self, data=None, dimensions=2, bins=4, parameters=None):
         """
         Parameters
         ----------
@@ -245,17 +244,21 @@ class MetaD:
         self.data = data
         self.dimensions = dimensions
         self.bins = bins
+        if parameters is None:
+            parameters = np.concatenate(
+                [[1], np.random.uniform(-5, 5, size=(dimensions * bins) - 2)]
+            ).flatten()
 
         self.parameters = Parameters(
             meta_d=Value(
-                value=0,
+                value=parameters[0],
                 lower=-5,
                 upper=5,
                 prior="norm",
                 args={"mean": 1, "std": 2},
             ),
             criterion_type2=Value(
-                value=np.random.uniform(-5, 5, size=(dimensions * bins) - 2),
+                value=parameters[1:],
                 lower=np.array([[-5] * (bins - 1), [0] * (bins - 1)]).flatten(),
                 upper=np.array([[0] * (bins - 1), [5] * (bins - 1)]).flatten(),
                 prior=multivariate_normal,

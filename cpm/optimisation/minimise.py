@@ -141,6 +141,102 @@ class LogLikelihood:
             LL = -1 * LL
         return LL
 
+    def multinomial(predicted, observed, negative=True, clip=1e-10, **kwargs):
+        """
+        Compute the log likelihood of the predicted values given the observed values for multinomial data.
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+        negative : bool, optional
+            Flag indicating whether to return the negative log likelihood.
+
+        Returns
+        -------
+        float
+            The summed log likelihood or negative summed log likelihood.
+
+        Examples
+        --------
+        >>> # Sample data
+        >>> predicted = np.array([[0.2, 0.5, 0.3], [0.1, 0.7, 0.2]])
+        >>> observed = np.array([[2, 5, 3], [1, 7, 2]])
+
+        >>> # Calculate log likelihood
+        >>> ll_float = LogLikelihood.multinomial(predicted, observed)
+        >>> print("Log Likelihood (multinomial):", ll)
+        Log Likelihood (multinomial): 4.596597454123483
+        """
+        if isinstance(observed, np.ndarray) and len(observed) == 1:
+            observed = np.array(observed[0], dtype=float)
+        else:
+            observed = np.array(observed, dtype=float)
+        predicted, observed = np.squeeze(predicted), np.squeeze(observed)
+        assert (
+            predicted.shape == observed.shape
+        ), "The predicted and observed values must have the same shape."
+        assert predicted.sum(axis=-1).all() == 1, "The predicted values must sum to 1."
+        predicted = np.clip(predicted, clip, np.inf)  # Avoid log(0)
+        predicted = predicted / predicted.sum(axis=-1, keepdims=True)
+        LL = np.sum(
+            [
+                multinomial.logpmf(observed[i], n=observed[i].sum(), p=predicted[i])
+                for i in range(observed.shape[0])
+            ]
+        )
+        if negative:
+            LL = -1 * LL
+        return LL
+
+    def product(predicted, observed, negative=True, clip=1e-10, **kwargs):
+        """
+        Compute the log likelihood of the predicted values given the observed values for continuous data,
+        according to the following equation:
+
+            likelihood = sum(observed * log(predicted))
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+        negative : bool, optional
+            Flag indicating whether to return the negative log likelihood.
+
+        Returns
+        -------
+        float
+            The summed log likelihood or negative log likelihood.
+
+        Examples
+        --------
+        >>> # Sample data
+        >>> predicted = np.array([[0.2, 0.5, 0.3], [0.1, 0.7, 0.2]])
+        >>> observed = np.array([[2, 5, 3], [1, 7, 2]])
+
+        >>> # Calculate log likelihood
+        >>> ll_float = LogLikelihood.product(predicted, observed)
+        >>> print("Log Likelihood :", ll_float)
+        Log Likelihood : 18.314715666079106
+        """
+        if isinstance(observed, np.ndarray) and len(observed) == 1:
+            observed = np.array(observed[0], dtype=float)
+        else:
+            observed = np.array(observed, dtype=float)
+        predicted, observed = np.squeeze(predicted), np.squeeze(observed)
+        assert (
+            predicted.shape == observed.shape
+        ), "The predicted and observed values must have the same shape."
+        predicted = np.clip(predicted, clip, np.inf)  # Avoid log(0)
+        LL = np.sum(observed.flatten() * np.log(predicted.flatten()))
+        if negative:
+            LL = -1 * LL
+        return LL
+
 
 class Distance:
 

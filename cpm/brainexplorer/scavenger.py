@@ -62,6 +62,7 @@ class Scavenger:
             self.data = pd.read_excel(filepath, header=0)
 
         self.results = pd.DataFrame()
+        self.group_results = pd.DataFrame()
         self.codebook = {
             "win_risk": "Proportion of risky wins",
             "loss_risk": "Proportion of risky losses",
@@ -383,7 +384,12 @@ class Scavenger:
 
         # Convert results to a DataFrame
         self.results = pd.DataFrame(self.results)
-        return self.results
+
+        # calculate group means
+        group_results = self.results.mean()
+        self.group_results = pd.DataFrame(group_results).T
+
+        return self.results, self.group_results
 
     def codebook(self):
         """

@@ -74,6 +74,7 @@ class spaceObserver:
             # self.data = pd.read_excel(filepath, header=0, nrows=500)
 
         self.results = pd.DataFrame()
+        self.group_results = pd.DataFrame()
         self.codebook = {
         }
 
@@ -220,7 +221,24 @@ class spaceObserver:
 
             # Convert results to a DataFrame
             self.results = pd.DataFrame(self.results)
-            return self.results
+            
+            # calculate group means
+            rt_mean = np.mean(self.results["mean_RT"])
+            rt_std = np.std(self.results["mean_RT"])
+            conf_mean = np.mean(self.results["mean_confidence"])
+            conf_std = np.std(self.results["mean_confidence"])
+            rt_conf_mean = np.mean(self.results["mean_confidenceRT"])
+            acc_mean = np.mean(self.results["accuracy"])
+            acc_std = np.std(self.results["accuracy"])
+            conf_corr_mean = np.mean(self.results["conf_corr_mean"])
+            conf_incorr_mean = np.mean(self.results["conf_incorr_mean"])
+            abs_evdiff_mean = np.mean(self.results["mean_abs_evdiff"])
+            evdiff_correct_mean = np.mean(self.results["evdiff_correct"])
+            evdiff_incorrect_mean = np.mean(self.results["evdiff_incorrect"])
+
+            self.group_results = pd.DataFrame({"mean_RT": rt_mean, "std_RT": rt_std, "mean_confidence": conf_mean, "std_confidence": conf_std, "mean_confidenceRT": rt_conf_mean, "mean_accuracy": acc_mean, "std_accuracy": acc_std, "mean_confidence_corr": conf_corr_mean, "mean_confidence_incorr": conf_incorr_mean, "mean_abs_evdiff": abs_evdiff_mean, "mean_evdiff_correct": evdiff_correct_mean, "mean_evdiff_incorrect": evdiff_incorrect_mean}, index=[0])
+            
+            return self.results, self.group_results
         
         
         elif mode == "modelling": 
@@ -277,7 +295,17 @@ class spaceObserver:
 
             # Convert results to a DataFrame
             self.results = pd.DataFrame(self.results)
-            return self.results
+            
+            # calculate group means
+            rt_mean = np.mean(self.results["mean_RT"])
+            rt_std = np.std(self.results["mean_RT"])
+            conf_mean = np.mean(self.results["mean_confidence"])
+            conf_std = np.std(self.results["mean_confidence"])
+            acc_mean = np.mean(self.results["accuracy"])
+            acc_std = np.std(self.results["accuracy"])
+            self.group_results = pd.DataFrame({"mean_RT": rt_mean, "std_RT": rt_std, "mean_confidence": conf_mean, "std_confidence": conf_std, "mean_accuracy": acc_mean, "std_accuracy": acc_std}, index=[0])
+            
+            return self.results, self.group_results
 
 
 

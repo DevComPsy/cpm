@@ -18,7 +18,7 @@ import multiprocess as mp
 __all__ = ["metad_generator", "d_prime_calculator", "MetaD", "EstimatorMetaD"]
 
 
-def metad_generator(parameters, **kwargs):
+def metad_generator(parameters, data, **kwargs):
     """
     A function for calculating meta-d based on Signal Detection Theory.
 
@@ -38,6 +38,12 @@ def metad_generator(parameters, **kwargs):
             Response criteria for stimulus type 1.
         - criterion_type2: array-like
             Response criteria for stimulus type 2.
+    data : object
+        An object containing the following attributes:
+        - hit_rates : array-like
+            Hit rates for each confidence bin.
+        - false_alarm_rates : array-like
+            False alarm rates for each confidence bin.
     **kwargs : dict
         Additional keyword arguments.
 
@@ -55,6 +61,7 @@ def metad_generator(parameters, **kwargs):
         The second row contains the confidence bin probabilities of incorrect responses given stimulus type 1.
         The third row contains the confidence bin probabilities of correct responses given stimulus type 2.
         The fourth row contains the confidence bin probabilities of incorrect responses given stimulus type 2.
+        Each column is a bins, such that the first column is the first confidence bin, the second column is the second confidence bin, and so on.
     - nbins : int
         Number of confidence bins.
     - meta_criterion : float
@@ -71,6 +78,10 @@ def metad_generator(parameters, **kwargs):
 
     Examples
     --------
+    >>> from cpm.applications.signal_detection import metad_generator
+    >>> from cpm.generators import Parameters
+    >>> import numpy as np
+    >>> # Example usage
     >>> parameters = Parameters(
     >>>    nbins=4,
     >>>    d_prime=2,
@@ -100,51 +111,61 @@ def metad_generator(parameters, **kwargs):
     if s is None:
         s = 1
 
+
     ## non freely varying parameters
     nbins = parameters.bins
     d_prime = parameters.d_prime
-    criterion_type1 = parameters.criterion_type1
+    criterion_type1 = (-1 / (1 + s)) * (
+        norm.ppf(data.hit_rates) + norm.ppf(data.false_alarm_rates)
+    )
+    criterion_type1 = criterion_type1[[nbins - 1]]
 
     ## freely varying parameters
     meta_d = parameters.meta_d
     criterion_type2 = parameters.criterion_type2
     ## meta_criterion is defined to be the distance from the mean of the type 1 distribution to the decision criterion
     ## it is an adjustment we apply to shift the means of the two distributions
-    meta_criterion = meta_d * criterion_type1 / d_prime
+    meta_criterion = meta_d * (criterion_type1 / d_prime)
 
     S1mu = -meta_d / 2 - meta_criterion  ## mean for stimulus type 1
     S1sd = 1  ## standard deviation for stimulus type 1
     S2mu = meta_d / 2 - meta_criterion  ## mean for stimulus type 2
-    S2sd = 1 / s  ## standard deviation for stimulus type 2
+    S2sd = S1sd / s  ## standard deviation for stimulus type 2
     if len(criterion_type2) != 2 * nbins - 2:
         raise ValueError(
             "The parameters for the type 2 criteria must be twice the number of confidence bins minus 2"
         )
 
     ## if criterion_type2 is a cpm.generators.Value object, extract the value
-    criterion_type2_array = (
-        criterion_type2.value if hasattr(criterion_type2, "value") else criterion_type2
-    )
+    criterion_type2_array = criterion_type2.value
     ## Create criterion array with -inf and inf for the edges
     criterion_type2_array = np.concatenate(
-        [[-np.inf], criterion_type2_array, [0], criterion_type2_array, [np.inf]]
+        [
+            [-np.inf],
+            criterion_type2_array[0 : nbins - 1],
+            [0],
+            criterion_type2_array[nbins - 1 :],
+            [np.inf],
+        ]
     )
 
-    ## calculate the probabilities of hit rates (correct) and false alarm rates (incorrect) for each stimulus type
-    correct_stimulus_one = norm.cdf(0, S1mu, S1sd)
-    incorrect_stimulus_one = norm.cdf(0, S2mu, S2sd)
+    ## calculate the area under the CDF curve for each stimulus/response combination
+    ## auc = area under the curve
+    correct_stimulus_one = norm.cdf(0, S1mu, S1sd) ## hit rate
+    incorrect_stimulus_one = norm.cdf(0, S2mu, S2sd) ## false alarms
 
-    correct_stimulus_two = 1 - norm.cdf(0, S2mu, S2sd)
-    incorrect_stimulus_two = 1 - norm.cdf(0, S1mu, S1sd)
+    correct_stimulus_two = 1 - norm.cdf(0, S2mu, S2sd) ## correct rejection
+    incorrect_stimulus_two = 1 - norm.cdf(0, S1mu, S1sd) ## misses
     # Ensure that the values are clipped to avoid zero values
-    correct_stimulus_one = np.clip(correct_stimulus_one, 1e-10, None)
-    incorrect_stimulus_one = np.clip(incorrect_stimulus_one, 1e-10, None)
-    correct_stimulus_two = np.clip(correct_stimulus_two, 1e-10, None)
-    incorrect_stimulus_two = np.clip(incorrect_stimulus_two, 1e-10, None)
+    # correct_stimulus_one = np.clip(correct_stimulus_one, 1e-10, None)
+    # incorrect_stimulus_one = np.clip(incorrect_stimulus_one, 1e-10, None)
+    # correct_stimulus_two = np.clip(correct_stimulus_two, 1e-10, None)
+    # incorrect_stimulus_two = np.clip(incorrect_stimulus_two, 1e-10, None)
 
     ## calculate probabilities for each confidence bin given the stimulus type and responses
-    ## probability_correct_stimulus_one: probability of correct responses given stimulus type 1
-    ## probability_incorrect_stimulus_one: probability of incorrect responses given stimulus type 1
+    ## probability_correct_stimulus_one: probability of correct stimulus 1 responses (hit rate)
+    ## probability_incorrect_stimulus_one: probability of incorrect stimulus 1 responses (misses)
+    ## hit rates
     probability_correct_stimulus_one = [
         (
             norm.cdf(criterion_type2_array[i + 1], S1mu, S1sd)
@@ -153,6 +174,7 @@ def metad_generator(parameters, **kwargs):
         / correct_stimulus_one
         for i in np.arange(nbins)
     ]
+    ## false alarms
     probability_incorrect_stimulus_one = [
         (
             norm.cdf(criterion_type2_array[i + 1], S2mu, S2sd)
@@ -161,8 +183,9 @@ def metad_generator(parameters, **kwargs):
         / incorrect_stimulus_one
         for i in np.arange(nbins)
     ]
-    ## probability_correct_stimulus_two: probability of correct responses given stimulus type 2
-    ## probability_incorrect_stimulus_two: probability of incorrect responses given stimulus type 2
+    ## probability_correct_stimulus_two: probability of correct stimulus two responses (correct rejection)
+    ## probability_incorrect_stimulus_two: probability of incorrect stimulus 2 responses (false alarms)
+    ## correct rejection
     probability_correct_stimulus_two = [
         (
             (1 - norm.cdf(criterion_type2_array[nbins + i], S2mu, S2sd))
@@ -171,6 +194,7 @@ def metad_generator(parameters, **kwargs):
         / correct_stimulus_two
         for i in np.arange(nbins)
     ]
+    ## false alarms
     probability_incorrect_stimulus_two = [
         (
             (1 - norm.cdf(criterion_type2_array[nbins + i], S1mu, S1sd))
@@ -179,29 +203,40 @@ def metad_generator(parameters, **kwargs):
         / incorrect_stimulus_two
         for i in np.arange(nbins)
     ]
+    ## the probabilities below are ordered to correspond with the human data
+    ## see cpm.utils.metad count_bins function on how participant data is ordered
     probabilities = np.array(
         [
-            np.asarray(probability_correct_stimulus_one).flatten(),
-            np.asarray(probability_incorrect_stimulus_one).flatten(),
-            np.asarray(probability_correct_stimulus_two).flatten(),
-            np.asarray(probability_incorrect_stimulus_two).flatten(),
+            np.asarray(probability_correct_stimulus_one).flatten(),  ## hit rates
+            np.asarray(probability_incorrect_stimulus_one).flatten(),  ## false alarms
+            np.asarray(probability_correct_stimulus_two).flatten(),  ## correct rejections
+            np.asarray(probability_incorrect_stimulus_two).flatten(),  ## misses
         ],
     )
     output = {
-        "dependent": probabilities.flatten(),
+        "dependent": probabilities,
         "bins": nbins.value,
+        "type_2_criterion_array": criterion_type2_array,
         "meta_criterion": meta_criterion,
         "meta_d": meta_d.value,
         "S1mu": S1mu,
         "S1sd": S1sd,
         "S2mu": S2mu,
         "S2sd": S2sd,
+        "criterion_type1": criterion_type1,
+        "hits_and_false_alarms": data,
+        "area_under_the_curve" : np.array([
+            correct_stimulus_one,
+            incorrect_stimulus_one,
+            correct_stimulus_two,
+            incorrect_stimulus_two,
+        ])
     }
 
     return output
 
 
-def d_prime_calculator(data):
+def d_prime_calculator(data, s=1):
     """
     A function that calculates d-prime from hit rates and false alarms.
 
@@ -212,13 +247,10 @@ def d_prime_calculator(data):
     where HR is the hit rate (true positive rate) and FAR is the false alarm rate (false positive rate).
     z is the inverse of the cumulative distribution function of the standard normal distribution.
     """
-    dprime = norm.ppf(data.hit_rates) - norm.ppf(data.false_alarm_rates)
-    criterion_type1 = -0.5 * (
-        norm.ppf(data.hit_rates) + norm.ppf(data.false_alarm_rates)
-    )
+    dprime = (1 / s) * norm.ppf(data.hit_rates) - norm.ppf(data.false_alarm_rates)
+
     output = {
         "d_prime": dprime,
-        "criterion_type1": criterion_type1,
         "hit_rates": data.hit_rates,
         "false_alarm_rates": data.false_alarm_rates,
     }
@@ -252,75 +284,111 @@ class MetaD:
         self.parameters = Parameters(
             meta_d=Value(
                 value=parameters[0],
-                lower=-5,
-                upper=5,
+                lower=-10,
+                upper=10,
                 prior="norm",
                 args={"mean": 1, "std": 2},
             ),
             criterion_type2=Value(
                 value=parameters[1:],
-                lower=np.array([[-5] * (bins - 1), [0] * (bins - 1)]).flatten(),
-                upper=np.array([[0] * (bins - 1), [5] * (bins - 1)]).flatten(),
+                lower=np.array([[-20] * (bins - 1), [0] * (bins - 1)]).flatten(),
+                upper=np.array([[0] * (bins - 1), [20] * (bins - 1)]).flatten(),
                 prior=multivariate_normal,
                 args={
                     "mean": np.delete(np.linspace(-4, 4, 2 * bins - 1), bins - 1),
                     "cov": 3 * np.eye(2 * bins - 2),
                 },
             ),
-            criterion_type1=1,
             s=1,
             d_prime=1,
             bins=bins,
         )
         self.bounds = self.parameters.bounds()
 
-        # Generate matrices A and b based on number of bins
-        A = np.zeros((2 * bins - 1, 2 * bins - 1))
-        for i in range(2 * bins - 3):
-            A[i, i + 1 : i + 3] = [-1, 1]
-        A[-2, bins - 1] = -1
-        A[-1, bins] = 1
+        ## Here, we constrain the parameters to ensure that the criteria are in the correct order
+        ## this means that criteria for bin i is always larger than i + 1
+        ## this is different from other toolboxes. because they order the criteria for different responses in opposing orders
+        ## here, we always have the criteria for all responses in the same order
+        nCriteria = int(2 * self.bins - 1)
+        num_rows = nCriteria - 2
+        lb = np.full(nCriteria - 2, 1e-5)
+        ub = np.full(nCriteria - 2, np.inf)
 
-        self.constraints = LinearConstraint(A=A, lb=self.bounds[0], ub=self.bounds[1])
+        A = np.eye(num_rows, k=0) - np.eye(num_rows, k=1)
+        A = np.hstack((np.zeros((num_rows, 1)), A, np.zeros((num_rows, 1))))
+        A[-1, -1] = -1
+
+        self.constraints = LinearConstraint(A=A, lb=lb, ub=ub)
 
         self.d_prime_formula = d_prime_calculator
-        self.meta_d_model = metad_generator
+        self.meta_d_formula = metad_generator
 
     def run(self):
         """
         Run the meta-d analysis.
         """
-
+        ## type 1 sensitivity
         ## fist, calculate hit rates and false alarm rates
         aggregate = self.data.groupby(["stimulus", "response"]).count().reset_index()
         ## calculate hit rates for when stimulus == response
         hit_rates = (
-            aggregate[aggregate["stimulus"] == aggregate["response"]].confidence.sum()
+            aggregate[
+                (aggregate.stimulus == aggregate.response)
+            ].confidence.sum()
             / aggregate.confidence.sum()
         )
-        ## calculate false alarm rates for when stimulus != response
         false_alarm_rates = (
-            aggregate[aggregate["stimulus"] != aggregate["response"]].confidence.sum()
+            aggregate[
+                (aggregate.stimulus != aggregate.response)
+            ].confidence.sum()
             / aggregate.confidence.sum()
         )
-        transformed = pd.Series(
+        transformed_type1 = pd.Series(
             {
                 "hit_rates": hit_rates,
                 "false_alarm_rates": false_alarm_rates,
             }
         )
-        self.d_prime = pd.Series(self.d_prime_formula(transformed))
+        self.d_prime = pd.Series(self.d_prime_formula(transformed_type1))
         self.parameters.update(
             **{
                 "d_prime": self.d_prime.d_prime,
-                "criterion_type1": self.d_prime.criterion_type1,
             }
         )
-        self.meta_d = pd.Series(self.meta_d_model(self.parameters))
+        ## type 2 sensitivity
+        discretised_data = bin_ratings(
+            ratings=self.data.confidence, xtdout=False, nbins=self.bins
+        )
+        counted_data = count_bins(
+            stimulus_identifier=self.data.stimulus.astype(int),
+            response=self.data.response.astype(int),
+            n_ratings=4,
+            rating=discretised_data,
+            pandas=True,
+        )
+        ## calculate counts of responses for each bin
+        ## we use it to calculate the meta-criterion
+        ## to adjust means of distributions to avoid problems with optimisation
+        hit_rates_binned = counted_data[counted_data.stimulus == 1].counts.to_numpy()
+        hit_rates_binned /= np.sum(hit_rates_binned)
+        hit_rates_binned = hit_rates_binned[::-1]
+        hit_rates_binned = hit_rates_binned[1:]
+        false_alarm_rates_binned = counted_data[counted_data.stimulus == 0].counts.to_numpy()
+        false_alarm_rates_binned /= np.sum(false_alarm_rates_binned)
+        false_alarm_rates_binned = false_alarm_rates_binned[::-1]
+        false_alarm_rates_binned = false_alarm_rates_binned[1:]
+        
+        transformed_type2 = pd.Series(
+            {
+                "hit_rates": hit_rates_binned,
+                "false_alarm_rates": false_alarm_rates_binned,
+            }
+        )
+        self.meta_d = pd.Series(self.meta_d_formula(self.parameters, transformed_type2))
         self.dependent = self.meta_d.get("dependent").flatten()
         return None
 
-    def reset(self, parameters):
+    def reset(self, parameters=None, data=None):
         """
         Update the parameters of the model.
 
@@ -329,9 +397,13 @@ class MetaD:
         parameters : dict
             A dictionary containing the parameters to update.
         """
-        self.parameters.update(
-            **{"meta_d": parameters[0], "criterion_type2": parameters[1:]}
-        )
+        if parameters is not None:
+            self.parameters.update(
+                **{"meta_d": parameters[0], "criterion_type2": parameters[1:]}
+            )
+        if data is not None:
+            self.data = data
+        return None
 
     def export(self):
         """
@@ -382,6 +454,7 @@ class EstimatorMetaD:
 
     def __init__(
         self,
+        model=None,
         data=None,
         initial_guess=None,
         minimisation=None,
@@ -395,7 +468,9 @@ class EstimatorMetaD:
         display=False,
         **kwargs,
     ):
-        self.model = copy.deepcopy(MetaD)
+        self.model = copy.deepcopy(model)
+        if not isinstance(self.model, MetaD):
+            raise ValueError("The model must be an instance of MetaD.")
         self.data = data
         self.ppt_identifier = ppt_identifier
         self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
@@ -409,16 +484,15 @@ class EstimatorMetaD:
         self.prior = prior
 
         self.method = method
-        if isinstance(model, Wrapper):
-            self.parameter_names = self.model.parameters.free()
-        if not self.parameter_names:
-            raise ValueError(
-                "The model does not contain any free parameters. Please check the model parameters."
-            )
-        if isinstance(model, Simulator):
-            raise ValueError(
-                "The GradientFree class is not compatible with the Simulator object."
-            )
+        self.parameter_names = [
+            "meta_d",
+            "criterion1_type2",
+            "criterion2_type2",
+            "criterion3_type3",
+            "criterion4_type4",
+            "criterion5_type5",
+            "criterion6_type6",
+        ]
 
         self.fit = []
         self.details = []
@@ -428,7 +502,7 @@ class EstimatorMetaD:
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
             guesses=initial_guess,
-            shape=(number_of_starts, len(self.parameter_names)),
+            shape=(number_of_starts, 7),
         )
 
         self.__parallel__ = parallel
@@ -466,14 +540,13 @@ class EstimatorMetaD:
             )
 
             discrete = bin_ratings(
-                ratings=participant_dc.confidence, xtdout=True, nbins=self.bins
+                ratings=participant_dc.confidence, xtdout=False, nbins=self.model.bins
             )
             observed = count_bins(
                 stimulus_identifier=participant_dc.stimulus,
                 response=participant_dc.response,
                 n_ratings=4,
                 rating=discrete,
-                nbins=self.bins,
                 pandas=False,
             ).flatten()
 

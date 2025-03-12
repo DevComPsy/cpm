@@ -223,16 +223,15 @@ class LogLikelihood:
         >>> print("Log Likelihood :", ll_float)
         Log Likelihood : 18.314715666079106
         """
-        if isinstance(observed, np.ndarray) and len(observed) == 1:
-            observed = np.array(observed[0], dtype=float)
-        else:
-            observed = np.array(observed, dtype=float)
+        limit = np.log(1e-200)
+        bound = np.finfo(np.float64).min
         predicted, observed = np.squeeze(predicted), np.squeeze(observed)
-        assert (
-            predicted.shape == observed.shape
-        ), "The predicted and observed values must have the same shape."
         predicted = np.clip(predicted, clip, np.inf)  # Avoid log(0)
-        LL = np.sum(observed.flatten() * np.log(predicted.flatten()))
+        LL = observed.flatten() * np.log(predicted.flatten())
+        ## swap NA with -Inf
+        LL[np.isnan(LL)] = -np.inf
+        LL[LL < bound] = limit  # Set the lower bound to avoid overflow
+        LL = np.sum(LL)
         if negative:
             LL = -1 * LL
         return LL

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Union
-
+import warnings
 
 def bin_ratings(
     ratings: Union[list, np.ndarray],
@@ -133,6 +133,7 @@ def count_bins(
     padding=True,
     pandas=True,
     scale=False,
+    order=None,
 ):
     """
     Convert discretized confidence ratings (usually sorted into bins) into response counts for each stimulus type.
@@ -151,7 +152,14 @@ def count_bins(
         If True, padding is added to avoid zeros in the response counts. The default value is 1 / (2 * n_ratings).
         If False, no padding is added. If a double is provided, it is used as padding.
     scale : bool
-
+        If True, the response counts are scaled by the sum of ratings for each stimulus type.
+        The default value is False.
+    pandas : bool
+        If True, the output is returned as a pandas DataFrame. The default value is True.
+    order : list-like
+        If provided, the order of the output DataFrame is set to this order. The default value is None.
+        If None, the order is set to accommodate the cpm.applications.signal_detection.MetaD class.
+        If the number of stimuli is larger than 2, no order is set..
     Returns
     -------
     counts : np.ndarray
@@ -169,30 +177,29 @@ def count_bins(
     >>> discrete = bin_ratings(rating, nbins=4)
     >>> n_ratings = 4
     >>> count_bins(stimulus_identifier=stimulus_identifier, response=response, rating=discrete, n_ratings=n_ratings, padding=False)
-            counts  stimulus  response
-    0     58.0         0         0
-    1     50.0         0         0
-    2     66.0         0         0
-    3     64.0         0         0
-    4     65.0         0         1
-    5     71.0         0         1
-    6     55.0         0         1
-    7     48.0         0         1
-    8     64.0         1         0
-    9     61.0         1         0
-    10    61.0         1         0
-    11    71.0         1         0
-    12    63.0         1         1
-    13    68.0         1         1
-    14    68.0         1         1
-    15    67.0         1         1
-
+        counts  stimulus  response  bins
+    0     67.0         0         0     3
+    1     66.0         0         0     2
+    2     55.0         0         0     1
+    3     67.0         0         0     0
+    4     65.0         0         1     0
+    5     57.0         0         1     1
+    6     60.0         0         1     2
+    7     63.0         0         1     3
+    8     61.0         1         0     3
+    9     68.0         1         0     2
+    10    70.0         1         0     1
+    11    58.0         1         0     0
+    12    59.0         1         1     3
+    13    56.0         1         1     2
+    14    68.0         1         1     1
+    15    60.0         1         1     0
     """
     ## check for valid inputs, and force everything to numpy.array
     stimulus_identifier = np.array(stimulus_identifier)
     response = np.array(response)
     rating = np.array(rating)
-
+    n_ratings = int(n_ratings)
     ## number of distinct responses
     n_responses = response.max() + 1
     if isinstance(padding, bool):
@@ -209,8 +216,19 @@ def count_bins(
     number_of_stimuli = stimulus_identifier.max() + 1
     number_of_discrete_ratings = n_ratings
     columns = number_of_discrete_ratings * number_of_stimuli
+    reorder = False
+    if order is not None:
+        if len(order) != number_of_stimuli**2 * number_of_discrete_ratings:
+            raise ValueError(
+                "The order must be of length number_of_stimuli**2 * number_of_discrete_ratings"
+            )
+        locations = order
+        reorder = True
+    if (order is None) and (number_of_stimuli == 2):
+        reorder = True
+        locations = [3, 2, 1, 0, 11, 10, 9, 8, 12, 13, 14, 15, 7, 6, 5, 4]
 
-    counts = np.zeros((number_of_stimuli, columns))
+    counts = np.zeros((int(number_of_stimuli), int(columns)))
 
     for stim in np.arange(number_of_stimuli):
         indices = np.where(stimulus_identifier == stim)
@@ -228,7 +246,9 @@ def count_bins(
                 ][rates]
             if scale:
                 response_counts /= denominator
-            counts[stim, resp * n_ratings : (resp + 1) * n_ratings] = response_counts
+            start = int(resp) * int(n_ratings)
+            finish = int((resp + 1) * (n_ratings))
+            counts[int(stim),  start:finish] = response_counts
     # pad response counts to avoid zeros
     if padding > 0:
         counts += padding
@@ -240,5 +260,43 @@ def count_bins(
             np.repeat(np.arange(n_responses), columns / number_of_stimuli),
             number_of_stimuli,
         )
+        if reorder:
+            output = output.iloc[locations]
+            output["bins"] = np.array([
+                3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3
+            ])
+        else:
+            output["bins"] = np.tile(
+                np.arange(number_of_discrete_ratings), number_of_stimuli * n_responses
+            )
+        output.reset_index(drop=True, inplace=True)
         counts = output
     return counts
+
+
+n = 1000
+dimensions = 2
+stimulus_identifier = np.random.randint(0, dimensions, n)
+response = np.random.randint(0, dimensions, n)
+rating = np.random.normal(0, 1, n)
+discrete = bin_ratings(rating, nbins=4)
+n_ratings = 4
+bb = count_bins(
+    stimulus_identifier=stimulus_identifier,
+    response=response,
+    rating=discrete,
+    n_ratings=n_ratings,
+    padding=False,
+)
+
+bb.reset_index(drop=True, inplace=True)
+bb
+
+# number_of_stimuli = 2
+# number_of_discrete_ratings = 4
+
+# locations = np.arange(number_of_stimuli**2 * number_of_discrete_ratings)
+# locations = np.arange(number_of_stimuli**2 * number_of_discrete_ratings)
+# locations = np.split(locations, number_of_stimuli**2)
+# locations = np.array([locations[i] for i in [0, 2, 3, 1]])
+# locations.flatten()

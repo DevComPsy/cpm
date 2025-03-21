@@ -1,19 +1,177 @@
 import numpy as np
 import pandas as pd
-from typing import Union
-import warnings
+
+
+def count_trials(
+    data=pd.DataFrame,
+    stimuli: str = "Stimuli",
+    responses: str = "Responses",
+    accuracy: str = "Accuracy",
+    confidence: str = "Confidence",
+    nRatings: int = 4,
+    padding: bool = False,
+    padAmount: float = None,
+):
+    """Convert raw behavioral data to nR_S1 and nR_S2 response count.
+
+    Given data from an experiment where an observer discriminates between two
+    stimulus alternatives on every trial and provides confidence ratings,
+    converts trial by trial experimental information for N trials into response
+    counts.
+
+    Parameters
+    ----------
+    data :
+        Dataframe containing stimuli, accuracy and confidence ratings.
+    stimuli :
+        Stimuli ID (0 or 1). If a dataframe is provided, should be the name of
+        the column containing the stimuli ID. Default is `'Stimuli'`.
+    responses :
+        Response (0 or 1). If a dataframe is provided, should be the
+        name of the column containing the response accuracy. Default is
+        `'Responses'`.
+    accuracy :
+        Response accuracy (0 or 1). If a dataframe is provided, should be the
+        name of the column containing the response accuracy. Default is
+        `'Accuracy'`.
+    confidence :
+        Confidence ratings. If a dataframe is provided, should be the name of
+        the column containing the confidence ratings. Default is
+        `'Confidence'`.
+    nRatings :
+        Total of available subjective ratings available for the subject. e.g.
+        if subject can rate confidence on a scale of 1-4, then nRatings = 4.
+        Default is `4`.
+    padding :
+        If `True`, each response count in the output has the value of padAmount
+        added to it. Padding cells is desirable if trial counts of 0 interfere
+        with model fitting. If False, trial counts are not manipulated and 0s
+        may be present in the response count output. Default value for padding
+        is 0.
+    padAmount :
+        The value to add to each response count if padding is set to 1.
+        Default value is 1/(2*nRatings)
+
+    Returns
+    -------
+    nR_S1, nR_S2 :
+        Vectors containing the total number of responses in each accuracy
+        category, conditional on presentation of S1 and S2.
+
+    Notes
+    -----
+    All trials where `stimuli` is not 0 or 1, accuracy is not 0 or 1, or confidence is
+    not in the range [1, nRatings], are automatically omitted.
+
+    The inputs can be responses, accuracy or both. If both `responses` and
+    `accuracy` are provided, will check for consstency. If only `accuracy` is
+    provided, the responses vector will be automatically infered.
+
+    If nR_S1 = [100 50 20 10 5 1], then when stimulus S1 was presented, the subject had
+    the following accuracy counts:
+        responded S1, confidence=3 : 100 times
+        responded S1, confidence=2 : 50 times
+        responded S1, confidence=1 : 20 times
+        responded S2, confidence=1 : 10 times
+        responded S2, confidence=2 : 5 times
+        responded S2, confidence=3 : 1 time
+
+    The ordering of accuracy / confidence counts for S2 should be the same as it is for
+    S1. e.g. if nR_S2 = [3 7 8 12 27 89], then when stimulus S2 was presented, the
+    subject had the following accuracy counts:
+        responded S1, confidence=3 : 3 times
+        responded S1, confidence=2 : 7 times
+        responded S1, confidence=1 : 8 times
+        responded S2, confidence=1 : 12 times
+        responded S2, confidence=2 : 27 times
+        responded S2, confidence=3 : 89 times
+
+    Examples
+    --------
+    >>> stimID = [0, 1, 0, 0, 1, 1, 1, 1]
+    >>> accuracy = [0, 1, 1, 1, 0, 0, 1, 1]
+    >>> confidence = [1, 2, 3, 4, 4, 3, 2, 1]
+    >>> nRatings = 4
+
+    >>> nR_S1, nR_S2 = trials2counts(stimID, accuracy, confidence, nRatings)
+    >>> print(nR_S1, nR_S2)
+
+    Reference
+    ---------
+    This function is adapted from the Python version of trials2counts.m by
+    Maniscalco & Lau [1] retrieved at:
+    http://www.columbia.edu/~bsm2105/type2sdt/trials2counts.py
+
+    .. [1] Maniscalco, B., & Lau, H. (2012). A signal detection theoretic
+        approach for estimating metacognitive sensitivity from confidence
+        ratings. Consciousness and Cognition, 21(1), 422–430.
+        https://doi.org/10.1016/j.concog.2011.09.021
+
+    """
+    if isinstance(data, pd.DataFrame):
+        stimuli = data[stimuli].to_numpy()
+        confidence = data[confidence].to_numpy()
+        if accuracy in data:
+            accuracy = data[accuracy].to_numpy()
+        if responses in data:
+            responses = data[responses].to_numpy()
+    elif data is not None:
+        raise ValueError("`Data` should be a DataFrame")
+
+    # Check data consistency
+    tempstim, tempresp, tempratg = [], [], []
+    for s, rp, rt in zip(stimuli, responses, confidence):
+        if (s == 0 or s == 1) and (rp == 0 or rp == 1) and (rt >= 1 and rt <= nRatings):
+            tempstim.append(s)
+            tempresp.append(rp)
+            tempratg.append(rt)
+    stimuli = tempstim
+    responses = tempresp
+    confidence = tempratg
+
+    if padAmount is None:
+        padAmount = 1 / (2 * nRatings)
+
+    nR_S1, nR_S2 = [], []
+    # S1 responses
+    for r in range(nRatings, 0, -1):
+        cs1, cs2 = 0, 0
+        for s, rp, rt in zip(stimuli, responses, confidence):
+            if s == 0 and rp == 0 and rt == r:
+                cs1 += 1
+            if s == 1 and rp == 0 and rt == r:
+                cs2 += 1
+        nR_S1.append(cs1)
+        nR_S2.append(cs2)
+
+    # S2 responses
+    for r in range(1, nRatings + 1, 1):
+        cs1, cs2 = 0, 0
+        for s, rp, rt in zip(stimuli, responses, confidence):
+            if s == 0 and rp == 1 and rt == r:
+                cs1 += 1
+            if s == 1 and rp == 1 and rt == r:
+                cs2 += 1
+        nR_S1.append(cs1)
+        nR_S2.append(cs2)
+
+    # pad response counts to avoid zeros
+    if padding:
+        nR_S1 = [n + padAmount for n in nR_S1]
+        nR_S2 = [n + padAmount for n in nR_S2]
+
+    return np.array(nR_S1), np.array(nR_S2)
 
 def bin_ratings(
-    ratings: Union[list, np.ndarray],
+    ratings=None,
     nbins: int = 4,
+    verbose: bool = True,
     ignore_invalid: bool = False,
-    xtdout: bool = False,
 ):
-    """
-    Convert continuous confidence ratings into discrete bins defined by quantiles.
+    """Convert from continuous to discrete ratings.
 
     Resample if quantiles are equal at high or low end to ensure proper
-    assignment of binned confidences.
+    assignment of binned confidence
 
     Parameters
     ----------
@@ -21,26 +179,32 @@ def bin_ratings(
         Ratings on a continuous scale.
     nbins : int
         The number of discrete ratings to resample. Defaut set to `4`.
+    verbose : boolean
+        If `True`, warning warnings be returned.
     ignore_invalid : bool
-        If `False` (default), an ValueError will be raised in case of impossible
+        If `False` (default), an arreor will be raised in case of impossible
         discretisation of the confidence ratings. This is mostly due to identical
         values and SDT values should not be extracted from the data. If `True` the
-        discretisation will process anyway.
+        discretisation will process anyway. This option can be usefull for plotting.
 
     Returns
     -------
-    discrete_ratings : np.ndarray
-        If xtdout=False, the function returns the discretised ratings.
-    xtdout : pd.Series
-        if xtdout=True, the function returns a pd.Series with the following items:
-        discrete_ratings : np.ndarray
-            The discretised ratings.
-        confidence_bins : np.ndarray
-            The bins used for discretisation.
-        resampled : bool
-            If resampling was needed, it can either be True or False.
-        counts_of_bins : int
-            The number of bins.
+    discreteRatings : np.ndarray
+        New rating array only containing integers between 1 and `nbins`.
+    out : dict
+        Dictionary containing logs of the discrization process:
+            * `'confbins'`: list or 1d array-like - If the ratings were
+                reampled, a list containing the new ratings and the new low or
+                hg threshold, appened before or after the rating, respectively.
+                Else, only returns the ratings.
+            * `'rebin'`: boolean - If True, the ratings were resampled due to
+                larger numbers of highs or low ratings.
+            * `'binCount'` : int - Number of bins
+
+    .. warning:: This function will automatically control for bias in high or
+        low confidence ratings. If the first two or the last two quantiles
+        have identical values, low or high confidence trials are excluded
+        (respectively), and the function is run again on the remaining data.
 
     Raises
     ------
@@ -50,7 +214,7 @@ def bin_ratings(
 
     Examples
     --------
-    >>> from cpm.utils.signal import discrete_ratings
+    >>> from metadpy.utils import discreteRatings
     >>> ratings = np.array([
     >>>     96, 98, 95, 90, 32, 58, 77,  6, 78, 78, 62, 60, 38, 12,
     >>>     63, 18, 15, 13, 49, 26,  2, 38, 60, 23, 25, 39, 22, 33,
@@ -58,245 +222,56 @@ def bin_ratings(
     >>>     52,  0,  0,  0, 25,  1, 16, 37, 59, 20, 25, 23, 45, 22,
     >>>     28, 62, 61, 69, 20, 75, 10, 18, 61, 27, 63, 22, 54, 30,
     >>>     36, 66, 14,  2, 53, 58, 88, 23, 77, 54])
-    >>> discrete_ratings(ratings)
-    array([4, 4, 3, ..., 1, 1, 2])
-    >>> discrete_ratings, out = bin_ratings(ratings, xtdout=True)
-    confidence_bins     [0.00011738282511786213, 0.2518697968335193, 0...
-    resampled                                                       False
-    counts_of_bins                                                 [2500]
-    discrete_ratings    [4, 4, 3, 1, 2, 1, 2, 3, 4, 4, 2, 1, 4, 1, 3, ...
+    >>> discreteRatings, out = discreteRatings(ratings)
+    (array([4, 4, 4, 4, 2, 3, 4, 1, 4, 4, 4, 4, 3, 1, 4, 1, 1, 1, 3, 2, 1, 3,
+        4, 2, 2, 3, 2, 2, 2, 2, 3, 1, 3, 1, 3, 4, 3, 1, 3, 1, 2, 3, 3, 1,
+        1, 1, 2, 1, 1, 3, 3, 2, 2, 2, 3, 2, 2, 4, 4, 4, 2, 4, 1, 1, 4, 2,
+        4, 2, 3, 2, 3, 4, 1, 1, 3, 3, 4, 2, 4, 3]),
+    {'confBins': array([ 0., 20., 35., 60., 98.]), 'rebin': 0, 'binCount': 21})
 
     """
     out, temp = {}, []
-    confidence_bins = np.quantile(ratings, np.linspace(0, 1, nbins + 1))
-    if (confidence_bins[0] == confidence_bins[1]) & (
-        confidence_bins[nbins - 1] == confidence_bins[nbins]
-    ):
+    confBins = np.quantile(ratings, np.linspace(0, 1, nbins + 1))
+    if (confBins[0] == confBins[1]) & (confBins[nbins - 1] == confBins[nbins]):
         if ignore_invalid is False:
             raise ValueError(
                 "The resulting rating scale contains a lot of identical"
                 " values and cannot be further analyzed"
             )
-    elif confidence_bins[nbins - 1] == confidence_bins[nbins]:
+    elif confBins[nbins - 1] == confBins[nbins]:
+        if verbose is True:
+            print("Correcting for bias in high confidence ratings")
         # Exclude high confidence trials and re-estimate
-        high_confidence = confidence_bins[-1]
-        confidence_bins = np.quantile(
-            ratings[ratings != high_confidence], np.linspace(0, 1, nbins)
-        )
-        for b in range(len(confidence_bins) - 1):
-            temp.append(
-                (ratings >= confidence_bins[b]) & (ratings <= confidence_bins[b + 1])
-            )
-        temp.append(ratings == high_confidence)
+        hiConf = confBins[-1]
+        confBins = np.quantile(ratings[ratings != hiConf], np.linspace(0, 1, nbins))
+        for b in range(len(confBins) - 1):
+            temp.append((ratings >= confBins[b]) & (ratings <= confBins[b + 1]))
+        temp.append(ratings == hiConf)
 
-        out["confidence_bins"] = [confidence_bins, high_confidence]
-        out["resampled"] = [1]
-    elif confidence_bins[0] == confidence_bins[1]:
+        out["confBins"] = [confBins, hiConf]
+        out["rebin"] = [1]
+    elif confBins[0] == confBins[1]:
+        if verbose is True:
+            print("Correction for bias in low confidence ratings")
         # Exclude low confidence trials and re-estimate
-        low_confidence = confidence_bins[1]
-        temp.append(ratings == low_confidence)
-        confidence_bins = np.quantile(
-            ratings[ratings != low_confidence], np.linspace(0, 1, nbins)
-        )
-        for b in range(1, len(confidence_bins)):
-            temp.append(
-                (ratings >= confidence_bins[b - 1]) & (ratings <= confidence_bins[b])
-            )
-        out["confidence_bins"] = [low_confidence, confidence_bins]
-        out["resampled"] = True
+        lowConf = confBins[1]
+        temp.append(ratings == lowConf)
+        confBins = np.quantile(ratings[ratings != lowConf], np.linspace(0, 1, nbins))
+        for b in range(1, len(confBins)):
+            temp.append((ratings >= confBins[b - 1]) & (ratings <= confBins[b]))
+        out["confBins"] = [lowConf, confBins]
+        out["rebin"] = [1]
     else:
-        for b in range(len(confidence_bins) - 1):
-            temp.append(
-                (ratings >= confidence_bins[b]) & (ratings <= confidence_bins[b + 1])
-            )
-        out["confidence_bins"] = confidence_bins
-        out["resampled"] = False
+        for b in range(len(confBins) - 1):
+            temp.append((ratings >= confBins[b]) & (ratings <= confBins[b + 1]))
+        out["confBins"] = confBins
+        out["rebin"] = [0]
 
-    discrete_ratings = np.zeros(len(ratings), dtype="int")
+    discreteRatings = np.zeros(len(ratings), dtype="int")
     for b in range(nbins):
-        discrete_ratings[temp[b]] = b
-    discrete_ratings += 1
-    out["counts_of_bins"] = [sum(temp[b])]
-    out["discrete_ratings"] = discrete_ratings
+        discreteRatings[temp[b]] = b
+    discreteRatings += 1
+    out["binCount"] = [sum(temp[b])]
 
-    if xtdout:
-        return pd.Series(out)
-    else:
-        return discrete_ratings
+    return discreteRatings, out
 
-
-def count_bins(
-    stimulus_identifier,
-    response,
-    rating,
-    n_ratings,
-    padding=True,
-    pandas=True,
-    scale=False,
-    order=None,
-):
-    """
-    Convert discretized confidence ratings (usually sorted into bins) into response counts for each stimulus type.
-
-    Parameters
-    ----------
-    stimulus_identifier : list-like
-        List of stimulus identifiers. Must start from 0, so that if you have 4 stimuli, the identifiers will be [0, 1, 2, 3].
-    response : list-like
-        List of responses, where each element corresponds to one of the stimulus identifiers. Must start from 0.
-    rating : list-like
-        List of confidence ratings, where each element corresponds to elements in stimulus_identifier.
-    n_ratings : int
-        The number of discrete ratings, must be larger than 0 and smaller or equal to the highest value in rating.
-    padding : bool or double
-        If True, padding is added to avoid zeros in the response counts. The default value is 1 / (2 * n_ratings).
-        If False, no padding is added. If a double is provided, it is used as padding.
-    scale : bool
-        If True, the response counts are scaled by the sum of ratings for each stimulus type.
-        The default value is False.
-    pandas : bool
-        If True, the output is returned as a pandas DataFrame. The default value is True.
-    order : list-like
-        If provided, the order of the output DataFrame is set to this order. The default value is None.
-        If None, the order is set to accommodate the cpm.applications.signal_detection.MetaD class.
-        If the number of stimuli is larger than 2, no order is set..
-    Returns
-    -------
-    counts : np.ndarray
-        A numpy array with the response counts for each stimulus type and for each ratings. Each row is a stimulus type and each column is a rating, such that stimulus type 0, rating 2 with response 2 is counts[0, 2 * n_ratings + 2]. Note that counting starts from 0.
-
-    Examples
-    -------
-    >>> import numpy as np
-    >>> from cpm.utils.metad import discrete_ratings, trials2counts
-    >>> n = 1000
-    >>> dimensions = 2
-    >>> stimulus_identifier = np.random.randint(0, dimensions, n)
-    >>> response = np.random.randint(0, dimensions, n)
-    >>> rating = np.random.normal(0, 1, n)
-    >>> discrete = bin_ratings(rating, nbins=4)
-    >>> n_ratings = 4
-    >>> count_bins(stimulus_identifier=stimulus_identifier, response=response, rating=discrete, n_ratings=n_ratings, padding=False)
-        counts  stimulus  response  bins
-    0     67.0         0         0     3
-    1     66.0         0         0     2
-    2     55.0         0         0     1
-    3     67.0         0         0     0
-    4     65.0         0         1     0
-    5     57.0         0         1     1
-    6     60.0         0         1     2
-    7     63.0         0         1     3
-    8     61.0         1         0     3
-    9     68.0         1         0     2
-    10    70.0         1         0     1
-    11    58.0         1         0     0
-    12    59.0         1         1     3
-    13    56.0         1         1     2
-    14    68.0         1         1     1
-    15    60.0         1         1     0
-    """
-    ## check for valid inputs, and force everything to numpy.array
-    stimulus_identifier = np.array(stimulus_identifier)
-    response = np.array(response)
-    rating = np.array(rating)
-    n_ratings = int(n_ratings)
-    ## number of distinct responses
-    n_responses = response.max() + 1
-    if isinstance(padding, bool):
-        if padding == True:
-            padding = 1 / (2 * n_ratings)
-    # check for valid inputs
-    if not (len(stimulus_identifier) == len(response)) or not (
-        len(stimulus_identifier) == len(rating)
-    ):
-        raise ValueError(
-            "stimulus_identifier, response, and rating input vectors must have the same lengths"
-        )
-
-    number_of_stimuli = stimulus_identifier.max() + 1
-    number_of_discrete_ratings = n_ratings
-    columns = number_of_discrete_ratings * number_of_stimuli
-    reorder = False
-    if order is not None:
-        if len(order) != number_of_stimuli**2 * number_of_discrete_ratings:
-            raise ValueError(
-                "The order must be of length number_of_stimuli**2 * number_of_discrete_ratings"
-            )
-        locations = order
-        reorder = True
-    if (order is None) and (number_of_stimuli == 2):
-        reorder = True
-        locations = [3, 2, 1, 0, 11, 10, 9, 8, 12, 13, 14, 15, 7, 6, 5, 4]
-
-    counts = np.zeros((int(number_of_stimuli), int(columns)))
-
-    for stim in np.arange(number_of_stimuli):
-        indices = np.where(stimulus_identifier == stim)
-        stim_ratings = rating[indices]
-        stim_responses = response[indices]
-        denominator = np.sum(stim_ratings)
-        for resp in np.arange(n_responses):
-            response_indices = np.where(stim_responses == resp)
-            response_ratings = stim_ratings[response_indices]
-            response_counts = np.zeros(n_ratings)
-            response_unique = np.unique(response_ratings, return_counts=True)
-            for rates in np.arange(len(response_unique[0])):
-                response_counts[int(response_unique[0][rates]) - 1] = response_unique[
-                    1
-                ][rates]
-            if scale:
-                response_counts /= denominator
-            start = int(resp) * int(n_ratings)
-            finish = int((resp + 1) * (n_ratings))
-            counts[int(stim),  start:finish] = response_counts
-    # pad response counts to avoid zeros
-    if padding > 0:
-        counts += padding
-
-    if pandas:
-        output = pd.DataFrame(counts.flatten(), columns=["counts"])
-        output["stimulus"] = np.repeat(np.arange(number_of_stimuli), columns)
-        output["response"] = np.tile(
-            np.repeat(np.arange(n_responses), columns / number_of_stimuli),
-            number_of_stimuli,
-        )
-        if reorder:
-            output = output.iloc[locations]
-            output["bins"] = np.array([
-                3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3
-            ])
-        else:
-            output["bins"] = np.tile(
-                np.arange(number_of_discrete_ratings), number_of_stimuli * n_responses
-            )
-        output.reset_index(drop=True, inplace=True)
-        counts = output
-    return counts
-
-
-n = 1000
-dimensions = 2
-stimulus_identifier = np.random.randint(0, dimensions, n)
-response = np.random.randint(0, dimensions, n)
-rating = np.random.normal(0, 1, n)
-discrete = bin_ratings(rating, nbins=4)
-n_ratings = 4
-bb = count_bins(
-    stimulus_identifier=stimulus_identifier,
-    response=response,
-    rating=discrete,
-    n_ratings=n_ratings,
-    padding=False,
-)
-
-bb.reset_index(drop=True, inplace=True)
-bb
-
-# number_of_stimuli = 2
-# number_of_discrete_ratings = 4
-
-# locations = np.arange(number_of_stimuli**2 * number_of_discrete_ratings)
-# locations = np.arange(number_of_stimuli**2 * number_of_discrete_ratings)
-# locations = np.split(locations, number_of_stimuli**2)
-# locations = np.array([locations[i] for i in [0, 2, 3, 1]])
-# locations.flatten()

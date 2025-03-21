@@ -2,7 +2,7 @@
 # and the original metad code from: http://www.columbia.edu/~bsm2105/type2sdt
 
 import warnings
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 import numpy as np
 import pandas as pd
 import cpm

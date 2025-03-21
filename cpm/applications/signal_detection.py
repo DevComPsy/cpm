@@ -23,9 +23,9 @@ def metad_nll(
     d1: float,
     t1c1: float,
     s: int,
-    parameters: Optional[cpm.generators.Parameters] = None,
+    parameters: cpm.generators.Parameters = None,
     prior: bool = False,
-) -> float:
+):
     """Negative log-likelihood of parameters given experimental data.
 
     Parameters
@@ -47,6 +47,11 @@ def metad_nll(
         `s = np.std(S1) / np.std(S2)`. If not specified, s is set to a default
         value of 1. For most purposes, it is recommended to set `s=1`. See
         http://www.columbia.edu/~bsm2105/type2sdt for further discussion.
+
+    Returns
+    -------
+    logL : float
+        The negative log-likelihood of the parameters given the data.
 
     """
     meta_d1, t2c1 = guess[0], guess[1:]
@@ -213,20 +218,16 @@ def fit_metad(
     results :
         In the following, S1 and S2 represent the distributions of evidence generated
         by stimulus classes S1 and S2:
-        * `'dprime'` : `mean(S2) - mean(S1)`, in root-mean-square(sd(S1), sd(S2))
-            units
-        * `'s'` : `sd(S1) / sd(S2)`
+        * `'d'` : d-prime, the distance between the means of the S1 and S2 distributions, in RMS units.
+        * `'s'` : ratio of the standard deviations of the S1 and S2
         * `'meta_d'` : meta-d' in RMS units
-        * `'m_diff'` : `meta_da - da`
-        * `'m_ratio'` : `meta_da / da`
-        * `'meta_ca'` : type 1 criterion for meta-d' fit, RMS units.
-        * `'t2ca_rS1'` : type 2 criteria of "S1" responses for meta-d' fit, RMS
-        units.
-        * `'t2ca_rS2'` : type 2 criteria of "S2" responses for meta-d' fit,
-            RMS units.
+        * `'m_diff'` : `meta_d - d`
+        * `'m_ratio'` : `meta_d / d`
+        * `'meta_c'` : type 1 criterion for meta-d' fit, RMS units.
+        * `'t2ca_rS1'` : type 2 criteria of "S1" responses for meta-d' fit, RMS units.
+        * `'t2ca_rS2'` : type 2 criteria of "S2" responses for meta-d' fit, RMS units.
         * `'logL'` : log likelihood of the data fit
-        * `'est_HR2_rS1'` : estimated (from meta-d' fit) type 2 hit rates for S1
-        responses.
+        * `'est_HR2_rS1'` : estimated (from meta-d' fit) type 2 hit rates for S1 responses.
         * `'obs_HR2_rS1'` : actual type 2 hit rates for S1 responses.
         * `'est_FAR2_rS1'` : estimated type 2 false alarm rates for S1 responses.
         * `'obs_FAR2_rS1'` : actual type 2 false alarm rates for S1 responses.
@@ -402,6 +403,47 @@ def fit_metad(
 
 
 class EstimatorMetaD:
+    """
+    Class to estimate metacognitive parameters using the meta-d model proposed by Maniscalco and Lau (2012).
+
+    Parameters
+    ----------
+    data : pd.DataFrame, pd.DataFrameGroupBy
+        DataFrame containing the data to be analyzed. See Note below.
+    bins : int
+        Number of bins to use for binning the confidence ratings.
+    cl : int, optional
+        Number of cores to use for parallel processing. If None, all available cores will be used.
+    parallel : bool, default False
+        If True, parallel processing will be used.
+    libraries : list of str, default ["numpy", "pandas"]
+        List of libraries to use for parallel processing in Jupyter. Default is ["numpy", "pandas"].
+    prior : bool, default False
+        If True, the log likelihoods will incorporate prior density of parameters.
+    display : int, default 0
+        Level of algorithm's verbosity:
+            * 0 (default) : work silently.
+            * 1 : display a termination report.
+            * 2 : display progress during iterations.
+            * 3 : display progress during iterations (more complete report).
+    ppt_identifier : str, optional
+        Identifier for participants in the data. If None, the default identifier will be used.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments to be passed to the optimization function.
+
+    Returns
+    -------
+    An EstimatorMetaD object.
+
+    Note
+    ----
+    The data DataFrame should contain the following columns:
+        - 'participant': Identifier for each participant.
+        - 'signal': Stimulus presented to the participant (e.g., 'signal' or 'noise').
+        - 'response': Participant's response to the stimulus.
+        - 'confidence': Participant's confidence rating for their response.
+        - 'accuracy': Accuracy of the participant's response.
+    """
     def __init__(
         self,
         data=None,

@@ -1,5 +1,6 @@
 # The majority of this code was adapted from the metadpy package
 # and the original metad code from: http://www.columbia.edu/~bsm2105/type2sdt
+# Information about the license can be found in the LICENSE-BUNDLE file
 
 import warnings
 from typing import Callable, List, Optional
@@ -476,6 +477,7 @@ class EstimatorMetaD:
         self.prior = prior
         self.fit = []
         self.details = []
+        self.criteria = (bins - 1) * 2
         self.parameters = cpm.generators.Parameters(
             meta_d=cpm.generators.Value(
                 value=np.random.randn(),
@@ -521,6 +523,10 @@ class EstimatorMetaD:
             self.cl = detect_cores()
 
     def optimise(self):
+        """
+        Estimates the metacognitive parameters using the meta-d model.
+        This function fits the meta-d model to the data and returns the estimated parameters for each participant.
+        """
 
         def __task(participant, **args):
             subject, _, ppt = decompose(

@@ -26,7 +26,9 @@ def metad_nll(
     parameters: cpm.generators.Parameters = None,
     prior: bool = False,
 ):
-    """Negative log-likelihood of parameters given experimental data.
+    """
+    Evaluate the negative log-likelihood of the parameters given the data.
+    This function is used in the optimization process to fit the meta-d model.
 
     Parameters
     ----------
@@ -162,7 +164,12 @@ def fit_metad(
     parameters: cpm.generators.Parameters = None,
     prior: bool = False,
 ):
-    """Fit metad model using MLE.
+    """
+    Estimate metacognitive parameters using the meta-d model proposed by Maniscalco and Lau (2012).
+    This function fits the meta-d model to the data and returns the estimated parameters.
+    It is done via maximum likelihood estimation (MLE) using the scipy.optimize.minimize function.
+    The function uses the trust-constr method for optimization, which is suitable for constrained
+    optimization problems.
 
     Parameters
     ----------
@@ -439,10 +446,10 @@ class EstimatorMetaD:
     ----
     The data DataFrame should contain the following columns:
         - 'participant': Identifier for each participant.
-        - 'signal': Stimulus presented to the participant (e.g., 'signal' or 'noise').
-        - 'response': Participant's response to the stimulus.
-        - 'confidence': Participant's confidence rating for their response.
-        - 'accuracy': Accuracy of the participant's response.
+        - 'signal' (integer): Stimulus presented to the participant, for example, 0 for S1 and 1 for S2.
+        - 'response' (integer): Participant's response to the stimulus.
+        - 'confidence' (integer, float): Participant's confidence rating for their response.
+        - 'accuracy' (integer): Accuracy of the participant's response. 0 = incorrect, 1 = correct.
     """
     def __init__(
         self,
@@ -525,6 +532,7 @@ class EstimatorMetaD:
             subject["discrete"] = bin_ratings(ratings=subject.confidence.to_numpy(), nbins=self.bins)[0]
             nRatings = self.bins
             nCriteria = int(2 * nRatings - 1)  # number criteria to be fitted
+            
             nR_S1, nR_S2 = count_trials(
                 data=subject,
                 stimuli="signal",
@@ -535,6 +543,7 @@ class EstimatorMetaD:
                 padding=True,
                 padAmount=1/nRatings,
             )
+            
             results_dict = fit_metad(
                 nR_S1=nR_S1,
                 nR_S2=nR_S2,
@@ -589,6 +598,7 @@ class EstimatorMetaD:
         else:
             results = list(map(__task, self.data))
             self.fit = results
+        return None
 
     def export(self):
         """

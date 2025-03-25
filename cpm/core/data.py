@@ -140,7 +140,10 @@ def detailed_pandas_compiler(details):
                 value = pd.DataFrame(np.asarray(value)).T
             else:
                 value = pd.DataFrame([value]).T
-            value.columns = [key + "_" + str(x) for x in value.columns]
+            if value.columns.shape[0] == 1:
+                value.columns = [key]
+            else:
+                value.columns = [key + "_" + str(x) for x in value.columns]
             row = pd.concat([row, value], axis=1)
         output = pd.concat([output, row], axis=0)
     return output

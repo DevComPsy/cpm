@@ -132,14 +132,19 @@ def detailed_pandas_compiler(details):
     for i in details:
         row = pd.DataFrame()
         for key, value in i.items():
+            ## ignore some items
             if key == "population" or key == "population_energies":
                 continue
+            ## make sure thiungs are in the right format
             if isinstance(value, (list, np.ndarray)):
                 if isinstance(value, np.ndarray) and value.ndim > 1:
                     value = value.flatten()
                 value = pd.DataFrame(np.asarray(value)).T
+            elif isinstance(value, tuple):
+                value = np.asarray(list(value)).flatten()
             else:
                 value = pd.DataFrame([value]).T
+            ## rename the columns
             if value.columns.shape[0] == 1:
                 value.columns = [key]
             else:

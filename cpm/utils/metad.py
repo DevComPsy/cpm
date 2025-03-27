@@ -236,8 +236,9 @@ def bin_ratings(
     if (confBins[0] == confBins[1]) & (confBins[nbins - 1] == confBins[nbins]):
         if ignore_invalid is False:
             raise ValueError(
-                "The resulting rating scale contains a lot of identical"
-                " values and cannot be further analyzed"
+                "The resulting rating scale contains a lot of identical values and cannot be further analyzed."
+                "Consider setting `ignore_invalid` to `True` to ignore this error."
+                "This is not recommended for SDT analysis."
             )
     elif confBins[nbins - 1] == confBins[nbins]:
         if verbose is True:

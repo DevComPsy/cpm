@@ -436,6 +436,8 @@ class EstimatorMetaD:
             * 3 : display progress during iterations (more complete report).
     ppt_identifier : str, optional
         Identifier for participants in the data. If None, the default identifier will be used.
+    ignore_invalid : bool, default False
+        If True, invalid confidence ratings will be ignored during binning. If False, an error will be raised if invalid ratings are found. We recommend setting this to False (Default).
     **kwargs : additional keyword arguments
         Additional keyword arguments to be passed to the optimization function.
 
@@ -462,6 +464,7 @@ class EstimatorMetaD:
         prior=False,
         display=False,
         ppt_identifier=None,
+        ignore_invalid=False,
         **kwargs,
     ):
         self.data = data
@@ -475,6 +478,7 @@ class EstimatorMetaD:
         self.kwargs = kwargs
         self.display = display
         self.prior = prior
+        self.ignore_invalid = ignore_invalid
         self.fit = []
         self.details = []
         self.criteria = (bins - 1) * 2
@@ -535,7 +539,13 @@ class EstimatorMetaD:
                 identifier=self.ppt_identifier,
             )
 
-            subject["discrete"] = bin_ratings(ratings=subject.confidence.to_numpy(), nbins=self.bins)[0]
+            try:
+                subject["discrete"] = bin_ratings(
+                    ratings=subject.confidence.to_numpy(),
+                    nbins=self.bins,
+                    ignore_invalid=self.ignore_invalid)[0]
+            except Exception as e:
+                raise RuntimeError(f"Error binning ratings for participant {ppt}: {e}")
             nRatings = self.bins
             nCriteria = int(2 * nRatings - 1)  # number criteria to be fitted
             

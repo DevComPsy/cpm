@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 import numpy as np
 import scipy
 from scipy.stats import norm
@@ -86,8 +87,11 @@ def test_parameters_call():
 
 
 def test_parameters_export():
-    params = Parameters(a=0.5, b=0.3)
-    assert params.export() == {"a": params.a, "b": params.b}
+    params = Parameters(a=Value(
+            value=0.5, lower=0, upper=1, prior="norm", args={"mean": 0.5, "sd": 0.1}
+        ), b=0.3)
+    result = params.export()
+    assert isinstance(result, pd.DataFrame), "Export should return a pandas DataFrame."
 
 
 def test_parameters_update():

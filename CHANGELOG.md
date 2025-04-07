@@ -1,6 +1,5 @@
 # CHANGELOG
 
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -13,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detect parallel method to use given environment (support for parallelisation on Jupyter Notebooks)
 - Provide a complete n-dimensional and k-arm reinforcement learning model for multi-armed bandit tasks in applications
 - Add support for '>' and '<' operator in Value type
+- Add validation to export method and improve data handling in Simulator class
+- Update export tests to validate DataFrame output and adjust simulation assertions
+- Implement ProspectSoftmaxModel for decision-making under risk
 
 ### Fixed
 
@@ -20,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix pandas groupby method for parallelization when in Jupyter Notebook
 - Fix magnitude is not taking effect in Nominal
 - Fix choice kernel choice should check whether computations still need to carry out
+- Fix column assignment logic in simulation_export function
+- Fix tests by updating ProspectUtility parameters in tests to reflect changes in constructor
+
+### Changed
+
+- Update model description in RLRW class to include reference to Sutton & Barto (2021)
 
 ## [Unreleased] <=0.18.4
 

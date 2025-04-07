@@ -4,9 +4,10 @@ from cpm.generators import Wrapper, Parameters, Value
 from cpm.models.decision import Softmax
 from cpm.models.activation import ProspectUtility
 
-class ProspectSoftmaxModel(Wrapper):
+class PTSM(Wrapper):
     """
-    A model that can interpret data either as:
+    A Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on (ref needed).
+    The model can interpret data either as:
         - 'safe vs. risky' (choice=0 => safe, choice=1 => risky)
         OR
         - 'optimal vs. non-optimal' (choice=0 => suboptimal, 1 => optimal)

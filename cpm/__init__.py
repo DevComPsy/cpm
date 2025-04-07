@@ -1,5 +1,6 @@
 __author__ = "Lenard Dome"
 __email__ = "lenarddome@gmail.com"
+__license__ = "AGPL-3.0"
 
 """
 This is the main module of the package.

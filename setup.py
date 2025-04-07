@@ -27,7 +27,7 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.20.1",
+    version="0.21.6",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     author="Lenard Dome, Frank Hezemans, Andrew Webb, Tobias Hauser",
@@ -36,6 +36,7 @@ setup(
     packages=find_packages(),
     # package_dir={"cpm": "cpm"},
     include_package_data=True,
+    package_data={"cpm": ["**/*.csv"]},
     python_requires=">3.11.0",
     install_requires=[
         "numpy>=1.26.0",  # Numerical functions

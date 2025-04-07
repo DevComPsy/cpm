@@ -111,22 +111,19 @@ class ProspectUtility:
     Parameters
     ----------
     magnitudes : numpy.ndarray
-        The magnitudes of potential outcomes for each choice option.
-        Should be a nested array where the outer dimension represents trials,
-        followed by options within each trial, followed by potential outcomes within each option.
+        A nested array where the outer dimension represents trials, with each trial
+        containing the potential outcome magnitudes for each option.
     probabilities : numpy.ndarray
-        The probabilities of potential outcomes for each choice option.
-        Should be a nested array where the outer dimension represents trials,
-        followed by options within each trial, followed by potential outcomes within each option.
-    alpha_pos : float
-        The risk attitude parameter for non-negative outcomes, which determines the curvature of the utility function in the gain domain.
-        If alpha_neg is undefined, alpha_pos will be used for both the gain and loss domains.
-    alpha_neg : float
-        The risk attitude parameter for negative outcomes, which determines the curvature of the utility function in the loss domain.
+        A nested array (with the same shape as magnitudes) where each entry contains
+        the probability of the corresponding outcome.
+    alpha : float
+        The utility curvature parameter, used for both gains and losses.
     lambda_loss : float
-        The loss aversion parameter, which scales the utility of negative outcomes relative to non-negative outcomes.
-    beta : float
-        The discriminability parameter, which determines the curvature of the weighting function.
+        The loss aversion parameter (scaling losses relative to gains).
+    gamma : float
+        The probability weighting curvature parameter (for "tk" and "power").
+    delta : float
+        The attractiveness parameter for weighting functions (used for "prelec" and "gw").
     delta : float
         The attractiveness parameter, which determines the elevation of the weighting function.
     weighting : str
@@ -140,8 +137,10 @@ class ProspectUtility:
     The different weighting functions currently implemented are:
 
         - `tk`: Tversky & Kahneman (1992).
-        - `pd`: Prelec (1998).
+        - `prelec`: Prelec (1998).
         - `gw`: Gonzalez & Wu (1999).
+        - `power` : Simple power function: w(p) = p^gamma
+        
 
     Following Tversky & Kahneman (1992), the expected utility U of a choice option is defined as:
 
@@ -194,83 +193,74 @@ class ProspectUtility:
         self,
         magnitudes=None,
         probabilities=None,
-        alpha_pos=1,
-        alpha_neg=None,
+        alpha=1,
         lambda_loss=1,
-        beta=1,
+        gamma=1,
         delta=1,
         weighting="tk",
         **kwargs,
     ):
         self.magnitudes = np.asarray(magnitudes.copy())
         self.magnitudes = np.array(
-            [
-                np.array(self.magnitudes[i], dtype=float)
-                for i in range(self.magnitudes.shape[0])
-            ],
+            [np.array(self.magnitudes[i], dtype=float) for i in range(self.magnitudes.shape[0])],
             dtype=object,
         )
-
         self.probabilities = np.asarray(probabilities.copy())
         self.probabilities = np.array(
-            [
-                np.array(self.probabilities[i], dtype=float)
-                for i in range(self.probabilities.shape[0])
-            ],
+            [np.array(self.probabilities[i], dtype=float) for i in range(self.probabilities.shape[0])],
             dtype=object,
         )
-
-        self.alpha_pos = alpha_pos
-        if alpha_neg is None:
-            self.alpha_neg = alpha_pos
-        else:
-            self.alpha_neg = alpha_neg
-
+        self.alpha = alpha
         self.lambda_loss = lambda_loss
-        self.beta = beta
+        self.gamma = gamma
         self.delta = delta
 
         self.shape = self.magnitudes.shape
         if self.shape != self.probabilities.shape:
-            raise ValueError("outcomes and probabilities do not have the same shape.")
+            raise ValueError("magnitudes and probabilities do not have the same shape.")
 
+        # Choose weighting function based on the argument
         if weighting == "tk":
             self.__weighting_fun = self.__weighting_tk
-        elif weighting == "pd":
-            self.__weighting_fun = self.__weighting_p
+        elif weighting == "power":
+            self.__weighting_fun = self.__weighting_power
+        elif weighting == "prelec":
+            self.__weighting_fun = self.__weighting_prelec
         elif weighting == "gw":
             self.__weighting_fun = self.__weighting_gw
         else:
-            raise ValueError("Invalid weighting type.")
-
+            raise ValueError("Invalid weighting type. Must be one of: 'tk', 'power', 'prelec', 'gw'.")
+            
         self.utilities = []
         self.weights = []
         self.expected_utility = []
         self.weighting = weighting
 
     def __utility(self, x=None):
-        # ensure alpha_pos and alpha_neg are numpy arrays
-        alpha_pos = np.array(self.alpha_pos)
-        alpha_neg = np.array(self.alpha_neg)
-        # use np.maximum to handle very small negative numbers due to floating-point precision
-        positive_part = np.power(np.maximum(x, 0), alpha_pos)
-        # use np.maximum to handle very small positive numbers due to floating-point precision
-        negative_part = -self.lambda_loss * np.power(np.maximum(-x, 0), alpha_neg)
-        # combine the results using np.where
+        # For gains: x^alpha; for losses: -lambda_loss * |x|^alpha
+        # Use np.maximum to handle very small negative numbers due to floating-point precision
+        positive_part = np.power(np.maximum(x, 0), self.alpha)
+        negative_part = -self.lambda_loss * np.power(np.maximum(-x, 0), self.alpha)
         return np.where(x >= 0, positive_part, negative_part)
 
     def __weighting_tk(self, x=None):
-        numerator = np.power(x, self.beta)
-        denominator = np.power((numerator + np.power(1 - x, self.beta)), 1 / self.beta)
+        numerator = np.power(x, self.gamma)
+        denominator = np.power(numerator + np.power(1 - x, self.gamma), 1 / self.gamma)
         return numerator / denominator
 
-    def __weighting_p(self, x=None):
-        return np.exp(-self.delta * np.power(-np.log(x), self.beta))
+    def __weighting_power(self, x=None):
+        return np.power(x, self.gamma)
+
+    def __weighting_prelec(self, x=None):
+        return np.exp(-self.delta * np.power(-np.log(x), self.gamma))
 
     def __weighting_gw(self, x=None):
-        numerator = self.delta * np.power(x, self.beta)
-        denominator = numerator + np.power(1 - x, self.beta)
+        numerator = self.delta * np.power(x, self.gamma)
+        denominator = numerator + np.power(1 - x, self.gamma)
         return numerator / denominator
+
+    def weight_probability(self, x):
+        return self.__weighting_fun(x)
 
     def compute(self):
         """
@@ -301,10 +291,16 @@ class ProspectUtility:
         return self.compute()
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(magnitudes={self.magnitudes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+        return (
+            f"{self.__class__.__name__}("
+            f"magnitudes={self.magnitudes}, probabilities={self.probabilities}, "
+            f"alpha={self.alpha}, lambda_loss={self.lambda_loss}, gamma={self.gamma}, "
+            f"delta={self.delta}, weighting={self.weighting}"
+            f")"
+        )
 
     def __str__(self):
-        return f"{self.__class__.__name__}(magnitudes={self.magnitudes}, probabilities={self.probabilities}, alpha_pos={self.alpha_pos}, alpha_neg={self.alpha_neg}, lambda_loss={self.lambda_loss}, beta={self.beta}, delta={self.delta},weighting={self.weights})"
+        return self.__repr__()
 
 
 class Offset:

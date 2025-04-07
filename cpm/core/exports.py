@@ -32,7 +32,14 @@ def simulation_export(simulation):
                 if isinstance(value, int) or isinstance(value, float):
                     value = np.array([value])
                 current = pd.DataFrame(value.flatten()).T
-                current.columns = [f"{key}_{i}" for i in range(current.shape[1])]
+                if current.shape[1] > 1:
+                    current.columns = [f"{key}_{i}" for i in range(current.shape[1])]
+                elif current.shape[1] == 1:
+                    current.columns = [key]
+                else:
+                    raise ValueError(
+                        f"Value of {key} is of shape {value.shape}. Dimensions must be greater than 0."
+                    )
                 row = pd.concat([row, current], axis=1)
             ppt = pd.concat([ppt, row], axis=0)
         ppt["ppt"] = id

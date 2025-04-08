@@ -123,8 +123,6 @@ class ProspectUtility:
     gamma : float
         The probability weighting curvature parameter (for "tk" and "power").
     delta : float
-        The attractiveness parameter for weighting functions (used for "prelec" and "gw").
-    delta : float
         The attractiveness parameter, which determines the elevation of the weighting function.
     weighting : str
         The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'.

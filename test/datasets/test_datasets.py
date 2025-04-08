@@ -24,7 +24,7 @@ def test_load_csv(mock_read_csv, mock_exists, mock_csv_data):
 
     # Assertions
     mock_exists.assert_called_once_with(
-        "/Users/lenarddome/github-devcompsy/modelling-toolbox/cpm/datasets/data/test.csv"
+        os.path.join(os.path.dirname(__file__), "../../cpm/datasets/data/test.csv")
     )
     mock_read_csv.assert_called_once()
     assert isinstance(result, pd.DataFrame)

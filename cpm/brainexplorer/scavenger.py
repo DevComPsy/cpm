@@ -42,11 +42,11 @@ class Scavenger:
         -----
         The columns required in data:
 
-        - "chosenOption_outcomes_percent": if option A or B chosen,
-        - "chosenOption_outcomes_userVisiblePercent": Percent visible to user for chosen option,
-        - "unchosenOption_outcomes_userVisiblePercent": Percent visible to user for option not chosen,
-        - "chosenOption_outcomes_trialValue": Trial Values for option chosen,
-        - "unchosenOption_outcomes_trialValue": Trial Values for option not chosen
+        - "choice": if option A or B chosen,
+        - "risky_prob": Likelihood of winning for option B,
+        - "safe_magn": Trial Values for Option A,   
+        - "risky_magn1" & "risky_magn2: Trial Values for Option B,
+        - "ambg": if the trial is ambiguous or not
         """
 
         ## check file extension
@@ -64,19 +64,19 @@ class Scavenger:
             "win_risk_NoAbg": "Proportion of risky wins in non-ambiguous trials",
             "loss_risk_abg": "Proportion of risky losses in ambiguous trials",
             "loss_risk_NoAbg": "Proportion of risky losses in non-ambiguous trials",
-            "optimal_all": "Proportion of optimal choices",
-            "optimal_win": "Proportion of optimal choices in wins",
-            "optimal_loss": "Proportion of optimal choices in losses",
-            "optimal_all_abg": "Proportion of optimal choices in ambiguous trials",
-            "optimal_win_abg": "Proportion of optimal choices in wins in ambiguous trials",
-            "optimal_loss_abg": "Proportion of optimal choices in losses in ambiguous trials",
+            "rational_all": "Proportion of rational choices",
+            "rational_win": "Proportion of rational choices in wins",
+            "rational_loss": "Proportion of rational choices in losses",
+            "rational_all_abg": "Proportion of rational choices in ambiguous trials",
+            "rational_win_abg": "Proportion of rational choices in wins in ambiguous trials",
+            "rational_loss_abg": "Proportion of rational choices in losses in ambiguous trials",
         }
 
     def metrics(self):
 
         """
         Compute metrics from the loaded data: expected values of rewards when choosing safe vs. risky options, percentages of 
-        risky and safe wins/losses as well as total optimal choices. 
+        risky and safe wins/losses as well as total rational choices. 
 
         Parameters
         ----------
@@ -100,12 +100,15 @@ class Scavenger:
         win_risk_NoAbg: Proportion of risky wins in non-ambiguous trials, 
         loss_risk_abg: Proportion of risky losses in ambiguous trials,
         loss_risk_NoAbg: Proportion of risky losses in non-ambiguous trials,
-        optimal_all: Proportion of optimal choices, 
-        optimal_win: Proportion of optimal choices in wins,
-        optimal_loss: Proportion of optimal choices in losses,
-        optimal_all_abg: Proportion of optimal choices in ambiguous trials,
-        optimal_win_abg: Proportion of optimal choices in win trials in ambiguous trials,
-        optimal_loss_abg: Proportion of optimal choices in loss trials in ambiguous trials
+        rational_all: Proportion of rational choices, 
+        rational_win: Proportion of rational choices in wins,
+        rational_loss: Proportion of rational choices in losses,
+        rational_all_abg: Proportion of rational choices in ambiguous trials,
+        rational_win_abg: Proportion of rational choices in win trials in ambiguous trials,
+        rational_loss_abg: Proportion of rational choices in loss trials in ambiguous trials,
+        rational_all_NoAbg: Proportion of rational choices in non-ambiguous trials,
+        rational_win_NoAbg: Proportion of rational choices in win trials in non-ambiguous trials,
+        rational_loss_NoAbg: Proportion of rational choices in loss trials in non-ambiguous trials
 
         
         Notes
@@ -122,13 +125,7 @@ class Scavenger:
         If visible percentages do not add up to 1 the trial is labeled as ambiguous.
 
         We calculate the expected value of the safe option A and the risky option B and then use these values to calculate the loss trials in which expected values are < 0.
-        Percentages of loss and win trials are calculated for risky choice trials (by objetive risk, option B) and number of optimal choices are calculated for all trials, win trials and loss trials.
-
-
-        Warns
-        -----
-        UserWarning
-            Provides a warning for `np.linalg.LinAlgError` in logistic regression from `statsmodels` for a given user when a singular matrix error occurs.
+        Percentages of loss and win trials are calculated for risky choice trials (by objetive risk, option B) and number of rational choices are calculated for all trials, win trials and loss trials.
 
      
 
@@ -141,13 +138,12 @@ class Scavenger:
         """
 
         # Group data by userID
-        grouped_data = self.data.groupby("userID")
+        grouped_data = self.data.groupby("loopID")
 
         all_users_data = []
 
         # Loop through each group of user data
         for user_id, user_data in grouped_data:
-            user_data = user_data.sort_values("trial")
 
             # Initialize a dictionary to store results for this user
             user_metrics = {
@@ -160,75 +156,42 @@ class Scavenger:
                 "A_EV": [],
                 "B_EV": [],
                 "chosen": [],
+                "all_rewards": [],
+                "choice_stickiness": [],    
             }
 
             # Loop through each trial in the user's data
             for _, trial_data in user_data.iterrows():
                 metrics_data_trial = {}
 
-                fields_to_process = [
-                    "chosenOption_outcomes_percent",
-                    "chosenOption_outcomes_userVisiblePercent",
-                    "unchosenOption_outcomes_userVisiblePercent",
-                    "chosenOption_outcomes_trialValue",
-                    "unchosenOption_outcomes_trialValue",
-                ]
-
-                # Normalize the strings into arrays
-                normalized_data = {}
-
-                for field in fields_to_process:
-                    if field in trial_data:
-                        value = trial_data[field]
-                        if isinstance(value, str):
-                            normalized_data[field] = [
-                                float(x.strip()) for x in value.split(",")
-                            ]
-                        else:
-                            normalized_data[field] = [float(value)]
-
-                if len(normalized_data["chosenOption_outcomes_percent"]) == 1:
-                    metrics_data_trial["chosen"] = 1  # Option A chosen
-                    metrics_data_trial["A_perc"] = normalized_data[
-                        "chosenOption_outcomes_userVisiblePercent"
+                if trial_data["choice"] == 0:
+                    metrics_data_trial["chosen"] = 1  # Option A chosen (safe)
+                    metrics_data_trial["A_perc"] = 1
+                    metrics_data_trial["A_magn"] = trial_data["safe_magn"]*100
+                    metrics_data_trial["B_perc"] = trial_data[
+                        "risky_prob"
                     ]
-                    metrics_data_trial["A_magn"] = normalized_data[
-                        "chosenOption_outcomes_trialValue"
+                    metrics_data_trial["B_magn"] = [
+                        trial_data["risky_magn1"]*100, 
+                        trial_data["risky_magn2"]*100
                     ]
-                    metrics_data_trial["B_perc"] = normalized_data[
-                        "unchosenOption_outcomes_userVisiblePercent"
-                    ]
-                    metrics_data_trial["B_magn"] = normalized_data[
-                        "unchosenOption_outcomes_trialValue"
-                    ]
-                    if sum(metrics_data_trial["B_perc"]) != 1:
-                        metrics_data_trial["ambiguous"] = 1
-                    else:
-                        metrics_data_trial["ambiguous"] = 0
                 else:
                     metrics_data_trial["chosen"] = 2  # Option B chosen
-                    metrics_data_trial["A_perc"] = normalized_data[
-                        "unchosenOption_outcomes_userVisiblePercent"
+                    metrics_data_trial["A_perc"] = 1
+                    metrics_data_trial["A_magn"] = trial_data[
+                        "safe_magn"
                     ]
-                    metrics_data_trial["A_magn"] = normalized_data[
-                        "unchosenOption_outcomes_trialValue"
+                    metrics_data_trial["B_perc"] = trial_data[
+                        "risky_prob"
                     ]
-                    metrics_data_trial["B_perc"] = normalized_data[
-                        "chosenOption_outcomes_userVisiblePercent"
-                    ]
-                    metrics_data_trial["B_magn"] = normalized_data[
-                        "chosenOption_outcomes_trialValue"
+                    metrics_data_trial["B_magn"] = [
+                        trial_data["risky_magn1"], 
+                        trial_data["risky_magn2"]
                     ]
 
-                    if sum(metrics_data_trial["B_perc"]) != 1:
-                        metrics_data_trial["ambiguous"] = 1
-                    else:
-                        metrics_data_trial["ambiguous"] = 0
-
-                if trial_data["decision"] == "optionA":
-                    metrics_data_trial["chosenLeft"] = 1
-                else:
-                    metrics_data_trial["chosenLeft"] = 0
+                metrics_data_trial["ambiguous"] = trial_data[
+                    "ambg"
+                ]
 
                 # Compute expected values
                 metrics_data_trial["A_EV"] = np.dot(
@@ -236,12 +199,13 @@ class Scavenger:
                     np.array(metrics_data_trial["A_magn"]),
                 )
                 metrics_data_trial["B_EV"] = 0.5 * np.array(
-                    metrics_data_trial["B_perc"]
-                ) + 0.5 * np.array(metrics_data_trial["B_magn"])
-                metrics_data_trial["B_EV"] = metrics_data_trial["B_EV"][0]
+                    metrics_data_trial["B_magn"][0]
+                ) + 0.5 * np.array(metrics_data_trial["B_magn"][1]) # assuming 50% propbs
+
                 metrics_data_trial["EV_diff_safe"] = (
                     metrics_data_trial["A_EV"] - metrics_data_trial["B_EV"]
                 )
+
                 if metrics_data_trial["chosen"] == 1:
                     metrics_data_trial["EV_diff_chosen"] = (
                         metrics_data_trial["A_EV"] - metrics_data_trial["B_EV"]
@@ -261,7 +225,8 @@ class Scavenger:
                 user_metrics["EV_diff_chosen_all"].append(
                     metrics_data_trial["EV_diff_chosen"]
                 )
-                user_metrics["chosen_left_all"].append(metrics_data_trial["chosenLeft"])
+                user_metrics["RT"] = trial_data["rt"]
+                user_metrics["all_rewards"].append(trial_data["feedback"])  
 
             all_users_data.append(user_metrics)
 
@@ -275,6 +240,14 @@ class Scavenger:
             ev_diff_chosen = np.array(user_data["EV_diff_chosen_all"], dtype=object)
 
             user_results = {"userID": user_id}
+
+            user_results["mean_RT"] = np.mean(user_data["RT"])
+            user_results["std_RT"] = np.std(user_data["RT"])
+
+            user_results["total_rewards"] = np.sum(user_data["all_rewards"])
+
+            # calculate choice stickiness
+            user_results["choice_stickiness"] = np.sum(user_data["chosen"][i] == 1 and user_data["chosen"][i + 1] == 1 for i in range(len(user_data["chosen"]) - 1))
 
             # Number of risky choices
             user_results["win_risk"] = np.sum(rsk[~t_loss]) / np.sum(~t_loss)
@@ -293,83 +266,37 @@ class Scavenger:
                 t_loss & ~t_abg
             )
 
-            # Number of optimal choices
-            user_results["optimal_all"] = np.sum(ev_diff_chosen > 0) / len(
+            # Number of rational choices
+            user_results["rational_all"] = np.sum(ev_diff_chosen >= 0) / len(
                 ev_diff_chosen
             )
-            user_results["optimal_win"] = np.sum(ev_diff_chosen[~t_loss] > 0) / np.sum(
+            user_results["rational_win"] = np.sum(ev_diff_chosen[~t_loss] >= 0) / np.sum(
                 ~t_loss
             )
-            user_results["optimal_loss"] = np.sum(ev_diff_chosen[t_loss] > 0) / np.sum(
+            user_results["rational_loss"] = np.sum(ev_diff_chosen[t_loss] >= 0) / np.sum(
                 t_loss
             )
-            user_results["optimal_all_abg"] = np.sum(
-                ev_diff_chosen[t_abg] > 0
+
+            user_results["rational_all_abg"] = np.sum(
+                ev_diff_chosen[t_abg] >= 0
             ) / np.sum(t_abg)
-            user_results["optimal_win_abg"] = np.sum(
-                ev_diff_chosen[~t_loss & t_abg] > 0
+            user_results["rational_all_NoAbg"] = np.sum(
+                ev_diff_chosen[~t_abg] >= 0
+            ) / np.sum(~t_abg)
+
+            user_results["rational_win_abg"] = np.sum(
+                ev_diff_chosen[~t_loss & t_abg] >= 0
             ) / np.sum(~t_loss & t_abg)
-            user_results["optimal_loss_abg"] = np.sum(
-                ev_diff_chosen[t_loss & t_abg] > 0
+            user_results["rational_win_NoAbg"] = np.sum(
+                ev_diff_chosen[~t_loss & ~t_abg] >= 0
+            ) / np.sum(~t_loss & ~t_abg)
+
+            user_results["rational_loss_abg"] = np.sum(
+                ev_diff_chosen[t_loss & t_abg] >= 0
             ) / np.sum(t_loss & t_abg)
-
-            # logistic regression
-            logit_data = user_data.copy()
-            logit_data = pd.DataFrame(logit_data)
-
-            logit_data["chosen"] = np.array(logit_data["chosen"]) - 1
-
-            modelspec = "chosen ~ A_EV + B_EV"
-
-            # Standardize A_EV and B_EV
-            logit_data["A_EV"] = zscore(logit_data["A_EV"])
-            logit_data["B_EV"] = zscore(logit_data["B_EV"])
-
-            # Fit logistic regression model for all data
-            logit_all = smf.logit(modelspec, data=logit_data).fit()
-
-            # Create a mask for t_loss
-            t_loss = logit_data["t_loss_all"]
-
-            # Standardize A_EV and B_EV for non-loss cases
-            logit_data.loc[~t_loss, "A_EV"] = zscore(logit_data.loc[~t_loss, "A_EV"])
-            logit_data.loc[~t_loss, "B_EV"] = zscore(logit_data.loc[~t_loss, "B_EV"])
-
-            # Fit logistic regression model for non-loss cases
-            logit_win = smf.logit(modelspec, data=logit_data[~t_loss]).fit()
-
-            # Standardize A_EV and B_EV for loss cases
-            logit_data.loc[t_loss, "A_EV"] = zscore(logit_data.loc[t_loss, "A_EV"])
-            logit_data.loc[t_loss, "B_EV"] = zscore(logit_data.loc[t_loss, "B_EV"])
-
-            # Fit logistic regression model for loss cases
-            # Catch singular matrix error
-            try:
-                logit_loss = smf.logit(modelspec, data=logit_data[t_loss]).fit()
-            except np.linalg.LinAlgError:
-                warnings.warn(
-                    f"Singular matrix error for user {user_id} in loss case logistic regression. Skipping."
-                )
-                continue
-
-            # Add results for each logistic regression model
-            user_results[f"{'logit_all'}_itcp"] = logit_all.params.get("const", None)
-
-            for coef_name, estimate in logit_all.params.items():
-                if coef_name != "const":  # Skip intercept here as it's already added
-                    user_results[f"{'logit_all'}_{coef_name}"] = estimate
-
-            user_results[f"{'logit_win'}_itcp"] = logit_all.params.get("const", None)
-
-            for coef_name, estimate in logit_all.params.items():
-                if coef_name != "const":  # Skip intercept here as it's already added
-                    user_results[f"{'logit_win'}_{coef_name}"] = estimate
-
-            user_results[f"{'logit_loss'}_itcp"] = logit_all.params.get("const", None)
-
-            for coef_name, estimate in logit_all.params.items():
-                if coef_name != "const":  # Skip intercept here as it's already added
-                    user_results[f"{'logit_loss'}_{coef_name}"] = estimate
+            user_results["rational_loss_NoAbg"] = np.sum(
+                ev_diff_chosen[t_loss & ~t_abg] >= 0
+            ) / np.sum(t_loss & ~t_abg)
 
             # Append user-level results
             self.results = pd.concat(

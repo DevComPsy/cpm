@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix magnitude is not taking effect in Nominal
 - Fix choice kernel choice should check whether computations still need to carry out
 - Fix column names in `cpm.applications.signal_detection.EstimatordMetaD` class
+- Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
 
 ### Changed
 

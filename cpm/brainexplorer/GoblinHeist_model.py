@@ -49,11 +49,35 @@ class GoblinHeist:
 
         self.data = data
 
+        """
         if parameters is None:
             self.parameters=[1, 0.8, 0.5, 0.8, 0.8, -0.1, -0.1]
             warnings.warn("No parameters specified, using default parameters.")
         else:
             self.parameters = parameters
+        """
+
+        if parameters is None:
+            self.parameters = {
+                "temperature": 0.8,
+                "learning_rate": 0.5,
+                "eligibility_trace_decay": 0.8,
+                "mixing_weight_low_stake": 0.8,
+                "mixing_weight_high_stake": 0.8,
+                "stickiness": -0.1,
+                "response_stickiness": -0.1
+            }
+            warnings.warn("No parameters specified, using default parameters.")
+        else:
+            self.parameters = {
+                "temperature": parameters[0],
+                "learning_rate": parameters[1],
+                "eligibility_trace_decay": parameters[2],
+                "mixing_weight_low_stake": parameters[3],
+                "mixing_weight_high_stake": parameters[4],
+                "stickiness": parameters[5],
+                "response_stickiness": parameters[6]
+            }
 
 
     def MF_MB_model(self):
@@ -75,6 +99,7 @@ class GoblinHeist:
         """
 
         # pull out the paramters
+        """
         b = self.parameters[0] # softmax inverse tempterature
         lr = self.parameters[1] # learning rate
         lamb = self.parameters[2] # eligibility trace decay
@@ -82,6 +107,14 @@ class GoblinHeist:
         w_hi = self.parameters[4] # mixing weight for high stake trials
         st = self.parameters[5] # stickiness
         respst = self.parameters[6] # response stickiness
+        """
+        b = self.parameters["temperature"] # softmax inverse temperature
+        lr = self.parameters["learning_rate"] # learning rate
+        lamb = self.parameters["eligibility_trace_decay"] # eligibility trace decay
+        w_lo = self.parameters["mixing_weight_low_stake"] # mixing weight for low stake trials
+        w_hi = self.parameters["mixing_weight_high_stake"] # mixing weight for high stake trials
+        st = self.parameters["stickiness"] # stickiness
+        respst = self.parameters["response_stickiness"] # response stickiness
 
         # initialization
         Q_MF = np.ones((2,2))*4.5

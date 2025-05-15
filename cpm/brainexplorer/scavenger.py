@@ -88,12 +88,9 @@ class Scavenger:
         results : pd.DataFrame
             A DataFrame containing the computed metrics.
 
-        A_EV: expected value of choosing option A
-        B_EV: expected value of choosing option B
-        EV_diff_chosen: Expected value difference between option A and B
-        chosen: 1 if option A chosen, 2 if option B chosen
-        t_loss_all: 1 if loss trial, 0 if win trial
-        t_abg_all: 1 if ambiguous trial, 0 if non-ambiguous trial,
+        mean_RT: Mean reaction time,
+        median_RT: Median reaction time,
+        std_RT: Standard deviation of reaction time,
         win_risk: Proportion of wins for risky choices,
         loss_risk: Proportion of losses for risky choices, 
         win_risk_abg: Proportion of risky wins in ambiguous trials, 
@@ -242,6 +239,7 @@ class Scavenger:
             user_results = {"userID": user_id}
 
             user_results["mean_RT"] = np.mean(user_data["RT"])
+            user_results["median_RT"] = np.median(user_data["RT"])
             user_results["std_RT"] = np.std(user_data["RT"])
 
             user_results["total_rewards"] = np.sum(user_data["all_rewards"])
@@ -316,4 +314,4 @@ class Scavenger:
         """
         Return a codebook describing the metrics.
         """
-        return self.codebook
+        return self.codebook 

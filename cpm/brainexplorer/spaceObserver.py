@@ -104,6 +104,9 @@ class spaceObserver:
         mean_RT : float 
             The mean response time across all trials.  
 
+        median_RT : float
+            The median response time across all trials.
+
         std_RT : float 
             The standard deciation of the response time across all trials.     
 
@@ -184,6 +187,7 @@ class spaceObserver:
 
                 # mean reaction times
                 user_results["mean_RT"] = np.mean(user_data["choiceRT"])
+                user_results["median_RT"] = np.median(user_data["choiceRT"])
                 user_results["std_RT"] = np.std(user_data["choiceRT"])  
                 user_results['mean_confidenceRT'] = np.mean(user_data["confidenceRT"])
                 user_results['std_confidenceRT'] = np.std(user_data["confidenceRT"])
@@ -285,8 +289,21 @@ class spaceObserver:
 
                 user_results["mean_accuracy"] = np.mean(user_data["correct"])
                 user_results["mean_RT"] = np.mean(user_data["RT"])
+                user_results["median_RT"] = np.median(user_data["RT"])
+                user_results["std_RT"] = np.std(user_data["RT"])
                 user_results["mean_confidence"] = np.nanmean(user_data["confidence"])
                 user_results["mean_confidenceRT"] = np.nanmean(user_data["confidenceRT"])
+
+                # confidence by performance
+                correct = np.array(user_data["correct"])
+                # transform false to 0 and true to 1
+                correct = correct.astype(int)
+                confidence = np.array(user_data["confidence"])
+                
+                conf_corr = confidence[correct == 1]
+                conf_incorr = confidence[~correct != 1] 
+                user_results["conf_corr_mean"] = np.mean(conf_corr)
+                user_results["conf_incorr_mean"] = np.mean(conf_incorr)
 
                 # Append user-level results
                 self.results = pd.concat(

@@ -32,7 +32,7 @@ class PTSM(Wrapper):
         Parameters
         ----------
         data : pd.DataFrame
-            Expected to have columns: 'safe_magn', 'risky_magn', 'risky_prob', 'choice'
+            The data, where each row is a trial and each column is an input to the model. Expected to have columns: 'safe_magnitudes', 'risky_magnitudes', 'risky_probability', 'observed'
         parameters_settings : list of lists
             e.g. [
                 [alpha0, alpha_low, alpha_high],
@@ -107,9 +107,9 @@ class PTSM(Wrapper):
             temp  = parameters.temperature.value
 
             # Read trial data (expected columns: safe_magn, risky_magn, risky_prob, choice)
-            safe_magn  = trial["safe_magn"]
-            risky_magn = trial["risky_magn"]
-            risky_prob = trial["risky_prob"]
+            safe_magn  = trial["safe_magnitudes"]
+            risky_magn = trial["risky_magnitudes"]
+            risky_prob = trial["risky_probability"]
             observed = trial["observed"].astype(int)
 
             # Compute objective expected values (EV)

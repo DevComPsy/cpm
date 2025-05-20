@@ -7,7 +7,7 @@ from scipy.special import logsumexp
 
 class GoblinHeist:
     """
-    Class for the Goblin Heist task
+    Model for model-based vs model-free decision making in a decision making task
 
     Attributes
     ----------
@@ -48,14 +48,6 @@ class GoblinHeist:
     def __init__(self, data, parameters=None):
 
         self.data = data
-
-        """
-        if parameters is None:
-            self.parameters=[1, 0.8, 0.5, 0.8, 0.8, -0.1, -0.1]
-            warnings.warn("No parameters specified, using default parameters.")
-        else:
-            self.parameters = parameters
-        """
 
         if parameters is None:
             self.parameters = {
@@ -99,15 +91,6 @@ class GoblinHeist:
         """
 
         # pull out the paramters
-        """
-        b = self.parameters[0] # softmax inverse tempterature
-        lr = self.parameters[1] # learning rate
-        lamb = self.parameters[2] # eligibility trace decay
-        w_lo = self.parameters[3] # mixing weight for low stake trials
-        w_hi = self.parameters[4] # mixing weight for high stake trials
-        st = self.parameters[5] # stickiness
-        respst = self.parameters[6] # response stickiness
-        """
         b = self.parameters["temperature"] # softmax inverse temperature
         lr = self.parameters["learning_rate"] # learning rate
         lamb = self.parameters["eligibility_trace_decay"] # eligibility trace decay
@@ -149,6 +132,7 @@ class GoblinHeist:
             # calculating the probability choosing action a given Q
             LL = LL + b*Q[a-1] - logsumexp(b * Q) 
 
+            # update choice structure
             M = np.zeros((2,2))
             M[s1-1, a-1] = 1
 

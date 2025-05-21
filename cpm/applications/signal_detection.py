@@ -529,7 +529,19 @@ class EstimatorMetaD:
     def optimise(self):
         """
         Estimates the metacognitive parameters using the meta-d model.
-        This function fits the meta-d model to the data and returns the estimated parameters for each participant.
+        Here, we use a Trust-Region Constrained Optimization algorithm (Conn et al., 2000) to fit the model to the data.
+        We use the `trust-constr` method from `scipy.optimize.minimize` to perform the optimization, and minimise the negative log-likelihood of the data given the model parameters.
+        The optimization is performed for each participant in the data.
+
+        Notes
+        -----
+        If you want to tune the behaviour of the optimization, you can do so by passing additional keyword arguments to the class constructor. See the [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html) documentation for more details on the available options. By default, the optimization will use the `trust-constr` method with the default options specified in the `scipy.optimize.minimize` documentation.
+
+
+        References
+        ----------
+        Conn, A. R., Gould, N. I. M., & Toint, P. L. (2000). Trust Region Methods. Society for Industrial and Applied Mathematics. https://doi.org/10.1137/1.9780898719857
+
         """
 
         def __task(participant, **args):

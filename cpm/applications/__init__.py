@@ -1,1 +1,2 @@
-from .reinforcement_learning import RLRW
+from . import reinforcement_learning
+from . import signal_detection

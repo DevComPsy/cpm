@@ -448,11 +448,13 @@ class EstimatorMetaD:
     Note
     ----
     The data DataFrame should contain the following columns:
-        - 'participant': Identifier for each participant.
-        - 'signal' (integer): Stimulus presented to the participant, for example, 0 for S1 and 1 for S2.
-        - 'response' (integer): Participant's response to the stimulus.
-        - 'confidence' (integer, float): Participant's confidence rating for their response.
-        - 'accuracy' (integer): Accuracy of the participant's response. 0 = incorrect, 1 = correct.
+
+    - 'participant': Identifier for each participant.
+    - 'signal' (integer): Stimulus presented to the participant, for example, 0 for S1 and 1 for S2.
+    - 'response' (integer): Participant's response to the stimulus.
+    - 'confidence' (integer, float): Participant's confidence rating for their response.
+    - 'accuracy' (integer): Accuracy of the participant's response. 0 = incorrect, 1 = correct.
+
     """
     def __init__(
         self,

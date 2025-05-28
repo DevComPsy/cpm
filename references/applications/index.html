@@ -89,11 +89,13 @@
               <ul class="current">
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.applications</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#cpm.applications.RLRW">RLRW</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.RLRW--notes">Notes</a>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.applications.reinforcement_learning.RLRW">RLRW</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.RLRW--references">References</a>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD">EstimatorMetaD</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD.export">export</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD.optimise">optimise</a>
     </li>
         </ul>
     </li>
@@ -141,80 +143,82 @@
 
 
 
-<h2 id="cpm.applications.RLRW" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">RLRW</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">parameters_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">generate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h2 id="cpm.applications.reinforcement_learning.RLRW" class="doc doc-heading">
+              <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">reinforcement_learning</span><span class="o">.</span><span class="n">RLRW</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">parameters_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">generate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h2>
 
 
-  <div class="doc doc-contents first">
-      <p class="doc doc-class-bases">
-        Bases: <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code></p>
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper(model=None, data=None, parameters=None) (cpm.generators.Wrapper)" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code></p>
 
-  
-      <p>The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
+
+        <p>The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
 The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019).</p>
 
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>data</code></td>
-          <td>
-          </td>
-          <td><p>The data to be fit by the model. The data must contain columns for the choice and reward for each dimension. See Notes for more information on what columns should you include.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>dimensions</code></td>
-          <td>
-          </td>
-          <td><p>The number of distinct stimuli present in the data.</p></td>
-          <td>
-                <code>2</code>
-          </td>
-        </tr>
-        <tr>
-          <td><code>parameters_settings</code></td>
-          <td>
-          </td>
-          <td><p>The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters and for the default settings.</p></td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
-  <p><strong>Returns:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-                <code>cpm.<span title="cpm.generators">generators</span>.<a class="autorefs autorefs-internal" title="cpm.generators.Wrapper" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code>
-          </td>
-          <td><p>A cpm.generators.Wrapper object.</p></td>
-        </tr>
-    </tbody>
-  </table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>data</code></b>
+              –
+              <div class="doc-md-description">
+                <p>The data to be fit by the model. The data must contain columns for the choice and reward for each dimension. See Notes for more information on what columns should you include.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>dimensions</code></b>
+              –
+              <div class="doc-md-description">
+                <p>The number of distinct stimuli present in the data.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parameters_settings</code></b>
+              –
+              <div class="doc-md-description">
+                <p>The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters and for the default settings.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-<p><strong>Examples:</strong></p>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper(model=None, data=None, parameters=None) (cpm.generators.Wrapper)" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code>
+              –
+              <div class="doc-md-description">
+                <p>A cpm.generators.Wrapper object.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p><span class="doc-section-title">Examples:</span></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">RLRW</span>
@@ -224,20 +228,31 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">RLRW</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </code></pre></div>
-      <h4 id="cpm.applications.RLRW--notes">Notes</h4>
-<p>Data must contain the following columns:</p>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>Data must contain the following columns:</p>
 <ul>
 <li>choice: the choice of the participant from the available options, starting from 0.</li>
 <li>arm_n: the stimulus identifier for each option (arms in the bandit task), where n is the option available on a given trial. If there are more than one options, the stimulus identifier should be specified as separate columns of arm_1, arm_2, arm_3, etc. or arm_left, arm_middle, arm_right, etc.</li>
 <li>reward_n: the reward given after each options, where n is the corresponding arm of the bandit available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.</li>
 </ul>
 <p>parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 1 and an upper bound of 10.</p>
-<h4 id="cpm.applications.RLRW--references">References</h4>
-<p>Robert C Wilson Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Robert C Wilson Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.</p>
+</details>
 
 
 
-  
+
+
+
+
+
 
   <div class="doc doc-children">
 
@@ -253,7 +268,276 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 
   </div>
 
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="cpm.applications.signal_detection.EstimatorMetaD" class="doc doc-heading">
+              <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">signal_detection</span><span class="o">.</span><span class="n">EstimatorMetaD</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">],</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_invalid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+        <p>Class to estimate metacognitive parameters using the meta-d model proposed by Maniscalco and Lau (2012).</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>data</code></b>
+                  (<code>(<span title="pandas.DataFrame">DataFrame</span>, <span title="pandas.DataFrameGroupBy">DataFrameGroupBy</span>)</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>DataFrame containing the data to be analyzed. See Note below.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>bins</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Number of bins to use for binning the confidence ratings.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>cl</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Number of cores to use for parallel processing. If None, all available cores will be used.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parallel</code></b>
+                  (<code><span title="bool">bool</span></code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>If True, parallel processing will be used.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>libraries</code></b>
+                  (<code>list of str</code>, default:
+                      <code>[&#34;numpy&#34;, &#34;pandas&#34;]</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>List of libraries to use for parallel processing in Jupyter. Default is ["numpy", "pandas"].</p>
+              </div>
+            </li>
+            <li>
+              <b><code>prior</code></b>
+                  (<code><span title="bool">bool</span></code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>If True, the log likelihoods will incorporate prior density of parameters.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>display</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Level of algorithm's verbosity:
+    * 0 (default) : work silently.
+    * 1 : display a termination report.
+    * 2 : display progress during iterations.
+    * 3 : display progress during iterations (more complete report).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>ppt_identifier</code></b>
+                  (<code><span title="str">str</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Identifier for participants in the data. If None, the default identifier will be used.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>ignore_invalid</code></b>
+                  (<code><span title="bool">bool</span></code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>If True, invalid confidence ratings will be ignored during binning. If False, an error will be raised if invalid ratings are found. We recommend setting this to False (Default).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>**kwargs</code></b>
+                  (<code>additional keyword arguments</code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Additional keyword arguments to be passed to the optimization function.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code>An EstimatorMetaD object.</code>
+              –
+              <div class="doc-md-description">
+                
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>The data DataFrame should contain the following columns:</p>
+<ul>
+<li>'participant': Identifier for each participant.</li>
+<li>'signal' (integer): Stimulus presented to the participant, for example, 0 for S1 and 1 for S2.</li>
+<li>'response' (integer): Participant's response to the stimulus.</li>
+<li>'confidence' (integer, float): Participant's confidence rating for their response.</li>
+<li>'accuracy' (integer): Accuracy of the participant's response. 0 = incorrect, 1 = correct.</li>
+</ul>
+</details>
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cpm.applications.signal_detection.EstimatorMetaD.export" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Exports the optimization results and fitted parameters as a <code>pandas.DataFrame</code>.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+              –
+              <div class="doc-md-description">
+                <p>A pandas DataFrame containing the optimization results and fitted parameters.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cpm.applications.signal_detection.EstimatorMetaD.optimise" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Estimates the metacognitive parameters using the meta-d model.
+Here, we use a Trust-Region Constrained Optimization algorithm (Conn et al., 2000) to fit the model to the data.
+We use the <code>trust-constr</code> method from <code>scipy.optimize.minimize</code> to perform the optimization, and minimise the negative log-likelihood of the data given the model parameters.
+The optimization is performed for each participant in the data.</p>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>If you want to tune the behaviour of the optimization, you can do so by passing additional keyword arguments to the class constructor. See the <a href="https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html"><code>scipy.optimize.minimize</code></a> documentation for more details on the available options. By default, the optimization will use the <code>trust-constr</code> method with the default options specified in the <code>scipy.optimize.minimize</code> documentation.</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Conn, A. R., Gould, N. I. M., &amp; Toint, P. L. (2000). Trust Region Methods. Society for Industrial and Applied Mathematics. https://doi.org/10.1137/1.9780898719857</p>
+</details>
+
+    </div>
+
+</div>
+
+
+
   </div>
+
+    </div>
 
 </div>
               

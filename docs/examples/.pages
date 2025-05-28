@@ -3,3 +3,5 @@ nav:
     - example2.ipynb
     - example3.ipynb
     - "Example 4: Scaling to the cluster" : example4.ipynb
+    - "Example 5: Estimating metacognitive sensitivity in perceptual decision making": example5.ipynb
+    - example6.ipynb

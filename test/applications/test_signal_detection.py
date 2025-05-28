@@ -51,7 +51,7 @@ def test_metad_nll_runs():
         guess, nR_S1, nR_S2, nRatings, d1, t1c1, s
     )
     assert isinstance(result, float)
-    assert result == 1e+300
+    assert np.isclose(result, 1e+300)
 
 def test_fit_metad_runs():
     nR_S1 = np.array([10, 5, 2, 1, 1, 1])

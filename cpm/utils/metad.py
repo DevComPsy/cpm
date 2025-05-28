@@ -179,21 +179,21 @@ def bin_ratings(
     ratings : list | np.ndarray
         Ratings on a continuous scale.
     nbins : int
-        The number of discrete ratings to resample. Defaut set to `4`.
+        The number of discrete ratings to resample. Default set to `4`.
     verbose : boolean
-        If `True`, warning warnings be returned.
+        If `True`, warnings will be returned.
     ignore_invalid : bool
-        If `False` (default), an arreor will be raised in case of impossible
+        If `False` (default), an error will be raised in case of impossible
         discretisation of the confidence ratings. This is mostly due to identical
-        values and SDT values should not be extracted from the data. If `True` the
-        discretisation will process anyway. This option can be usefull for plotting.
+        values, and SDT values should not be extracted from the data. If `True`, the
+        discretisation will process anyway. This option can be useful for plotting.
 
     Returns
     -------
     discreteRatings : np.ndarray
         New rating array only containing integers between 1 and `nbins`.
     out : dict
-        Dictionary containing logs of the discrization process:
+        Dictionary containing logs of the discretisation process:
             * `'confbins'`: list or 1d array-like - If the ratings were
                 reampled, a list containing the new ratings and the new low or
                 hg threshold, appened before or after the rating, respectively.

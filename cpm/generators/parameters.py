@@ -122,6 +122,9 @@ class Parameters:
             if value.prior is not None:
                 lower.append(value.lower)
                 upper.append(value.upper)
+        ## make sure to turn non-homogeneous arrays into flattened numpy arrays
+        lower = np.concatenate([np.asarray(x).flatten() for x in lower])
+        upper = np.concatenate([np.asarray(x).flatten() for x in upper])
         return lower, upper
 
     def PDF(self, log=False):
@@ -397,7 +400,7 @@ class Value:
         return Value(**self.__dict__)
 
     def __array__(self) -> np.ndarray:
-        return np.array(self.value)
+        return np.asarray(self.value)
 
     def __float__(self) -> float:
         return float(self.value)

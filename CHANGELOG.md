@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add validation to export method and improve data handling in Simulator class
 - Update export tests to validate DataFrame output and adjust simulation assertions
 - Implement ProspectSoftmaxModel for decision-making under risk
+- Add meta-_d_ to applications
+- Provide utility functions for data preprocessing with meta-_d_ type models
+- Introduce new likelihoods (`multinomial` and `product`)
 
 ### Fixed
 
@@ -28,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update model description in RLRW class to include reference to Sutton & Barto (2021)
+- Fix column names in `cpm.applications.signal_detection.EstimatordMetaD` class
+- Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
+- Fix column name issues in `cpm.applications.signal_detection.EstimatordMetaD` class
+- Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
+
+### Changed
+
+- Improved error handling in `cpm.applications.signal_detection.EstimatordMetaD`
+- Improved error handling and added input validation in several methods, such as the `detailed_pandas_compiler` function and parameter bounds handling in `cpm/generators/parameters.py`
 
 ## [Unreleased] <=0.18.4
 

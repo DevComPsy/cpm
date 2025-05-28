@@ -27,14 +27,13 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.22.4",
+    version="0.23.0",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
-    author="Lenard Dome, Frank Hezemans, Andrew Webb, Tobias Hauser",
+    author="Lenard Dome, Frank Hezemans, Andrew Webb, Marc Carrera, Tobias Hauser",
     author_email="lenarddome@gmail.com",
     url="https://github.com/DevComPsy/cpm",
     packages=find_packages(),
-    # package_dir={"cpm": "cpm"},
     include_package_data=True,
     package_data={"cpm": ["**/*.csv"]},
     python_requires=">3.11.0",

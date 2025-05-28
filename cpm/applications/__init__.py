@@ -1,2 +1,3 @@
-from .reinforcement_learning import RLRW
-from .decision_making import PTSM
+from . import reinforcement_learning
+from . import signal_detection
+from . import decision_making

@@ -6,7 +6,8 @@ from cpm.models.activation import ProspectUtility
 
 class PTSM(Wrapper):
     """
-    A Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on (ref needed).
+    A Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Kahneman & Tversky (1979). It computes expected utility by combining transformed magnitudes and weighted probabilities, suitable for safe–risky decision paradigms.
+
     The model can interpret data either as:
         - 'safe vs. risky' (choice=0 => safe, choice=1 => risky)
         OR
@@ -49,6 +50,19 @@ class PTSM(Wrapper):
             The probability weighting function to use. Options include:
                 "power": use a simple power function (p^gamma)
                 "tk": use the Tversky–Kahneman (1992) weighting function.
+                See [cpm.models.activation.ProspectUtility](cpm.models.activation.ProspectUtility) .
+
+        See Also
+        ---------
+        [cpm.models.decision.Softmax](cpm.models.decision.Softmax) : for mapping utilities to choice probabilities.
+
+        [cpm.models.activation.ProspectUtility](cpm.models.activation.ProspectUtility) : for the Prospect Utility class that computes subjective utilities and weighted probabilities.
+
+        References
+        ----------
+
+        Kahneman, D., & Tversky, A. (1979). Prospect theory: An analysis of decision under risk. *Econometrica*, 47(2), 263–291.
+
         """
         # Use default parameter settings if none provided.
         if parameters_settings is None:

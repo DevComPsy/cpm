@@ -125,7 +125,7 @@ class ProspectUtility:
     delta : float
         The attractiveness parameter, which determines the elevation of the weighting function.
     weighting : str
-        The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'.
+        The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'. See Notes for details.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -170,17 +170,26 @@ class ProspectUtility:
 
     Examples
     --------
-    >>> vals = np.array([np.array([1, 40]), np.array([10])], dtype=object)
-    >>> probs = np.array([np.array([0.95, 0.05]), np.array([1])], dtype=object)
-    >>> prospect = ProspectUtility(
-            magnitudes=vals, probabilities=probs, alpha_pos = 0.85, beta = 0.9
-        )
-    >>> prospect.compute()
-    array([2.44583162, 7.07945784])
+    >>> from cpm.models.activations import ProspectUtility
+    >>> magnitudes = [[5, 0], [10, 0]]
+    >>> probabilities = [[0.8, 0.2], [0.5, 0.5]]
+    >>> model = ProspectUtility(
+    ...     magnitudes=magnitudes,
+    ...     probabilities=probabilities,
+    ...     alpha=0.88,
+    ...     lambda_loss=2.25,
+    ...     gamma=0.61,
+    ...     delta=1.0,
+    ...     weighting="prelec"
+    ... )
+    >>> expected_utilities = model.compute()
+    >>> print(expected_utilities)
 
     References
     ----------
     Gonzalez, R., & Wu, G. (1999). On the shape of the probability weighting function. Cognitive psychology, 38(1), 129-166.
+
+    Kahneman, D., & Tversky, A. (1979). Prospect theory: An analysis of decision under risk. *Econometrica*, 47(2), 263–291.
 
     Prelec, D. (1998). The probability weighting function. Econometrica, 497-527.
 

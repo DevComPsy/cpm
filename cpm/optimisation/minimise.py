@@ -175,10 +175,10 @@ class LogLikelihood:
         else:
             observed = np.array(observed, dtype=float)
         predicted, observed = np.squeeze(predicted), np.squeeze(observed)
-        assert (
-            predicted.shape == observed.shape
-        ), "The predicted and observed values must have the same shape."
-        assert predicted.sum(axis=-1).all() == 1, "The predicted values must sum to 1."
+        if predicted.shape != observed.shape:
+            raise ValueError("The predicted and observed values must have the same shape.")
+        if not np.allclose(predicted.sum(axis=-1), 1):
+            raise ValueError("The predicted values must sum to 1 within a tolerance.")
         predicted = np.clip(predicted, clip, np.inf)  # Avoid log(0)
         predicted = predicted / predicted.sum(axis=-1, keepdims=True)
         LL = np.sum(

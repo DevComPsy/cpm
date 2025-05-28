@@ -134,7 +134,7 @@ def detailed_pandas_compiler(details):
             ## ignore some items
             if key == "population" or key == "population_energies":
                 continue
-            ## make sure thiungs are in the right format
+            ## make sure things are in the right format
             if isinstance(value, np.ndarray):
                 value = value.flatten()
                 ## ensure it is a 1D array

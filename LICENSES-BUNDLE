@@ -1,0 +1,19 @@
+---
+
+The cpm repository and source distributions bundle a number of libraries that
+are compatibly licensed.  We list these here.
+
+Name: metadpy
+Files: cpm/application/signal_detection.py
+License: GPLv3
+    For details, see header comments in cpm/application/signal_detection.py.
+
+Name: meta-d MATLAB scripts
+Files: cpm/applications/signal_detection.py
+License: None
+    For details, see header comments in cpm/application/signal_detection.py.
+    The MATLAB scripts are not included in the cpm repository, but are
+    referenced in the cpm/application/signal_detection.py file.
+    The MATLAB scripts are available at <https://www.columbia.edu/~bsm2105/type2sdt/>
+    and were written by Brian Maniscalco. There is no accompanying license
+    information, but they are still referenced here for completeness.

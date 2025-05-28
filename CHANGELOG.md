@@ -1,6 +1,5 @@
 # CHANGELOG
 
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -13,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detect parallel method to use given environment (support for parallelisation on Jupyter Notebooks)
 - Provide a complete n-dimensional and k-arm reinforcement learning model for multi-armed bandit tasks in applications
 - Add support for '>' and '<' operator in Value type
+- Add meta-_d_ to applications
+- Provide utility functions for data preprocessing with meta-_d_ type models
+- Introduce new likelihoods (`multinomial` and `product`)
 
 ### Fixed
 
@@ -20,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix pandas groupby method for parallelization when in Jupyter Notebook
 - Fix magnitude is not taking effect in Nominal
 - Fix choice kernel choice should check whether computations still need to carry out
+- Fix column names in `cpm.applications.signal_detection.EstimatordMetaD` class
+- Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
+- Fix column name issues in `cpm.applications.signal_detection.EstimatordMetaD` class
+- Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
+
+### Changed
+
+- Improved error handling in `cpm.applications.signal_detection.EstimatordMetaD`
+- Improved error handling and added input validation in several methods, such as the `detailed_pandas_compiler` function and parameter bounds handling in `cpm/generators/parameters.py`
 
 ## [Unreleased] <=0.18.4
 

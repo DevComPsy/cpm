@@ -112,7 +112,6 @@ def extract_params_from_fit(data, keys=None):
         parameters[keys[i]] = data[i]
     return parameters
 
-
 def detailed_pandas_compiler(details):
     """
     Exports a list of dictionaries as a pandas dataframe.
@@ -132,18 +131,49 @@ def detailed_pandas_compiler(details):
     for i in details:
         row = pd.DataFrame()
         for key, value in i.items():
+            ## ignore some items
             if key == "population" or key == "population_energies":
                 continue
-            if isinstance(value, (list, np.ndarray)):
-                if isinstance(value, np.ndarray) and value.ndim > 1:
-                    value = value.flatten()
-                value = pd.DataFrame(np.asarray(value)).T
+            ## make sure things are in the right format
+            if isinstance(value, np.ndarray):
+                value = value.flatten()
+                ## ensure it is a 1D array
+                value = value.reshape(-1)
+            elif isinstance(value, list):
+                value = np.asarray(value).flatten()
+            elif isinstance(value, tuple):
+                value = np.asarray(list(value)).flatten()
+            elif isinstance(value, pd.Series):
+                value = value.to_numpy().flatten()
+            elif isinstance(value, dict):
+                value = pd.DataFrame(value).T
+            elif isinstance(value, (np.float_, np.int_, np.bool_, int, float, str, bool)):
+                value = np.array([value])
             else:
-                value = pd.DataFrame([value]).T
-            value.columns = [key + "_" + str(x) for x in value.columns]
+                raise ValueError(
+                    "The value of the optimiser output is not a numpy class, list, dict, or pandas dataframe. Please check the data.\n"
+                    f"The value is of type {type(value)}.\n"
+                    f"The value is {value}.\n"
+                )
+            value = pd.DataFrame(value).T
+            value = value.reset_index(drop=True)
+            
+            ## rename the columns
+            try: 
+                if value.columns.shape[0] == 1:
+                    value.columns = [key]
+                else:
+                    value.columns = [key + "_" + str(x) for x in value.columns]
+            except AttributeError:
+                raise ValueError(
+                    "The value of the optimiser output is not a pandas dataframe. Please check the data.\n"
+                    f"The value is of type {type(value)}.\n"
+                    f"The value is {value}.\n"
+                )
             row = pd.concat([row, value], axis=1)
         output = pd.concat([output, row], axis=0)
     return output
+
 
 
 def decompose(participant=None, pandas=False, identifier=None):

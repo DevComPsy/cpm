@@ -1,7 +1,8 @@
+import os
 import pytest
 import pandas as pd
 from unittest.mock import patch, mock_open
-from cpm.datasets.base import load_csv, load_bandit_data, load_risky_choices
+from cpm.datasets import load_csv, load_bandit_data, load_risky_choices
 
 
 @pytest.fixture
@@ -23,9 +24,13 @@ def test_load_csv(mock_read_csv, mock_exists, mock_csv_data):
     result = load_csv("test.csv")
 
     # Assertions
-    mock_exists.assert_called_once_with(
-        os.path.join(os.path.dirname(__file__), "../../cpm/datasets/data/test.csv")
-    )
+    # Get the path that should be used by load_csv
+    import cpm.datasets.base
+    base_dir = os.path.dirname(cpm.datasets.base.__file__)
+    data_dir = os.path.join(base_dir, "data")
+    expected_path = os.path.join(data_dir, "test.csv")
+    
+    mock_exists.assert_called_once_with(expected_path)
     mock_read_csv.assert_called_once()
     assert isinstance(result, pd.DataFrame)
     assert result.equals(pd.DataFrame({"col1": [1, 3], "col2": [2, 4]}))

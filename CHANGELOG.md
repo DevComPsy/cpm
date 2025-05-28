@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Provide a complete n-dimensional and k-arm reinforcement learning model for multi-armed bandit tasks in applications
 - Add support for '>' and '<' operator in Value type
 - Add meta-_d_ to applications
-- Provide utilitiy functions for data preprocessing with meta-_d_ type models
-- Introduce new likelihoods (`multionomial` and `product`)
+- Provide utility functions for data preprocessing with meta-_d_ type models
+- Introduce new likelihoods (`multinomial` and `product`)
 
 ### Fixed
 

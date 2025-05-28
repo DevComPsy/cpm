@@ -15,7 +15,7 @@
         show_root_heading: true
         heading_level: 2
 
-::: cpm.utils.metad.count_trials
+::: cpm.utils.metad.bin_ratings
     options:
         show_root_heading: true
         heading_level: 2

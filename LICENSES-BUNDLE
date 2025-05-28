@@ -9,7 +9,7 @@ License: GPLv3
     For details, see header comments in cpm/application/signal_detection.py.
 
 Name: meta-d MATLAB scripts
-Files: cpm/application/signal_detection.py
+Files: cpm/applications/signal_detection.py
 License: None
     For details, see header comments in cpm/application/signal_detection.py.
     The MATLAB scripts are not included in the cpm repository, but are

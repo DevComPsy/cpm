@@ -36,6 +36,8 @@ class Scavenger:
 
         >>> scavenger = Scavenger("/example/2025-01-10_Scavenger.xlsx")
         >>> scavenger.metrics()
+        >>> results = scavenger.results
+        >>> results.to_csv("/example/scavenger_results.csv", index=False)
         >>> scavenger.codebook()
 
         Notes
@@ -58,6 +60,12 @@ class Scavenger:
         self.results = pd.DataFrame()
         self.group_results = pd.DataFrame()
         self.codebook = {
+            "userID": "Unique identifier for each participant",
+            "mean_RT": "Mean reaction time",
+            "median_RT": "Median reaction time",
+            "total_rewards": "Total rewards earned",
+            "choice_stickiness": "Number of consecutive choices for the same option",   
+            "risky_choices": "Proportion of risky choices overall",
             "win_risk": "Proportion of risky wins",
             "loss_risk": "Proportion of risky losses",
             "win_risk_abg": "Proportion of risky wins in ambiguous trials",
@@ -70,6 +78,12 @@ class Scavenger:
             "rational_all_abg": "Proportion of rational choices in ambiguous trials",
             "rational_win_abg": "Proportion of rational choices in wins in ambiguous trials",
             "rational_loss_abg": "Proportion of rational choices in losses in ambiguous trials",
+            "rational_all_NoAbg": "Proportion of rational choices in non-ambiguous trials", 
+            "rational_win_NoAbg": "Proportion of rational choices in wins in non-ambiguous trials",
+            "rational_loss_NoAbg": "Proportion of rational choices in losses in non-ambiguous trials",
+            "rational_catchTrials": "Proportion of rational choices in catch trials",
+            "above_chance": "Proportion of trials with choices above chance level",
+            "chosen_left_all": "Proportion of trials where option A (safe) was chosen"
         }
 
     def metrics(self):
@@ -90,9 +104,10 @@ class Scavenger:
 
         mean_RT: Mean reaction time,
         median_RT: Median reaction time,
-        std_RT: Standard deviation of reaction time,
+        risky_choices: Proportion of risky choices overall,
         win_risk: Proportion of wins for risky choices,
         loss_risk: Proportion of losses for risky choices, 
+        risk_ambg: Proportion of risky choices in ambiguous trials,
         win_risk_abg: Proportion of risky wins in ambiguous trials, 
         win_risk_NoAbg: Proportion of risky wins in non-ambiguous trials, 
         loss_risk_abg: Proportion of risky losses in ambiguous trials,
@@ -106,6 +121,9 @@ class Scavenger:
         rational_all_NoAbg: Proportion of rational choices in non-ambiguous trials,
         rational_win_NoAbg: Proportion of rational choices in win trials in non-ambiguous trials,
         rational_loss_NoAbg: Proportion of rational choices in loss trials in non-ambiguous trials
+        rational_catchTrials: Proportion of rational choices in catch trials,
+        above_chance: Proportion of trials with choices above chance level,
+        chosen_left_all: Proportion of trials where option A (safe) was chosen.
 
         
         Notes
@@ -135,7 +153,7 @@ class Scavenger:
         """
 
         # Group data by userID
-        grouped_data = self.data.groupby("loopID")
+        grouped_data = self.data.groupby("userID")
 
         all_users_data = []
 
@@ -154,23 +172,28 @@ class Scavenger:
                 "B_EV": [],
                 "chosen": [],
                 "all_rewards": [],
-                "choice_stickiness": [],    
+                "choice_stickiness": [],   
+                "RT": [],
+                "catchtrial": [],
+                "abovechance": [],
+                "chosenLeft": []
             }
 
             # Loop through each trial in the user's data
             for _, trial_data in user_data.iterrows():
                 metrics_data_trial = {}
 
-                if trial_data["choice"] == 0:
+                if trial_data["chosen"] == 0:
                     metrics_data_trial["chosen"] = 1  # Option A chosen (safe)
                     metrics_data_trial["A_perc"] = 1
-                    metrics_data_trial["A_magn"] = trial_data["safe_magn"]*100
-                    metrics_data_trial["B_perc"] = trial_data[
-                        "risky_prob"
+                    metrics_data_trial["A_magn"] = trial_data["safe_magn"]
+                    metrics_data_trial["B_perc"] = [
+                        trial_data["risky_prob1"],
+                        trial_data["risky_prob2"]
                     ]
                     metrics_data_trial["B_magn"] = [
-                        trial_data["risky_magn1"]*100, 
-                        trial_data["risky_magn2"]*100
+                        trial_data["risky_magn1"], 
+                        trial_data["risky_magn2"]
                     ]
                 else:
                     metrics_data_trial["chosen"] = 2  # Option B chosen
@@ -178,8 +201,9 @@ class Scavenger:
                     metrics_data_trial["A_magn"] = trial_data[
                         "safe_magn"
                     ]
-                    metrics_data_trial["B_perc"] = trial_data[
-                        "risky_prob"
+                    metrics_data_trial["B_perc"] = [
+                        trial_data["risky_prob1"],
+                        trial_data["risky_prob2"]
                     ]
                     metrics_data_trial["B_magn"] = [
                         trial_data["risky_magn1"], 
@@ -187,7 +211,7 @@ class Scavenger:
                     ]
 
                 metrics_data_trial["ambiguous"] = trial_data[
-                    "ambg"
+                    "ambiguousTrial"
                 ]
 
                 # Compute expected values
@@ -195,9 +219,13 @@ class Scavenger:
                     np.array(metrics_data_trial["A_perc"]),
                     np.array(metrics_data_trial["A_magn"]),
                 )
-                metrics_data_trial["B_EV"] = 0.5 * np.array(
+                metrics_data_trial["B_EV"] = np.array(
+                    metrics_data_trial["B_perc"][0]
+                ) * np.array(
                     metrics_data_trial["B_magn"][0]
-                ) + 0.5 * np.array(metrics_data_trial["B_magn"][1]) # assuming 50% propbs
+                ) + np.array(
+                    metrics_data_trial["B_perc"][1]
+                ) * np.array(metrics_data_trial["B_magn"][1]) 
 
                 metrics_data_trial["EV_diff_safe"] = (
                     metrics_data_trial["A_EV"] - metrics_data_trial["B_EV"]
@@ -222,8 +250,11 @@ class Scavenger:
                 user_metrics["EV_diff_chosen_all"].append(
                     metrics_data_trial["EV_diff_chosen"]
                 )
-                user_metrics["RT"] = trial_data["rt"]
-                user_metrics["all_rewards"].append(trial_data["feedback"])  
+                user_metrics["RT"].append(trial_data["RT"])
+                user_metrics["all_rewards"].append(trial_data["outcome"])  
+                user_metrics["catchtrial"].append(trial_data["catchtrial"])
+                user_metrics["abovechance"].append(trial_data["abovechance"])
+                user_metrics["chosenLeft"].append(trial_data["chosenLeft"])
 
             all_users_data.append(user_metrics)
 
@@ -235,12 +266,14 @@ class Scavenger:
             t_loss = np.array(user_data["t_loss_all"])
             t_abg = np.array(user_data["t_abg_all"])
             ev_diff_chosen = np.array(user_data["EV_diff_chosen_all"], dtype=object)
+            catch_trials = np.array(user_data["catchtrial"], dtype=bool)
+            abovechance = np.array(user_data["abovechance"])
+            chosen_left = np.array(user_data["chosenLeft"])
 
             user_results = {"userID": user_id}
 
             user_results["mean_RT"] = np.mean(user_data["RT"])
             user_results["median_RT"] = np.median(user_data["RT"])
-            user_results["std_RT"] = np.std(user_data["RT"])
 
             user_results["total_rewards"] = np.sum(user_data["all_rewards"])
 
@@ -248,9 +281,10 @@ class Scavenger:
             user_results["choice_stickiness"] = np.sum(user_data["chosen"][i] == 1 and user_data["chosen"][i + 1] == 1 for i in range(len(user_data["chosen"]) - 1))
 
             # Number of risky choices
+            user_results["risky_choices"] = np.mean(rsk == 1)
             user_results["win_risk"] = np.sum(rsk[~t_loss]) / np.sum(~t_loss)
-            print(user_results["win_risk"])
             user_results["loss_risk"] = np.sum(rsk[t_loss]) / np.sum(t_loss)
+            user_results["risk_ambg"] = np.sum(rsk[t_abg]) / np.sum(t_abg)
             user_results["win_risk_abg"] = np.sum(rsk[~t_loss & t_abg]) / np.sum(
                 ~t_loss & t_abg
             )
@@ -296,6 +330,21 @@ class Scavenger:
                 ev_diff_chosen[t_loss & ~t_abg] >= 0
             ) / np.sum(t_loss & ~t_abg)
 
+            # proportion rational chocies on catch trials
+            user_results["rational_catchTrials"] = np.mean(
+                ev_diff_chosen[catch_trials] >= 0
+            )
+
+            # proportion above chance level
+            user_results["above_chance"] = np.sum(
+                abovechance == 1
+            ) / len(abovechance)
+
+            # proportion chosen left
+            user_results["chosen_left_all"] = np.sum(
+                chosen_left == 1
+            ) / len(chosen_left)
+
             # Append user-level results
             self.results = pd.concat(
                 [self.results, pd.DataFrame([user_results])], ignore_index=True
@@ -304,14 +353,10 @@ class Scavenger:
         # Convert results to a DataFrame
         self.results = pd.DataFrame(self.results)
 
-        # calculate group means
-        group_results = self.results.mean()
-        self.group_results = pd.DataFrame(group_results).T
-
-        return self.results, self.group_results
+        return self.results
 
     def codebook(self):
         """
         Return a codebook describing the metrics.
         """
-        return self.codebook 
+        return self.codebook

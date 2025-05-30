@@ -42,6 +42,21 @@ class milkyWay:
         self.results_MW = pd.DataFrame()
         self.results_PM = pd.DataFrame()
         self.codebook = {
+            "userID": "Unique identifier for each participant",
+            "trial_type": "Type of trial (Milky Way or Pirate Market)",
+            "rt_adj": "Adjusted reaction time of the trial",
+            "choice": "Choice made by the participant (1 or 2)",
+            "correct": "Whether the choice was correct (1) or incorrect (0)",
+            "mean_RT_MW": "Mean reaction time for Milky Way trials",
+            "median_RT_MW": "Median reaction time for Milky Way trials",
+            "mean_RT_PM": "Mean reaction time for Pirate Market trials",
+            "median_RT_PM": "Median reaction time for Pirate Market trials",
+            "accuracy_MW": "Accuracy for Milky Way trials",
+            "accuracy_PM": "Accuracy for Pirate Market trials",
+            "prop_same_choice_MW": "Proportion of same choice in Milky Way trials",
+            "prop_same_choice_PM": "Proportion of same choice in Pirate Market trials",
+            "prop_WSLS_1": "Proportion of win-stay/loose-shift choices for correct trials based on whether the choice was correct",
+            "prop_WSLS_2": "Proportion of win-stay/loose-shift choices for correct trials based on whether participant got at least 50 points (MW) or less than 50 points (PM)"
         }
     
     def metrics(self):
@@ -63,6 +78,8 @@ class milkyWay:
         - accuracy_PM: Accuracy for Pirate Market trials
         - prop_same_choice_MW: Proportion of same choice in Milky Way trials
         - prop_same_choice_PM: Proportion of same choice in Pirate Market trials
+        - prop_WSLS_1: Proportion of win-stay/loose-shift choices for correct trials based on whether the choice was correct
+        - prop_WSLS_2: Proportion of win-stay/loose-shift choices for correct trials based on whether participant got at least 50 points (MW) or less than 50 points (PM)
         """
         # seperate MilkyWay and Pirate Market data
         MW_data = self.data[self.data['trial_type'] == 'reward']
@@ -83,6 +100,15 @@ class milkyWay:
 
             user_results_MW["prop_same_choice_MW"] = np.mean(user_data_MW["choice"] == 1)
 
+            # proportion of win-stay/loose-shift choices
+            user_results_MW["prop_WSLS_1"] = np.mean(
+                user_data_MW["WSLS_v1"]
+            )
+
+            user_results_MW["prop_WSLS_2"] = np.mean(
+                user_data_MW["WSLS_v2"]
+            )
+
             # Append user-level results
             self.results_MW = pd.concat(
                 [self.results_MW, pd.DataFrame([user_results_MW])], ignore_index=True
@@ -101,6 +127,15 @@ class milkyWay:
 
             user_results_PM["prop_same_choice_PM"] = np.mean(user_data_PM["choice"] == 1)
 
+            # proportion of win-stay/loose-shift choices
+            user_results_PM["prop_WSLS_1"] = np.mean(
+                user_data_PM["WSLS_v1"]
+            )
+
+            user_results_PM["prop_WSLS_2"] = np.mean(
+                user_data_PM["WSLS_v2"]
+            )
+
             # Append user-level results
             self.results_PM = pd.concat(
                 [self.results_PM, pd.DataFrame([user_results_PM])], ignore_index=True
@@ -111,15 +146,6 @@ class milkyWay:
     def codebook(self):
         """
         Create a codebook for the data.
-        """
-        self.codebook = {
-            "userID": "Unique identifier for each participant",
-            "rt": "Reaction time of the trial",
-            "choice": "Choice made by the participant",
-            "outchosen": "Outcome reward of the chosen option",
-            "reward1": "Reward of option 1",
-            "reward2": "Reward of option 2"
-        }
-        
+        """        
         return self.codebook
         

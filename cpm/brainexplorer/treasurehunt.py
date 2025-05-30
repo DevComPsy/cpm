@@ -58,7 +58,6 @@ class treasurehunt:
             # self.data = pd.read_excel(filepath, header=0, nrows=500)
 
         self.results = pd.DataFrame()
-        self.group_results = pd.DataFrame()
         self.codebook = {
             "userID": "Unique identifier for each participant",
             "mean_accuracy": "Mean accuracy across all trials",

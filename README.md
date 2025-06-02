@@ -35,7 +35,7 @@ mkdocs build
 mkdocs serve
 ```
 
-Then open a browser and go to http://127.0.0.1:8000/
+Then open a browser and go to <http://127.0.0.1:8000/>
 
 Depending on the version you have, you might need to add Jupyter to PATH, see this [link](https://github.com/jupyter/nbconvert/issues/1773#issuecomment-1283852572) for more information.
 
@@ -75,7 +75,7 @@ Feel free to use gitmoji for commit messages, but insert them at the end of the 
 See this [link](https://gitmoji.dev/) for more information.
 
 ## Pull request conventions
-    
+
 When creating a pull request, make sure to follow these conventions: [link](https://github.blog/2015-01-21-how-to-write-the-perfect-pull-request/)
 
 ## Compiling the package
@@ -100,3 +100,15 @@ twine upload dist/*
 * `numpy`-style docstrings for documentation
 * `mkdocs` for documentation generation
 * `pytest` for testing
+
+## TODO
+
+* [ ] MBMF parameterisation should use toolbox functions
+* [ ] MBMF should be part of application (use RWRL template)
+* [ ] Create example dataset for MBMF (goblin heist) -- cpm.datasets.model_based_model_free
+* [ ] Example jupyter notebook for MBMF: explaining model with references, and fitting it to data, plotting parameters
+* [ ] (least important for now) Parameter recovery for MBMF
+  * [ ] generating data with MBMF
+  * [ ] save parameters used to generate data
+  * [ ] fitting MBMF to generated data
+  * [ ] plotting parameters (pearson correlation, etc.)

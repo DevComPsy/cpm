@@ -1,16 +1,21 @@
 # cpm.utils
 
-::: cpm.utils.pandas_to_dict
+::: cpm.utils.data.pandas_to_dict
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.utils.dict_to_pandas
+::: cpm.utils.data.dict_to_pandas
     options:
         show_root_heading: true
         heading_level: 2
 
-::: cpm.utils.load
+::: cpm.utils.metad.count_trials
+    options:
+        show_root_heading: true
+        heading_level: 2
+
+::: cpm.utils.metad.bin_ratings
     options:
         show_root_heading: true
         heading_level: 2

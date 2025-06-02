@@ -7,11 +7,12 @@ from scipy.special import digamma
 from scipy.stats import t as students_t
 
 from ..generators import Parameters
+from ..core.diagnostics import convergence_diagnostics_plots
 
 
 class VariationalBayes:
     """
-    Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods.
+    Performs hierarchical Bayesian estimation of a given model using variational (approximate) inference methods, a reduced version of the Hierarchical Bayesian Inference (HBI) algorithm proposed by Piray et al. (2019), to exclude model comparison and selection.
 
     Parameters
     ----------
@@ -28,13 +29,33 @@ class VariationalBayes:
     chain : int, optional
         The number of random parameter initialisations. Default is 4.
     hyperpriors: dict, optional
-        A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau).
+        A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.
     convergence : str, optional
         The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.
 
     Notes
     -----
 
+    The hyperprios are as follows:
+
+    - `a0` : array-like
+        Vector of means of the normal prior on the population-level means, mu.
+    - `b` : float
+        Scalar value that is multiplied with population-level precisions, tau, to determine the standard deviations of the normal prior on the population-level means, mu.
+    - `v` : float
+        Scalar value that is used to determine the shape parameter (nu) of the gamma prior on population-level precisions, tau.
+    - `s` : array-like
+        Vector of values that serve as lower bounds on the scale parameters (sigma) of the gamma prior on population-level precisions, tau.
+
+    With the number of parameters as N, the default values are as follows:
+
+    - `a0` : np.zeros(N)
+    - `b` : 1
+    - `v` : 0.5
+    - `s` : np.repeat(0.01, N)
+
+
+    The convergence criterion can be set to 'lme' or 'parameters'. If set to 'lme', the algorithm will stop when the log model evidence converges. If set to 'parameters', the algorithm will stop when the "normalized" means of the population-level parameters converge.
 
     References
     ----------
@@ -56,6 +77,7 @@ class VariationalBayes:
         chain=4,
         hyperpriors=None,
         convergence="parameters",
+        quiet=False,
         **kwargs,
     ):
         # write input arguments to self
@@ -91,7 +113,9 @@ class VariationalBayes:
                 s=np.repeat(0.01, self.__n_param__),
             )
         else:
-            self.hyperpriors = hyperpriors
+            self.hyperpriors = Parameters(**hyperpriors)
+
+        self.__quiet__ = quiet
         self.kwargs = kwargs
 
         # write some further objects to self:
@@ -337,7 +361,8 @@ class VariationalBayes:
         empirical_variances = mean_squares - square_means
         # also create empirical estimates of standard deviations (square root
         # of empirical variances), ensuring variances are not smaller than 1e-6
-        empirical_SDs = np.sqrt(np.clip(empirical_variances, a_min=1e-6, a_max=None))
+        np.clip(empirical_variances, a_min=1e-6, a_max=None, out=empirical_variances)
+        empirical_SDs = np.sqrt(empirical_variances)
 
         # TODO: ensure that shapes of `empirical_means` and `self.hyperpriors.a0`
         # are consistent
@@ -367,11 +392,10 @@ class VariationalBayes:
 
         # now we need to convert these estimates of population-level precisions
         # into usable estimates of standard deviations.
-        # to this end, we (1) take the inverse of the estimated precisions to
-        # get estimated variances, (2) ensure the estimated variances are not
-        # unreasonably small (using 1e-6 as lower threshold), (3) take the
+        # to this end, we ensure the estimated variances are not
+        # unreasonably small (using 1e-6 as lower threshold), and take the
         # square root of the estimated variances to get estimated SDs.
-        E_sd = np.sqrt(np.clip((1 / E_tau), a_min=1e-6, a_max=None))
+        E_sd = np.sqrt(np.clip(E_tau, a_min=1e-6, a_max=None))
 
         # also compute "hierarchical errorbars" - basically standard errors of
         # the estimates of the population-level means, which can be used
@@ -411,7 +435,7 @@ class VariationalBayes:
             hyper["mean"] = E_mu[i]
             hyper["mean_se"] = E_mu_error[i]
             hyper["sd"] = E_sd[i]
-            hyper["iteration"] = iter_idx + 1
+            hyper["iteration"] = iter_idx
             hyper["chain"] = chain_idx
             hyper["lme"] = lme
             self.hyperparameters = pd.concat([self.hyperparameters, hyper])
@@ -460,7 +484,8 @@ class VariationalBayes:
             Whether the algorithm has converged.
         """
 
-        print(f"Iteration: {iter_idx + 1}, LME: {lme_new}")
+        if self.__quiet__ is False:
+            print(f"Iteration: {iter_idx + 1}, LME: {lme_new}")
 
         lme_satisfied = False
         param_satisfied = False
@@ -560,9 +585,23 @@ class VariationalBayes:
 
         """
         output = []
+        parameter_names = self.optimiser.model.parameters.free()
+        rng = np.random.default_rng()
+
         for chain in range(self.chain):
-            print(f"Chain: {chain + 1}")
-            results = self.run_vb(chain_index=chain)
+            ## select a random starting point for each chain to avoid local minima
+            if chain > 0:
+                population_updates = {}
+                for i, name in enumerate(parameter_names):
+                    population_updates[name] = {
+                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
+                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
+                    }
+                self.optimiser.model.parameters.update_prior(**population_updates)
+
+            if self.__quiet__ is False:
+                print(f"Chain: {chain + 1}")
+            results = self.run_vb(chain_index=chain + 1)
             output.append(copy.deepcopy(results))
         self.output = output
         return None
@@ -617,8 +656,30 @@ class VariationalBayes:
             x=(-1 * np.abs(t_df["t_stat"])), df=(2 * self.__nu__)
         )
 
-        # TODO check if this is a sensible approach, or if we get issues with
+        # TODO: check if this is a sensible approach, or if we get issues with
         # overwriting an existing dataframe
         self.mu_stats = pd.concat([self.mu_stats, t_df])
 
         return t_df
+
+    def diagnostics(self, show=True, save=False, path=None):
+        """
+        Returns the convergence diagnostics plots for the group-level hyperparameters.
+
+        Parameters
+        ----------
+        show : bool, optional
+            Whether to show the plots. Default is True.
+        save : bool, optional
+            Whether to save the plots. Default is False.
+        path : str, optional
+            The path to save the plots. Default is None.
+
+        Notes
+        -----
+        The convergence diagnostics plots show the convergence of the log model evidence, the means, and the standard deviations of the group-level hyperparameters.
+        It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.
+        """
+        convergence_diagnostics_plots(
+            self.hyperparameters, show=show, save=save, path=path
+        )

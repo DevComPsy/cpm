@@ -1,12 +1,38 @@
 # CHANGELOG
 
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+
+- Detect parallel method to use given environment (support for parallelisation on Jupyter Notebooks)
+- Provide a complete n-dimensional and k-arm reinforcement learning model for multi-armed bandit tasks in applications
+- Add support for '>' and '<' operator in Value type
+- Add meta-_d_ to applications
+- Provide utility functions for data preprocessing with meta-_d_ type models
+- Introduce new likelihoods (`multinomial` and `product`)
+
+### Fixed
+
+- Fix multi-outcome log-likelihood calculation in `cpm.optimisation.minimise.LogLikehood.categorical` method
+- Fix pandas groupby method for parallelization when in Jupyter Notebook
+- Fix magnitude is not taking effect in Nominal
+- Fix choice kernel choice should check whether computations still need to carry out
+- Fix column names in `cpm.applications.signal_detection.EstimatordMetaD` class
+- Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
+- Fix column name issues in `cpm.applications.signal_detection.EstimatordMetaD` class
+- Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
+
+### Changed
+
+- Improved error handling in `cpm.applications.signal_detection.EstimatordMetaD`
+- Improved error handling and added input validation in several methods, such as the `detailed_pandas_compiler` function and parameter bounds handling in `cpm/generators/parameters.py`
+
+## [Unreleased] <=0.18.4
 
 ### Added
 
@@ -28,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 6312ad99: more thorough computation of inverse Hessian matrix and log determinant of Hessian matrix
 - 289cde73: made update_priors usable for both normal and truncated normal priors
 - ec2a181c: Implementing Piray's Variational Bayes method
+- 2d0c716d: Added convergence diagnostic plots for hierarchical methods
 
 ### Changed
 
@@ -65,3 +92,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 988b77a4: fix variational bayes data type error
 - 67df33c3: fix empirical bayes assigning values to objects before creating them
 - 62f92b16: fix initial guesses cannot generate starting guesses for parameter with non-finite or nan bounds
+- 88d056ff: fix a bug where undeclared variables caused issue in Empirical Bayes
+- b094aca9: fix inverted SD in the variational bayes method - remove as it is unnecessary

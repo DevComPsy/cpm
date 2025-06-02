@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import copy
 from scipy.stats import (
     truncnorm,
@@ -70,9 +71,6 @@ class Parameters:
     def __call__(self):
         return self.__dict__
 
-    def export(self):
-        return self.__dict__
-
     def __copy__(self):
         return Parameters(**self.__dict__)
 
@@ -124,6 +122,9 @@ class Parameters:
             if value.prior is not None:
                 lower.append(value.lower)
                 upper.append(value.upper)
+        ## make sure to turn non-homogeneous arrays into flattened numpy arrays
+        lower = np.concatenate([np.asarray(x).flatten() for x in lower])
+        upper = np.concatenate([np.asarray(x).flatten() for x in upper])
         return lower, upper
 
     def PDF(self, log=False):
@@ -198,6 +199,31 @@ class Parameters:
             if value.prior is not None:
                 free.append(key)
         return free
+
+    def export(self):
+        """
+        Return all freely-varying parameters and their accompanying lower and upper bounds, and prior distributions.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A table of all freely-varying parameters and their accompanying lower and upper bounds, and prior distributions. Each row is a parameter, and the columns are the lower bound, upper bound, prior distribution, and the parameters of the prior distribution.
+        """
+        table = pd.DataFrame()
+        for key, value in self.__dict__.items():
+            if value.prior is not None:
+                output = pd.Series(
+                    {
+                        "lower": value.lower,
+                        "upper": value.upper,
+                        "prior_fun": value.prior,
+                        **value.prior.kwds,
+                    }
+                )
+                output = output.to_frame().T
+                table = pd.concat([table, output], axis=0)
+        table.index = self.free()
+        return table
 
 
 class Value:
@@ -377,13 +403,19 @@ class Value:
         return Value(**self.__dict__)
 
     def __array__(self) -> np.ndarray:
-        return np.array(self.value)
+        return np.asarray(self.value)
 
     def __float__(self) -> float:
         return float(self.value)
 
     def __int__(self) -> int:
         return int(self.value)
+
+    def __gt__(self, other):
+        return self.value > other
+
+    def __ge__(self, other):
+        return self.value >= other
 
     def __len__(self):
         return len(self.value)

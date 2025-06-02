@@ -222,3 +222,9 @@ If you have this sorted, you can execute the `main.py` file from the command lin
 ```bash
 python src/main.py
 ```
+
+### ImportError: DLL load failed while importing arrays: The paging file is too small for this operation to complete. python multiprocess
+
+This error is due to the fact that the Windows operating system has a limit on the number of processes that can be spawned.
+Possible solution are (1) to increase the size of the paging file; (2) to decrease the number of processes spawned; or (3) to use a different operating system via `docker`.
+`cpm` provides a ready-to-ue `docker` container via [DockerHub](https://hub.docker.com/repository/docker/lenarddome/dcp-cpm-latest-dev/general), which you can use to run your code.

@@ -71,7 +71,7 @@ class spaceObserver:
         self.data = self.data[self.data["confidenceRT"] > 150]  # only keep trials with confidence reaction time > 150 ms
         self.data = self.data[self.data["confidenceRT"] < 10000]  # only keep trials with confidence reaction time < 10000 ms
         self.data = self.data[self.data["confidence"].notna()]  # only keep trials with confidence data
-        self.data = self.data[len(self.data["userID"]) < 80]  # only keep participants with less than 80 trials
+        self.data = self.data[self.data.groupby("userID")["userID"].transform('count') < 80]  # only keep participants with less than 80 trials
 
         nr_part_after = len(self.data["userID"].unique())
 

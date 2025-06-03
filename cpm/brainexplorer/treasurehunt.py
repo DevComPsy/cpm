@@ -32,11 +32,11 @@ class treasurehunt:
         Example
         ----------
 
-        >>> spaceObserver = SpaceObserver("/example/2025-02-20_SpaceObserver_Data_short.xlsx")
-        >>> spaceObserver.metrics()
-        >>> spaceObserver.clean_data()
-        >>> results = spaceObserver.results
-        >>> spaceObserver.codebook()
+        >>> treasurehunt = treasurehunt("/example/2025-02-20_SpaceObserver_Data_short.xlsx")
+        >>> treasurehunt.metrics()
+        >>> treasurehunt.clean_data()
+        >>> results = treasurehunt.results
+        >>> treasurehunt.codebook()
 
 
         Notes
@@ -62,8 +62,12 @@ class treasurehunt:
         nr_part_before = len(self.data["userID"].unique())
 
         self.data = self.data[self.data["run"] == 1]  # only keep first attempt
-        self.data = self.data[self.data["confidence"].nunique() > 3] # only keep trials with more than 3 unique values in confidence rating
-        self.data = self.data[self.data["draws"].nunique() > 3]  # only keep trials with more than 3 unique values in number of samples
+
+        # Filter out userIDs where all trials have less than 3 unique values for confidence or draws
+        valid_users = self.data.groupby("userID").filter(
+            lambda group: group["confidence"].nunique() > 3 and group["draws"].nunique() > 3
+        )["userID"].unique()
+        self.data = self.data[self.data["userID"].isin(valid_users)]
 
         nr_part_after = len(self.data["userID"].unique())
 
@@ -89,7 +93,7 @@ class treasurehunt:
             "deltaev_coef": "Coefficient for the change in total evidence in the regression model"  
         }
 
-    def metrics(self, mode=None):
+    def metrics(self):
         """
 
         Returns 
@@ -145,7 +149,7 @@ class treasurehunt:
             user_results["mean_n_draws"] = np.mean(user_data["draws"])
 
             # if chocie in line with current evidence
-            user_results["mean_chosEv"] = np.mean(user_results["chEv"])
+            user_results["mean_chosEv"] = np.mean(user_data["chEv"])
 
             # regression for influence of recent results on current choice  
 
@@ -212,8 +216,8 @@ class treasurehunt:
         """
         nr_part_before = len(self.results["userID"].unique())
 
-        self.results = self.results[self.results["draws"] > 2]  # only keep participants with mean number of draws > 2
-        self.results = self.results[self.results["draws"] < 23]  # only keep participants with mean number of draws < 23
+        self.results = self.results[self.results["mean_n_draws"] > 2]  # only keep participants with mean number of draws > 2
+        self.results = self.results[self.results["mean_n_draws"] < 23]  # only keep participants with mean number of draws < 23
 
         self.results = self.results[self.results["mean_confidence"] > 15]  # only keep participants with mean confidence > 15
         self.results = self.results[self.results["mean_confidence"] < 98]  # only keep participants with mean confidence < 98

@@ -62,10 +62,10 @@ class Scavenger:
         nr_participants_before = len(self.data["userID"].unique())
 
         self.data = self.data[self.data["run"] == 1] # only keep first attempt
-        self.data = self.data[self.data["rt"] > 150] # only keep trials with reaction time > 150 ms
-        self.data = self.data[self.data["rt"] < 10000] # only keep trials with reaction time < 10000 ms
-        self.data = self.data[len(self.data["run"]) < 40]  # only keep participants with less than 40 trials
-        self.data = self.data[self.data["configID"] != 242]
+        self.data = self.data[self.data["RT"] > 150] # only keep trials with reaction time > 150 ms
+        self.data = self.data[self.data["RT"] < 10000] # only keep trials with reaction time < 10000 ms
+        self.data = self.data[self.data.groupby("userID")["userID"].transform('count') < 40]  # only keep participants with less than 40 trials
+        self.data = self.data[self.data["config_id"] != 242]
 
         nr_participants_after = len(self.data["userID"].unique())
         self.deleted_participants = nr_participants_before - nr_participants_after
@@ -381,10 +381,10 @@ class Scavenger:
         """
         nr_part_before = len(self.results["userID"].unique())
 
-        self.data = self.data[self.data["median_RT"] < 5000]
-        self.data = self.data[self.data["rational_catchTrials"] >= 0.5]
-        self.data = self.data[self.data["risky_choices"] < 0.95]
-        self.data = self.data[self.data["chosen_left_all"] < 0.95]
+        self.results = self.results[self.results["median_RT"] < 5000]
+        self.results = self.results[self.results["rational_catchTrials"] >= 0.5]
+        self.results = self.results[self.results["risky_choices"] < 0.95]
+        self.results = self.results[self.results["chosen_left_all"] < 0.95]
 
         self.deleted_participants += nr_part_before - len(self.results["userID"].unique())
 

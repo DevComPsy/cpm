@@ -34,6 +34,8 @@ class treasurehunt:
 
         >>> spaceObserver = SpaceObserver("/example/2025-02-20_SpaceObserver_Data_short.xlsx")
         >>> spaceObserver.metrics()
+        >>> spaceObserver.clean_data()
+        >>> results = spaceObserver.results
         >>> spaceObserver.codebook()
 
 
@@ -41,23 +43,34 @@ class treasurehunt:
         -----
         The columns required in data:
         - userID: unique identifier for each participant
-        - run: 
+        - run: number of attempt by participant
         - outcome: the outcome of the trial
         - confidence: the confidence of the trial
         - RT: the reaction time of the trial
         - confidenceRT: the confidence reaction time of the trial
         - ev: the evidence of the trial
-        
+
+        Trial-level exclusion criteria:
+
+        - attempts after the first attempt ("run" variable)
+        - < 3 unique values in confidence rating 
+        - < 3 unique values in number of samples
         """
 
-        ## check file extension
-        if filepath.endswith(".csv"):
-            self.data = pd.read_csv(filepath, header=0)
-        elif filepath.endswith(".xlsx"):
-            self.data = pd.read_excel(filepath, header=0)
-            # self.data = pd.read_excel(filepath, header=0, nrows=500)
+        self.data = pd.read_csv(filepath, header=0)
+
+        nr_part_before = len(self.data["userID"].unique())
+
+        self.data = self.data[self.data["run"] == 1]  # only keep first attempt
+        self.data = self.data[self.data["confidence"].nunique() > 3] # only keep trials with more than 3 unique values in confidence rating
+        self.data = self.data[self.data["draws"].nunique() > 3]  # only keep trials with more than 3 unique values in number of samples
+
+        nr_part_after = len(self.data["userID"].unique())
+
+        self.deleted_participants = nr_part_before - nr_part_after
 
         self.results = pd.DataFrame()
+
         self.codebook = {
             "userID": "Unique identifier for each participant",
             "mean_accuracy": "Mean accuracy across all trials",
@@ -131,12 +144,8 @@ class treasurehunt:
 
             user_results["mean_n_draws"] = np.mean(user_data["draws"])
 
-            correct_responses = []
-            for i in range(len(user_data["outcome"])):
-                if user_data["outcome"].iloc[i] == 100:
-                    correct_responses.append(1)
-
-            user_results["mean_accuracy"] = len(correct_responses) / len(user_data["outcome"])  
+            # if chocie in line with current evidence
+            user_results["mean_chosEv"] = np.mean(user_results["chEv"])
 
             # regression for influence of recent results on current choice  
 
@@ -189,6 +198,29 @@ class treasurehunt:
         self.results = pd.DataFrame(self.results)
         
         return self.results
+    
+    def clean_data(self): 
+        """
+        Clean the aggregated data by applying participant-level exclusion criteria.
+
+        Exclusion criteria:
+        ---------
+        - Mean number of draws < 2 or > 23
+        - Make choice not in line with current evidence in >= 20% of trials
+        - Mean confidence < 15 or > 98
+
+        """
+        nr_part_before = len(self.results["userID"].unique())
+
+        self.results = self.results[self.results["draws"] > 2]  # only keep participants with mean number of draws > 2
+        self.results = self.results[self.results["draws"] < 23]  # only keep participants with mean number of draws < 23
+
+        self.results = self.results[self.results["mean_confidence"] > 15]  # only keep participants with mean confidence > 15
+        self.results = self.results[self.results["mean_confidence"] < 98]  # only keep participants with mean confidence < 98
+
+        self.results = self.results[self.results["mean_chosEv"] >= 0.8]  # only keep participants with mean choice in line with current evidence >= 80%
+
+        self.deleted_participants += nr_part_before - len(self.results["userID"].unique())
 
     def codebook(self):
         """

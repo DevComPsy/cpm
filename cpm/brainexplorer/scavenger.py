@@ -36,6 +36,7 @@ class Scavenger:
 
         >>> scavenger = Scavenger("/example/2025-01-10_Scavenger.xlsx")
         >>> scavenger.metrics()
+        >>> scavenger.clean_data()
         >>> results = scavenger.results
         >>> results.to_csv("/example/scavenger_results.csv", index=False)
         >>> scavenger.codebook()
@@ -49,13 +50,25 @@ class Scavenger:
         - "safe_magn": Trial Values for Option A,   
         - "risky_magn1" & "risky_magn2: Trial Values for Option B,
         - "ambg": if the trial is ambiguous or not
-        """
 
-        ## check file extension
-        if filepath.endswith(".csv"):
-            self.data = pd.read_csv(filepath, header=0)
-        elif filepath.endswith(".xlsx"):
-            self.data = pd.read_excel(filepath, header=0)
+        Trial-level exclusion criteria:
+        - Reaction time < 150 or > 10000 ms
+        - Attempts after the first attempt ("run" variable)
+        - Participants with more than 40 trials (due to technical error)
+        - Participants with configID = 242
+        """
+        self.data = pd.read_csv(filepath, header=0)
+
+        nr_participants_before = len(self.data["userID"].unique())
+
+        self.data = self.data[self.data["run"] == 1] # only keep first attempt
+        self.data = self.data[self.data["rt"] > 150] # only keep trials with reaction time > 150 ms
+        self.data = self.data[self.data["rt"] < 10000] # only keep trials with reaction time < 10000 ms
+        self.data = self.data[len(self.data["run"]) < 40]  # only keep participants with less than 40 trials
+        self.data = self.data[self.data["configID"] != 242]
+
+        nr_participants_after = len(self.data["userID"].unique())
+        self.deleted_participants = nr_participants_before - nr_participants_after
 
         self.results = pd.DataFrame()
         self.group_results = pd.DataFrame()
@@ -354,6 +367,26 @@ class Scavenger:
         self.results = pd.DataFrame(self.results)
 
         return self.results
+
+    def clean_data(self):
+        """
+        Clean the data by applying participant-level exlusion criteria.
+
+        Exclusion criteria:
+        ----------
+        - Median reaction time > 5000 ms
+        - Same choice safe/risky on >= 95% of trials
+        - Same choice left/right on >= 95% of trials
+        - Fail >= 50% of catch trials
+        """
+        nr_part_before = len(self.results["userID"].unique())
+
+        self.data = self.data[self.data["median_RT"] < 5000]
+        self.data = self.data[self.data["rational_catchTrials"] >= 0.5]
+        self.data = self.data[self.data["risky_choices"] < 0.95]
+        self.data = self.data[self.data["chosen_left_all"] < 0.95]
+
+        self.deleted_participants += nr_part_before - len(self.results["userID"].unique())
 
     def codebook(self):
         """

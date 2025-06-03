@@ -10,7 +10,9 @@ class milkyWay:
 
     def __init__(self, filepath):
         """
-        Load data to be analyised and turn into Pandas DataFrame
+        Load data to be analyised and turn into Pandas DataFrame. 
+        Trial-level exclusion criteria are applied to the data.
+        The results for Milky Way and Pirate Market trials are stored in separate DataFrames.
 
         Parameters
         ----------
@@ -22,6 +24,7 @@ class milkyWay:
 
         >>> milkyWay = milkyWay("/example/2025-02-20_SpaceObserver_Data_short.xlsx")
         >>> milkyWay.metrics()
+        >>> milkyWay.clean_data()
         >>> results_MW = milkyWay.results_MW
         >>> results_PM = milkyWay.results_PM
         >>> milkyWay.codebook()
@@ -35,9 +38,25 @@ class milkyWay:
         - rt_adj: the adjusted reaction time of the trial
         - choice: the choice made by the participant
         - correct: whether the choice was correct (1) or incorrect (0)
+
+        The trial-level exclusion criteria are applied:
+        - Reaction time < 150 or > 10000 ms
+        - Attempts after the first attempt ("run" variable)
+        - Participants with more than 72 trials (due to technical error)
         """
         
         self.data = pd.read_csv(filepath)
+
+        nr_part_before = len(self.data["userID"].unique())
+
+        #trial-level exclusion criteria
+        self.data = self.data[self.data["run"] == 1]  # only keep first attempt
+        self.data = self.data[self.data["rt_adj"] > 150] # only keep trials with reaction time > 150 ms
+        self.data = self.data[self.data["rt_adj"] < 10000] # only keep trials with reaction time < 10000 ms
+        self.data = self.data[len(self.data["run"]) < 72]  # only keep participants with less than 72 trials
+
+        nr_part_after = len(self.data["userID"].unique())
+        self.deleted_participants = nr_part_before - nr_part_after
 
         self.results_MW = pd.DataFrame()
         self.results_PM = pd.DataFrame()
@@ -58,7 +77,8 @@ class milkyWay:
             "prop_WSLS_1": "Proportion of win-stay/loose-shift choices for correct trials based on whether the choice was correct",
             "prop_WSLS_2": "Proportion of win-stay/loose-shift choices for correct trials based on whether participant got at least 50 points (MW) or less than 50 points (PM)"
         }
-    
+
+
     def metrics(self):
         """
         Calculate the metrics for the data.
@@ -142,6 +162,31 @@ class milkyWay:
             )
 
         self.results_PM = pd.DataFrame(self.results_PM)
+
+
+    def clean_data(self):
+        """
+        Clean the data by removing participants who do not meet the participant-level inclusion criteria.
+
+        Exclusion Critera
+        -----------------       
+
+        Participant-level:
+        - Same choice on >= 95% of trials
+        - Median RT > 10000 ms
+        """
+        combined_results = pd.concat([self.results_MW, self.results_PM], ignore_index=True)
+        nr_part_before = len(combined_results["userID"].unique())
+
+        self.results_MW = self.results_MW[self.results_MW["prop_same_choice_MW"] < 0.95]
+        self.results_PM = self.results_PM[self.results_PM["prop_same_choice_PM"] < 0.95]
+
+        self.results_MW = self.results_MW[self.results_MW["median_RT_MW"] < 10000]
+        self.results_PM = self.results_PM[self.results_PM["median_RT_PM"] < 10000]
+
+        combined_after = pd.concat([self.results_MW, self.results_PM], ignore_index=True)
+
+        self.deleted_participants += nr_part_before - len(combined_after["userID"].unique())
 
     def codebook(self):
         """

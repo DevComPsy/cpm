@@ -21,7 +21,8 @@ class spaceObserver:
 
     def __init__(self, filepath=None):
         """
-        Load data to be analyised and turn into Pandas DataFrame
+        Load data to be analyised and turn into Pandas DataFrame.
+        Exlude trials not meeting the criteria.
 
         Parameters
         ----------
@@ -33,6 +34,8 @@ class spaceObserver:
 
         >>> spaceObserver = SpaceObserver("/example/2025-02-20_SpaceObserver_Data.csv")
         >>> results = spaceObserver.metrics()
+        >>> spaceObserver.clean_data()
+        >>> results = spaceObserver.results
         >>> results.to_csv("/example/spaceObserver_results.csv", index=False)
         >>> spaceObserver.codebook()
 
@@ -47,10 +50,54 @@ class spaceObserver:
         - **confidence**: the confidence rating of the trial
         - **confidenceRT**: the reaction time of the confidence rating in the trial
         - **stimulus_intensity**: the evidence strength of the trial, which is the difference of evidence for each group of stimuli.
+
+        Trial-level exclusion critera:
+        - Attempts after the first attempt ("run" variable)
+        - Reaction time < 150 or > 10000 ms
+        - Reaction time of confidence < 150 or > 10000 ms
+        - practice trials: if more than 8 subsequent trials where confidence data is missing, it is a practice run and will be excluded.
+        - Trials with missing confidence data
+        - Participants with more than 80 trials (due to technical error)
         """
 
         ## read data
         self.data = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
+
+        nr_part_before = len(self.data["userID"].unique())
+
+        self.data = self.data[self.data["run"] == 1]  # only keep first attempt
+        self.data = self.data[self.data["choiceRT"] > 150]  # only keep trials with reaction time > 150 ms
+        self.data = self.data[self.data["choiceRT"] < 10000]  # only keep trials with reaction time < 10000 ms
+        self.data = self.data[self.data["confidenceRT"] > 150]  # only keep trials with confidence reaction time > 150 ms
+        self.data = self.data[self.data["confidenceRT"] < 10000]  # only keep trials with confidence reaction time < 10000 ms
+        self.data = self.data[self.data["confidence"].notna()]  # only keep trials with confidence data
+        self.data = self.data[len(self.data["userID"]) < 80]  # only keep participants with less than 80 trials
+
+        nr_part_after = len(self.data["userID"].unique())
+
+        self.deleted_participants = nr_part_before - nr_part_after
+
+        # delete practice trials
+        # if > 8 subseequent trials where confidence data is missing it is practice run
+
+        self.data["confidence"] = self.data["confidence"].replace(
+            ["NaN", "nan", "NAN", ""], pd.NA
+        )
+
+        self.data["confidence"] = pd.to_numeric(self.data["confidence"], errors='coerce')
+
+        print(len(self.data))
+
+        self.data = self.data.groupby(["userID", "round"]).filter(
+            lambda run: (
+                (
+                    (run["confidence"].isna() != run["confidence"].isna().shift()).cumsum()
+                    .where(run["confidence"].isna())
+                    .value_counts()
+                    .max()
+                ) if run["confidence"].isna().any() else 0
+            ) < 9
+        )
 
         self.results = pd.DataFrame()
         self.codebook = {
@@ -121,41 +168,6 @@ class spaceObserver:
             The mean evidence strength for each of the bins. The trials here are split into 4 quarters. The evidence strength is divided into four equal bins and the mean is calculated for each bin.
         """            
 
-
-        # delete practice trials
-        # if > 8 subseequent trials where confidence data is missing it is practice run
-        """
-        practice_trials = self.data.groupby(["userID", "round"]).filter(
-            lambda run_data: run_data["confidence"][(pd.isna(run_data["confidence"])) | (run_data["confidence"] == "NaN")].count() > 8
-        )
-        self.data = self.data.drop(practice_trials.index)
-        """
-
-        self.data["confidence"] = self.data["confidence"].replace(
-            ["NaN", "nan", "NAN", ""], pd.NA
-        )
-
-        self.data["confidence"] = pd.to_numeric(self.data["confidence"], errors='coerce')
-
-        print(len(self.data))
-
-        self.data = self.data.groupby(["userID", "round"]).filter(
-            lambda run: (
-                (
-                    (run["confidence"].isna() != run["confidence"].isna().shift()).cumsum()
-                    .where(run["confidence"].isna())
-                    .value_counts()
-                    .max()
-                ) if run["confidence"].isna().any() else 0
-            ) < 9
-        )
-
-        print(self.data["confidence"].unique())
-
-        print(len(self.data))
-
-        print(self.data[self.data["userID"] == 121]["round"].unique())
-
         # Group data by subject
         grouped_data = self.data.groupby("userID")
 
@@ -187,14 +199,14 @@ class spaceObserver:
             user_results["mean_RT_incorrect"] = np.mean(np.array(user_data["choiceRT"])[correct != 1])
             user_results["median_RT_incorrect"] = np.median(np.array(user_data["choiceRT"])[correct != 1])
 
-            evidence_strenght = user_data["stimulus_intensity"]
+            evidence_strength = user_data["stimulus_intensity"]
 
             # calcualte evidence strength for each bin
 
             bin_size = 4
 
             # Divide evidence strength into 4 equal bins and calculate the mean for each bin
-            bins = np.array_split(evidence_strenght, bin_size)
+            bins = np.array_split(evidence_strength, bin_size)
             ES_1 = np.mean(bins[0]) if len(bins[0]) > 0 else np.nan
             ES_2 = np.mean(bins[1]) if len(bins[1]) > 0 else np.nan
             ES_3 = np.mean(bins[2]) if len(bins[2]) > 0 else np.nan
@@ -211,7 +223,27 @@ class spaceObserver:
 
         return self.results
 
+    def clean_data(self):
+        """
+        Clean aggregated data by applyign participant-level exclusion criteria.
+        Exclusion criteria:
+        ---------
+        - Mean accuracy < 0.5 
+        - Median reaction time > 5000 ms
+        - Median reaction time for confidence ratings > 5000 ms
+        - Median evidence strength > 25
+        - Mean confidence > 97        
+        """
 
+        nr_part_before = len(self.results["userID"].unique())
+
+        self.results = self.results[self.results["mean_accuracy"] >= 0.5]
+        self.results = self.results[self.results["median_RT"] < 5000]
+        self.results = self.results[self.results["median_confidenceRT"] < 5000]
+        self.results = self.results[self.results["ES_bins"].apply(lambda x: np.nanmean(x) < 25)]
+        self.results = self.results[self.results["mean_confidence"] < 97]
+
+        self.deleted_participants += nr_part_before - len(self.results["userID"].unique())
 
     def codebook(self):
         """

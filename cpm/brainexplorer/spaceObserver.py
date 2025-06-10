@@ -188,7 +188,7 @@ class spaceObserver:
             ES_4 = np.mean(bins[3]) if len(bins[3]) > 0 else np.nan
             user_results["ES_bins"] = np.array([ES_1, ES_2, ES_3, ES_4])
 
-            self.results["ES_total_mean"] = np.mean(evidence_strength)
+            user_results["ES_total_mean"] = np.nanmean(evidence_strength)
 
             # Append user-level results
             self.results = pd.concat(

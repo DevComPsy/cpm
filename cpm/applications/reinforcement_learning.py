@@ -50,7 +50,7 @@ class RLRW(Wrapper):
 
     References
     ----------
-    Robert C Wilson Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.
+    Robert C Wilson & Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.
 
     """
 

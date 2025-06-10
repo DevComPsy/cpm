@@ -13,6 +13,9 @@ theme:
 extra_css:
   - style.css
 
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
 plugins:
   - search
   - awesome-pages
@@ -42,3 +45,4 @@ markdown_extensions:
   # - markdown_include.include:
   #     base_path: .
   - admonition
+  - pymdownx.arithmatex

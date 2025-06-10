@@ -120,7 +120,7 @@ class PTSM(Wrapper):
             gamma = parameters.gamma.value  # This is used as the weighting curvature
             temp  = parameters.temperature.value
 
-            # Read trial data (expected columns: safe_magn, risky_magn, risky_prob, choice)
+            # Read trial data 
             safe_magn  = trial["safe_magnitudes"]
             risky_magn = trial["risky_magnitudes"]
             risky_prob = trial["risky_probability"]

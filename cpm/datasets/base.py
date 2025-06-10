@@ -86,3 +86,32 @@ def load_risky_choices():
 
     """
     return load_csv("risky_choices.csv")
+
+def load_model_based_model_free():
+    """
+    Load the risky choices dataset from a CSV file.
+
+    Returns
+    -------
+    pd.DataFrame
+        A pandas DataFrame containing the risky choices data.
+
+    Examples
+    --------
+    >>> data = load_model_based_model_free()
+    >>> print(data.head())
+
+    Notes
+    -----
+    The dataset will include the following columns:
+
+        - userID: unique identifier for each participant
+        - stimuli: which planets presented in stage of the trial
+        - s: the state of the trial
+        - rews: the rewards for each stimulus / planet 
+        - choice: the choice made by the participant
+        - stake: the stake of the trial (1 or 5) 
+        - points: the points received in the trial
+
+    """
+    return load_csv("model_based_model_free.csv")

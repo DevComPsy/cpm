@@ -283,7 +283,7 @@ class MBMF(Wrapper):
 
             s1 = trial["s"][0] # first choice stage
             s2 = trial["s"][1] # second choice stage
-            action = self.data["choice"]
+            action = trial["choice"]
             a = action[0] - (s1 == 2) * 2
 
             # choose which weight to update based on stake of trial

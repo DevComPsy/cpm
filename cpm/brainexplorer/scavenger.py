@@ -54,21 +54,12 @@ class Scavenger:
         Trial-level exclusion criteria:
         - Reaction time < 150 or > 10000 ms
         - Attempts after the first attempt ("run" variable)
-        - Participants with more than 40 trials (due to technical error)
-        - Participants with configID = 242
         """
         self.data = pd.read_csv(filepath, header=0)
 
-        nr_participants_before = len(self.data["userID"].unique())
-
         self.data = self.data[self.data["run"] == 1] # only keep first attempt
-        self.data = self.data[self.data["RT"] > 150] # only keep trials with reaction time > 150 ms
-        self.data = self.data[self.data["RT"] < 10000] # only keep trials with reaction time < 10000 ms
-        self.data = self.data[self.data.groupby("userID")["userID"].transform('count') < 40]  # only keep participants with less than 40 trials
-        self.data = self.data[self.data["config_id"] != 242]
-
-        nr_participants_after = len(self.data["userID"].unique())
-        self.deleted_participants = nr_participants_before - nr_participants_after
+        self.data = self.data[self.data["RT"] >= 150] # only keep trials with reaction time > 150 ms
+        self.data = self.data[self.data["RT"] <= 10000] # only keep trials with reaction time < 10000 ms
 
         self.results = pd.DataFrame()
         self.group_results = pd.DataFrame()
@@ -378,15 +369,29 @@ class Scavenger:
         - Same choice safe/risky on >= 95% of trials
         - Same choice left/right on >= 95% of trials
         - Fail >= 50% of catch trials
+        - Participants with more than 40 trials (due to technical error)
+        - Participants with configID = 242
         """
         nr_part_before = len(self.results["userID"].unique())
 
-        self.results = self.results[self.results["median_RT"] < 5000]
-        self.results = self.results[self.results["rational_catchTrials"] >= 0.5]
-        self.results = self.results[self.results["risky_choices"] < 0.95]
-        self.results = self.results[self.results["chosen_left_all"] < 0.95]
+        self.cleanedresults = self.results.copy()
 
-        self.deleted_participants += nr_part_before - len(self.results["userID"].unique())
+        user_id_counts = self.data["userID"].value_counts()
+        user_ids_to_keep = user_id_counts[user_id_counts <= 40].index
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(user_ids_to_keep)]
+
+        user_ids_to_exclude = (
+            self.data.loc[self.data["config_id"] == 242, "userID"].unique()
+            )
+        user_ids_to_keep = [uid for uid in self.data["userID"].unique() if uid not in user_ids_to_exclude]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(user_ids_to_keep)]
+
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] < 5000]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["rational_catchTrials"] > 0.5]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["risky_choices"] < 0.95]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["chosen_left_all"] < 0.95]
+
+        self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
 
     def codebook(self):
         """

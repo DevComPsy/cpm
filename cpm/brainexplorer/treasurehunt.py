@@ -53,25 +53,11 @@ class treasurehunt:
         Trial-level exclusion criteria:
 
         - attempts after the first attempt ("run" variable)
-        - < 3 unique values in confidence rating 
-        - < 3 unique values in number of samples
         """
 
         self.data = pd.read_csv(filepath, header=0)
 
-        nr_part_before = len(self.data["userID"].unique())
-
         self.data = self.data[self.data["run"] == 1]  # only keep first attempt
-
-        # Filter out userIDs where all trials have less than 3 unique values for confidence or draws
-        valid_users = self.data.groupby("userID").filter(
-            lambda group: group["confidence"].nunique() > 3 and group["draws"].nunique() > 3
-        )["userID"].unique()
-        self.data = self.data[self.data["userID"].isin(valid_users)]
-
-        nr_part_after = len(self.data["userID"].unique())
-
-        self.deleted_participants = nr_part_before - nr_part_after
 
         self.results = pd.DataFrame()
 
@@ -118,12 +104,11 @@ class treasurehunt:
         - totevminus_coef: coefficient for the previous total evidence in the regression model
         - deltaev_coef: coefficient for the change in total evidence in the regression model
         """
+        # turn string fields into list of ints
+        self.data["ev"] = self.data["ev"].apply(lambda x: [int(i) for i in x.strip("[]").split(" ")])
 
         # Group data by userID
         grouped_data = self.data.groupby("userID")
-
-        # turn string fields into list of ints
-        self.data["ev"] = self.data["ev"].apply(lambda x: [int(i) for i in x.strip("[]").split(" ")])
 
         # Loop through each group of user data
         for user_id, user_data in grouped_data:
@@ -212,19 +197,34 @@ class treasurehunt:
         - Mean number of draws < 2 or > 23
         - Make choice not in line with current evidence in >= 20% of trials
         - Mean confidence < 15 or > 98
-
+        - < 3 unique values in confidence rating 
+        - < 3 unique values in number of samples
         """
         nr_part_before = len(self.results["userID"].unique())
 
-        self.results = self.results[self.results["mean_n_draws"] > 2]  # only keep participants with mean number of draws > 2
-        self.results = self.results[self.results["mean_n_draws"] < 23]  # only keep participants with mean number of draws < 23
+        self.cleanedresults = self.results.copy()
+        
+        # Filter out participants who have less than 3 unique values for confidence 
+        valid_users = self.data.groupby("userID").filter(
+            lambda group: group["confidence"].nunique() >= 3 
+        )["userID"].unique()
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(valid_users)]
+        
+        # Filter out participants who have less than 3 unique values for draws
+        valid_users = self.data.groupby("userID").filter(
+            lambda group: group["draws"].nunique() >= 3 
+        )["userID"].unique()
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(valid_users)]
 
-        self.results = self.results[self.results["mean_confidence"] > 15]  # only keep participants with mean confidence > 15
-        self.results = self.results[self.results["mean_confidence"] < 98]  # only keep participants with mean confidence < 98
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] >= 2]  # only keep participants with mean number of draws > 2
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] <= 23]  # only keep participants with mean number of draws < 23
 
-        self.results = self.results[self.results["mean_chosEv"] >= 0.8]  # only keep participants with mean choice in line with current evidence >= 80%
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_confidence"] >= 15]  # only keep participants with mean confidence > 15
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_confidence"] <= 98]  # only keep participants with mean confidence < 98
 
-        self.deleted_participants += nr_part_before - len(self.results["userID"].unique())
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_chosEv"] > 0.8]  # only keep participants with mean choice in line with current evidence >= 80%
+
+        self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
 
     def codebook(self):
         """

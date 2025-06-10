@@ -55,49 +55,24 @@ class spaceObserver:
         - Attempts after the first attempt ("run" variable)
         - Reaction time < 150 or > 10000 ms
         - Reaction time of confidence < 150 or > 10000 ms
-        - practice trials: if more than 8 subsequent trials where confidence data is missing, it is a practice run and will be excluded.
         - Trials with missing confidence data
-        - Participants with more than 80 trials (due to technical error)
         """
 
         ## read data
         self.data = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
 
-        nr_part_before = len(self.data["userID"].unique())
-
         self.data = self.data[self.data["run"] == 1]  # only keep first attempt
-        self.data = self.data[self.data["choiceRT"] > 150]  # only keep trials with reaction time > 150 ms
-        self.data = self.data[self.data["choiceRT"] < 10000]  # only keep trials with reaction time < 10000 ms
-        self.data = self.data[self.data["confidenceRT"] > 150]  # only keep trials with confidence reaction time > 150 ms
-        self.data = self.data[self.data["confidenceRT"] < 10000]  # only keep trials with confidence reaction time < 10000 ms
+        self.data = self.data[self.data["choiceRT"] >= 150]  # only keep trials with reaction time > 150 ms
+        self.data = self.data[self.data["choiceRT"] <= 10000]  # only keep trials with reaction time < 10000 ms
+        self.data = self.data[self.data["confidenceRT"] >= 150]  # only keep trials with confidence reaction time > 150 ms
+        self.data = self.data[self.data["confidenceRT"] <= 10000]  # only keep trials with confidence reaction time < 10000 ms
         self.data = self.data[self.data["confidence"].notna()]  # only keep trials with confidence data
-        self.data = self.data[self.data.groupby("userID")["userID"].transform('count') < 80]  # only keep participants with less than 80 trials
-
-        nr_part_after = len(self.data["userID"].unique())
-
-        self.deleted_participants = nr_part_before - nr_part_after
-
-        # delete practice trials
-        # if > 8 subseequent trials where confidence data is missing it is practice run
-
+        
         self.data["confidence"] = self.data["confidence"].replace(
             ["NaN", "nan", "NAN", ""], pd.NA
         )
 
         self.data["confidence"] = pd.to_numeric(self.data["confidence"], errors='coerce')
-
-        print(len(self.data))
-
-        self.data = self.data.groupby(["userID", "round"]).filter(
-            lambda run: (
-                (
-                    (run["confidence"].isna() != run["confidence"].isna().shift()).cumsum()
-                    .where(run["confidence"].isna())
-                    .value_counts()
-                    .max()
-                ) if run["confidence"].isna().any() else 0
-            ) < 9
-        )
 
         self.results = pd.DataFrame()
         self.codebook = {
@@ -213,6 +188,8 @@ class spaceObserver:
             ES_4 = np.mean(bins[3]) if len(bins[3]) > 0 else np.nan
             user_results["ES_bins"] = np.array([ES_1, ES_2, ES_3, ES_4])
 
+            self.results["ES_total_mean"] = np.mean(evidence_strength)
+
             # Append user-level results
             self.results = pd.concat(
                 [self.results, pd.DataFrame([user_results])], ignore_index=True
@@ -232,18 +209,29 @@ class spaceObserver:
         - Median reaction time > 5000 ms
         - Median reaction time for confidence ratings > 5000 ms
         - Median evidence strength > 25
-        - Mean confidence > 97        
+        - Mean confidence > 97       
+        - Participants with more than 80 trials (due to technical error) 
         """
 
         nr_part_before = len(self.results["userID"].unique())
 
-        self.results = self.results[self.results["mean_accuracy"] >= 0.5]
-        self.results = self.results[self.results["median_RT"] < 5000]
-        self.results = self.results[self.results["median_confidenceRT"] < 5000]
-        self.results = self.results[self.results["ES_bins"].apply(lambda x: np.nanmean(x) < 25)]
-        self.results = self.results[self.results["mean_confidence"] < 97]
+        self.cleanedresults = self.results.copy()
 
-        self.deleted_participants += nr_part_before - len(self.results["userID"].unique())
+        users_80trials = set(
+            self.data.loc[
+                self.data.groupby("userID")["userID"].transform('count') <= 80, 
+                "userID"
+            ].unique()
+        )
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(users_80trials)]
+
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_accuracy"] >= 0.5]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] <= 3000]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidenceRT"] <= 3000]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["ES_total_mean"] <= 25]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_confidence"] <= 97]
+
+        self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
 
     def codebook(self):
         """

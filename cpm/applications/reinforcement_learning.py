@@ -150,9 +150,11 @@ class RLRW(Wrapper):
         super().__init__(data=data, model=model, parameters=parameters)
 
 
-class MBMF:
+class MBMF(Wrapper):
     """
-    Model for model-based vs model-free decision making in a decision making task
+    This class implements a model for model-based vs model-free decision making in a decision making task. 
+    The model uses a combination of model-based and model-free learning to predict choices based on the rewards received for each stimulus.
+    It is based on the model described in Kool et al. (2016) and adds choice stickiness calcualtions to the model.
 
     Attributes
     ----------
@@ -166,8 +168,12 @@ class MBMF:
     Example
     ----------
 
-    goblinHeist = GoblinHeist(data, [1, 0.8, 0.5, 0.8, 0.8, -0.1, -0.1])
-    goblinHeist.MB_MF_model()
+    >>> import numpy
+    >>> import pandas
+    >>> from cpm.applications import MBMF
+    >>> data = pandas.read_csv("datasets/data/GH_example_data.csv")
+
+    >>> model = MBMF(data=data, parameters_settings=[[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]])
 
     Notes
     -----
@@ -180,6 +186,7 @@ class MBMF:
     - stake: the stake of the trial (1 or 5) 
     - points: the points received in the trial
 
+    parameters_settings must be a 2D array, like [[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]], where the first list specifies the inverse temperature, the second list specifies the learning rate, the third list specifies the eligibility trace decay, the fourth list specifies the mixing weight for low stake trials, the fifth list specifies the mixing weight for high stake trials, the sixth list specifies the stickiness, and the seventh list specifies the response stickiness. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. 
 
     References
     ----------  
@@ -191,82 +198,96 @@ class MBMF:
     """
 
     def __init__(
-        self, data=None, dimensions=2, parameters_settings=None, generate=False
+        self, data=None, parameters_settings=None
     ):
-        self.data = data
+        if parameters_settings is None:
+            parameters_settings = [[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]]
+        parameters = Parameters(
+            temperature=Value(
+                value=parameters_settings[0][0],
+                lower=parameters_settings[0][1],
+                upper=parameters_settings[0][2]
+            ),
+            learning_rate=Value(
+                value=parameters_settings[1][0],
+                lower=parameters_settings[1][1],
+                upper=parameters_settings[1][2]
+            ),
+            eligibility_trace_decay=Value(
+                value=parameters_settings[2][0],
+                lower=parameters_settings[2][1],
+                upper=parameters_settings[2][2]
+            ),
+            mixing_weight_low_stake=Value(
+                value=parameters_settings[3][0],
+                lower=parameters_settings[3][1],
+                upper=parameters_settings[3][2]
+            ),
+            mixing_weight_high_stake=Value(
+                value=parameters_settings[4][0],
+                lower=parameters_settings[4][1],
+                upper=parameters_settings[4][2]
+            ),
+            stickiness=Value(
+                value=parameters_settings[5][0],
+                lower=parameters_settings[5][1],
+                upper=parameters_settings[5][2]
+            ),
+            response_stickiness=Value(
+                value=parameters_settings[6][0],
+                lower=parameters_settings[6][1],
+                upper=parameters_settings[6][2]
+            )
+        )
 
-        ## TODO: cpm.generators.Value should be used here
-        ## TODO: cpm.generators.Parameters should be used here
-        if parameters is None:
-            self.parameters = {
-                "temperature": 0.8,
-                "learning_rate": 0.5,
-                "eligibility_trace_decay": 0.8,
-                "mixing_weight_low_stake": 0.8,
-                "mixing_weight_high_stake": 0.8,
-                "stickiness": -0.1,
-                "response_stickiness": -0.1
-            }
-            warnings.warn("No parameters specified, using default parameters.")
-        else:
-            self.parameters = {
-                "temperature": parameters[0],
-                "learning_rate": parameters[1],
-                "eligibility_trace_decay": parameters[2],
-                "mixing_weight_low_stake": parameters[3],
-                "mixing_weight_high_stake": parameters[4],
-                "stickiness": parameters[5],
-                "response_stickiness": parameters[6]
-            }
+        @ipp.require("numpy")
+
+        def MF_MB_model(parameters, trial):
+
+            """
+            Model for model-based vs model-free decision making in a decison making task
 
 
-    def MF_MB_model(self):
+            Returns
+            -------
+            LL: 
+                Log Likelihood 
+            Q:
+                Q values for the mixing model
+            Q_MF:
+                Q values for model-free learning
+            Q_MB:
+                Q values for model-based learning       
+            """
 
-        """
-        Model for model-based vs model-free decision making in a decison making task
+            # pull out the paramters
+            b = parameters.temperature # softmax inverse temperature
+            lr = parameters.learning_rate # learning rate
+            lamb = parameters.eligibility_trace_decay # eligibility trace decay
+            w_lo = parameters.mixing_weight_low_stake # mixing weight for low stake trials
+            w_hi = parameters.mixing_weight_high_stake # mixing weight for high stake trials
+            st = parameters.stickiness # stickiness
+            respst = parameters.response_stickiness # response stickiness
 
+            # initialization
+            Q_MF = numpy.ones((2,2))
+            Q2 = numpy.ones((2,1))
+            TM = [numpy.eye(2), numpy.eye(2)] #transition matrix
+            M = numpy.zeros((2,2)) # last action matrix
+            R = [0, 0]     # last choice structure
+            LL = 0 # log likelihood
 
-        Returns
-        -------
-        LL: 
-            Log Likelihood 
-        Q:
-            Q values
-        Q_MF:
-            Q values for model-free learning
-        Q_MB:
-            Q values for model-based learning       
-        """
+                
+            if trial["stimuli"][0] == 2 or trial["stimuli"][0] == 4:
+                R = R = numpy.flipud(R) 
 
-        # pull out the paramters
-        b = self.parameters["temperature"] # softmax inverse temperature
-        lr = self.parameters["learning_rate"] # learning rate
-        lamb = self.parameters["eligibility_trace_decay"] # eligibility trace decay
-        w_lo = self.parameters["mixing_weight_low_stake"] # mixing weight for low stake trials
-        w_hi = self.parameters["mixing_weight_high_stake"] # mixing weight for high stake trials
-        st = self.parameters["stickiness"] # stickiness
-        respst = self.parameters["response_stickiness"] # response stickiness
-
-        # initialization
-        Q_MF = np.ones((2,2))*4.5
-        Q2 = np.ones((2,1))*4.5
-        TM = [np.eye(2), np.eye(2)] #transition matrix
-        M = np.zeros((2,2)) # last action matrix
-        R = [0, 0]     # last choice structure
-        LL = 0 # log likelihood
-
-        for i in range(len(self.data["stimuli"])): 
-            
-            if self.data["stimuli"][i] == 2 or self.data["stimuli"][i] == 4:
-                R = R = np.flipud(R) 
-
-            s1 = self.data["s"][i][0] # first choice stage
-            s2 = self.data["s"][i][1] # second choice stage
-            action = self.data["choice"][i]
+            s1 = trial["s"][0] # first choice stage
+            s2 = trial["s"][1] # second choice stage
+            action = self.data["choice"]
             a = action[0] - (s1 == 2) * 2
 
             # choose which weight to update based on stake of trial
-            if self.data["stake"][i] == 1:
+            if trial["stake"] == 1:
                 w = w_lo
             else: 
                 w = w_hi
@@ -275,17 +296,17 @@ class MBMF:
             Q_MB = TM[s1-1].T @ Q2
 
             # calculating the Q values for mixing model
-            Q = w*Q_MB + (1-w)*Q_MF[s1-1, :].T + st * M[s1-1, :].T + respst * np.array(R)
+            Q = w*Q_MB + (1-w)*Q_MF[s1-1, :].T + st * M[s1-1, :].T + respst * numpy.array(R)
 
             # calculating the probability choosing action a given Q
             LL = LL + b*Q[a-1] - logsumexp(b * Q) 
 
             # update choice structure
-            M = np.zeros((2,2))
+            M = numpy.zeros((2,2))
             M[s1-1, a-1] = 1
 
-            R = np.zeros((2,1))
-            if action == self.data["stimuli"][i][0]:
+            R = numpy.zeros((2,1))
+            if action == trial["stimuli"][0]:
                 R[0] = 1
             else: 
                 R[1] = 1
@@ -295,19 +316,19 @@ class MBMF:
             dtQ1 = Q2[s2-1] - Q_MF[s1-1, a-1]
             Q_MF[s1-1, a-1] = Q_MF[s1-1, a-1] + lr * dtQ1
             # second choice stage
-            dtQ2 = self.data["points"][i] - Q2[s2-1]
+            dtQ2 = trial["points"] - Q2[s2-1]
             Q2[s2-1] = Q2[s2-1] + lr * dtQ2
             Q_MF[s1-1, a-1] = Q_MF[s1-1, a-1] + lamb * lr * dtQ2
 
-        # compile results
-        results = pd.DataFrame({
-            "userID": self.data["userID"][0],
-            "LL": [LL],
-            "Q": [Q.flatten()],
-            "Q_MF": [Q_MF.flatten()],
-            "Q_MB": [Q_MB.flatten()]
-        })
+            # compile results
+            results = pandas.DataFrame({
+                "userID": trial["userID"][0],
+                "LL": [LL],
+                "Q": [Q.flatten()],
+                "Q_MF": [Q_MF.flatten()],
+                "Q_MB": [Q_MB.flatten()]
+            })
 
-        return results    
+            return results    
 
-    super().__init__(data=data, model=model, parameters=parameters)
+        super().__init__(data=data, model=MF_MB_model, parameters=parameters)

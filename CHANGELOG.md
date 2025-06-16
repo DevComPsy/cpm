@@ -35,11 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
 - Fix column name issues in `cpm.applications.signal_detection.EstimatordMetaD` class
 - Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
+- Fix Issue [#55](https://github.com/DevComPsy/cpm/issues/55): AttributeError: np.float_ was removed in NumPy 2.0 during export
 
 ### Changed
 
 - Improved error handling in `cpm.applications.signal_detection.EstimatordMetaD`
 - Improved error handling and added input validation in several methods, such as the `detailed_pandas_compiler` function and parameter bounds handling in `cpm/generators/parameters.py`
+- Allow for larger variations in the estimation of the Hessian matrix in test units
 
 ## [Unreleased] <=0.18.4
 

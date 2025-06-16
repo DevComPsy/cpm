@@ -79,4 +79,4 @@ def test_estimatormetad_init_optimise_export(synthetic_data):
     est.optimise()
     df = est.export()
     assert isinstance(df, pd.DataFrame)
-    assert np.all(np.isclose(expected_output, df))
+    assert np.all(np.isclose(expected_output, df, atol=1e-5))

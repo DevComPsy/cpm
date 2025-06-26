@@ -103,7 +103,7 @@ class RLRW(Wrapper):
             )  ## compile reward vector
             ## get the activations for each arm given q-values for each stimulus
             activations = numpy.array([values[i - 1] for i in arms])
-            activations = activations.reshape(k_arms, 1)
+            # activations = activations.reshape(k_arms, 1)
             ## compute softmax
             response = cpm.models.decision.Softmax(
                 activations=activations, temperature=temperature

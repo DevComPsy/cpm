@@ -4,12 +4,12 @@ from cpm.models.decision import Softmax, Sigmoid, GreedyRule, ChoiceKernel
 
 
 def test_softmax():
-    expected = np.array([0.45352133, 0.54647867])
-    activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
-    softmax = Softmax(temperature=1, activations=activations)
+    expected = np.array([0.30719589, 0.18632372, 0.50648039])
+    activations = np.array([0.1, 0, 0.2])
+    softmax = Softmax(temperature=5, activations=activations)
     policies = softmax.compute()
     choice = softmax.choice()
-    assert policies.shape == (2,), "The shape of the policies is incorrect."
+    assert policies.shape == (3,), "The shape of the policies is incorrect."
     assert np.isclose(
         policies.sum(), 1
     ), "The probabilities in the softmax do not sum to 1."
@@ -19,11 +19,11 @@ def test_softmax():
 
 
 def test_softmax_irreducible_noise():
-    expected = np.array([0.45816919, 0.54183081])
-    activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
-    softmax = Softmax(temperature=1, xi=0.1, activations=activations)
+    expected = np.array([0.30980963, 0.20102468, 0.48916569])
+    activations = np.array([0.1, 0, 0.2])
+    softmax = Softmax(temperature=5, xi=0.1, activations=activations)
     policies = softmax.irreducible_noise()
-    assert policies.shape == (2,)
+    assert policies.shape == (3,)
     assert np.isclose(policies.sum(), 1)
     assert np.allclose(
         policies, expected
@@ -31,18 +31,23 @@ def test_softmax_irreducible_noise():
 
 
 def test_softmax_choice():
-    activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    activations = np.array([0.1, 0, 0.2])
     softmax = Softmax(temperature=1, activations=activations)
     choice = softmax.choice()
-    assert choice in [0, 1], "The Softmax.choice output is not in the expected range."
+    assert choice in [0, 1, 2], "The Softmax.choice output is not in the expected range."
+
+def test_softmax_input_shape():
+    activations = np.array([[0.1, 0, 0.2], [0.3, 0.4, 0.5]])
+    softmax = Softmax(temperature=1, activations=activations)
+    assert len(softmax.shape) == 1, "The Softmax model should flatten 2D input arrays."
 
 
 def test_sigmoid():
-    expected = np.array([0.57444252, 0.57444252])
-    activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    expected = np.array([0.52497919, 0.5, 0.549834])
+    activations = np.array([0.1, 0, 0.2])
     sigmoid = Sigmoid(temperature=1, activations=activations)
     policies = sigmoid.compute()
-    assert policies.shape == (2,)
+    assert policies.shape == (3,)
     assert np.all(policies >= 0) and np.all(policies <= 1)
     assert np.allclose(
         policies, expected
@@ -50,10 +55,10 @@ def test_sigmoid():
 
 
 def test_sigmoid_choice():
-    activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    activations = np.array([0.1, 0, 0.2])
     sigmoid = Sigmoid(temperature=1, activations=activations)
     choice = sigmoid.choice()
-    assert choice in [0, 1], "The Sigmoid.choice output is not in the expected range."
+    assert choice in [0, 1, 2], "The Sigmoid.choice output is not in the expected range."
 
 
 def test_greedy_rule():

@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error handling in `cpm.applications.signal_detection.EstimatordMetaD`
 - Improved error handling and added input validation in several methods, such as the `detailed_pandas_compiler` function and parameter bounds handling in `cpm/generators/parameters.py`
 - Allow for larger variations in the estimation of the Hessian matrix in test units
+- Changed Softmax and Sigmoid function input shape requirements to ensure they accept 1D arrays only, with a warning for 2D arrays
 
 ## [Unreleased] <=0.18.4
 

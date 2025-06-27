@@ -36,6 +36,11 @@ def test_softmax_choice():
     choice = softmax.choice()
     assert choice in [0, 1, 2], "The Softmax.choice output is not in the expected range."
 
+def test_softmax_input_shape():
+    activations = np.array([[0.1, 0, 0.2], [0.3, 0.4, 0.5]])
+    softmax = Softmax(temperature=1, activations=activations)
+    assert len(softmax.shape) == 1, "The Softmax model should flatten 2D input arrays."
+
 
 def test_sigmoid():
     expected = np.array([0.52497919, 0.5, 0.549834])

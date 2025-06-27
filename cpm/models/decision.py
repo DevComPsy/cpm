@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from ..generators import Value
 
 __all__ = [
@@ -73,6 +74,14 @@ class Softmax:
             self.activations = np.zeros(1)
         self.policies = np.zeros(self.activations.shape[0])
         self.shape = self.activations.shape
+        if len(self.shape) > 1:
+            self.activations = self.activations.flatten()
+            self.shape = self.activations.shape
+            warnings.warn(
+                "Activations should be a 1D array, but a 2D array was provided. "
+                "Flattening the activations to a 1D array."
+            )
+            
 
         self.__run__ = False
 

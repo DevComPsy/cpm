@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cpm"
+version = "0.23.5"
+description = "cpm"
+readme = "README.md"
+authors = [
+    { name = "Lenard Dome" },
+    { name = "Frank Hezemans" },
+    { name = "Andrew Webb" },
+    { name = "Marc Carrera" },
+    { name = "Tobias Hauser" }
+]
+maintainers = [
+    { name = "Lenard Dome", email = "lenarddome@gmail.com" }
+]
+license = { text = "AGPLv3" }
+requires-python = ">3.11.0"
+keywords = ["cpm"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: AGPLv3",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: PyPy"
+]
+dependencies = [
+    "numpy>=2.0.0",
+    "SciPy>=1.11.4",
+    "pandas>=2.1.4",
+    "multiprocess>=0.70.16",
+    "ipyparallel>=8.8.0",
+    "numdifftools>=0.9.41",
+    "pybads>=1.0.4",
+    "dill>=0.3.8"
+]
+
+[project.urls]
+Homepage = "https://github.com/DevComPsy/cpm"
+Documentation = "https://devcompsy.github.io/cpm/"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+cpm = ["**/*.csv"]

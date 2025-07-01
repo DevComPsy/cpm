@@ -189,6 +189,13 @@ class Sigmoid:
         self.activations = np.asarray(activations.copy())
         self.policies = []
         self.shape = self.activations.shape
+        if len(self.shape) > 1:
+            self.activations = self.activations.flatten()
+            self.shape = self.activations.shape
+            warnings.warn(
+                "Activations should be a 1D array, but a 2D array was provided. "
+                "Flattening the activations to a 1D array."
+            )
         self.__run__ = False
 
     def compute(self):

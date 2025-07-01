@@ -27,7 +27,7 @@ history = open("CHANGELOG.md").read().replace(".. :changelog:", "")
 
 setup(
     name="cpm",
-    version="0.23.3",
+    version="0.23.5",
     description="cpm",
     long_description=readme + "\n\n" + doclink + "\n\n" + history,
     author="Lenard Dome, Frank Hezemans, Andrew Webb, Marc Carrera, Tobias Hauser",
@@ -47,13 +47,12 @@ setup(
         "pybads>=1.0.4",  # Bayesian Directed Search
         "dill>=0.3.8",  # Serialization
     ],
-    license="AGPLv3",
+    license="AGPL-3.0",
     zip_safe=False,
     keywords="cpm",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: AGPLv3",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: Implementation :: PyPy",

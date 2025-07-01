@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from ..generators import Value
 
 __all__ = [
@@ -48,23 +49,15 @@ class Softmax:
     --------
     >>> from cpm.models.decision import Softmax
     >>> import numpy as np
-    >>> temperature = 1
-    >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+    >>> temperature = 5
+    >>> activations = np.array([0.1, 0, 0.2])
     >>> softmax = Softmax(temperature=temperature, activations=activations)
     >>> softmax.compute()
-    array([0.45352133, 0.54647867])
-
-    >>> softmax.config()
-    {
-        "temperature"   : 1,
-        "activations":
-            array([[ 0.1,  0. ,  0.2],
-            [-0.6,  0. ,  0.9]]),
-        "name"  : "Softmax",
-        "type"  : "decision",
-    }
+    array([0.30719589, 0.18632372, 0.50648039])
+    >>> softmax.choice() # This will randomly choose one of the actions based on the computed probabilities.
+    2  
     >>> Softmax(temperature=temperature, activations=activations).compute()
-    array([0.45352133, 0.54647867])
+    array([0.30719589, 0.18632372, 0.50648039])
     """
 
     def __init__(self, temperature=None, xi=None, activations=None, **kwargs):
@@ -81,8 +74,14 @@ class Softmax:
             self.activations = np.zeros(1)
         self.policies = np.zeros(self.activations.shape[0])
         self.shape = self.activations.shape
-        if len(self.shape) == 1:
-            self.shape = (1, self.shape[0])
+        if len(self.shape) > 1:
+            self.activations = self.activations.flatten()
+            self.shape = self.activations.shape
+            warnings.warn(
+                "Activations should be a 1D array, but a 2D array was provided. "
+                "Flattening the activations to a 1D array."
+            )
+            
 
         self.__run__ = False
 
@@ -94,11 +93,9 @@ class Softmax:
         -------
         numpy.ndarray: Array of computed policies.
         """
-        output = np.zeros(self.shape[0])
-        for i in range(self.shape[0]):
-            output[i] = np.sum(np.exp(self.activations[i] * self.temperature)) / np.sum(
-                np.exp(self.activations * self.temperature)
-            )
+        output = np.exp(self.activations * self.temperature) / np.sum(
+            np.exp(self.activations * self.temperature)
+        )
         self.policies = output
         self.__run__ = True
         return self.policies
@@ -150,13 +147,7 @@ class Softmax:
         """
         if not self.__run__:
             self.compute()
-        return np.random.choice(self.shape[0], p=self.policies.flatten())
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations})"
-
-    def __str__(self):
-        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations})"
+        return np.random.choice(self.policies.shape[0], p=self.policies.flatten())
 
     def __call__(self):
         return self.compute()
@@ -180,6 +171,16 @@ class Sigmoid:
     activations : ndarray
         An array of activations for the sigmoid function.
 
+    Examples
+    --------
+    >>> from cpm.models.decision import Sigmoid
+    >>> import numpy as np
+    >>> temperature = 7
+    >>> activations = np.array([[0.1, 0.2]])
+    >>> sigmoid = Sigmoid(temperature=temperature, activations=activations)
+    >>> sigmoid.compute()
+    array([[0.66818777, 0.80218389]])
+
     """
 
     def __init__(self, temperature=None, activations=None, beta=0, **kwargs):
@@ -188,8 +189,13 @@ class Sigmoid:
         self.activations = np.asarray(activations.copy())
         self.policies = []
         self.shape = self.activations.shape
-        if len(self.shape) == 1:
-            self.shape = (1, self.shape[0])
+        if len(self.shape) > 1:
+            self.activations = self.activations.flatten()
+            self.shape = self.activations.shape
+            warnings.warn(
+                "Activations should be a 1D array, but a 2D array was provided. "
+                "Flattening the activations to a 1D array."
+            )
         self.__run__ = False
 
     def compute(self):
@@ -201,12 +207,10 @@ class Sigmoid:
         output: ndarray
             A 2D array of outputs computed using the sigmoid function.
         """
-        output = np.zeros(self.shape[0])
-        for i in range(self.shape[0]):
-            output[i] = 1 / (
-                1
-                + np.exp((np.sum(self.activations[i]) - self.beta) * -self.temperature)
-            )
+        output = 1 / (
+            1
+            + np.exp((self.activations - self.beta) * -self.temperature)
+        )
         self.policies = output
         self.__run__ = True
         return output
@@ -229,12 +233,6 @@ class Sigmoid:
         if not self.__run__:
             self.compute()
         return np.random.choice(self.shape[0], p=self.policies / self.policies.sum())
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations}, beta={self.beta})"
-
-    def __str__(self):
-        return f"{self.__class__.__name__}(temperature={self.temperature}, activations={self.activations}, beta={self.beta})"
 
     def __call__(self):
         return self.compute()
@@ -417,12 +415,6 @@ class ChoiceKernel:
         if not self.run:
             self.compute()
         return np.random.choice(self.shape[0], p=self.policies)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(temperature_activations={self.temperature_a}, temperature_kernel={self.temperature_k}, activations={self.activations}, kernel={self.kernel})"
-
-    def __str__(self):
-        return f"{self.__class__.__name__}(temperature_activations={self.temperature_a}, temperature_kernel={self.temperature_k}, activations={self.activations}, kernel={self.kernel})"
 
     def __call__(self):
         return self.compute()

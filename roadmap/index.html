@@ -51,37 +51,21 @@
                 <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
                 </li>
               </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
-                </li>
-              </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Roadmap</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../troubleshooting/">Troubleshooting</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Roadmap</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#performance-improvement">Performance improvement</a>
+    <li class="toctree-l2"><a class="reference internal" href="#ongoing-improvements">Ongoing Improvements</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a>
+    <li class="toctree-l2"><a class="reference internal" href="#planned-features">Planned Features</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#new-features">New features</a>
+    <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a>
     </li>
     </ul>
-                </li>
-              </ul>
-              <p class="caption"><span class="caption-text">User Guide</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started/">Getting Started</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/data-format/">Data formats</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/parameters/">Specify your parameters</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/defining-model/">Build your model</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/fitting/">Fitting your models to data</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/troubleshooting/">Troubleshooting</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -92,22 +76,24 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../examples/example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../examples/example4/">Example 4: Scaling to the cluster</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/example4/">Example 4: Scale to hypercomputing cluster</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/example5/">Example 5: Estimating meta-d (metacognitive efficiency)</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">API reference</span></p>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/applications/">cpm.applications</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/generators/">cpm.generators</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/models/">cpm.models</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/models/">cpm.models</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/generators/">cpm.generators</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/optimisation/">cpm.optimisation</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/optimisation/">cpm.optimisation</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/hierarchical/">cpm.hierarchical</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/hierarchical/">cpm.hierarchical</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/applications/">cpm.applications</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/utils/">cpm.utils</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/utils/">cpm.utils</a>
                   </li>
               </ul>
       </div>
@@ -124,6 +110,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Getting Started</li>
       <li class="breadcrumb-item active">Roadmap</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -133,38 +120,66 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="cpm-roadmap">cpm Roadmap</h1>
-<h2 id="performance-improvement">Performance improvement</h2>
-<p>We are always looking for ways to speed up the code. Any contribution aiming to do so is welcome.</p>
-<p>Some specific areas we are looking to improve are:</p>
+                <h1 id="roadmap">Roadmap</h1>
+<p>We would like to invite anyone interested in contributing to the development of the <code>cpm</code> toolbox to join us in shaping its future. This document outlines our current focus areas, ongoing improvements, and planned features.</p>
+<h2 id="ongoing-improvements">Ongoing Improvements</h2>
 <ul>
-<li>Using <code>numba</code> to speed up the code and allow compilation of classes with <a href="https://numba.pydata.org/numba-doc/dev/user/jitclass.html">@jitclass</a>.</li>
-<li>Reduce code duplication and improve code organization.</li>
-<li>Improve the performance of the <code>cpm.generators</code> module to speed up simulations.</li>
-<li>Improve shared memory usage and reduce the number of copies of the data.</li>
-<li>Improve the data compilation process to speed up the majority of data cleaning happening in the modules during runs and exports.</li>
+<li>
+<p><strong>Performance</strong></p>
+<ul>
+<li>Integrate <code>numba</code> for JIT compilation (e.g., with <a href="https://numba.pydata.org/numba-doc/dev/user/jitclass.html">@jitclass</a>)</li>
+<li>Reduce code duplication and improve organization</li>
+<li>Optimize <code>cpm.generators</code> for faster simulations and data compilation/export</li>
+<li>Improve shared memory usage and minimize data copies</li>
+<li>Speed up data cleaning and compilation in modules/exports</li>
 </ul>
-<h2 id="documentation">Documentation</h2>
-<p>We would like to expand the documentation to include more examples and tutorials.
-We imagine that these will at some point migrate to their own repository, but for now, they will be part of the main documentation.</p>
-<h2 id="testing">Testing</h2>
-<p>We would like to improve the testing coverage of the code.</p>
-<h2 id="new-features">New features</h2>
-<p>We are always looking for new features to add to the library.
-If you have an idea for a new feature, please open an issue to discuss it.</p>
-<p>We already have a list of low-hanging fruit features that we would like to add:</p>
-<ol>
-<li>Expansion of the models classes. There are many model components out in the literature and we would like to add as many of them to the library as possible.</li>
-<li>Add model selection module, where we will incorporate model selection criteria and methods, which are also compatible with the hierarchical estimation approaches we already implemented.</li>
-<li>Add pre-built models to the library as ready-to-deploy applications.</li>
-<li>New and more efficitent Hierarchical and MCMC methods for model fitting (e.g. Variational Bayes Monte Carlo, Particle filtering).</li>
-</ol>
+</li>
+<li>
+<p><strong>Documentation</strong></p>
+<ul>
+<li>Expand with more examples and tutorials</li>
+<li>Plan for migration to a dedicated documentation repository</li>
+</ul>
+</li>
+<li>
+<p><strong>Testing</strong></p>
+<ul>
+<li>Increase test coverage across all modules</li>
+</ul>
+</li>
+</ul>
+<h2 id="planned-features">Planned Features</h2>
+<ul>
+<li>
+<p><strong>Model Expansion</strong></p>
+<ul>
+<li>Add more model components from the literature</li>
+<li>Provide pre-built, ready-to-deploy models</li>
+</ul>
+</li>
+<li>
+<p><strong>Model Selection</strong></p>
+<ul>
+<li>Develop a model selection module with various criteria</li>
+<li>Ensure compatibility with hierarchical estimation methods</li>
+</ul>
+</li>
+<li>
+<p><strong>Advanced Fitting Methods</strong></p>
+<ul>
+<li>Implement new hierarchical and MCMC methods (e.g., Variational Bayes Monte Carlo, Particle filtering)</li>
+<li>Implement sophisticated and cutting edge evaluation methods (e.g. g-distance, parameter space partitioning, etc.)</li>
+</ul>
+</li>
+</ul>
+<h2 id="contributing">Contributing</h2>
+<p>We welcome contributions! If you have ideas for new features or improvements, please open an issue to discuss them.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../about/" class="btn btn-neutral float-left" title="About"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../tutorials/getting-started/" class="btn btn-neutral float-right" title="Getting Started">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../troubleshooting/" class="btn btn-neutral float-left" title="Troubleshooting"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../examples/example1/" class="btn btn-neutral float-right" title="Example 1: An associative learning model and blocking">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -187,10 +202,10 @@ If you have an idea for a new feature, please open an issue to discuss it.</p>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../about/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../troubleshooting/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../tutorials/getting-started/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../examples/example1/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
@@ -198,6 +213,8 @@ If you have an idea for a new feature, please open an issue to discuss it.</p>
     <script>var base_url = "..";</script>
     <script src="../js/theme_extra.js"></script>
     <script src="../js/theme.js"></script>
+      <script src=".."></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       <script src="../search/main.js"></script>
     <script>
         jQuery(function () {

@@ -15,7 +15,7 @@
       <script>
         // Current page data
         var mkdocs_page_name = "cpm.models";
-        var mkdocs_page_input_path = "references/models.md";
+        var mkdocs_page_input_path = "api/models.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -51,27 +51,13 @@
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../about/">About</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../roadmap/">Roadmap</a>
-                </li>
-              </ul>
-              <p class="caption"><span class="caption-text">User Guide</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/getting-started/">Getting Started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting/">Troubleshooting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../roadmap/">Roadmap</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -82,12 +68,14 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example4/">Example 4: Scaling to the cluster</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example4/">Example 4: Scale to hypercomputing cluster</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example5/">Example 5: Estimating meta-d (metacognitive efficiency)</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">API reference</span></p>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../applications/">cpm.applications</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../generators/">cpm.generators</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.models</a>
     <ul class="current">
@@ -199,11 +187,11 @@
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../generators/">cpm.generators</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../optimisation/">cpm.optimisation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../hierarchical/">cpm.hierarchical</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../applications/">cpm.applications</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../utils/">cpm.utils</a>
                   </li>
@@ -222,7 +210,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">API reference</li>
+          <li class="breadcrumb-item">API Reference</li>
       <li class="breadcrumb-item active">cpm.models</li>
     <li class="wy-breadcrumbs-aside">
     </li>
@@ -1061,7 +1049,7 @@ It is based on Equation 7 in Wilson and Collins (2019).</p>
 
 <details class="see-also" open>
   <summary>See Also</summary>
-  <p><a href="models/cpm.models.learning.KernelUpdate">cpm.models.learning.KernelUpdate</a>: A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.</p>
+  <p><a class="autorefs autorefs-internal" title="KernelUpdate(response, alpha, kernel, input, **kwargs)" href="#cpm.models.learning.KernelUpdate">cpm.models.learning.KernelUpdate</a>: A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.</p>
 </details>
 
 <details class="references" open>
@@ -1430,6 +1418,17 @@ of P = 0.5.</p>
   </tbody>
 </table>
 
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.models.decision</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sigmoid</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">temperature</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">activations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sigmoid</span> <span class="o">=</span> <span class="n">Sigmoid</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="n">activations</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sigmoid</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+<span class="go">array([[0.66818777, 0.80218389]])</span>
+</code></pre></div>
+
+
 
 
 
@@ -1629,23 +1628,15 @@ You can see <a href="" title="./examples/examples2">Example 2</a> for a demonstr
 <p><span class="doc-section-title">Examples:</span></p>
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.models.decision</span><span class="w"> </span><span class="kn">import</span> <span class="n">Softmax</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">temperature</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">activations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">temperature</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">activations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">softmax</span> <span class="o">=</span> <span class="n">Softmax</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="n">activations</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">softmax</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
-<span class="go">array([0.45352133, 0.54647867])</span>
-</code></pre></div>
-    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">softmax</span><span class="o">.</span><span class="n">config</span><span class="p">()</span>
-<span class="go">{</span>
-<span class="go">    &quot;temperature&quot;   : 1,</span>
-<span class="go">    &quot;activations&quot;:</span>
-<span class="go">        array([[ 0.1,  0. ,  0.2],</span>
-<span class="go">        [-0.6,  0. ,  0.9]]),</span>
-<span class="go">    &quot;name&quot;  : &quot;Softmax&quot;,</span>
-<span class="go">    &quot;type&quot;  : &quot;decision&quot;,</span>
-<span class="go">}</span>
+<span class="go">array([0.30719589, 0.18632372, 0.50648039])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">softmax</span><span class="o">.</span><span class="n">choice</span><span class="p">()</span> <span class="c1"># This will randomly choose one of the actions based on the computed probabilities.</span>
+<span class="go">2  </span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Softmax</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="n">activations</span><span class="p">)</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
-<span class="go">array([0.45352133, 0.54647867])</span>
+<span class="go">array([0.30719589, 0.18632372, 0.50648039])</span>
 </code></pre></div>
 
 
@@ -2960,8 +2951,8 @@ It has the same shape as the weights input argument.</p>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../applications/" class="btn btn-neutral float-left" title="cpm.applications"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../generators/" class="btn btn-neutral float-right" title="cpm.generators">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../generators/" class="btn btn-neutral float-left" title="cpm.generators"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../optimisation/" class="btn btn-neutral float-right" title="cpm.optimisation">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -2984,10 +2975,10 @@ It has the same shape as the weights input argument.</p>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../applications/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../generators/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../generators/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../optimisation/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
@@ -2995,6 +2986,8 @@ It has the same shape as the weights input argument.</p>
     <script>var base_url = "../..";</script>
     <script src="../../js/theme_extra.js"></script>
     <script src="../../js/theme.js"></script>
+      <script src="../.."></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       <script src="../../search/main.js"></script>
     <script>
         jQuery(function () {

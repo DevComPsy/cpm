@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>About - CPM library</title>
+    <title>Troubleshooting - CPM library</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -14,8 +14,8 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "About";
-        var mkdocs_page_input_path = "about.md";
+        var mkdocs_page_name = "Troubleshooting";
+        var mkdocs_page_input_path = "troubleshooting.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -51,35 +51,15 @@
                 <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">About</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Troubleshooting</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#our-mission">Our Mission</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#our-values">Our Values</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#get-involved">Get Involved</a>
-    </li>
     </ul>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../roadmap/">Roadmap</a>
-                </li>
-              </ul>
-              <p class="caption"><span class="caption-text">User Guide</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/getting-started/">Getting Started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/data-format/">Data formats</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/parameters/">Specify your parameters</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/defining-model/">Build your model</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/fitting/">Fitting your models to data</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/troubleshooting/">Troubleshooting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../roadmap/">Roadmap</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -90,22 +70,24 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../examples/example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../examples/example4/">Example 4: Scaling to the cluster</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/example4/">Example 4: Scale to hypercomputing cluster</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/example5/">Example 5: Estimating meta-d (metacognitive efficiency)</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">API reference</span></p>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/applications/">cpm.applications</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/generators/">cpm.generators</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/models/">cpm.models</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/models/">cpm.models</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/generators/">cpm.generators</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/optimisation/">cpm.optimisation</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/optimisation/">cpm.optimisation</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/hierarchical/">cpm.hierarchical</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/hierarchical/">cpm.hierarchical</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/applications/">cpm.applications</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../references/utils/">cpm.utils</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/utils/">cpm.utils</a>
                   </li>
               </ul>
       </div>
@@ -122,7 +104,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">About</li>
+          <li class="breadcrumb-item">Getting Started</li>
+      <li class="breadcrumb-item active">Troubleshooting</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -131,26 +114,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h2 id="about-us">About Us</h2>
-<p>Welcome to our documentation page! We are a team of passionate developers dedicated to providing you with the best tools and resources for your software development needs.</p>
-<h3 id="our-mission">Our Mission</h3>
-<p>Our mission is to empower developers by creating high-quality software development tools that enhance productivity and streamline workflows. We believe that by providing developers with the right tools, we can help them build amazing software and achieve their goals.</p>
-<h3 id="our-values">Our Values</h3>
-<p>At our core, we value:</p>
-<ul>
-<li><strong>Innovation</strong>: We constantly strive to innovate and improve our tools to meet the evolving needs of developers.</li>
-<li><strong>Quality</strong>: We are committed to delivering high-quality software that is reliable, efficient, and user-friendly.</li>
-<li><strong>Collaboration</strong>: We believe in the power of collaboration and actively seek feedback from our users to make our tools better.</li>
-<li><strong>Community</strong>: We are dedicated to building a strong and supportive community of developers who can learn from and inspire each other.</li>
-</ul>
-<h3 id="get-involved">Get Involved</h3>
-<p>We welcome contributions from the community! If you have any ideas, suggestions, or bug reports, please feel free to <a href="https://github.com/your-repo/issues">submit an issue</a> or <a href="https://github.com/your-repo">contribute to our project</a>.</p>
-<p>Thank you for choosing our tools. We hope you find them valuable and enjoy using them in your software development journey!</p>
+                <h1 id="troubleshooting">Troubleshooting</h1>
+<p>There are two major types of issues you might encounter when using the <code>cpm</code>: problems with the <code>cpm</code> itself, bugs, and troubleshooting issues (not knowing how to get something done).</p>
+<p>If you have identified a problem with the <code>cpm</code>, such as a bug and the code or an error in the documentation, please report it to the <a href="https://github.com/DevComPsy/modelling-toolbox/issues">GitHub issue tracker</a>.</p>
+<p>If you are having trouble with the <code>cpm</code> itself, such as installation issues or trying to get something to work, please refer to the <a href="https://github.com/DevComPsy/modelling-toolbox/discussions">GitHub Discussion</a> page.
+Please search through the archive of Q&amp;As before posting a new question.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../installation/" class="btn btn-neutral float-left" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../roadmap/" class="btn btn-neutral float-right" title="Roadmap">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -174,7 +147,7 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../roadmap/" style="color: #fcfcfc">Next &raquo;</a></span>
@@ -185,6 +158,8 @@
     <script>var base_url = "..";</script>
     <script src="../js/theme_extra.js"></script>
     <script src="../js/theme.js"></script>
+      <script src=".."></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       <script src="../search/main.js"></script>
     <script>
         jQuery(function () {

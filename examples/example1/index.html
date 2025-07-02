@@ -51,27 +51,13 @@
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
               </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../about/">About</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../../roadmap/">Roadmap</a>
-                </li>
-              </ul>
-              <p class="caption"><span class="caption-text">User Guide</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/getting-started/">Getting Started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/data-format/">Data formats</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting/">Troubleshooting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/parameters/">Specify your parameters</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/defining-model/">Build your model</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/fitting/">Fitting your models to data</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../tutorials/troubleshooting/">Troubleshooting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../roadmap/">Roadmap</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
@@ -96,22 +82,24 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../example3/">Example 3: Estimating Empirical Priors</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../example4/">Example 4: Scaling to the cluster</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../example4/">Example 4: Scale to hypercomputing cluster</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../example5/">Example 5: Estimating meta-d (metacognitive efficiency)</a>
                   </li>
               </ul>
-              <p class="caption"><span class="caption-text">API reference</span></p>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../references/applications/">cpm.applications</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/generators/">cpm.generators</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../references/models/">cpm.models</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/models/">cpm.models</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../references/generators/">cpm.generators</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/optimisation/">cpm.optimisation</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../references/optimisation/">cpm.optimisation</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/hierarchical/">cpm.hierarchical</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../references/hierarchical/">cpm.hierarchical</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/applications/">cpm.applications</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../references/utils/">cpm.utils</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/utils/">cpm.utils</a>
                   </li>
               </ul>
       </div>
@@ -714,7 +702,7 @@ $$</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
@@ -727,13 +715,19 @@ $$</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">learning</span><span class="p">,</span> <span class="n">utils</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">cpm.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">learning</span><span class="p">,</span> <span class="n">utils</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cpm.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameters</span><span class="p">,</span> <span class="n">Wrapper</span><span class="p">,</span> <span class="n">Simulator</span>
 
 <span class="n">parameters</span> <span class="o">=</span> <span class="n">Parameters</span><span class="p">(</span><span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]))</span>
 <span class="n">parameters</span><span class="o">.</span><span class="n">values</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">from cpm.models import learning, utils
+<div class="clipboard-copy-txt" id="cell-2">import numpy as np
+import pandas as pd
+
+from cpm.models import learning, utils
 from cpm.generators import Parameters, Wrapper, Simulator
 
 parameters = Parameters(alpha = 0.2, values = np.array([0.25, 0.25, 0.25, 0.25]))
@@ -747,7 +741,7 @@ parameters.values</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[36]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>[0.25 0.25 0.25 0.25]</pre>
 </div>
@@ -761,7 +755,7 @@ parameters.values</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
@@ -774,15 +768,15 @@ parameters.values</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">input</span> <span class="o">=</span> <span class="p">{</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">input</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">({</span>
     <span class="s2">"trials"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]),</span>
     <span class="s2">"feedback"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">]),</span>
-<span class="p">}</span>
+<span class="p">})</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">input = {
+<div class="clipboard-copy-txt" id="cell-3">input = pd.Series({
     "trials": np.array([3, 4]),
     "feedback": np.array([1]),
-}</div>
+})</div>
 </div>
 </div>
 </div>
@@ -819,7 +813,7 @@ Both the <code>input</code> and <code>output</code> dictionaries can have any ot
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [37]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
@@ -838,9 +832,9 @@ Both the <code>input</code> and <code>output</code> dictionaries can have any ot
     <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 
     <span class="c1"># get trial-specific inputs</span>
-    <span class="n">stimulus</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trials"</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">stimulus</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trials"</span><span class="p">)</span>
     <span class="n">stimulus</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">Nominal</span><span class="p">(</span><span class="n">target</span> <span class="o">=</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">bits</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
-    <span class="n">feedback</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"feedback"</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">feedback</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"feedback"</span><span class="p">)</span>
 
     <span class="c1"># mute all non-presented stimuli values</span>
     <span class="n">activations</span> <span class="o">=</span> <span class="n">stimulus</span> <span class="o">*</span> <span class="n">values</span>
@@ -858,7 +852,7 @@ Both the <code>input</code> and <code>output</code> dictionaries can have any ot
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">output</span>
 
-<span class="n">pp</span><span class="p">(</span><span class="n">bush_and_mosteller</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="nb">input</span><span class="p">))</span>
+<span class="n">bush_and_mosteller</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-4">def bush_and_mosteller(parameters, input):
     # get parameters
@@ -866,9 +860,9 @@ Both the <code>input</code> and <code>output</code> dictionaries can have any ot
     values = np.array(parameters.values)
 
     # get trial-specific inputs
-    stimulus = input.get("trials").copy()
+    stimulus = input.get("trials")
     stimulus = utils.Nominal(target = stimulus, bits = 4)
-    feedback = input.get("feedback").copy()
+    feedback = input.get("feedback")
 
     # mute all non-presented stimuli values
     activations = stimulus * values
@@ -886,7 +880,7 @@ Both the <code>input</code> and <code>output</code> dictionaries can have any ot
     }
     return output
 
-pp(bush_and_mosteller(parameters, input))
+bush_and_mosteller(parameters, input)
 </div>
 </div>
 </div>
@@ -898,15 +892,20 @@ pp(bush_and_mosteller(parameters, input))
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>{
-    "activations"   : array([0.  , 0.  , 0.25, 0.25]),
-    "values": array([0.25, 0.25, 0.4 , 0.4 ]),
-    "policy": 0.5,
-    "error" : array([0.  , 0.  , 0.15, 0.15]),
-    "dependent"     : 0.5,
-}
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>/var/folders/w1/7prlf4xs12536zfppmztb1_m0000gn/T/ipykernel_15841/4170433186.py:4: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments.
+  values = np.array(parameters.values)
 </pre>
+</div>
+</div>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>{'activations': array([0.  , 0.  , 0.25, 0.25]),
+ 'values': array([0.25, 0.25, 0.4 , 0.4 ]),
+ 'policy': np.float64(0.5),
+ 'error': array([0.  , 0.  , 0.15, 0.15]),
+ 'dependent': np.float64(0.5)}</pre>
 </div>
 </div>
 </div>
@@ -929,7 +928,7 @@ pp(bush_and_mosteller(parameters, input))
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
@@ -948,9 +947,9 @@ pp(bush_and_mosteller(parameters, input))
     <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1"># copy to avoid changing the original</span>
 
     <span class="c1"># get trial-specific inputs</span>
-    <span class="n">stimulus</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trials"</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">stimulus</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trials"</span><span class="p">)</span>
     <span class="n">stimulus</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">Nominal</span><span class="p">(</span><span class="n">target</span> <span class="o">=</span> <span class="n">stimulus</span><span class="p">,</span> <span class="n">bits</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
-    <span class="n">feedback</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"feedback"</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">feedback</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"feedback"</span><span class="p">)</span>
 
     <span class="c1"># mute all non-presented stimuli values</span>
     <span class="n">activations</span> <span class="o">=</span> <span class="n">stimulus</span> <span class="o">*</span> <span class="n">values</span>
@@ -968,7 +967,7 @@ pp(bush_and_mosteller(parameters, input))
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">output</span>
 
-<span class="n">pp</span><span class="p">(</span><span class="n">rescorla_wagner</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="nb">input</span><span class="p">))</span>
+<span class="n">rescorla_wagner</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-5">def rescorla_wagner(parameters, input):
     # get parameters
@@ -976,9 +975,9 @@ pp(bush_and_mosteller(parameters, input))
     values = np.array(parameters.values) # copy to avoid changing the original
 
     # get trial-specific inputs
-    stimulus = input.get("trials").copy()
+    stimulus = input.get("trials")
     stimulus = utils.Nominal(target = stimulus, bits = 4)
-    feedback = input.get("feedback").copy()
+    feedback = input.get("feedback")
 
     # mute all non-presented stimuli values
     activations = stimulus * values
@@ -996,7 +995,7 @@ pp(bush_and_mosteller(parameters, input))
     }
     return output
 
-pp(rescorla_wagner(parameters, input))</div>
+rescorla_wagner(parameters, input)</div>
 </div>
 </div>
 </div>
@@ -1007,15 +1006,20 @@ pp(rescorla_wagner(parameters, input))</div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>{
-    "activations"   : array([0.  , 0.  , 0.25, 0.25]),
-    "values": array([0.25   , 0.25   , 0.29375, 0.29375]),
-    "policy": 0.5,
-    "error" : array([0.     , 0.     , 0.04375, 0.04375]),
-    "dependent"     : 0.5,
-}
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>/var/folders/w1/7prlf4xs12536zfppmztb1_m0000gn/T/ipykernel_15841/2133887932.py:4: DeprecationWarning: __array__ implementation doesn't accept a copy keyword, so passing copy=False failed. __array__ must implement 'dtype' and 'copy' keyword arguments.
+  values = np.array(parameters.values) # copy to avoid changing the original
 </pre>
+</div>
+</div>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>{'activations': array([0.  , 0.  , 0.25, 0.25]),
+ 'values': array([0.25   , 0.25   , 0.29375, 0.29375]),
+ 'policy': np.float64(0.5),
+ 'error': array([0.     , 0.     , 0.04375, 0.04375]),
+ 'dependent': np.float64(0.5)}</pre>
 </div>
 </div>
 </div>
@@ -1033,7 +1037,7 @@ pp(rescorla_wagner(parameters, input))</div>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../tutorials/troubleshooting/" class="btn btn-neutral float-left" title="Troubleshooting"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../roadmap/" class="btn btn-neutral float-left" title="Roadmap"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../example2/" class="btn btn-neutral float-right" title="Example 2: Reinforcement learning with a two-armed bandit.">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -1057,7 +1061,7 @@ pp(rescorla_wagner(parameters, input))</div>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../tutorials/troubleshooting/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../../roadmap/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../example2/" style="color: #fcfcfc">Next &raquo;</a></span>
@@ -1068,6 +1072,8 @@ pp(rescorla_wagner(parameters, input))</div>
     <script>var base_url = "../..";</script>
     <script src="../../js/theme_extra.js"></script>
     <script src="../../js/theme.js"></script>
+      <script src="../.."></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       <script src="../../search/main.js"></script>
     <script>
         jQuery(function () {

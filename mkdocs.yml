@@ -13,16 +13,17 @@ theme:
 extra_css:
   - style.css
 
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
 plugins:
   - search
-  - awesome-pages
   - mkdocstrings:
       enable_inventory: false
       handlers:
         # See: https://mkdocstrings.github.io/python/usage/
         python:
-          import:
-            - https://docs.python-requests.org/en/master/objects.inv
           load_external_modules: true
           options:
             show_source: false
@@ -36,9 +37,27 @@ plugins:
             include_source: True
             ignore: ['examples/bandit.py']
 
-
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Troubleshooting: troubleshooting.md
+      - Roadmap: roadmap.md
+  - Examples:
+      - Example 1: examples/example1.ipynb
+      - Example 2: examples/example2.ipynb
+      - Example 3: examples/example3.ipynb
+      - "Example 4: Scaling to the cluster": examples/example4.ipynb
+      - "Example 5: Estimating meta-d (metacognitive efficiency)": examples/example5.ipynb
+  - API Reference:
+      - cpm.generators: api/generators.md
+      - cpm.models: api/models.md
+      - cpm.optimisation: api/optimisation.md
+      - cpm.hierarchical: api/hierarchical.md
+      - cpm.applications: api/applications.md
+      - cpm.utils: api/utils.md
 
 markdown_extensions:
-  # - markdown_include.include:
-  #     base_path: .
   - admonition
+  - pymdownx.arithmatex:
+      generic: true

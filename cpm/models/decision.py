@@ -364,7 +364,7 @@ class ChoiceKernel:
 
     See Also
     --------
-    [cpm.models.learning.KernelUpdate](models/cpm.models.learning.KernelUpdate): A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
+    [cpm.models.learning.KernelUpdate][cpm.models.learning.KernelUpdate]: A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
 
     References
     ----------

@@ -2,9 +2,9 @@
 
 ![the toolbox logo](./docs/img/cpm-logo.png)
 
-cpm is a fundamental package for Computational Psychiatry. It is designed to provide a set of tools for researchers and clinicians to analyze and model data in the field of Computational Psychiatry.
+![PyPI - Version](https://img.shields.io/pypi/v/cpm-toolbox)
 
-:warning: The package is under active development and is therefore currently in a beta version. :warning:
+cpm is a fundamental package for Computational Psychiatry. It is designed to provide a set of tools for researchers and clinicians to analyze and model data in the field of Computational Psychiatry.
 
 ## Installation and Usage
 

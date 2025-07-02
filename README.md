@@ -1,10 +1,26 @@
 # cpm
 
+![the toolbox logo](./docs/img/cpm-logo.png)
+
 cpm is a fundamental package for Computational Psychiatry. It is designed to provide a set of tools for researchers and clinicians to analyze and model data in the field of Computational Psychiatry.
 
 :warning: The package is under active development and is therefore currently in a beta version. :warning:
 
-## Install from GitHub
+## Installation and Usage
+
+To install the package, run the following command:
+
+```bash
+pip install cpm-toolbox
+```
+
+Once the package is installed, you can import it in your Python code:
+
+```python
+import cpm
+```
+
+## Install from GitHub for Nightly Builds
 
 In order to install the package from GitHub, run the following command:
 
@@ -35,7 +51,7 @@ mkdocs build
 mkdocs serve
 ```
 
-Then open a browser and go to http://127.0.0.1:8000/
+Then open a browser and go to <http://127.0.0.1:8000/>
 
 Depending on the version you have, you might need to add Jupyter to PATH, see this [link](https://github.com/jupyter/nbconvert/issues/1773#issuecomment-1283852572) for more information.
 
@@ -75,7 +91,7 @@ Feel free to use gitmoji for commit messages, but insert them at the end of the 
 See this [link](https://gitmoji.dev/) for more information.
 
 ## Pull request conventions
-    
+
 When creating a pull request, make sure to follow these conventions: [link](https://github.blog/2015-01-21-how-to-write-the-perfect-pull-request/)
 
 ## Compiling the package

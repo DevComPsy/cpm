@@ -51,6 +51,7 @@ nav:
       - examples/model-recovery.ipynb
       - examples/fitting-hierarchical-estimation.ipynb
       - examples/fitting-hierarchical.ipynb
+      - examples/hpc-example.ipynb
   - API Reference:
       - cpm.generators: api/generators.md
       - cpm.models: api/models.md

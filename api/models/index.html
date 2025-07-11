@@ -62,15 +62,21 @@
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example1/">Example 1: An associative learning model and blocking</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/associative-learning/">Two associative learning models and blocking (cpm.models, cpm.generators)</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example2/">Example 2: Reinforcement learning with a two-armed bandit.</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/bandit-task/">Reinforcement learning with a two-armed bandit (cpm.models, cpm.generators, cpm.optimisation)</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example3/">Example 3: Estimating Empirical Priors</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/metacognition/">Estimating metacognitive efficiency with meta-d (cpm.applications)</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example4/">Example 4: Scale to hypercomputing cluster</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/model-parameter-recovery/">Parameter Recovery (cpm.generators, cpm.models, cpm.optimisation)</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../examples/example5/">Example 5: Estimating meta-d (metacognitive efficiency)</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/model-recovery/">Model Recovery and Landscaping (cpm.models, cpm.generators, cpm.optimisation)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/fitting-hierarchical-estimation/">Estimating Empirical Priors (cpm.hierarchical)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/fitting-hierarchical/">Exploring hierarchical estimation of hyperparameters (cpm.hierarchical)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../examples/hpc-example/">Scale to hypercomputing cluster</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
@@ -1948,7 +1954,15 @@ the difference between the target value and the summed activation of all values
 for a given output units target value available on the current trial/state. For separable
 error term, see the Bush and Mosteller (1951) rule.</p>
 <p>The current implementation is based on the Gluck and Bower's (1988) delta rule, an
-extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning.</p>
+extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning. Such that</p>
+<div class="arithmatex">\[
+\Delta w_{ij} = \alpha \cdot (\lambda_i - \sum_j w_{ij}) \cdot x_j
+\]</div>
+<p>where <span class="arithmatex">\(\Delta w_{ij}\)</span> is the change in weight for the <span class="arithmatex">\(j\)</span>-th stimulus for the <span class="arithmatex">\(i\)</span>-th outcome,
+<span class="arithmatex">\(\lambda_i\)</span> is the target (feedback) value for the i-th outcome, <span class="arithmatex">\(w_ij\)</span> is the weights of stimulus <span class="arithmatex">\(j\)</span> 
+for the <span class="arithmatex">\(i\)</span>-th outcome,
+<span class="arithmatex">\(x_j\)</span> is the j-th stimulus input, and <span class="arithmatex">\(\alpha\)</span> is the learning rate. This is consistent with the
+Rescorla and Wagner (1972)'s learning rule incorporating the summed error term. </p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
@@ -2260,12 +2274,26 @@ It has the same shape as the weights input argument.</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The humble teacher learning rule is a learning rule that is based on the idea that if output node activations large than the teaching signals should not be counted as error, but should be rewarded. So the humble teacher turns teaching signals into discrete (nominal) values, where they do not indicate the degree of membership between stimuli and outcome label, the degree of causality between stimuli and outcome, or the degree of correctness of the output.</p>
+  <p>The humble teacher is a learning rule that is based on the idea that if output node activations are larger than the teaching signal, they should not be counted as error, but should be rewarded. It is defined as:</p>
+<div class="arithmatex">\[
+t_k = \begin{cases}
+\min(-1, a_k) &amp; \text{if } t_k = 0 \text{ if stimulus is not followed by outcome/category-label} \\
+\max(1, a_k) &amp; \text{if } t_k = 1 \text{ if stimulus is followed by outcome/category-label}
+\end{cases}
+\]</div>
+<p>where <span class="arithmatex">\(t_k\)</span> is the teaching signal. Then the change in weights is computed according to the delta rule (Rescorla &amp; Wagner, 1972; Rumelhart, Hinton &amp; Williams, 1986; Gluck &amp; Bower, 1988):</p>
+<div class="arithmatex">\[
+\Delta w_{ij} = \alpha \cdot (t_k - a_k) \cdot x_j
+\]</div>
+<p>where <span class="arithmatex">\(\Delta w_{ij}\)</span> is the change in weight for the <span class="arithmatex">\(j\)</span>-th stimulus for the <span class="arithmatex">\(i\)</span>-th outcome, <span class="arithmatex">\(t_k\)</span> is the teaching signal for the <span class="arithmatex">\(k\)</span>-th outcome, <span class="arithmatex">\(a_k\)</span> is the summed activation of all nodes connected to the <span class="arithmatex">\(k\)</span>-th outcome, <span class="arithmatex">\(x_j\)</span> is the j-th stimulus input, and <span class="arithmatex">\(\alpha\)</span> is the learning rate.</p>
 </details>
 
 <details class="references" open>
   <summary>References</summary>
-  <p>Kruschke, J. K. (1992). ALCOVE: An exemplar-based connectionist model of category learning. Psychological Review, 99, 22–44.</p>
+  <p>Gluck, M. A., &amp; Bower, G. H. (1988). From conditioning to category learning: An adaptive network model. Journal of Experimental Psychology: General, 117(3), 227–247.</p>
+<p>Kruschke, J. K. (1992). ALCOVE: An exemplar-based connectionist model of category learning. Psychological Review, 99, 22–44.</p>
+<p>Rescorla, R. A., &amp; Wagner, A. R. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and nonreinforcement. In A. H. Black &amp; W. F. Prokasy (Eds.), Classical conditioning II: Current research and theory (pp. 64-99). New York:Appleton-Century-Crofts.</p>
+<p>Rumelhart, D. E., Hinton, G. E., &amp; Williams, R. J. (1986). Learning representations by back-propagating errors. nature, 323(6088), 533-536.</p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
@@ -2276,8 +2304,8 @@ It has the same shape as the weights input argument.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">humble_teacher</span> <span class="o">=</span> <span class="n">HumbleTeacher</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">feedback</span><span class="o">=</span><span class="n">teacher</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">humble_teacher</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
-<span class="go">array([[-0.06, -0.06, -0.06],</span>
-<span class="go">   [ 0.  ,  0.  ,  0.  ]])</span>
+<span class="go">array([[-0.06,  0.04,  0.14],</span>
+<span class="go">    [ 0.4 ,  0.5 ,  0.6 ]])</span>
 </code></pre></div>
 
 
@@ -2810,7 +2838,11 @@ Bush and Mosteller (1951).</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>This type of learning rule was among the earliest formal models of associative learning (Le Pelley, 2004), which were based on standard linear operators (Bush &amp; Mosteller, 1951; Estes, 1950; Kendler, 1971).</p>
+  <p>This type of learning rule was among the earliest formal models of associative learning (Le Pelley, 2004), which were based on standard linear operators (Bush &amp; Mosteller, 1951; Estes, 1950; Kendler, 1971). It is used in a variety of reinforcement learning models. This learning rule is defined in <code>cpm</code> as</p>
+<div class="arithmatex">\[
+\Delta w_{ij} = \alpha \cdot (\lambda_i - w_{ij}) \cdot x_j
+\]</div>
+<p>which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms. </p>
 </details>
 
 <details class="references" open>
@@ -2986,8 +3018,9 @@ It has the same shape as the weights input argument.</p>
     <script>var base_url = "../..";</script>
     <script src="../../js/theme_extra.js"></script>
     <script src="../../js/theme.js"></script>
-      <script src="../.."></script>
+      <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
       <script src="../../search/main.js"></script>
     <script>
         jQuery(function () {

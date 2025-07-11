@@ -32,7 +32,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=2.0.0",
-    "SciPy>=1.11.4",
+    "SciPy>=1.16.0",
     "pandas>=2.1.4",
     "multiprocess>=0.70.16",
     "ipyparallel>=8.8.0",
@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/DevComPsy/cpm"
+Homepage = "https://cpm-toolbox.net"
 Documentation = "https://devcompsy.github.io/cpm/"
 
 [tool.setuptools]

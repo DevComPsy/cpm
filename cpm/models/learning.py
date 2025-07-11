@@ -577,7 +577,6 @@ class HumbleTeacher:
 
         for i in range(self.shape[0]):
             activations = np.sum(self.weights[i] * self.input)
-            print(f"Activations for outcome {i}: {activations}")
             for j in range(self.shape[1]):
                 if self.teacher[i] == 0:
                     teacher = np.min([-1, activations])

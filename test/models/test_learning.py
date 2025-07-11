@@ -87,12 +87,16 @@ def test_humble_teacher():
     humble_teacher = HumbleTeacher(
         alpha=0.1, weights=weights, feedback=teacher, input=input
     )
-    computed_weights = humble_teacher.compute()
+    humble_teacher.compute()
+
+    computed_weights = humble_teacher.delta
     assert computed_weights.shape == weights.shape
     assert np.allclose(
-        computed_weights, np.array([[-0.06, -0.06, -0.06], [0.0, 0.0, 0.0]])
+        computed_weights, np.array([[-0.16, -0.16, -0.16], [ 0. ,  0. ,  0. ]]) 
     ), "The weights are not updated correctly with the HumbleTeacher rule."
-
+    assert np.allclose(
+        humble_teacher.weights, np.array([[-0.06,  0.04,  0.14], [ 0.4 ,  0.5 ,  0.6 ]])
+    ), "The teacher should be zero after the HumbleTeacher update."
 
 if __name__ == "__main__":
     pytest.main()

@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
-import warnings
 from scipy.stats import zscore
-import statsmodels.formula.api as smf
 
 
 class Scavenger:
@@ -159,130 +157,27 @@ class Scavenger:
         # Group data by userID
         grouped_data = self.data.groupby("userID")
 
-        all_users_data = []
-
         # Loop through each group of user data
         for user_id, user_data in grouped_data:
-
-            # Initialize a dictionary to store results for this user
-            user_metrics = {
-                "userID": user_id,
-                "rsk_all": [],
-                "t_loss_all": [],
-                "t_abg_all": [],
-                "EV_diff_chosen_all": [],
-                "chosen_left_all": [],
-                "A_EV": [],
-                "B_EV": [],
-                "chosen": [],
-                "all_rewards": [],
-                "choice_stickiness": [],   
-                "RT": [],
-                "catchtrial": [],
-                "abovechance": [],
-                "chosenLeft": []
-            }
-
-            # Loop through each trial in the user's data
-            for _, trial_data in user_data.iterrows():
-                metrics_data_trial = {}
-
-                if trial_data["chosen"] == 0:
-                    metrics_data_trial["chosen"] = 1  # Option A chosen (safe)
-                    metrics_data_trial["A_perc"] = 1
-                    metrics_data_trial["A_magn"] = trial_data["safe_magn"]
-                    metrics_data_trial["B_perc"] = [
-                        trial_data["risky_prob1"],
-                        trial_data["risky_prob2"]
-                    ]
-                    metrics_data_trial["B_magn"] = [
-                        trial_data["risky_magn1"], 
-                        trial_data["risky_magn2"]
-                    ]
-                else:
-                    metrics_data_trial["chosen"] = 2  # Option B chosen
-                    metrics_data_trial["A_perc"] = 1
-                    metrics_data_trial["A_magn"] = trial_data[
-                        "safe_magn"
-                    ]
-                    metrics_data_trial["B_perc"] = [
-                        trial_data["risky_prob1"],
-                        trial_data["risky_prob2"]
-                    ]
-                    metrics_data_trial["B_magn"] = [
-                        trial_data["risky_magn1"], 
-                        trial_data["risky_magn2"]
-                    ]
-
-                metrics_data_trial["ambiguous"] = trial_data[
-                    "ambiguousTrial"
-                ]
-
-                # Compute expected values
-                metrics_data_trial["A_EV"] = np.dot(
-                    np.array(metrics_data_trial["A_perc"]),
-                    np.array(metrics_data_trial["A_magn"]),
-                )
-                metrics_data_trial["B_EV"] = np.array(
-                    metrics_data_trial["B_perc"][0]
-                ) * np.array(
-                    metrics_data_trial["B_magn"][0]
-                ) + np.array(
-                    metrics_data_trial["B_perc"][1]
-                ) * np.array(metrics_data_trial["B_magn"][1]) 
-
-                metrics_data_trial["EV_diff_safe"] = (
-                    metrics_data_trial["A_EV"] - metrics_data_trial["B_EV"]
-                )
-
-                if metrics_data_trial["chosen"] == 1:
-                    metrics_data_trial["EV_diff_chosen"] = (
-                        metrics_data_trial["A_EV"] - metrics_data_trial["B_EV"]
-                    )
-                elif metrics_data_trial["chosen"] == 2:
-                    metrics_data_trial["EV_diff_chosen"] = (
-                        metrics_data_trial["B_EV"] - metrics_data_trial["A_EV"]
-                    )
-
-                # Store the trial data for the user in the user's metrics dictionary
-                user_metrics["A_EV"].append(metrics_data_trial["A_EV"])
-                user_metrics["B_EV"].append(metrics_data_trial["B_EV"])
-                user_metrics["chosen"].append(metrics_data_trial["chosen"])
-                user_metrics["rsk_all"].append(metrics_data_trial["chosen"] - 1)
-                user_metrics["t_loss_all"].append(metrics_data_trial["A_EV"] < 0)
-                user_metrics["t_abg_all"].append(bool(metrics_data_trial["ambiguous"]))
-                user_metrics["EV_diff_chosen_all"].append(
-                    metrics_data_trial["EV_diff_chosen"]
-                )
-                user_metrics["RT"].append(trial_data["RT"])
-                user_metrics["all_rewards"].append(trial_data["outcome"])  
-                user_metrics["catchtrial"].append(trial_data["catchtrial"])
-                user_metrics["abovechance"].append(trial_data["abovechance"])
-                user_metrics["chosenLeft"].append(trial_data["chosenLeft"])
-
-            all_users_data.append(user_metrics)
-
-        # iterate over all users
-        for user_data in all_users_data:
-
-            user_id = user_data["userID"]
-            rsk = np.array(user_data["rsk_all"])
-            t_loss = np.array(user_data["t_loss_all"])
-            t_abg = np.array(user_data["t_abg_all"])
-            ev_diff_chosen = np.array(user_data["EV_diff_chosen_all"], dtype=object)
+            print(user_data.head())
+            t_abg = np.array(user_data["ambiguousTrial"], dtype=bool)
             catch_trials = np.array(user_data["catchtrial"], dtype=bool)
             abovechance = np.array(user_data["abovechance"])
             chosen_left = np.array(user_data["chosenLeft"])
+            ev_diff_chosen = np.array(user_data["EV_diff_chosen"], dtype=object)
+            rsk = np.array(user_data["chosen"])
+            t_loss = np.array(user_data["safe_EV"] < 0)
+            
 
             user_results = {"userID": user_id}
 
             user_results["mean_RT"] = np.mean(user_data["RT"])
             user_results["median_RT"] = np.median(user_data["RT"])
 
-            user_results["total_rewards"] = np.sum(user_data["all_rewards"])
+            user_results["total_rewards"] = np.sum(user_data["outcome"])
 
-            # calculate choice stickiness
-            user_results["choice_stickiness"] = np.sum(user_data["chosen"][i] == 1 and user_data["chosen"][i + 1] == 1 for i in range(len(user_data["chosen"]) - 1))
+            # calculate choice stickiness      
+            user_results["choice_stickiness"] = np.sum(user_data["chosen"].iloc[i] == 1 and user_data["chosen"].iloc[i + 1] == 1 for i in range(len(user_data["chosen"]) - 1))
 
             # Number of risky choices
             user_results["risky_choices"] = np.mean(rsk == 1)

@@ -237,7 +237,11 @@ class MBMF(Wrapper):
                 value=parameters_settings[6][0],
                 lower=parameters_settings[6][1],
                 upper=parameters_settings[6][2]
-            )
+            ),
+            Q_MF = numpy.ones((2,2))*4.5,
+            Q2 = numpy.ones((2,1))*4.5,
+            M = numpy.zeros((2,2)), # last action matrix
+            R = numpy.zeros(2)     # last choice structure
         )
 
         @ipp.require("numpy")
@@ -270,13 +274,15 @@ class MBMF(Wrapper):
             respst = parameters.response_stickiness # response stickiness
 
             # initialization
-            Q_MF = numpy.ones((2,2))
-            Q2 = numpy.ones((2,1))
-            TM = [numpy.eye(2), numpy.eye(2)] #transition matrix
-            M = numpy.zeros((2,2)) # last action matrix
-            R = [0, 0]     # last choice structure
-            LL = 0 # log likelihood
 
+            # initialization
+            Q_MF = numpy.array(parameters.Q_MF) # Q values for model-free learning
+            Q2 = numpy.array(parameters.Q2) # Q values for model-based learning
+
+            M = numpy.array(parameters.M) # last action matrix
+            R = numpy.array(parameters.R) # last choice structure
+
+            TM = [numpy.eye(2), numpy.eye(2)] #transition matrix
                 
             if trial["stimuli"][0] == 2 or trial["stimuli"][0] == 4:
                 R = R = numpy.flipud(R) 
@@ -299,7 +305,7 @@ class MBMF(Wrapper):
             Q = w*Q_MB + (1-w)*Q_MF[s1-1, :].T + st * M[s1-1, :].T + respst * numpy.array(R)
 
             # calculating the probability choosing action a given Q
-            LL = LL + b*Q[a-1] - logsumexp(b * Q) 
+            policy = numpy.exp(b * Q) / numpy.sum(numpy.exp(b * Q))
 
             # update choice structure
             M = numpy.zeros((2,2))
@@ -321,13 +327,16 @@ class MBMF(Wrapper):
             Q_MF[s1-1, a-1] = Q_MF[s1-1, a-1] + lamb * lr * dtQ2
 
             # compile results
-            results = pandas.DataFrame({
-                "userID": trial["userID"][0],
-                "LL": [LL],
-                "Q": [Q.flatten()],
-                "Q_MF": [Q_MF.flatten()],
-                "Q_MB": [Q_MB.flatten()]
-            })
+            results = {
+                "policy": numpy.array(policy),
+                "R": numpy.array(R),
+                "M": numpy.array(M),
+                "Q": numpy.array(Q.flatten()),
+                "Q2": numpy.array(Q2),
+                "Q_MF": numpy.array(Q_MF),
+                "Q_MB": numpy.array(Q_MB.flatten()),
+                "dependent": numpy.array([policy[1]])
+            }
 
             return results    
 

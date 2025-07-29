@@ -104,6 +104,7 @@ class LogLikelihood:
         np.clip(probabilities, 1e-100, 1 - 1e-100, out=probabilities)
 
         LL = bernoulli.logpmf(k=observed.flatten(), p=probabilities)
+        LL[np.isnan(LL)] = -np.inf
         LL[LL < bound] = limit  # Set the lower bound to avoid overflow
         LL = np.sum(LL)
         if negative:
@@ -137,6 +138,7 @@ class LogLikelihood:
         1.7350011354094463
         """
         LL = np.sum(norm.logpdf(predicted, observed, 1))
+        LL[np.isnan(LL)] = -np.inf
         if negative:
             LL = -1 * LL
         return LL
@@ -187,6 +189,7 @@ class LogLikelihood:
                 for i in range(observed.shape[0])
             ]
         )
+        LL[np.isnan(LL)] = -np.inf
         if negative:
             LL = -1 * LL
         return LL
@@ -259,6 +262,7 @@ class Distance:
             The sum of squared errors.
         """
         sse = np.sum((predicted.flatten() - observed.flatten()) ** 2)
+        sse[np.isnan(sse)] = np.inf  # Handle NaN values
         return sse
 
     def MSE(predicted, observed, **kwargs):
@@ -277,9 +281,81 @@ class Distance:
         float
             The Euclidean distance.
         """
-        euclidean = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2))
+        euclidean = np.mean((predicted.flatten() - observed.flatten()) ** 2)
+        euclidean[np.isnan(euclidean)] = np.inf  # Handle NaN values
         return euclidean
 
+    def RMSE(predicted, observed, **kwargs):
+        """
+        Compute the Root Mean Squared Errors (RMSE).
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+
+        Returns
+        -------
+        float
+            The Root Mean Squared Errors.
+        """
+        shape = predicted.shape
+        n=1
+        n *= [shape[i] for i in range(len(shape))]
+        rmse = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2)/n)
+        rmse[np.isnan(rmse)] = np.inf
+
+class Discrete:
+
+    def __init__(self) -> None:
+        pass
+
+    def ChiSquare(predicted, observed, **kwargs):
+        """
+        Compute the Chi-Square statistic.
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+
+        Returns
+        -------
+        float
+            The Chi-Square statistic.
+        """
+        predicted = np.array(predicted, dtype=float)
+        observed = np.array(observed, dtype=float)
+        chi_square = ((observed - (np.sum(observed) * predicted)) ** 2 / (np.sum(observed) * predicted))
+        chi_square = np.sum(chi_square)
+        chi_square[np.isnan(chi_square)] = np.inf
+        return chi_square
+
+    def G2(predicted, observed, **kwargs):
+        """
+        Compute the G2 statistic.
+
+        Parameters
+        ----------
+        predicted : array-like
+            The predicted values.
+        observed : array-like
+            The observed values.
+
+        Returns
+        -------
+        float
+            The G2 statistic.
+        """
+        predicted = np.array(predicted, dtype=float)
+        observed = np.array(observed, dtype=float)
+        g2 = 2 * np.sum(observed * np.log(observed / (np.sum(observed) * predicted)))
+        g2[np.isnan(g2)] = np.inf
+        return g2
 
 class Bayesian:
 

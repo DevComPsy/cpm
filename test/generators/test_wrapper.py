@@ -11,7 +11,7 @@ def dummy_model(parameters, trial):
 
 
 def test_wrapper_initialization():
-    data = pd.DataFrame({"stimulus": [1, 2, 3], "step": [1, 2, 3]})
+    data = pd.DataFrame({"stimulus": [1, 2, 3], "step": [1, 2, 3], "observed": [0.1, 0.2, 0.3]})
     parameters = Parameters(alpha=0.1)
     wrapper = Wrapper(model=dummy_model, data=data, parameters=parameters)
     assert wrapper.model == dummy_model, "Model not set correctly"
@@ -51,6 +51,36 @@ def test_wrapper_export():
     assert isinstance(exported_data, pd.DataFrame)
     assert len(exported_data) == 3
 
+def dummy_loss(predicted, observed):
+    # Simple loss: sum of squared differences
+    return np.sum((predicted - observed) ** 2)
+
+def test_connector_returns_callable_and_computes_loss():
+    # Create dummy data
+    df = pd.DataFrame({"stimulus": [1, 2, 3], "step": [1, 2, 3], "observed": [0.1, 0.2, 0.3]})
+    parameters = Parameters(alpha=Value(0.1))
+
+    # Create wrapper
+    wrapper = Wrapper(model=dummy_model, data=df, parameters=parameters)
+
+    # Get parser from connector
+    parser = wrapper.connector(loss=dummy_loss)
+
+    # Check that parser is callable
+    assert callable(parser)
+
+    # Call parser with parameters
+    result = parser([2])
+
+    # Should return a float/int
+    assert isinstance(result, (float, int, np.floating, np.integer))
+
+def test_connector_raises_without_loss():
+    df = pd.DataFrame({"stimulus": [1, 2, 3], "step": [1, 2, 3], "observed": [0.1, 0.2, 0.3]})
+    parameters = Parameters(alpha=Value(0.1))
+    wrapper = Wrapper(model=dummy_model, data=df, parameters=parameters)
+    with pytest.raises(ValueError):
+        wrapper.connector()
 
 if __name__ == "__main__":
     pytest.main()

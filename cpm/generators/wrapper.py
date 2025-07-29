@@ -7,7 +7,7 @@ import pickle as pkl
 from .parameters import Parameters, Value
 from ..core.data import unpack_trials, determine_data_length
 from ..core.exports import simulation_export
-
+from ..core.optimisers import objective
 
 class Wrapper:
     """
@@ -185,3 +185,42 @@ class Wrapper:
             filename = "simulation"
         pkl.dump(self, open(filename + ".pkl", "wb"))
         return None
+
+    def connector(loss=None, prior=False):
+        """
+        A method to connect the model to an objective function.
+        This method is used to create a parser function that can be used in third-party optimisation routine (e.g., scipy, pybads, genetic algorithms).
+
+        Parameters
+        ----------
+        loss : function
+            The loss function that is used to calculate the metric value. 
+        prior : bool, optional
+            If True, the prior distribution of the parameters is added to the metric value. Default is False.
+
+        Notes
+        -----
+        The `loss` function should take the following arguments:
+            - `predicted`: The predicted values from the model.
+            - `observed`: The observed values from the data.
+
+        It should return a single numeric value representing the loss.
+
+
+        Returns
+        -------
+        parser : function
+            A function that takes a single argument `pars`, which is a dictionary of parameters.
+        
+        """
+        observed = self.data.observed.to_numpy()
+        def parser(pars):
+            return objective(
+                pars,
+                function=self,
+                data=observed,
+                loss=loss,
+                prior=prior,
+            )
+
+        return parser

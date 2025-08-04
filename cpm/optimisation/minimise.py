@@ -9,6 +9,7 @@ def check_nan_and_bounds_in_input(predicted, observed):
     Check if predicted or observed values contain NaN, Inf, nothing, and also check for shape mismatching.
     Accepts array-like inputs.
     If any of the above is found, raise an error with details.
+    Returns squeezed arrays for shape compatibility.
     """
     if predicted is None or observed is None:
         raise ValueError("Predicted and observed values must not be None.")
@@ -21,24 +22,23 @@ def check_nan_and_bounds_in_input(predicted, observed):
         raise ValueError("Observed values must not be empty.")
     predicted = np.asarray(predicted)
     observed = np.asarray(observed)
-    ## check for nan outputs
-    if np.any(np.isnan(predicted)):
-        idx = np.where(np.isnan(predicted))
+    predicted_s = np.squeeze(predicted)
+    observed_s = np.squeeze(observed)
+    if np.any(np.isnan(predicted_s)):
+        idx = np.where(np.isnan(predicted_s))
         raise ValueError(f"Predicted values contain NaN at indices {idx}.")
-    if np.any(np.isnan(observed)):
-        idx = np.where(np.isnan(observed))
+    if np.any(np.isnan(observed_s)):
+        idx = np.where(np.isnan(observed_s))
         raise ValueError(f"Observed values contain NaN at indices {idx}.")
-    ## check for inf outputs
-    if np.any(np.isinf(predicted)):
-        idx = np.where(np.isinf(predicted))
+    if np.any(np.isinf(predicted_s)):
+        idx = np.where(np.isinf(predicted_s))
         raise ValueError(f"Predicted values contain Inf at indices {idx}.")
-    if np.any(np.isinf(observed)):
-        idx = np.where(np.isinf(observed))
+    if np.any(np.isinf(observed_s)):
+        idx = np.where(np.isinf(observed_s))
         raise ValueError(f"Observed values contain Inf at indices {idx}.")
-    # Check for shape mismatching
-    if predicted.shape != observed.shape:
-        raise ValueError(f"Shape mismatch: predicted shape {predicted.shape} does not match observed shape {observed.shape}.")
-    return None
+    if predicted_s.shape != observed_s.shape:
+        raise ValueError(f"Shape mismatch: predicted shape {predicted.shape} (squeezed {predicted_s.shape}) does not match observed shape {observed.shape} (squeezed {observed_s.shape}).")
+    return predicted_s, observed_s
 
 def check_nan_bounds_in_log(value, bound=-1e100):
     """
@@ -98,7 +98,7 @@ class LogLikelihood:
         >>> LogLikelihood.categorical(predicted, observed)
         1.7350011354094463
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         bound = -1e100
         values = np.array(predicted * observed).flatten()
         values = values[observed.flatten() != 0]
@@ -151,7 +151,7 @@ class LogLikelihood:
         1.7350011354094463
 
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         bound = -1e100
         probabilities = predicted.flatten()
         ## bump up the probabilities to avoid log(0)
@@ -192,7 +192,7 @@ class LogLikelihood:
         1.7350011354094463
         """
 
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         bound = -1e100
         LL = norm.logpdf(predicted, observed, 1)
         LL = check_nan_bounds_in_log(LL, bound=bound)
@@ -231,7 +231,7 @@ class LogLikelihood:
         >>> print("Log Likelihood (multinomial):", ll)
         Log Likelihood (multinomial): 4.596597454123483
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         bound = -1e100
         LL = multinomial.logpmf(observed, n=np.sum(observed, axis=1), p=predicted)
         LL = check_nan_bounds_in_log(LL, bound=bound)
@@ -272,13 +272,11 @@ class LogLikelihood:
         >>> print("Log Likelihood :", ll_float)
         Log Likelihood : 18.314715666079106
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
 
         bound = -1e100
-        predicted, observed = np.squeeze(predicted), np.squeeze(observed)
         np.clip(predicted, 1e-100, 1 - 1e-100, out=predicted)
         LL = observed.flatten() * np.log(predicted.flatten())
-        ## swap NA with -Inf
         LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)
         if negative:
@@ -308,7 +306,7 @@ class Distance:
         float
             The sum of squared errors.
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         sse = np.sum((predicted.flatten() - observed.flatten()) ** 2)
         sse = np.float64(sse)  # Ensure the result is a float
         return sse
@@ -330,7 +328,7 @@ class Distance:
         float
             The Euclidean distance.
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         euclidean = np.mean((predicted.flatten() - observed.flatten()) ** 2)
         return euclidean
 
@@ -351,11 +349,8 @@ class Distance:
         float
             The Root Mean Squared Errors.
         """
-        check_nan_and_bounds_in_input(predicted, observed)
-        shape = predicted.shape
-        n=1
-        n *= [shape[i] for i in range(len(shape))]
-        rmse = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2)/n)[0]
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
+        rmse = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2))
         return rmse
 
 class Discrete:
@@ -380,7 +375,7 @@ class Discrete:
         float
             The Chi-Square statistic.
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         predicted = np.array(predicted, dtype=float)
         observed = np.array(observed, dtype=float)
         chi_square = ((observed - (np.sum(observed) * predicted)) ** 2 / (np.sum(observed) * predicted))
@@ -404,7 +399,7 @@ class Discrete:
         float
             The G2 statistic.
         """
-        check_nan_and_bounds_in_input(predicted, observed)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         predicted = np.array(predicted, dtype=float)
         observed = np.array(observed, dtype=float)
         g2 = 2 * np.sum(observed * np.log(observed / (np.sum(observed) * predicted)))

@@ -363,6 +363,7 @@ class Discrete:
     def __init__(self) -> None:
         pass
 
+    @staticmethod
     def ChiSquare(predicted, observed, **kwargs):
         """
         Compute the Chi-Square statistic.
@@ -384,9 +385,9 @@ class Discrete:
         observed = np.array(observed, dtype=float)
         chi_square = ((observed - (np.sum(observed) * predicted)) ** 2 / (np.sum(observed) * predicted))
         chi_square = np.sum(chi_square)
-        chi_square[np.isnan(chi_square)] = np.inf
         return chi_square
 
+    @staticmethod
     def G2(predicted, observed, **kwargs):
         """
         Compute the G2 statistic.
@@ -407,7 +408,6 @@ class Discrete:
         predicted = np.array(predicted, dtype=float)
         observed = np.array(observed, dtype=float)
         g2 = 2 * np.sum(observed * np.log(observed / (np.sum(observed) * predicted)))
-        g2[np.isnan(g2)] = np.inf
         return g2
 
 class Bayesian:

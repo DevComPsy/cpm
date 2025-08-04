@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from cpm.optimisation.minimise import Bayesian, LogLikelihood, Distance
+from cpm.optimisation.minimise import Bayesian, LogLikelihood, Distance, Discrete
 
 class TestBayesian:
     def test_bic_basic(self):
@@ -315,6 +315,95 @@ class TestDistance:
         assert np.isclose(Distance.SSE(predicted, observed), 1.0), "Expected SSE to be 1.0"
         assert np.isclose(Distance.MSE(predicted, observed), 0.25), "Expected MSE to be 0.25"
         assert np.isclose(Distance.RMSE(predicted, observed), 0.3535533905932738), "Expected RMSE to be 0.353"
+
+class TestDiscrete:
+    def test_chisquare_basic(self):
+        predicted = np.array([0.2, 0.3, 0.5])
+        observed = np.array([2, 3, 5])
+        result = Discrete.ChiSquare(predicted, observed)
+        assert isinstance(result, float), f"Expected float, got {type(result)}"
+        assert np.isclose(result, 0.0), "Expected ChiSquare to be 0.0 for perfect prediction"
+        expected = np.float64(1.142857142857143)
+        observed[2] = 9
+        result = Discrete.ChiSquare(predicted, observed)
+        assert isinstance(result, float), f"Expected float, got {type(result)}"
+        assert np.isclose(result, expected), f"Expected {expected}, got {result}"
+
+    def test_g2_basic(self):
+        predicted = np.array([0.2, 0.3, 0.5])
+        observed = np.array([2, 3, 5])
+        result = Discrete.G2(predicted, observed)
+        assert isinstance(result, float), f"Expected float, got {type(result)}"
+        assert np.isclose(result, 0.0), "Expected G2 to be 0.0 for perfect prediction"
+        expected = np.float64(1.1589373428441814)
+        observed[2] = 9
+        result = Discrete.G2(predicted, observed)
+        assert isinstance(result, float), f"Expected float, got {type(result)}"
+        assert np.isclose(result, expected), f"Expected {expected}, got {result}"
+
+    def test_with_zeros(self):
+        predicted = np.array([0.2, 0.3, 0.5])
+        observed = np.zeros(3)
+        result = Discrete.ChiSquare(predicted, observed)
+        assert isinstance(result, float)
+        result = Discrete.G2(predicted, observed)
+        assert isinstance(result, float)
+
+    def test_with_negatives(self):
+        predicted = np.array([0.2, 0.3, 0.5])
+        observed = np.array([-2, -3, -5])
+        result = Discrete.ChiSquare(predicted, observed)
+        assert isinstance(result, float)
+        result = Discrete.G2(predicted, observed)
+        assert isinstance(result, float)
+
+    def test_with_nan(self):
+        predicted = np.array([0.2, np.nan, 0.5])
+        observed = np.array([2, 3, 5])
+        with pytest.raises(ValueError):
+            Discrete.ChiSquare(predicted, observed)
+        with pytest.raises(ValueError):
+            Discrete.G2(predicted, observed)
+
+    def test_with_inf(self):
+        predicted = np.array([0.2, np.inf, 0.5])
+        observed = np.array([2, 3, 5])
+        with pytest.raises(ValueError):
+            Discrete.ChiSquare(predicted, observed)
+        with pytest.raises(ValueError):
+            Discrete.G2(predicted, observed)
+
+    def test_empty_arrays(self):
+        predicted = np.array([])
+        observed = np.array([])
+        with pytest.raises(ValueError):
+            Discrete.ChiSquare(predicted, observed)
+        with pytest.raises(ValueError):
+            Discrete.G2(predicted, observed)
+
+    def test_shape_mismatch(self):
+        predicted = np.array([0.2, 0.3, 0.5])
+        observed = np.array([2, 3])
+        with pytest.raises(ValueError):
+            Discrete.ChiSquare(predicted, observed)
+        with pytest.raises(ValueError):
+            Discrete.G2(predicted, observed)
+
+    def test_integer_and_float(self):
+        predicted = np.array([0.2, 0.3, 0.5], dtype=float)
+        observed = np.array([2, 3, 5], dtype=int)
+        result = Discrete.ChiSquare(predicted, observed)
+        assert isinstance(result, float)
+        result = Discrete.G2(predicted, observed)
+        assert isinstance(result, float)
+
+    def test_2d_arrays(self):
+        predicted = np.array([[0.2, 0.3], [0.5, 0.0]])
+        observed = np.array([[2, 3], [5, 0]])
+        result = Discrete.ChiSquare(predicted, observed)
+        assert isinstance(result, float)
+        result = Discrete.G2(predicted, observed)
+        assert isinstance(result, float)
 
 if __name__ == "__main__":
     pytest.main()

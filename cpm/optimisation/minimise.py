@@ -12,6 +12,13 @@ def check_nan_and_bounds_in_input(predicted, observed):
     """
     if predicted is None or observed is None:
         raise ValueError("Predicted and observed values must not be None.")
+
+    if not isinstance(predicted, (np.ndarray, list)) or not isinstance(observed, (np.ndarray, list)):
+        raise TypeError("Predicted and observed values must be array-like (numpy.ndarray or list).")
+    if len(predicted) == 0:
+        raise ValueError("Model output must not be empty.")
+    if len(observed) == 0:
+        raise ValueError("Observed values must not be empty.")
     predicted = np.asarray(predicted)
     observed = np.asarray(observed)
     ## check for nan outputs
@@ -284,6 +291,7 @@ class Distance:
     def __init__(self):
         pass
 
+    @staticmethod
     def SSE(predicted, observed, **kwargs):
         """
         Compute the sum of squared errors (SSE).
@@ -302,9 +310,10 @@ class Distance:
         """
         check_nan_and_bounds_in_input(predicted, observed)
         sse = np.sum((predicted.flatten() - observed.flatten()) ** 2)
-        sse[np.isnan(sse)] = np.inf  # Handle NaN values
+        sse = np.float64(sse)  # Ensure the result is a float
         return sse
 
+    @staticmethod
     def MSE(predicted, observed, **kwargs):
         """
         Compute the Mean Squared Errors (EDE).
@@ -321,10 +330,11 @@ class Distance:
         float
             The Euclidean distance.
         """
+        check_nan_and_bounds_in_input(predicted, observed)
         euclidean = np.mean((predicted.flatten() - observed.flatten()) ** 2)
-        euclidean[np.isnan(euclidean)] = np.inf  # Handle NaN values
         return euclidean
 
+    @staticmethod
     def RMSE(predicted, observed, **kwargs):
         """
         Compute the Root Mean Squared Errors (RMSE).
@@ -342,12 +352,11 @@ class Distance:
             The Root Mean Squared Errors.
         """
         check_nan_and_bounds_in_input(predicted, observed)
-
         shape = predicted.shape
         n=1
         n *= [shape[i] for i in range(len(shape))]
-        rmse = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2)/n)
-        rmse[np.isnan(rmse)] = np.inf
+        rmse = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2)/n)[0]
+        return rmse
 
 class Discrete:
 

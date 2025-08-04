@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from cpm.optimisation.minimise import Bayesian, LogLikelihood
+from cpm.optimisation.minimise import Bayesian, LogLikelihood, Distance
 
 class TestBayesian:
     def test_bic_basic(self):
@@ -209,7 +209,7 @@ class TestLogLikelihood:
             result = LogLikelihood.product(predicted, observed, negative=False)
         except Exception as e:
             pytest.fail(f"product raised {e}")
-        assert isinstance(result, float)
+        assert isinstance(result, float), "Expected float, got {type(result)}"
         assert np.isclose(result, 0.0), "Perfect prediction should yield zero log likelihood"
 
     def test_product_zero_probabilities(self):
@@ -220,13 +220,101 @@ class TestLogLikelihood:
             result = LogLikelihood.product(predicted, observed, negative=False)
         except Exception as e:
             pytest.fail(f"product raised {e}")
-        assert isinstance(result, float)
+        assert isinstance(result, float), f"Expected float, got {type(result)}"
 
     def test_product_nan_handling(self):
         observed = np.array([1, 0, 1, 0])
         predicted = np.array([np.nan, 0.3, 0.6, 0.4])
         with pytest.raises(ValueError):
             LogLikelihood.product(predicted, observed, negative=False)
+
+class TestDistance:
+    def test_sse_basic(self):
+        predicted = np.array([1, 2, 3])
+        observed = np.array([1, 2, 4])
+        result = Distance.SSE(predicted, observed)
+        assert np.isclose(result, 1.0), f"Expected 1.0, got {result}"
+        assert isinstance(result, np.float64), f"Expected np.float64, got {type(result)}"
+
+    def test_mse_basic(self):
+        predicted = np.array([1, 2, 3])
+        observed = np.array([1, 2, 4])
+        result = Distance.MSE(predicted, observed)
+        assert np.isclose(result, 1/3), f"Expected 1/3, got {result}"
+
+    def test_rmse_basic(self):
+        predicted = np.array([1, 2, 3])
+        observed = np.array([1, 2, 4])
+        result = Distance.RMSE(predicted, observed)
+        assert isinstance(result, float), f"Expected float, got {type(result)}"
+
+    def test_with_zeros(self):
+        predicted = np.array([1, 2, 3, 4, 5])
+        observed = predicted.copy()
+        assert Distance.SSE(predicted, observed) == 0, "SSE with zeros should be zero"
+        assert Distance.MSE(predicted, observed) == 0, "MSE with zeros should be zero"
+        assert Distance.RMSE(predicted, observed) == 0, "RMSE with zeros should be zero"
+
+    def test_with_negatives(self):
+        predicted = np.array([-1, -2, -3])
+        observed = np.array([-1, -2, -4])
+        assert np.isclose(Distance.SSE(predicted, observed), 1.0), "SSE with negatives should be 1.0"
+        assert np.isclose(Distance.MSE(predicted, observed), 1/3), "MSE with negatives should be 1/3"
+        assert np.isclose(Distance.RMSE(predicted, observed), 1/3), "RMSE with negatives should be 1/sqrt(3)"
+
+    def test_with_nan(self):
+        predicted = np.array([1, np.nan, 3])
+        observed = np.array([1, 2, 3])
+        with pytest.raises(ValueError):
+            Distance.SSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.MSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.RMSE(predicted, observed)
+
+    def test_with_inf(self):
+        predicted = np.array([1, np.inf, 3])
+        observed = np.array([1, 2, 3])
+        with pytest.raises(ValueError):
+            Distance.SSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.MSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.RMSE(predicted, observed)
+
+    def test_empty_arrays(self):
+        predicted = np.array([])
+        observed = np.array([])
+        with pytest.raises(ValueError):
+            Distance.SSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.MSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.RMSE(predicted, observed)
+
+    def test_shape_mismatch(self):
+        predicted = np.array([1, 2, 3])
+        observed = np.array([1, 2])
+        with pytest.raises(ValueError):
+            Distance.SSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.MSE(predicted, observed)
+        with pytest.raises(ValueError):
+            Distance.RMSE(predicted, observed)
+
+    def test_integer_and_float(self):
+        predicted = np.array([1, 2, 3], dtype=int)
+        observed = np.array([1.0, 2.0, 4.0], dtype=float)
+        assert np.isclose(Distance.SSE(predicted, observed), 1.0), "Expected SSE to be 1.0"
+        assert np.isclose(Distance.MSE(predicted, observed), 1/3), "Expected MSE to be 1/3"
+        assert isinstance(Distance.RMSE(predicted, observed), float), "Expected RMSE to be a float"
+
+    def test_2d_arrays(self):
+        predicted = np.array([[1, 2], [3, 4]])
+        observed = np.array([[1, 2], [3, 5]])
+        assert np.isclose(Distance.SSE(predicted, observed), 1.0), "Expected SSE to be 1.0"
+        assert np.isclose(Distance.MSE(predicted, observed), 0.25), "Expected MSE to be 0.25"
+        assert np.isclose(Distance.RMSE(predicted, observed), 0.3535533905932738), "Expected RMSE to be 0.353"
 
 if __name__ == "__main__":
     pytest.main()

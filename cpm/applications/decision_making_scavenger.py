@@ -37,49 +37,48 @@ class PTSMExtended(Wrapper):
         self.variant = variant
         self.mode = mode
 
-       
-        params = Parameters(
-        # JAGS: eta_mu ~ dunif(-2, 2)
-        eta=Value(
-            value=parameters_settings["eta"][0],
-            lower=-2.0, upper=2.0,
-            prior="normal", # Can be negative, so not truncated
-            args={"mean": 0.0, "sd": 1.0}
-        ),
-        
-        # JAGS: phi_gain_mu ~ dunif(-10, 10)
-        phi_gain=Value(
-            value=parameters_settings["phi_gain"][0],
-            lower=-5.0, upper=5.0,
-            prior="normal",
-            args={"mean": 0.0, "sd": 1.0}
-        ),
-        
-        # JAGS: phi_loss_mu ~ dunif(-10, 10)
-        phi_loss=Value(
-            value=parameters_settings["phi_loss"][0],
-            lower=-5.0, upper=5.0,
-            prior="normal",
-            args={"mean": 0.0, "sd": 1.0}
-        ),
-        
-        # JAGS: softmax_beta_mu ~ dunif(0, 10), and T(0.001,)
-        temperature=Value(
-            value=parameters_settings["temperature"][0],
-            lower=0.001, upper=20.0,
-            prior="truncated_normal",
-            args={"mean": 5.0, "sd": 2.5}
-        ),
-    )
-
-    if variant == "1alpha":
-        # JAGS: alpha_mu ~ dunif(0, 5), and T(0.001,)
-        params["alpha"] = Value(
-            value=parameters_settings["alpha"][0],
-            lower=0.001, upper=5.0,
-            prior="truncated_normal",
-            args={"mean": 1.0, "sd": 1.0}
+        parameters = Parameters(
+            # JAGS: eta_mu ~ dunif(-2, 2)
+            eta=Value(
+                value=parameters_settings["eta"][0],
+                lower=-2.0, upper=2.0,
+                prior="normal",  # Can be negative, so not truncated
+                args={"mean": 0.0, "sd": 1.0}
+            ),
+            
+            # JAGS: phi_gain_mu ~ dunif(-10, 10)
+            phi_gain=Value(
+                value=parameters_settings["phi_gain"][0],
+                lower=-5.0, upper=5.0,
+                prior="normal",
+                args={"mean": 0.0, "sd": 1.0}
+            ),
+            
+            # JAGS: phi_loss_mu ~ dunif(-10, 10)
+            phi_loss=Value(
+                value=parameters_settings["phi_loss"][0],
+                lower=-5.0, upper=5.0,
+                prior="normal",
+                args={"mean": 0.0, "sd": 1.0}
+            ),
+            
+            # JAGS: softmax_beta_mu ~ dunif(0, 10), and T(0.001,)
+            temperature=Value(
+                value=parameters_settings["temperature"][0],
+                lower=0.001, upper=20.0,
+                prior="truncated_normal",
+                args={"mean": 5.0, "sd": 2.5}
+            ),
         )
+
+        if variant == "1alpha":
+            # JAGS: alpha_mu ~ dunif(0, 5), and T(0.001,)
+            parameters["alpha"] = Value(
+                value=parameters_settings["alpha"][0],
+                lower=0.001, upper=5.0,
+                prior="truncated_normal",
+                args={"mean": 1.0, "sd": 1.0}
+            )
 
         def model_fn(parameters, trial, generate=generate):
             eta = parameters.eta.value
@@ -99,7 +98,7 @@ class PTSMExtended(Wrapper):
             objective_best = 1 if ev_risk >= ev_safe else 0
 
             # Apply ambiguity aversion to probability
-            subj_prob = 0.5 - eta if ambig else 0.5
+            subj_prob = prob - eta * ambig
 
             def transform(x):
                 return x ** alpha if x >= 0 else -abs(x) ** alpha
@@ -108,7 +107,7 @@ class PTSMExtended(Wrapper):
             u_risk = subj_prob * transform(risky)
 
             # Apply domain-specific logit bias
-            phi_t = phi_gain if safe >= 0 else phi_loss
+            phi_t = phi_gain if risky >= 0 else phi_loss
             u_risk += phi_t
 
             # Decide softmax input order
@@ -138,4 +137,4 @@ class PTSMExtended(Wrapper):
                 "u_risk": u_risk,
             }
 
-        super().__init__(data=data, model=model_fn, parameters=params)
+        super().__init__(data=data, model=model_fn, parameters=parameters)

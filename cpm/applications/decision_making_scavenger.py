@@ -24,18 +24,19 @@ class PTSMExtended(Wrapper):
         variant="1alpha"  # or "noalpha"
     ):
         if parameters_settings is None:
-        parameters_settings = {
-            # format: [start_value]
-            "alpha": [0.8],
-            "eta": [0.0],
-            "phi_gain": [0.0],
-            "phi_loss": [0.0],
-            "temperature": [5.0],
-        }
-        warnings.warn("No parameters specified, using JAGS-inspired defaults.")
+            warnings.warn("No parameters specified, using JAGS-inspired defaults.")
+            parameters_settings = {
+                # format: [start_value, lower_bound, upper_bound]
+                "alpha":     [1.0, 0.1, 2.0],
+                "eta":       [0.0, -2.0, 2.0],
+                "phi_gain":  [0.0, -5.0, 5.0],
+                "phi_loss":  [0.0, -5.0, 5.0],
+                "temperature": [5.0, 0.001, 20.0],
+            }
 
         self.variant = variant
         self.mode = mode
+
        
         params = Parameters(
         # JAGS: eta_mu ~ dunif(-2, 2)
@@ -49,23 +50,23 @@ class PTSMExtended(Wrapper):
         # JAGS: phi_gain_mu ~ dunif(-10, 10)
         phi_gain=Value(
             value=parameters_settings["phi_gain"][0],
-            lower=-10.0, upper=10.0,
+            lower=-5.0, upper=5.0,
             prior="normal",
-            args={"mean": 0.0, "sd": 3.0}
+            args={"mean": 0.0, "sd": 1.0}
         ),
         
         # JAGS: phi_loss_mu ~ dunif(-10, 10)
         phi_loss=Value(
             value=parameters_settings["phi_loss"][0],
-            lower=-10.0, upper=10.0,
+            lower=-5.0, upper=5.0,
             prior="normal",
-            args={"mean": 0.0, "sd": 3.0}
+            args={"mean": 0.0, "sd": 1.0}
         ),
         
         # JAGS: softmax_beta_mu ~ dunif(0, 10), and T(0.001,)
         temperature=Value(
             value=parameters_settings["temperature"][0],
-            lower=0.001, upper=10.0,
+            lower=0.001, upper=20.0,
             prior="truncated_normal",
             args={"mean": 5.0, "sd": 2.5}
         ),

@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 from cpm.generators import Wrapper, Parameters, Value
 from cpm.models.decision import Softmax
+from scipy.stats import norm, truncnorm
 
 class PTSMExtended(Wrapper):
     """

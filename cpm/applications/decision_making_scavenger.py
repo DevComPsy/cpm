@@ -24,27 +24,61 @@ class PTSMExtended(Wrapper):
         variant="1alpha"  # or "noalpha"
     ):
         if parameters_settings is None:
-            parameters_settings = {
-                "alpha": [1.0, 0.01, 5.0],
-                "eta": [0.0, 0.0, 1.0],
-                "phi_gain": [0.0, -10.0, 10.0],
-                "phi_loss": [0.0, -10.0, 10.0],
-                "temperature": [5.0, 0.1, 15.0],
-            }
+        parameters_settings = {
+            # format: [start_value]
+            "alpha": [0.8],
+            "eta": [0.0],
+            "phi_gain": [0.0],
+            "phi_loss": [0.0],
+            "temperature": [5.0],
+        }
+        warnings.warn("No parameters specified, using JAGS-inspired defaults.")
 
         self.variant = variant
         self.mode = mode
-
-        # Define parameter set based on variant
+       
         params = Parameters(
-            eta=Value(*parameters_settings["eta"], prior="truncated_normal", args={"mean": parameters_settings["eta"][0], "sd": 0.25}),
-            phi_gain=Value(*parameters_settings["phi_gain"], prior="truncated_normal", args={"mean": parameters_settings["phi_gain"][0], "sd": 0.5}),
-            phi_loss=Value(*parameters_settings["phi_loss"], prior="truncated_normal", args={"mean": parameters_settings["phi_loss"][0], "sd": 0.5}),
-            temperature=Value(*parameters_settings["temperature"], prior="truncated_normal", args={"mean": parameters_settings["temperature"][0], "sd": 2.5})
-        )
+        # JAGS: eta_mu ~ dunif(-2, 2)
+        eta=Value(
+            value=parameters_settings["eta"][0],
+            lower=-2.0, upper=2.0,
+            prior="normal", # Can be negative, so not truncated
+            args={"mean": 0.0, "sd": 1.0}
+        ),
+        
+        # JAGS: phi_gain_mu ~ dunif(-10, 10)
+        phi_gain=Value(
+            value=parameters_settings["phi_gain"][0],
+            lower=-10.0, upper=10.0,
+            prior="normal",
+            args={"mean": 0.0, "sd": 3.0}
+        ),
+        
+        # JAGS: phi_loss_mu ~ dunif(-10, 10)
+        phi_loss=Value(
+            value=parameters_settings["phi_loss"][0],
+            lower=-10.0, upper=10.0,
+            prior="normal",
+            args={"mean": 0.0, "sd": 3.0}
+        ),
+        
+        # JAGS: softmax_beta_mu ~ dunif(0, 10), and T(0.001,)
+        temperature=Value(
+            value=parameters_settings["temperature"][0],
+            lower=0.001, upper=10.0,
+            prior="truncated_normal",
+            args={"mean": 5.0, "sd": 2.5}
+        ),
+    )
 
-        if variant == "1alpha":
-            params["alpha"] = Value(*parameters_settings["alpha"], prior="truncated_normal", args={"mean": parameters_settings["alpha"][0], "sd": 0.25})
+    if variant == "1alpha":
+        # JAGS: alpha_mu ~ dunif(0, 5), and T(0.001,)
+        params["alpha"] = Value(
+            value=parameters_settings["alpha"][0],
+            lower=0.001, upper=5.0,
+            prior="truncated_normal",
+            args={"mean": 1.0, "sd": 1.0}
+        )
 
         def model_fn(parameters, trial, generate=generate):
             eta = parameters.eta.value

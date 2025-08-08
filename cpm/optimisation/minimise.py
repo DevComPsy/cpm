@@ -21,7 +21,12 @@ def check_nan_and_bounds_in_input(predicted, observed):
     if len(observed) == 0:
         raise ValueError("Observed values must not be empty.")
     predicted = np.asarray(predicted)
+    predicted = np.asarray(predicted)
     observed = np.asarray(observed)
+    if predicted.size == 0:
+        raise ValueError("Model output must not be empty.")
+    if observed.size == 0:
+        raise ValueError("Observed values must not be empty.")
     predicted_s = np.squeeze(predicted)
     observed_s = np.squeeze(observed)
     if np.any(np.isnan(predicted_s)):

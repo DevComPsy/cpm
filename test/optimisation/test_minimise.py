@@ -260,7 +260,7 @@ class TestDistance:
         observed = np.array([-1, -2, -4])
         assert np.isclose(Distance.SSE(predicted, observed), 1.0), "SSE with negatives should be 1.0"
         assert np.isclose(Distance.MSE(predicted, observed), 1/3), "MSE with negatives should be 1/3"
-        assert np.isclose(Distance.RMSE(predicted, observed), 1/3), "RMSE with negatives should be 1/sqrt(3)"
+        assert np.isclose(Distance.RMSE(predicted, observed), 1/np.sqrt(3)), "RMSE with negatives should be 1/sqrt(3)"
 
     def test_with_nan(self):
         predicted = np.array([1, np.nan, 3])
@@ -314,7 +314,7 @@ class TestDistance:
         observed = np.array([[1, 2], [3, 5]])
         assert np.isclose(Distance.SSE(predicted, observed), 1.0), "Expected SSE to be 1.0"
         assert np.isclose(Distance.MSE(predicted, observed), 0.25), "Expected MSE to be 0.25"
-        assert np.isclose(Distance.RMSE(predicted, observed), 0.3535533905932738), "Expected RMSE to be 0.353"
+        assert np.isclose(Distance.RMSE(predicted, observed), 0.5), "Expected RMSE to be 0.5"
 
 class TestDiscrete:
     def test_chisquare_basic(self):

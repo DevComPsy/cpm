@@ -234,7 +234,7 @@ class LogLikelihood:
         """
         predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         bound = -1e100
-        LL = multinomial.logpmf(observed, n=np.sum(observed, axis=1), p=predicted)
+        LL = multinomial.logpmf(observed, n=np.sum(observed, axis=-1), p=predicted)
         LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)
         if negative:
@@ -458,7 +458,6 @@ class Bayesian:
         float
             The AIC value.
         """
-        if n <= 0:
         if k < 0:
             raise ValueError("Number of parameters (k) must be non-negative.")
         aic = -2 * likelihood + 2 * k

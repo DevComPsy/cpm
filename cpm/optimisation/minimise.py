@@ -459,7 +459,6 @@ class Bayesian:
             The AIC value.
         """
         if n <= 0:
-            raise ValueError("Number of data points (n) must be greater than 0.")
         if k < 0:
             raise ValueError("Number of parameters (k) must be non-negative.")
         aic = -2 * likelihood + 2 * k

@@ -35,7 +35,7 @@ Feel free to use gitmoji for commit messages, but insert them at the end of the 
 See this [link](https://gitmoji.dev/) for more information.
 
 ### Pull request conventions
-    
+
 When creating a pull request, make sure to follow these conventions: [link](https://github.blog/2015-01-21-how-to-write-the-perfect-pull-request/)
 
 ### Compiling the package

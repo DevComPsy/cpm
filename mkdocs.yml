@@ -14,18 +14,17 @@ extra_css:
   - style.css
 
 extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
 
 plugins:
   - search
-  - awesome-pages
   - mkdocstrings:
       enable_inventory: false
       handlers:
         # See: https://mkdocstrings.github.io/python/usage/
         python:
-          import:
-            - https://docs.python-requests.org/en/master/objects.inv
           load_external_modules: true
           options:
             show_source: false
@@ -39,10 +38,32 @@ plugins:
             include_source: True
             ignore: ['examples/bandit.py']
 
-
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Troubleshooting: troubleshooting.md
+      - Roadmap: roadmap.md
+  - Examples:
+      - examples/associative-learning.ipynb
+      - examples/bandit-task.ipynb
+      - examples/metacognition.ipynb
+      - examples/model-parameter-recovery.ipynb
+      - examples/model-recovery.ipynb
+      - examples/fitting-hierarchical-estimation.ipynb
+      - examples/fitting-hierarchical.ipynb
+      - examples/hpc-example.ipynb
+  - API Reference:
+      - cpm.generators: api/generators.md
+      - cpm.models: api/models.md
+      - cpm.optimisation: api/optimisation.md
+      - cpm.hierarchical: api/hierarchical.md
+      - cpm.applications: api/applications.md
+      - cpm.utils: api/utils.md
 
 markdown_extensions:
-  # - markdown_include.include:
-  #     base_path: .
   - admonition
-  - pymdownx.arithmatex
+  - pymdownx.arithmatex:
+      generic: true
+  - mdx_math:
+        enable_dollar_delimiter: True #for use of inline $..$

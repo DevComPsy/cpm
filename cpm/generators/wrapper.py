@@ -37,7 +37,6 @@ class Wrapper:
 
     If a model output contains any keys that are also present in parameters, it updates those in the parameters based on the model output.
 
-    Information on how to compile the model can be found in the [Tutorials - Build your model][/tutorials/defining-model] module.
     """
 
     def __init__(self, model=None, data=None, parameters=None):

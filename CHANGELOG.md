@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add meta-_d_ to applications
 - Provide utility functions for data preprocessing with meta-_d_ type models
 - Introduce new likelihoods (`multinomial` and `product`)
+- Add input validation and error handling in all `cpm.optimisation.minimise` methods
+- Add test units for `cpm.optimisation.minimise`
 
 ### Fixed
 
@@ -42,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error handling in `cpm.applications.signal_detection.EstimatordMetaD`
 - Improved error handling and added input validation in several methods, such as the `detailed_pandas_compiler` function and parameter bounds handling in `cpm/generators/parameters.py`
 - Allow for larger variations in the estimation of the Hessian matrix in test units
+- Changed Softmax and Sigmoid function input shape requirements to ensure they accept 1D arrays only, with a warning for 2D arrays
 
 ## [Unreleased] <=0.18.4
 

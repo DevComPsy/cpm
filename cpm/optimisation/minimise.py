@@ -16,10 +16,6 @@ def check_nan_and_bounds_in_input(predicted, observed):
 
     if not isinstance(predicted, (np.ndarray, list)) or not isinstance(observed, (np.ndarray, list)):
         raise TypeError("Predicted and observed values must be array-like (numpy.ndarray or list).")
-    if len(predicted) == 0:
-        raise ValueError("Model output must not be empty.")
-    if len(observed) == 0:
-        raise ValueError("Observed values must not be empty.")
     predicted = np.asarray(predicted)
     predicted = np.asarray(predicted)
     observed = np.asarray(observed)

@@ -104,7 +104,7 @@ class LogLikelihood:
         values = np.array(predicted * observed).flatten()
         values = values[observed.flatten() != 0]
         ## bump up the probabilities to avoid log(0)
-        np.clip(values, 1e-100, 1 - 1e-100, out=values)
+        np.clip(values, 1e-10, 1 - 1e-10, out=values)
         LL = np.log(values)
         LL = check_nan_bounds_in_log(LL, bound=bound)
         # Compute the negative log likelihood
@@ -156,7 +156,7 @@ class LogLikelihood:
         bound = -1e100
         probabilities = predicted.flatten()
         ## bump up the probabilities to avoid log(0)
-        np.clip(probabilities, 1e-100, 1 - 1e-100, out=probabilities)
+        np.clip(probabilities, 1e-10, 1 - 1e-10, out=probabilities)
 
         LL = bernoulli.logpmf(k=observed.flatten(), p=probabilities)
         LL = check_nan_bounds_in_log(LL, bound=bound)
@@ -276,7 +276,7 @@ class LogLikelihood:
         predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
 
         bound = -1e100
-        np.clip(predicted, 1e-100, 1 - 1e-100, out=predicted)
+        np.clip(predicted, 1e-10, 1 - 1e-10, out=predicted)
         LL = observed.flatten() * np.log(predicted.flatten())
         LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)

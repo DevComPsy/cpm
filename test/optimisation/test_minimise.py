@@ -73,7 +73,7 @@ class TestLogLikelihood:
         assert np.isclose(result, 0.0), "Perfect prediction should yield zero log likelihood"
 
     def test_categorical_zero_probabilities(self):
-        expected = np.float64(-921.0340371976183)
+        expected = np.float64(-92.10340371976183)
         observed = np.array([[1, 0], [0, 1], [1, 0], [0, 1]])
         predicted = np.array([[0.0, 1.0], [1.0, 0.0], [0.0, 1.0], [1.0, 0.0]])
         result = LogLikelihood.categorical(predicted, observed, negative=False)

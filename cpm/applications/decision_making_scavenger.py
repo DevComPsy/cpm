@@ -7,10 +7,10 @@ from cpm.models.decision import Softmax
 
 class PTSMExtended(Wrapper):
     """
-    An extended Prospect Theory Softmax Model supporting:
-      - Softmax bias (phi_gain / phi_loss)
-      - Ambiguity aversion (eta)
-      - Optional utility curvature (alpha)
+    A specific (inspired by Chew et al. 2019) Prospect Theory like Softmax Model supporting:
+      - Softmax bias (phi_gain / phi_loss) #gain loss specific bias for the risky option -> Chew bias only in gain domain and added to the difference.
+      - Ambiguity aversion (eta) #a parameter that lineary biases the 0.5 probability
+      - Optional utility curvature (alpha) #optimal curvature parameter alpha (crumbled around 1 in hierarchical fit, thus we suggest to investigate whether this parameter adds to the model)
 
     This class structure is designed for robust hierarchical fitting.
     """
@@ -35,7 +35,7 @@ class PTSMExtended(Wrapper):
 
         self.variant = variant
         self.mode = mode
-
+#define parameters scipystyle
         parameters = Parameters(
             eta=Value(
                 value=parameters_settings["eta"][0],
@@ -84,7 +84,7 @@ class PTSMExtended(Wrapper):
                 }
             )
 
-        # CORRECTED: Renamed back to model_fn
+        #Model
         def model_fn(parameters, trial, generate=generate):
             # CORRECTED: Access parameters directly, without .value
             eta = parameters.eta
@@ -130,7 +130,7 @@ class PTSMExtended(Wrapper):
             # This simulates the model's own choice based on its policies.
             model_choice = np.random.choice(np.arange(len(policies)), p=policies.flatten())
             
-            # CORRECTED: The full, well-formatted output dictionary
+            #structured output
             output = {
                 "policy": policies,
                 "model_choice": model_choice,

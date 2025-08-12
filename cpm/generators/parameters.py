@@ -86,6 +86,15 @@ class Parameters:
     def __len__(self):
         return 0
 
+    def __getattribute__(self, name):
+        attr = object.__getattribute__(self, name)
+        # Only deepcopy Value instances (not methods, etc.)
+        if isinstance(attr, Value):
+            return copy.deepcopy(attr)
+        elif not callable(attr):
+            return copy.deepcopy(attr)
+        return attr
+
     def update(self, **kwargs):
         """
         Update the parameters with new values.

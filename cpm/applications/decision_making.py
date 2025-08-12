@@ -1,3 +1,5 @@
+#to do: In order to track all parameters for Prelec and GW implementations of Prospect Theory add "delta" parameter
+
 import numpy as np
 import warnings
 from cpm.generators import Wrapper, Parameters, Value
@@ -11,7 +13,7 @@ class PTSM(Wrapper):
     The model can interpret data either as:
         - 'safe vs. risky' (choice=0 => safe, choice=1 => risky)
         OR
-        - 'optimal vs. non-optimal' (choice=0 => suboptimal, 1 => optimal)
+        - 'optimal vs. non-optimal' (choice=0 => suboptimal, 1 => optimal)  #this is only here in preperation to a specific form of joint modeling 
     
     The model computes objective EV internally (ev_safe vs. ev_risk)
     and outputs trial-level information (including whether the chosen option is optimal).

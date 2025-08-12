@@ -234,6 +234,7 @@ class PTSMExtended(Wrapper):
         - `temperature`: truncated normal with mean 10.0 and standard deviation 5.
         - `alpha`: truncated normal with mean 1.0 and standard deviation 1.
 
+    ### Model Description
 
     In what follows, we briefly describe the model's operations. First, the model calculates the subjective probability of the risky option, adjusting for ambiguity aversion using the parameter `eta`, denoted with $\\eta$. The subjective probability is computed as:
 
@@ -253,13 +254,27 @@ class PTSMExtended(Wrapper):
     \\end{cases}
     $$
 
-    The model then applies loss aversion and gain sensitivity adjustments based on the sign of the risky choice magnitude. Here, the gain sensitivity `phi_gain`, denoted as $\\phi_{gain}$, is applied when the risky choice is positive, and the loss sensitivity `phi_loss`, denoted as $\\phi_{loss}$, is applied when the risky choice is negative. The adjusted policies are computed using a softmax function:
+    The model then applies loss aversion and gain sensitivity adjustments based on the sign of the risky choice magnitude. Here, the gain sensitivity `phi_gain`, denoted as $\\phi_{gain}$, is applied when the risky choice is positive, and the loss sensitivity `phi_loss`, denoted as $\\phi_{loss}$, is applied when the risky choice is negative. The adjusted probability of choosing the risky option, $p(A_{risky})$, is computed using a softmax function:
 
     $$
     p(A_{risky}) = \\frac{e^{\\beta (u_{risky} + \\phi_{t})}}{e^{\\beta (u_{risky} + \\phi_{t})} + e^{\\beta u_{safe}}}
     $$
 
     where denoted with $\\beta$ is the `temperature` parameter, $u_{risky}$ is the utility of the risky option, $u_{safe}$ is the utility of the safe option, and $\\phi_{t}$ is either $\\phi_{gain}$ or $\\phi_{loss}$ depending on the sign of the risky choice magnitude. Note that in Chew et al. (2019), the model only has a gambling bias term for the gain loss, that is then added to the difference between the safe and risky utilities, and only then transformed to a probability via a sigmoid function.
+
+    Furthermore, the model generates a response based on the computed probabilities, where the choice is sampled from a Bernoulli distribution with the computed policy as the probability of choosing the risky option.
+
+    ### Model Output
+
+    For each trial, the model outputs the following variables:
+
+    - `policy`: The computed probabilities for the risky options.
+    - `model_choice`: The model's predicted choice (0 for safe, 1 for risky).
+    - `real_choice`: The observed (participant's) choice from the data.
+    - `u_safe`: The utility of the safe option.
+    - `u_risk`: The utility of the risky option.
+    - `dependent`: The computed probability of a risky choice according to the model, which can be used for further analysis or fitting
+    
 
     References
     ----------

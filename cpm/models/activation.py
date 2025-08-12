@@ -245,9 +245,12 @@ class ProspectUtility:
 
     def __utility(self, x=None):
         # For gains: x^alpha; for losses: -lambda_loss * |x|^alpha
-        # Use np.maximum to handle very small negative numbers due to floating-point precision
-        positive_part = np.power(np.maximum(x, 0), self.alpha)
-        negative_part = -self.lambda_loss * np.power(np.maximum(-x, 0), self.alpha)
+        # Ensure x is not None and is a numpy array
+        if x is None:
+            raise ValueError("Magnitudes cannot be None.")
+        x = np.asarray(x)
+        positive_part = np.power(x, self.alpha)
+        negative_part = -self.lambda_loss * np.power(np.abs(x), self.alpha)
         return np.where(x >= 0, positive_part, negative_part)
 
     def __weighting_tk(self, x=None):

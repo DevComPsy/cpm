@@ -19,7 +19,7 @@ class Parameters:
     Parameters
     ----------
     **kwargs : dict
-        Keyword arguments representing the parameters.
+        Keyword arguments representing the parameters. 
 
     Returns
     -------
@@ -58,6 +58,9 @@ class Parameters:
         for key, value in kwargs.items():
             if isinstance(value, Value):
                 setattr(self, key, value)
+            elif callable(value):
+                # Create a static method on the class with the key as the method name
+                setattr(self.__class__, key, staticmethod(value))
             else:
                 setattr(self, key, Value(value))
         # self.__dict__.update(kwargs)

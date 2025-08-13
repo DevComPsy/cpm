@@ -61,6 +61,8 @@ class Parameters:
             elif callable(value):
                 # Create a static method on the class with the key as the method name
                 setattr(self.__class__, key, staticmethod(value))
+            elif value == None:
+                setattr(self, key, None)
             else:
                 setattr(self, key, Value(value))
         # self.__dict__.update(kwargs)
@@ -86,14 +88,14 @@ class Parameters:
     def __len__(self):
         return 0
 
-    def __getattribute__(self, name):
-        attr = object.__getattribute__(self, name)
-        # Only deepcopy Value instances (not methods, etc.)
-        if isinstance(attr, Value):
-            return copy.deepcopy(attr)
-        elif not callable(attr):
-            return copy.deepcopy(attr)
-        return attr
+    # def __getattribute__(self, name):
+    #     attr = object.__getattribute__(self, name)
+    #     # Only deepcopy Value instances (not methods, etc.)
+    #     if isinstance(attr, Value):
+    #         return copy.deepcopy(attr)
+    #     elif not callable(attr):
+    #         return copy.deepcopy(attr)
+    #     return attr
 
     def update(self, **kwargs):
         """
@@ -131,9 +133,10 @@ class Parameters:
         """
         lower, upper = [], []
         for _, value in self.__dict__.items():
-            if value.prior is not None:
-                lower.append(value.lower)
-                upper.append(value.upper)
+            if value is not None:
+                if value.prior is not None:
+                    lower.append(value.lower)
+                    upper.append(value.upper)
         ## make sure to turn non-homogeneous arrays into flattened numpy arrays
         lower = np.concatenate([np.asarray(x).flatten() for x in lower])
         upper = np.concatenate([np.asarray(x).flatten() for x in upper])
@@ -150,8 +153,11 @@ class Parameters:
         """
         prior = 0
         for _, value in self.__dict__.items():
-            if value.prior is not None:
-                prior += value.PDF(log=True)
+            if value is not None:
+                # Check if the value has a prior distribution
+                # and if so, add its PDF to the prior
+                if value.prior is not None:
+                    prior += value.PDF(log=True)
         if np.isneginf(prior):
             prior = np.finfo(np.float64).min
         if not log:
@@ -205,8 +211,9 @@ class Parameters:
         """
         free = []
         for key, value in self.__dict__.items():
-            if value.prior is not None:
-                free.append(key)
+            if value is not None:
+                if value.prior is not None:
+                    free.append(key)
         return free
 
     def export(self):
@@ -220,17 +227,18 @@ class Parameters:
         """
         table = pd.DataFrame()
         for key, value in self.__dict__.items():
-            if value.prior is not None:
-                output = pd.Series(
-                    {
-                        "lower": value.lower,
-                        "upper": value.upper,
-                        "prior_fun": value.prior,
-                        **value.prior.kwds,
-                    }
-                )
-                output = output.to_frame().T
-                table = pd.concat([table, output], axis=0)
+            if value is not None:
+                if value.prior is not None:
+                    output = pd.Series(
+                        {
+                            "lower": value.lower,
+                            "upper": value.upper,
+                            "prior_fun": value.prior,
+                            **value.prior.kwds,
+                        }
+                    )
+                    output = output.to_frame().T
+                    table = pd.concat([table, output], axis=0)
         table.index = self.free()
         return table
 
@@ -567,8 +575,9 @@ class LogParameters(Parameters):
 
         """
         for _, value in self.__dict__.items():
-            if value.prior is not None and isinstance(value, Value):
-                value.value = self.__logit(value.value, value.lower, value.upper)
+            if value is not None:
+                if value.prior is not None and isinstance(value, Value):
+                    value.value = self.__logit(value.value, value.lower, value.upper)
 
     def log_inverse_transform(self):
         """
@@ -648,15 +657,16 @@ class LogParameters(Parameters):
         """
         lower, upper = [], []
         for _, value in self.__dict__.items():
-            if value.prior is not None:
-                if value.lower == 0:
-                    lower.append(
-                        self.__logit(value.lower + 1e-10, value.lower, value.upper)
-                    )
-                else:
-                    lower.append(self.__logit(value.lower, value.lower, value.upper))
+            if value is not None:
+                if value.prior is not None:
+                    if value.lower == 0:
+                        lower.append(
+                            self.__logit(value.lower + 1e-10, value.lower, value.upper)
+                        )
+                    else:
+                        lower.append(self.__logit(value.lower, value.lower, value.upper))
 
-                upper.append(
-                    self.__logit(value.upper - 1e-10, value.lower, value.upper)
-                )
+                    upper.append(
+                        self.__logit(value.upper - 1e-10, value.lower, value.upper)
+                    )
         return lower, upper

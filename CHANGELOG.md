@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduce new likelihoods (`multinomial` and `product`)
 - Add input validation and error handling in all `cpm.optimisation.minimise` methods
 - Add test units for `cpm.optimisation.minimise`
+- Added three models based on Prospect Theory: `cpm.applications.decision_making.PTSM`, `cpm.applications.decision_making.PTSM1992`, and `cpm.applications.decision_making.PTSM2025`
+- The `cpm.generators.Parameters` class now supports None-type parameters, allowing for more flexible model configurations
+- The `cpm.generators.Parameters` class now supports the use of user-defined functions as attributes in addition to freely-varying parameters
+- Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset
+
 
 ### Fixed
 
@@ -29,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix choice kernel choice should check whether computations still need to carry out
 - Fix column assignment logic in simulation_export function
 - Fix tests by updating ProspectUtility parameters in tests to reflect changes in constructor
+- Fix wrong probability adjustments in `cpm.optimisation.minimise.LogLikelihood` method causing strange parameter estimates
 
 ### Changed
 

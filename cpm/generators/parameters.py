@@ -61,7 +61,7 @@ class Parameters:
             elif callable(value):
                 # Create a static method on the class with the key as the method name
                 setattr(self.__class__, key, staticmethod(value))
-            elif value == None:
+            elif value is None:
                 setattr(self, key, None)
             else:
                 setattr(self, key, Value(value))

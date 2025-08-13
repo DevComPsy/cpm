@@ -78,11 +78,14 @@ def load_risky_choices():
 
         - `ppt`: the participant number.
         - `safe_magnitudes`: the magnitudes of the safe option.
-        - `risky_magnitudes_1`, `risky_magnitudes_2`: the magnitudes of the risky options.
-        - `safe_prob`: the probability of the safe option.
-        - `risky_prob_1`, `risky_prob_2`: the probabilities of the risky options.
+        - `risky_magnitudes`: the magnitudes of the risky options.
+        - `risky_probability`: the probabilities of the risky options.
         - `choice`: the choice of the participant (1 for risky, 0 for safe).
-        - `chose_left`: whether the participant chose the left option (1 for left, 0 for right).
+        - `optimal`: the optimal choice based on expected value (1 for risky, 0 for safe).
+        - `feedback`: the feedback (reward) given to the participant.
+        - `ambiguity`: whether the choice was ambiguous (1 for yes, 0 for no).
+        - `attempt`: the number of the experimental session for a given participant (e.g. 2 here means that participant is completing the experiment the second time).
+        - `rt_flip`: the reaction time for the choice, measured in seconds, multiplied by -1 if the choice is not an optimal choice. It is used for fitting various drift diffusion models.
 
     """
     return load_csv("risky_choices.csv")

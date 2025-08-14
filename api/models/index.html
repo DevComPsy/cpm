@@ -568,7 +568,7 @@ In practice, this can be used to "shift" or "offset" the "value" of one particul
 
 
 <h3 id="cpm.models.activation.ProspectUtility" class="doc doc-heading">
-              <code class="highlight language-python"><span class="n">ProspectUtility</span><span class="p">(</span><span class="n">magnitudes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">probabilities</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha_pos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha_neg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lambda_loss</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">weighting</span><span class="o">=</span><span class="s1">&#39;tk&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">ProspectUtility</span><span class="p">(</span><span class="n">magnitudes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">probabilities</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lambda_loss</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">utility_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weighting</span><span class="o">=</span><span class="s1">&#39;tk&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
@@ -596,9 +596,8 @@ In practice, this can be used to "shift" or "offset" the "value" of one particul
 )
               –
               <div class="doc-md-description">
-                <p>The magnitudes of potential outcomes for each choice option.
-Should be a nested array where the outer dimension represents trials,
-followed by options within each trial, followed by potential outcomes within each option.</p>
+                <p>A nested array where the outer dimension represents trials, with each trial
+containing the potential outcome magnitudes for each option.</p>
               </div>
             </li>
             <li>
@@ -608,30 +607,28 @@ followed by options within each trial, followed by potential outcomes within eac
 )
               –
               <div class="doc-md-description">
-                <p>The probabilities of potential outcomes for each choice option.
-Should be a nested array where the outer dimension represents trials,
-followed by options within each trial, followed by potential outcomes within each option.</p>
+                <p>A nested array (with the same shape as magnitudes) where each entry contains
+the probability of the corresponding outcome.</p>
               </div>
             </li>
             <li>
-              <b><code>alpha_pos</code></b>
+              <b><code>alpha</code></b>
                   (<code><span title="float">float</span></code>, default:
                       <code>1</code>
 )
               –
               <div class="doc-md-description">
-                <p>The risk attitude parameter for non-negative outcomes, which determines the curvature of the utility function in the gain domain.
-If alpha_neg is undefined, alpha_pos will be used for both the gain and loss domains.</p>
+                <p>The utility curvature parameter, used for both gains and losses.</p>
               </div>
             </li>
             <li>
-              <b><code>alpha_neg</code></b>
+              <b><code>beta</code></b>
                   (<code><span title="float">float</span></code>, default:
                       <code>None</code>
 )
               –
               <div class="doc-md-description">
-                <p>The risk attitude parameter for negative outcomes, which determines the curvature of the utility function in the loss domain.</p>
+                <p>An optional parameter for the utility function used by Tversky and Kahneman (1992) for losses, defaults to <code>alpha</code> if not provided.</p>
               </div>
             </li>
             <li>
@@ -641,17 +638,17 @@ If alpha_neg is undefined, alpha_pos will be used for both the gain and loss dom
 )
               –
               <div class="doc-md-description">
-                <p>The loss aversion parameter, which scales the utility of negative outcomes relative to non-negative outcomes.</p>
+                <p>The loss aversion parameter (scaling losses relative to gains).</p>
               </div>
             </li>
             <li>
-              <b><code>beta</code></b>
+              <b><code>gamma</code></b>
                   (<code><span title="float">float</span></code>, default:
                       <code>1</code>
 )
               –
               <div class="doc-md-description">
-                <p>The discriminability parameter, which determines the curvature of the weighting function.</p>
+                <p>The probability weighting curvature parameter (for gains with "tk" and both gains and losses with "power").</p>
               </div>
             </li>
             <li>
@@ -661,7 +658,17 @@ If alpha_neg is undefined, alpha_pos will be used for both the gain and loss dom
 )
               –
               <div class="doc-md-description">
-                <p>The attractiveness parameter, which determines the elevation of the weighting function.</p>
+                <p>The attractiveness parameter, which determines the elevation of the weighting function in <code>prelec</code> and <code>gw</code> weighting functions. In <code>tk</code>, it is the probability weighting for losses. Defaults to <code>gamma</code> if not provided.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>utility_curve</code></b>
+                  (<code><span title="callable">callable</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>An optional utility function that takes the magnitude, alpha, and lambda_loss, and returns the utilities of each choice options. The default is a power utility function, see Notes.</p>
               </div>
             </li>
             <li>
@@ -671,7 +678,7 @@ If alpha_neg is undefined, alpha_pos will be used for both the gain and loss dom
 )
               –
               <div class="doc-md-description">
-                <p>The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'.</p>
+                <p>The definition of the weighting function. Should be one of 'tk', 'pd', or 'gw'. See Notes for details.</p>
               </div>
             </li>
             <li>
@@ -694,48 +701,70 @@ If alpha_neg is undefined, alpha_pos will be used for both the gain and loss dom
   <summary>Notes</summary>
   <p>The different weighting functions currently implemented are:</p>
 <pre><code>- `tk`: Tversky &amp; Kahneman (1992).
-- `pd`: Prelec (1998).
+- `prelec`: Prelec (1998).
 - `gw`: Gonzalez &amp; Wu (1999).
+- `power` : Simple power function: w(p) = p^gamma
 </code></pre>
 <p>Following Tversky &amp; Kahneman (1992), the expected utility U of a choice option is defined as:</p>
-<pre><code>U = sum(w(p) * u(x)),
-</code></pre>
-<p>where w is a weighting function of the probability p of a potential outcome,
-and u is the utility function of the magnitude x of a potential outcome.
-These functions are defined as follows (equations 6 and 5 respectively in Tversky &amp; Kahneman, 1992, pp. 309):</p>
-<pre><code>w(p) = p^beta / (p^beta + (1 - p)^beta)^(1/beta),
-
-
-u(x) = ifelse(x &gt;= 0, x^alpha_pos, -lambda * (-x)^alpha_neg),
-</code></pre>
-<p>where beta is the discriminability parameter of the weighting function;
-alpha_pos and alpha_neg are the risk attitude parameters in the gain and loss domains respectively,
-and lambda is the loss aversion parameter.</p>
+<div class="arithmatex">\[
+\mathcal{U} = \sum_{i=1}^{n} w(p_i) \cdot u(x_i)
+\]</div>
+<p>where <span class="arithmatex">\(w\)</span> is a weighting function of the probability p of a potential outcome,
+and <span class="arithmatex">\(u\)</span> is the utility function of the magnitude x of a potential outcome.
+The utility function <span class="arithmatex">\(u\)</span> is defined as a power function for both gains and losses. It is implemented
+after Equation 5 in Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+u(x) =
+\begin{cases}
+    x^\alpha &amp; \text{if } x \geq 0 \\
+    -\lambda \cdot (-x)^\alpha &amp; \text{if } x &lt; 0
+\end{cases}
+\]</div>
+<p>where <span class="arithmatex">\(\alpha\)</span> is the utility curvature parameter, and <span class="arithmatex">\(\lambda\)</span> is the loss aversion parameter.
+The weighting function is implemented after Equation 6 in Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+w(p) = \frac{p^\gamma}{(p^\gamma + (1 - p)^\gamma)^{1/\gamma}}
+\]</div>
+<p>where <code>gamma</code>, denoted via <span class="arithmatex">\(\gamma\)</span>, is the discriminability parameter of the weighting function.
+In the original formulation of Tversky &amp; Kahneman (1992), losses are weighted with a different parameter,
+<code>delta</code>, denoted via <span class="arithmatex">\(\delta\)</span>, that replaces <span class="arithmatex">\(\gamma\)</span> in the weighting function for losses.
+In the current implementation, whether it is a gain or less is determined by the sign of the corresponding
+magnitude.</p>
 <p>Several other definitions of the weighting function have been proposed in the literature,
 most notably in Prelec (1998) and Gonzalez &amp; Wu (1999).
 Prelec (equation 3.2, 1998, pp. 503) proposed the following definition:</p>
-<pre><code>w(p) = exp(-delta * (-log(p))^beta),
-</code></pre>
-<p>where delta and beta are the attractiveness and discriminability parameters of the weighting function.
+<div class="arithmatex">\[
+w(p) = \exp(-\delta \cdot (-\log(p))^\gamma)
+\]</div>
+<p>where <code>delta</code>, <span class="arithmatex">\(\delta\)</span>, and <code>gamma</code>, <span class="arithmatex">\(\gamma\)</span>, are the attractiveness and discriminability parameters of the weighting function.
 Gonzalez &amp; Wu (equation 3, 1999, pp. 139) proposed the following definition:</p>
-<pre><code>w(p) = (delta * p^beta) / ((delta * p^beta) + (1-p)^beta).
-</code></pre>
+<div class="arithmatex">\[
+w(p) = \frac{\delta \cdot p^\gamma}{\delta \cdot p^\gamma + (1 - p)^\gamma}
+\]</div>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">40</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">10</span><span class="p">])],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">])],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">prospect</span> <span class="o">=</span> <span class="n">ProspectUtility</span><span class="p">(</span>
-<span class="go">        magnitudes=vals, probabilities=probs, alpha_pos = 0.85, beta = 0.9</span>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">cpm.models.activations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProspectUtility</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">magnitudes</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">probabilities</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">ProspectUtility</span><span class="p">(</span>
+<span class="go">        magnitudes=magnitudes,</span>
+<span class="go">        probabilities=probabilities,</span>
+<span class="go">        alpha=0.88,</span>
+<span class="go">        lambda_loss=2.25,</span>
+<span class="go">        gamma=0.61,</span>
+<span class="go">        delta=1.0,</span>
+<span class="go">        weighting=&quot;tk&quot;</span>
 <span class="go">    )</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">prospect</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
-<span class="go">array([2.44583162, 7.07945784])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expected_utilities</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">expected_utilities</span><span class="p">)</span>
 </code></pre></div>
 
 
 <details class="references" open>
   <summary>References</summary>
   <p>Gonzalez, R., &amp; Wu, G. (1999). On the shape of the probability weighting function. Cognitive psychology, 38(1), 129-166.</p>
+<p>Kahneman, D., &amp; Tversky, A. (1979). Prospect theory: An analysis of decision under risk. <em>Econometrica</em>, 47(2), 263–291.</p>
 <p>Prelec, D. (1998). The probability weighting function. Econometrica, 497-527.</p>
 <p>Tversky, A., &amp; Kahneman, D. (1992). Advances in prospect theory: Cumulative representation of uncertainty. Journal of Risk and uncertainty, 5, 297-323.</p>
 </details>

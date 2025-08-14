@@ -91,13 +91,49 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">cpm.applications</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#cpm.applications.reinforcement_learning.RLRW">RLRW</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD">EstimatorMetaD</a>
+    <li class="toctree-l2"><a class="reference internal" href="#reinforcement-learning">Reinforcement Learning</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD.export">export</a>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.reinforcement_learning.RLRW">RLRW</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD.optimise">optimise</a>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#decision-making">Decision Making</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.decision_making.PTSM">PTSM</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM--model-specification">Model Specification</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM--model-output">Model output</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.decision_making.PTSM1992">PTSM1992</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM1992--model-specification">Model Specification</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM1992--model-output">Model output</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.decision_making.PTSM2025">PTSM2025</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM2025--model-description">Model Description</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM2025--model-output">Model Output</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#metacognition">Metacognition</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD">EstimatorMetaD</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD.export">export</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.signal_detection.EstimatorMetaD.optimise">optimise</a>
+    </li>
+        </ul>
     </li>
         </ul>
     </li>
@@ -131,16 +167,17 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="cpmapplications">cpm.applications</h1>
+<h2 id="reinforcement-learning">Reinforcement Learning</h2>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<h2 id="cpm.applications.reinforcement_learning.RLRW" class="doc doc-heading">
+<h3 id="cpm.applications.reinforcement_learning.RLRW" class="doc doc-heading">
               <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">reinforcement_learning</span><span class="o">.</span><span class="n">RLRW</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">parameters_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">generate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
@@ -149,7 +186,7 @@
 
 
         <p>The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
-The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019).</p>
+The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019), which largely corresponds to the model presented by Suttong &amp; Barto (2021) in Chapter 14.</p>
 
 
 <table class="field-list">
@@ -226,7 +263,10 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>Data must contain the following columns:</p>
+  <p>The model implementation uses two parameters:
+- alpha: the learning rate, which determines how much the model updates its values based on the prediction error.
+- temperature: the inverse temperature, which determines the choice stochasticity -- how sensitive is the model to value differences.</p>
+<p>Data must contain the following columns:</p>
 <ul>
 <li>choice: the choice of the participant from the available options, starting from 0.</li>
 <li>arm_n: the stimulus identifier for each option (arms in the bandit task), where n is the option available on a given trial. If there are more than one options, the stimulus identifier should be specified as separate columns of arm_1, arm_2, arm_3, etc. or arm_left, arm_middle, arm_right, etc.</li>
@@ -237,7 +277,202 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 
 <details class="references" open>
   <summary>References</summary>
-  <p>Robert C Wilson Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.</p>
+  <p>Robert C Wilson &amp; Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.</p>
+</details>
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="decision-making">Decision Making</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.applications.decision_making.PTSM" class="doc doc-heading">
+              <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">decision_making</span><span class="o">.</span><span class="n">PTSM</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">generate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">utility_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weighting</span><span class="o">=</span><span class="s1">&#39;tk&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper(model=None, data=None, parameters=None) (cpm.generators.Wrapper)" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code></p>
+
+
+        <p>A simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky &amp; Kahneman (1992), similar to the initial publication of the theory in Kahneman &amp; Tversky (1979). It differs from <a class="autorefs autorefs-internal" title="cpm.applications.decision_making.PTSM2025(data=None, parameters_settings=None, utility_curve=None, variant='alpha')" href="#cpm.applications.decision_making.PTSM2025">cpm.applications.decision_making.PTSM2025</a> and <a class="autorefs autorefs-internal" title="cpm.applications.decision_making.PTSM1992(data=None, parameters_settings=None, utility_curve=None, weighting='tk')" href="#cpm.applications.decision_making.PTSM1992">cpm.applications.decision_making.PTSM1992</a> in that it does not use use different utility and weight curvature parameters for gains and losses.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>data</code></b>
+                  (<code><span title="pd.DataFrame">DataFrame</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The data, where each row is a trial and each column is an input to the model. Expected to have columns: 'safe_magnitudes', 'risky_magnitudes', 'risky_probability', 'observed'.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parameters_settings</code></b>
+                  (<code><span title="dict">dict</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>A dictionary containing the initial values and bounds for the model parameters. Each key must correspond to the name of the parameter, and contain a list in the form of [initial, lower_bound, upper_bound]. If not provided, default values are used. See Notes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>utility_curve</code></b>
+                  (<code><span title="callable">callable</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>A callable function that defines the utility curve. If provided, it overrides the default power function used for utility transformations. Its first argument should be the magnitude, and the second argument should be the curvature parameter (alpha). If None, a power function is used, see Notes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>weighting</code></b>
+                  (<code><span title="str">str</span></code>, default:
+                      <code>&#39;tk&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The probability weighting function to use. Options include:</p>
+<pre><code>- "power": use a simple power function (p^gamma)
+- "tk": use the Tversky–Kahneman (1992) weighting function.
+</code></pre>
+<p>See <a class="autorefs autorefs-internal" title="ProspectUtility(magnitudes=None, probabilities=None, alpha=1, beta=None, lambda_loss=1, gamma=1, delta=1, utility_curve=None, weighting='tk', **kwargs)" href="../models/#cpm.models.activation.ProspectUtility">cpm.models.activation.ProspectUtility</a> for explanation and alternatives.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="cpm.cpm.generators.Wrapper">Wrapper</span></code>
+              –
+              <div class="doc-md-description">
+                <p>An instance of the PTSM model, which can be used to fit data and generate predictions.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The model parameters are initialized with the following default values if not specified (values are in the form [initial, lower_bound, upper_bound]):</p>
+<pre><code>- `alpha`: [1.0, 1e-2, 5.0] (utility curvature for both gains and losses)
+- `lambda_loss`: [1.0, 1e-2, 5.0] (loss sensitivity)
+- `gamma`: [0.5, 1e-2, 5.0] (curvature for the weighting function for both gains and losses)
+- `temperature`: [5.0, 1e-2, 15.0] (temperature parameter for softmax)
+</code></pre>
+<p>The priors for the parameters are set as follows:</p>
+<pre><code>- `alpha`: truncated normal with mean 1.0 and standard deviation 1.0.
+- `lambda_loss`: truncated normal with mean 2.5 and standard deviation 1.0.
+- `gamma`: truncated normal with mean 2.5 and standard deviation 1.0.
+- `temperature`: truncated normal with mean 10.0 and standard deviation 5.0.
+</code></pre>
+<h6 id="cpm.applications.decision_making.PTSM--model-specification">Model Specification</h6>
+<p>The model computes the subjective utility of the safe and risky options using a utility function, which can be either a power function or a user-defined utility curve. If a utility curve is not provided, the model uses the following power function with curvature parameter <span class="arithmatex">\(\alpha\)</span> after Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+\mathcal{U}(o) = \sum_{i=1}^{n} w(p_i) \cdot u(x_i)
+\]</div>
+<p>where <span class="arithmatex">\(w\)</span> is a weighting function of the probability p of a potential outcome,
+and <span class="arithmatex">\(u\)</span> is the utility function of the magnitude x of a potential outcome. The choice options is denoted with <span class="arithmatex">\(o\)</span>.
+The utility function <span class="arithmatex">\(u\)</span> is defined as a power function for both gains and losses. It is implemented
+after Equation 5 in Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+u(x) =
+\begin{cases}
+    x^\alpha &amp; \text{if } x \geq 0 \\
+    -\lambda \cdot (-x)^\alpha &amp; \text{if } x &lt; 0
+\end{cases}
+\]</div>
+<p>where <span class="arithmatex">\(\alpha\)</span> is the utility curvature parameter for both gains and losses, and <span class="arithmatex">\(\lambda\)</span> is the loss aversion parameter.
+The weighting function is implemented after Equation 6 in Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+w(p) = \frac{p^\gamma}{(p^\gamma + (1 - p)^\gamma)^{1/\gamma}}
+\]</div>
+<p>where <code>gamma</code>, denoted via <span class="arithmatex">\(\gamma\)</span>, is the discriminability parameter of the weighting function for both gains and losses.
+The model then applies the softmax function to compute the choice probabilities:</p>
+<div class="arithmatex">\[
+p(o_i) = \frac{e^{\beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{\beta \cdot \mathcal{U}(o_j)}}
+\]</div>
+<h6 id="cpm.applications.decision_making.PTSM--model-output">Model output</h6>
+<p>The model outputs the following trial-level information:</p>
+<pre><code>- `policy`: the softmax probabilities for each option.
+- `dependent`: the probability of choosing the risky option.
+- `observed`: the observed (participant's) choice (0 for safe, 1 for risky).
+- `chosen`: the chosen option based on the softmax probabilities.
+- `is_optimal`: whether the chosen option is optimal (1 if chosen option is objectively better, 0 otherwise).
+- `objective_best`: the objectively better option (1 for risky, 0 for safe) determined by the objective evidence for each.
+- `ev_safe`: the expected value of the safe option.
+- `ev_risk`: the expected value of the risky option.
+- `u_safe`: the utility of the safe option.
+- `u_risk`: the utility of the risky option.
+</code></pre>
+</details>
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a class="autorefs autorefs-internal" title="Softmax(temperature=None, xi=None, activations=None, **kwargs)" href="../models/#cpm.models.decision.Softmax">cpm.models.decision.Softmax</a> : for mapping utilities to choice probabilities.</p>
+<p><a class="autorefs autorefs-internal" title="ProspectUtility(magnitudes=None, probabilities=None, alpha=1, beta=None, lambda_loss=1, gamma=1, delta=1, utility_curve=None, weighting='tk', **kwargs)" href="../models/#cpm.models.activation.ProspectUtility">cpm.models.activation.ProspectUtility</a> : for the Prospect Utility class that computes subjective utilities and weighted probabilities.</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Kahneman, D., &amp; Tversky, A. (1979). Prospect theory: An analysis of decision under risk. <em>Econometrica</em>, 47(2), 263–291.</p>
+<p>Tversky, A., &amp; Kahneman, D. (1992). Advances in prospect theory: Cumulative representation of uncertainty. Journal of Risk and uncertainty, 5, 297-323.</p>
 </details>
 
 
@@ -270,10 +505,390 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 
 
 
-<h2 id="cpm.applications.signal_detection.EstimatorMetaD" class="doc doc-heading">
+<h3 id="cpm.applications.decision_making.PTSM1992" class="doc doc-heading">
+              <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">decision_making</span><span class="o">.</span><span class="n">PTSM1992</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">utility_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">weighting</span><span class="o">=</span><span class="s1">&#39;tk&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper(model=None, data=None, parameters=None) (cpm.generators.Wrapper)" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code></p>
+
+
+        <p>A Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky &amp; Kahneman (1992), similar to the initial publication of the theory in Kahneman &amp; Tversky (1979). It computes expected utility by combining transformed magnitudes and weighted probabilities, suitable for safe–risky decision paradigms.</p>
+<p>The model computes objective EV internally (ev_safe vs. ev_risk)
+and outputs trial-level information (including whether the chosen option is optimal).</p>
+<p>Additionally, the model accepts a "weighting" argument that determines 
+which probability weighting function to use when computing the subjective 
+weighting of risky probabilities.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>data</code></b>
+                  (<code><span title="pd.DataFrame">DataFrame</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The data, where each row is a trial and each column is an input to the model. Expected to have columns: 'safe_magnitudes', 'risky_magnitudes', 'risky_probability', 'observed'.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parameters_settings</code></b>
+                  (<code><span title="dict">dict</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>A dictionary containing the initial values and bounds for the model parameters. Each key must correspond to the name of the parameter, and contain a list in the form of [initial, lower_bound, upper_bound]. If not provided, default values are used. See Notes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>utility_curve</code></b>
+                  (<code><span title="callable">callable</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>A callable function that defines the utility curve. If provided, it overrides the default power function used for utility transformations. Its first argument should be the magnitude. The following variables are also passed to this function: <code>alpha</code>, <code>beta</code> and <code>lambda_loss</code>. If None, a power function is used, see Notes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>weighting</code></b>
+                  (<code><span title="str">str</span></code>, default:
+                      <code>&#39;tk&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The probability weighting function to use. Options include:</p>
+<pre><code>- "power": use a simple power function (p^gamma)
+- "tk": use the Tversky–Kahneman (1992) weighting function.
+</code></pre>
+<p>See <a class="autorefs autorefs-internal" title="ProspectUtility(magnitudes=None, probabilities=None, alpha=1, beta=None, lambda_loss=1, gamma=1, delta=1, utility_curve=None, weighting='tk', **kwargs)" href="../models/#cpm.models.activation.ProspectUtility">cpm.models.activation.ProspectUtility</a> for explanation and alternatives.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="cpm.cpm.generators.Wrapper">Wrapper</span></code>
+              –
+              <div class="doc-md-description">
+                <p>An instance of the PTSM1992 model, which can be used to fit data and generate predictions.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The model parameters are initialized with the following default values if not specified (values are in the form [initial, lower_bound, upper_bound]):</p>
+<pre><code>- `alpha`: [1.0, 0, 5.0] (utility curvature for gains)
+- `beta`: [1.0, 0, 5.0] (utility curvature for losses)
+- `lambda_loss`: [1.0, 0, 5.0] (loss sensitivity)
+- `gamma`: [0.5, 0.001, 5.0] (curvature for gains)
+- `delta`: [0.5, 0.001, 5.0] (curvature for losses)
+- `temperature`: [5.0, 0.001, 20.0] (temperature parameter for softmax)
+</code></pre>
+<p>The priors for the parameters are set as follows:</p>
+<pre><code>- `alpha`: truncated normal with mean 2.5 and standard deviation 1.0.
+- `beta`: truncated normal with mean 2.5 and standard deviation 1.0.
+- `lambda_loss`: truncated normal with mean 2.5 and standard deviation 1.0.
+- `gamma`: truncated normal with mean 2.5 and standard deviation 1.0.
+- `delta`: truncated normal with mean 0 and standard deviation 1.0.
+- `temperature`: truncated normal with mean 10 and standard deviation 2.5.
+</code></pre>
+<h6 id="cpm.applications.decision_making.PTSM1992--model-specification">Model Specification</h6>
+<p>The model computes the subjective utility of the safe and risky options using a utility function, which can be either a power function or a user-defined utility curve. If a utility curve is not provided, the model uses the following power function with curvature parameter <span class="arithmatex">\(\alpha\)</span> after Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+\mathcal{U}(o) = \sum_{i=1}^{n} w(p_i) \cdot u(x_i)
+\]</div>
+<p>where <span class="arithmatex">\(w\)</span> is a weighting function of the probability p of a potential outcome,
+and <span class="arithmatex">\(u\)</span> is the utility function of the magnitude x of a potential outcome. The choice options is denoted with <span class="arithmatex">\(o\)</span>.
+The utility function <span class="arithmatex">\(u\)</span> is defined as a power function for both gains and losses. It is implemented
+after Equation 5 in Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+u(x) =
+\begin{cases}
+    x^\alpha &amp; \text{if } x \geq 0 \\
+    -\lambda \cdot (-x)^\beta &amp; \text{if } x &lt; 0
+\end{cases}
+\]</div>
+<p>where <span class="arithmatex">\(\alpha\)</span> is the utility curvature parameter for gains, and <span class="arithmatex">\(\beta\)</span>, is the curvature parameter for losses, <span class="arithmatex">\(\lambda\)</span> is the loss aversion parameter.
+The weighting function is implemented after Equation 6 in Tversky &amp; Kahneman (1992):</p>
+<div class="arithmatex">\[
+w^{+}(p) = \frac{p^\gamma}{(p^\gamma + (1 - p)^\gamma)^{1/\gamma}}, w^{-}(p) = \frac{p^\delta}{(p^\delta + (1 - p)^\delta)^{1/\delta}}
+\]</div>
+<p>where <code>gamma</code>, denoted via <span class="arithmatex">\(\gamma\)</span>, is the discriminability parameter of the weighting function for gains, and with <code>delta</code>, denoted via <span class="arithmatex">\(\delta\)</span>, is the discriminability parameter of the weighting function for losses.</p>
+<p>The model then applies the softmax function to compute the choice probabilities:</p>
+<div class="arithmatex">\[
+p(o_i) = \frac{e^{beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{beta \cdot \mathcal{U}(o_j)}}
+\]</div>
+<h6 id="cpm.applications.decision_making.PTSM1992--model-output">Model output</h6>
+<p>The model outputs the following trial-level information:</p>
+<pre><code>- `policy`: the softmax probabilities for each option.
+- `dependent`: the probability of choosing the risky option.
+- `observed`: the observed (participant's) choice (0 for safe, 1 for risky).
+- `chosen`: the chosen option based on the softmax probabilities.
+- `is_optimal`: whether the chosen option is optimal (1 if chosen option is objectively better, 0 otherwise).
+- `objective_best`: the objectively better option (1 for risky, 0 for safe) determined by the objective evidence for each.
+- `ev_safe`: the expected value of the safe option.
+- `ev_risk`: the expected value of the risky option.
+- `u_safe`: the utility of the safe option.
+- `u_risk`: the utility of the risky option.
+</code></pre>
+</details>
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a class="autorefs autorefs-internal" title="Softmax(temperature=None, xi=None, activations=None, **kwargs)" href="../models/#cpm.models.decision.Softmax">cpm.models.decision.Softmax</a> : for mapping utilities to choice probabilities.</p>
+<p><a class="autorefs autorefs-internal" title="ProspectUtility(magnitudes=None, probabilities=None, alpha=1, beta=None, lambda_loss=1, gamma=1, delta=1, utility_curve=None, weighting='tk', **kwargs)" href="../models/#cpm.models.activation.ProspectUtility">cpm.models.activation.ProspectUtility</a> : for the Prospect Utility class that computes subjective utilities and weighted probabilities.</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Kahneman, D., &amp; Tversky, A. (1979). Prospect theory: An analysis of decision under risk. <em>Econometrica</em>, 47(2), 263–291.</p>
+<p>Tversky, A., &amp; Kahneman, D. (1992). Advances in prospect theory: Cumulative representation of uncertainty. Journal of Risk and uncertainty, 5, 297-323.</p>
+</details>
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.applications.decision_making.PTSM2025" class="doc doc-heading">
+              <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">decision_making</span><span class="o">.</span><span class="n">PTSM2025</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">utility_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="s1">&#39;alpha&#39;</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="cpm.generators.Wrapper(model=None, data=None, parameters=None) (cpm.generators.Wrapper)" href="../generators/#cpm.generators.Wrapper">Wrapper</a></code></p>
+
+
+        <p>An Prospect Theory Softmax Model loosely based on Chew et al. (2019), incorporating a bias term (phi_gain / phi_loss) in the softmax function for risks and gains, a utility curvature parameter (alpha) for non-linear utility transformations, and an ambiguity aversion parameter (eta).</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>data</code></b>
+                  (<code><span title="pd.DataFrame">DataFrame</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Data containing the trials to be modeled, where each row represents a trial in the experiment (a state), and each column represents a variable (e.g., safe_magnitudes, risky_magnitudes, risky_probability, ambiguity, observed variable).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parameters_settings</code></b>
+                  (<code><span title="dict">dict</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>A dictionary containing the initial values and bounds for the model parameters. Each key must correspond to the name of the parameter, and contain a list in the form of [initial, lower_bound, upper_bound]. If not provided, default values are used. See Notes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>utility_curve</code></b>
+                  (<code><span title="callable">callable</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>A callable function that defines the utility curve. If provided, it overrides the default power function used for utility transformations. Its first argument should be the magnitude, and the second argument should be the curvature parameter (alpha). If None, a power function is used, see Notes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>variant</code></b>
+                  (<code><span title="str">str</span></code>, default:
+                      <code>&#39;alpha&#39;</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The variant of the model to use. Options are "alpha" for the full model with a non-linear curvature or "standard" for a simplified version without curvature. Default is "alpha".</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="cpm.cpm.generators.Wrapper">Wrapper</span></code>
+              –
+              <div class="doc-md-description">
+                <p>An instance of the PTSM2025 model, which can be used to fit data and generate predictions.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The model parameters are initialized with the following default values if not specified (values are in the form [initial, lower_bound, upper_bound]):</p>
+<pre><code>- `eta`: [0.0, -0.49, 0.49] (ambiguity aversion)
+- `phi_gain`: [0.0, -10.0, 10.0] (gain sensitivity)
+- `phi_loss`: [0.0, -10.0, 10.0] (loss sensitivity)
+- `temperature`: [5.0, 0.001, 20.0] (temperature parameter)
+- `alpha`: [1.0, 0.001, 5.0] (utility curvature parameter)
+</code></pre>
+<p>The priors for the parameters are set as follows:</p>
+<pre><code>- `eta`: truncated normal with mean 0.0 and standard deviation 0.25.
+- `phi_gain`: truncated normal with mean 0.0 and standard deviation 2.5.
+- `phi_loss`: truncated normal with mean 0.0 and standard deviation 2.5.
+- `temperature`: truncated normal with mean 10.0 and standard deviation 5.
+- `alpha`: truncated normal with mean 1.0 and standard deviation 1.
+</code></pre>
+<h6 id="cpm.applications.decision_making.PTSM2025--model-description">Model Description</h6>
+<p>In what follows, we briefly describe the model's operations. First, the model calculates the subjective probability of the risky option, adjusting for ambiguity aversion using the parameter <code>eta</code>, denoted with <span class="arithmatex">\(\eta\)</span>. The subjective probability is computed as:</p>
+<div class="arithmatex">\[
+p_{subjective} = p_{risky} - \eta \cdot ambiguity
+\]</div>
+<p>where <span class="arithmatex">\(p_{risky}\)</span> is the original probability of the risky choice and <span class="arithmatex">\(ambiguity\)</span> is the ambiguity associated with the risky option, either 0 for non-ambiguous or 1 for ambiguous cases.
+The utility of the safe and risky options is then computed using a utility function, which can be either a power function or a user-defined utility curve.
+If a utility curve is not provided, the model uses the following power function with curvature parameter <code>alpha</code>, denoted with <span class="arithmatex">\(\alpha\)</span>:</p>
+<div class="arithmatex">\[
+u(x) =
+\begin{cases}
+    x^\alpha &amp; \text{if } x \geq 0 \\
+    -|x|^\alpha &amp; \text{if } x &lt; 0
+\end{cases}
+\]</div>
+<p>The model then applies loss aversion and gain sensitivity adjustments based on the sign of the risky choice magnitude. Here, the gain sensitivity <code>phi_gain</code>, denoted as <span class="arithmatex">\(\phi_{gain}\)</span>, is applied when the risky choice is positive, and the loss sensitivity <code>phi_loss</code>, denoted as <span class="arithmatex">\(\phi_{loss}\)</span>, is applied when the risky choice is negative. The adjusted probability of choosing the risky option, <span class="arithmatex">\(p(A_{risky})\)</span>, is computed using a softmax function:</p>
+<div class="arithmatex">\[
+p(A_{risky}) = \frac{e^{\beta (u_{risky} + \phi_{t})}}{e^{\beta (u_{risky} + \phi_{t})} + e^{\beta u_{safe}}}
+\]</div>
+<p>where denoted with <span class="arithmatex">\(\beta\)</span> is the <code>temperature</code> parameter, <span class="arithmatex">\(u_{risky}\)</span> is the utility of the risky option, <span class="arithmatex">\(u_{safe}\)</span> is the utility of the safe option, and <span class="arithmatex">\(\phi_{t}\)</span> is either <span class="arithmatex">\(\phi_{gain}\)</span> or <span class="arithmatex">\(\phi_{loss}\)</span> depending on the sign of the risky choice magnitude. Note that in Chew et al. (2019), the model only has a gambling bias term for the gain loss, that is then added to the difference between the safe and risky utilities, and only then transformed to a probability via a sigmoid function.</p>
+<p>Furthermore, the model generates a response based on the computed probabilities, where the choice is sampled from a Bernoulli distribution with the computed policy as the probability of choosing the risky option.</p>
+<h6 id="cpm.applications.decision_making.PTSM2025--model-output">Model Output</h6>
+<p>For each trial, the model outputs the following variables:</p>
+<pre><code>- `policy`: The computed probabilities for the risky options.
+- `model_choice`: The model's predicted choice (0 for safe, 1 for risky).
+- `real_choice`: The observed (participant's) choice from the data.
+- `u_safe`: The utility of the safe option.
+- `u_risk`: The utility of the risky option.
+- `dependent`: The computed probability of a risky choice according to the model, which can be used for further analysis or fitting
+</code></pre>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Chew, B., Hauser, T. U., Papoutsi, M., Magerkurth, J., Dolan, R. J., &amp; Rutledge, R. B. (2019). Endogenous fluctuations in the dopaminergic midbrain drive behavioral choice variability. Proceedings of the National Academy of Sciences, 116(37), 18732–18737. https://doi.org/10.1073/pnas.1900872116</p>
+</details>
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="metacognition">Metacognition</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.applications.signal_detection.EstimatorMetaD" class="doc doc-heading">
               <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">signal_detection</span><span class="o">.</span><span class="n">EstimatorMetaD</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cl</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">libraries</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">],</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ppt_identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_invalid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
-</h2>
+</h3>
 
 
     <div class="doc doc-contents first">
@@ -458,10 +1073,10 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 <div class="doc doc-object doc-function">
 
 
-<h3 id="cpm.applications.signal_detection.EstimatorMetaD.export" class="doc doc-heading">
+<h4 id="cpm.applications.signal_detection.EstimatorMetaD.export" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">export</span><span class="p">()</span></code>
 
-</h3>
+</h4>
 
 
     <div class="doc doc-contents ">
@@ -499,10 +1114,10 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 <div class="doc doc-object doc-function">
 
 
-<h3 id="cpm.applications.signal_detection.EstimatorMetaD.optimise" class="doc doc-heading">
+<h4 id="cpm.applications.signal_detection.EstimatorMetaD.optimise" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">optimise</span><span class="p">()</span></code>
 
-</h3>
+</h4>
 
 
     <div class="doc doc-contents ">

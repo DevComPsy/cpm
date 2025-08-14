@@ -157,6 +157,8 @@
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Distance.MSE">MSE</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Distance.RMSE">RMSE</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#cpm.optimisation.minimise.Distance.SSE">SSE</a>
     </li>
         </ul>
@@ -256,7 +258,11 @@
             <li>
               <b><code>minimisation</code></b>
                   (<code><span title="function">function</span></code>, default:
-                      <code><a class="autorefs autorefs-internal" title="bernoulli(predicted=None, observed=None, negative=True, **kwargs) (cpm.optimisation.minimise.LogLikelihood.bernoulli)" href="#cpm.optimisation.minimise.LogLikelihood.bernoulli">bernoulli</a></code>
+                      <code><a class="autorefs autorefs-internal" title="bernoulli(predicted=None, observed=None, negative=True, **kwargs)
+
+  
+      staticmethod
+   (cpm.optimisation.minimise.LogLikelihood.bernoulli)" href="#cpm.optimisation.minimise.LogLikelihood.bernoulli">bernoulli</a></code>
 )
               –
               <div class="doc-md-description">
@@ -1434,7 +1440,11 @@ If <code>cl</code> is set to <code>None</code> and <code>parallel</code> is set 
             <li>
               <b><code>minimisation</code></b>
                   (<code><span title="function">function</span></code>, default:
-                      <code><a class="autorefs autorefs-internal" title="continuous(predicted, observed, negative=True, **kwargs) (cpm.optimisation.minimise.LogLikelihood.continuous)" href="#cpm.optimisation.minimise.LogLikelihood.continuous">continuous</a></code>
+                      <code><a class="autorefs autorefs-internal" title="continuous(predicted, observed, negative=True, **kwargs)
+
+  
+      staticmethod
+   (cpm.optimisation.minimise.LogLikelihood.continuous)" href="#cpm.optimisation.minimise.LogLikelihood.continuous">continuous</a></code>
 )
               –
               <div class="doc-md-description">
@@ -1727,6 +1737,10 @@ Please see that <a href="https://acerbilab.github.io/pybads/api/options/bads_opt
 <h4 id="cpm.optimisation.minimise.LogLikelihood.bernoulli" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">bernoulli</span><span class="p">(</span><span class="n">predicted</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
 </h4>
 
 
@@ -1834,6 +1848,10 @@ If we encounter any non-finite values, we set any log likelihood to the value of
 <h4 id="cpm.optimisation.minimise.LogLikelihood.categorical" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">categorical</span><span class="p">(</span><span class="n">predicted</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
 </h4>
 
 
@@ -1940,6 +1958,10 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
 <h4 id="cpm.optimisation.minimise.LogLikelihood.continuous" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">continuous</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
 </h4>
 
 
@@ -2031,6 +2053,10 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
 
 <h4 id="cpm.optimisation.minimise.LogLikelihood.multinomial" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">multinomial</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
 
 </h4>
 
@@ -2127,13 +2153,16 @@ On each row of <code>observed</code>, the array would have a 1 in the column cor
 <h4 id="cpm.optimisation.minimise.LogLikelihood.product" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">product</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">negative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
 </h4>
 
 
     <div class="doc doc-contents ">
 
-        <p>Compute the log likelihood of the predicted values given the observed values for continuous data,
-according to the following equation:</p>
+        <p>Compute the log likelihood of the predicted values given the observed values for continuous data, according to the following equation:</p>
 <pre><code>likelihood = sum(observed * log(predicted))
 </code></pre>
 
@@ -2265,6 +2294,10 @@ according to the following equation:</p>
 <h4 id="cpm.optimisation.minimise.Distance.MSE" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">MSE</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
 </h4>
 
 
@@ -2335,8 +2368,89 @@ according to the following equation:</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cpm.optimisation.minimise.Distance.RMSE" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">RMSE</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the Root Mean Squared Errors (RMSE).</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>predicted</code></b>
+                  (<code><span title="array">array</span> - <span title="like">like</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The predicted values.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>observed</code></b>
+                  (<code><span title="array">array</span> - <span title="like">like</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The observed values.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="float">float</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The Root Mean Squared Errors.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cpm.optimisation.minimise.Distance.SSE" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">SSE</span><span class="p">(</span><span class="n">predicted</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
 
 </h4>
 
@@ -2451,6 +2565,10 @@ according to the following equation:</p>
 <h4 id="cpm.optimisation.minimise.Bayesian.AIC" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">AIC</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
 </h4>
 
 
@@ -2531,6 +2649,10 @@ according to the following equation:</p>
 
 <h4 id="cpm.optimisation.minimise.Bayesian.BIC" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">BIC</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
 
 </h4>
 

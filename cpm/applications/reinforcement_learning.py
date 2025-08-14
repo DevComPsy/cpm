@@ -41,7 +41,7 @@ class RLRW(Wrapper):
     Notes
     -----
 
-    The modeel implementation uses two parameters:
+    The model implementation uses two parameters:
     - alpha: the learning rate, which determines how much the model updates its values based on the prediction error.
     - temperature: the inverse temperature, which determines the choice stochasticity -- how sensitive is the model to value differences.
     

@@ -12,11 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detect parallel method to use given environment (support for parallelisation on Jupyter Notebooks)
 - Provide a complete n-dimensional and k-arm reinforcement learning model for multi-armed bandit tasks in applications
 - Add support for '>' and '<' operator in Value type
+- Add validation to export method and improve data handling in Simulator class
+- Update export tests to validate DataFrame output and adjust simulation assertions
+- Implement ProspectSoftmaxModel for decision-making under risk
 - Add meta-_d_ to applications
 - Provide utility functions for data preprocessing with meta-_d_ type models
 - Introduce new likelihoods (`multinomial` and `product`)
 - Add input validation and error handling in all `cpm.optimisation.minimise` methods
 - Add test units for `cpm.optimisation.minimise`
+- Added three models based on Prospect Theory: `cpm.applications.decision_making.PTSM`, `cpm.applications.decision_making.PTSM1992`, and `cpm.applications.decision_making.PTSM2025`
+- The `cpm.generators.Parameters` class now supports None-type parameters, allowing for more flexible model configurations
+- The `cpm.generators.Parameters` class now supports the use of user-defined functions as attributes in addition to freely-varying parameters
+- Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset
+- Expanded `cpm.models.activation.ProspectUtility` class to include additional parameters for more flexible modeling of decision-making under risk, more closely approximating Tversky & Kahneman's (1992) version of Prospect Theory
 
 ### Fixed
 
@@ -24,11 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix pandas groupby method for parallelization when in Jupyter Notebook
 - Fix magnitude is not taking effect in Nominal
 - Fix choice kernel choice should check whether computations still need to carry out
+- Fix column assignment logic in simulation_export function
+- Fix tests by updating ProspectUtility parameters in tests to reflect changes in constructor
+- Fix wrong probability adjustments in `cpm.optimisation.minimise.LogLikelihood` method causing strange parameter estimates
+- Fix Issue [#55](https://github.com/DevComPsy/cpm/issues/55): AttributeError: np.float_ was removed in NumPy 2.0 during export
+- Fix `simulation_export` function to handle DataFrame output correctly
+- Fix `detailed_pandas_compiler` function to support new numpy versions
+- Fix probability adjustements in `cpm.optimisation.minimise.LogLikelihood` method to ensure correct parameter estimates
+
+### Changed
+
+- Update model description in RLRW class to include reference to Sutton & Barto (2021)
 - Fix column names in `cpm.applications.signal_detection.EstimatordMetaD` class
 - Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
 - Fix column name issues in `cpm.applications.signal_detection.EstimatordMetaD` class
 - Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
-- Fix Issue [#55](https://github.com/DevComPsy/cpm/issues/55): AttributeError: np.float_ was removed in NumPy 2.0 during export
 
 ### Changed
 

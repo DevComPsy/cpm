@@ -257,7 +257,7 @@ class PTSM1992(Wrapper):
     parameters_settings : dict, optional
         A dictionary containing the initial values and bounds for the model parameters. Each key must correspond to the name of the parameter, and contain a list in the form of [initial, lower_bound, upper_bound]. If not provided, default values are used. See Notes.
     utility_curve : callable, optional
-        A callable function that defines the utility curve. If provided, it overrides the default power function used for utility transformations. Its first argument should be the magnitude, and the second argument should be the curvature parameter (alpha). If None, a power function is used, see Notes.
+        A callable function that defines the utility curve. If provided, it overrides the default power function used for utility transformations. Its first argument should be the magnitude. The following variables are also passed to this function: `alpha`, `beta` and `lambda_loss`. If None, a power function is used, see Notes.
     weighting : str
         The probability weighting function to use. Options include:
 

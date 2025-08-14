@@ -516,7 +516,7 @@ class HumbleTeacher:
 
     $$
     t_k = \\begin{cases}
-    \\min(0, a_k) & \\text{if } t_k = 0 \\text{ if stimulus is not followed by outcome/category-label} \\\\
+    \\min(-1, a_k) & \\text{if } t_k = 0 \\text{ if stimulus is not followed by outcome/category-label} \\\\
     \\max(1, a_k) & \\text{if } t_k = 1 \\text{ if stimulus is followed by outcome/category-label}
     \\end{cases}
     $$

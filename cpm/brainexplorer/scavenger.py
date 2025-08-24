@@ -43,11 +43,16 @@ class Scavenger:
         -----
         The columns required in data:
 
-        - "choice": if option A or B chosen,
-        - "risky_prob": Likelihood of winning for option B,
-        - "safe_magn": Trial Values for Option A,   
-        - "risky_magn1" & "risky_magn2: Trial Values for Option B,
-        - "ambg": if the trial is ambiguous or not
+        - "run": number of attempt by participant
+        - "chosen": the option chosen by the participant (1 = safe, 2 = risky)
+        - "ambiguousTrial": whether the trial was ambiguous (1 = yes, 0 = no)
+        - "abovechance": whether the choice was above chance level (1 = yes, 0 = no)
+        - "EV_diff_chosen": the difference in expected value between the chosen and unchosen option
+        - "safe_EV": the expected value of the safe option
+        - "RT": the reaction time of the trial
+        - "date": the date and time of the trial
+        - "outcome": the outcome of the trial
+
 
         Trial-level exclusion criteria:
         - Reaction time < 150 or > 10000 ms
@@ -62,30 +67,57 @@ class Scavenger:
         self.results = pd.DataFrame()
         self.group_results = pd.DataFrame()
         self.codebook = {
-            "userID": "Unique identifier for each participant",
-            "mean_RT": "Mean reaction time",
-            "median_RT": "Median reaction time",
-            "total_rewards": "Total rewards earned",
-            "choice_stickiness": "Number of consecutive choices for the same option",   
-            "risky_choices": "Proportion of risky choices overall",
-            "win_risk": "Proportion of risky wins",
-            "loss_risk": "Proportion of risky losses",
-            "win_risk_abg": "Proportion of risky wins in ambiguous trials",
-            "win_risk_NoAbg": "Proportion of risky wins in non-ambiguous trials",
-            "loss_risk_abg": "Proportion of risky losses in ambiguous trials",
-            "loss_risk_NoAbg": "Proportion of risky losses in non-ambiguous trials",
-            "rational_all": "Proportion of rational choices",
-            "rational_win": "Proportion of rational choices in wins",
-            "rational_loss": "Proportion of rational choices in losses",
-            "rational_all_abg": "Proportion of rational choices in ambiguous trials",
-            "rational_win_abg": "Proportion of rational choices in wins in ambiguous trials",
-            "rational_loss_abg": "Proportion of rational choices in losses in ambiguous trials",
-            "rational_all_NoAbg": "Proportion of rational choices in non-ambiguous trials", 
-            "rational_win_NoAbg": "Proportion of rational choices in wins in non-ambiguous trials",
-            "rational_loss_NoAbg": "Proportion of rational choices in losses in non-ambiguous trials",
-            "rational_catchTrials": "Proportion of rational choices in catch trials",
-            "above_chance": "Proportion of trials with choices above chance level",
-            "chosen_left_all": "Proportion of trials where option A (safe) was chosen"
+                "userID": "Unique identifier for each participant",
+                "day_of_week": "Day of the week of the trial",
+                "time": "Time of the trial",
+                "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
+                "mean_RT": "Mean reaction time",
+                "median_RT": "Median reaction time",
+                "median_RT_safe": "Median reaction time for safe choices",
+                "median_RT_risky": "Median reaction time for risky choices",
+                "median_RT_ambg": "Median reaction time for ambiguous trials",
+                "median_RT_NoAmbg":"Median reaction time for non-ambiguous trials",
+                "median_RT_safe_ambg": "Median reaction time for safe choices in ambiguous trials",
+                "median_RT_safe_NoAmbg": "Median reaction time for safe choices in non-ambiguous trials",
+                "median_RT_risky_ambg": "Median reaction time for risky choices in ambiguous trials",
+                "median_RT_risky_NoAmbg": "Median reaction time for risky choices in non-ambiguous trials",
+                "mean_points": "Mean points received across all trials",
+                "mean_points_safe": "Mean points received for safe choices",
+                "mean_points_risky": "Mean points received for risky choices",
+                "mean_points_ambg": "Mean points received in ambiguous trials",
+                "mean_points_NoAmbg": "Mean points received in non-ambiguous",
+                "mean_points_safe_ambg": "Mean points received for safe choices in ambiguous trials",
+                "mean_points_safe_NoAmbg": "Mean points received for safe choices in non-ambiguous trials",
+                "mean_points_risky_ambg": "Mean points received for risky choices in ambiguous trials",
+                "mean_points_risky_NoAmbg": "Mean points received for risky choices in non-ambiguous",
+                "risky_choices": "Proportion of risky choices overall",
+                "win_risk": "Proportion of risky wins",
+                "loss_risk": "Proportion of risky losses",
+                "win_risk_abg": "Proportion of risky wins in ambiguous trials",
+                "win_risk_NoAbg": "Proportion of risky wins in non-ambiguous trials",
+                "loss_risk_abg": "Proportion of risky losses in ambiguous trials",
+                "loss_risk_NoAbg": "Proportion of risky losses in non-ambiguous trials",
+                "diff_loss_win_risk": "Difference between proportion of risky losses and wins",
+                "diff_Ambg_NoAmbg_risk": "Difference between proportion of risky choices in ambiguous and non-ambiguous trials",
+                "diff_Ambg_NoAmbg_win_risk": "Difference between proportion of risky wins in ambiguous and non-ambiguous trials",
+                "diff_Ambg_NoAmbg_loss_risk": "Difference between proportion of risky losses in ambiguous and non-ambiguous trials",
+                "rational_all": "Proportion of rational choices",
+                "rational_win": "Proportion of rational choices in wins",
+                "rational_loss": "Proportion of rational choices in losses",
+                "rational_all_abg": "Proportion of rational choices in ambiguous trials",
+                "rational_win_abg": "Proportion of rational choices in wins in ambiguous trials",
+                "rational_loss_abg": "Proportion of rational choices in losses in ambiguous trials",
+                "rational_all_NoAbg": "Proportion of rational choices in non-ambiguous trials",
+                "diff_NoAmbg_win_loss_rational": "Difference between proportion of rational choices in wins and losses in non-ambiguous trials",
+                "rational_win_NoAbg": "Proportion of rational choices in wins in non-ambiguous trials",
+                "rational_loss_NoAbg": "Proportion of rational choices in losses in non-ambiguous trials",
+                "diff_Ambg_NoAmbg_rational": "Difference between proportion of rational choices in ambiguous and non-ambiguous trials",
+                "diff_Ambg_NoAmbg_win_rational": "Difference between proportion of rational choices in wins in ambiguous and non-ambiguous trials",
+                "diff_Ambg_NoAmbg_loss_rational": "Difference between proportion of rational choices in losses in ambiguous and non-ambiguous trials",
+                "nb_incorrect_gain": "Number of incorrect choices in gain trials",
+                "above_chance": "Proportion of trials with choices above chance level",
+                "chosen_prop_LeftRight": "Proportion of trials where option A (safe) was chosen",
+                "chosen_prop_SafeRisky": "Proportion of trials where the safe option was chosen"
         }
 
     def metrics(self):
@@ -104,28 +136,59 @@ class Scavenger:
         results : pd.DataFrame
             A DataFrame containing the computed metrics.
 
-        mean_RT: Mean reaction time,
-        median_RT: Median reaction time,
-        risky_choices: Proportion of risky choices overall,
-        win_risk: Proportion of wins for risky choices,
-        loss_risk: Proportion of losses for risky choices, 
-        risk_ambg: Proportion of risky choices in ambiguous trials,
-        win_risk_abg: Proportion of risky wins in ambiguous trials, 
-        win_risk_NoAbg: Proportion of risky wins in non-ambiguous trials, 
-        loss_risk_abg: Proportion of risky losses in ambiguous trials,
-        loss_risk_NoAbg: Proportion of risky losses in non-ambiguous trials,
-        rational_all: Proportion of rational choices, 
-        rational_win: Proportion of rational choices in wins,
-        rational_loss: Proportion of rational choices in losses,
-        rational_all_abg: Proportion of rational choices in ambiguous trials,
-        rational_win_abg: Proportion of rational choices in win trials in ambiguous trials,
-        rational_loss_abg: Proportion of rational choices in loss trials in ambiguous trials,
-        rational_all_NoAbg: Proportion of rational choices in non-ambiguous trials,
-        rational_win_NoAbg: Proportion of rational choices in win trials in non-ambiguous trials,
-        rational_loss_NoAbg: Proportion of rational choices in loss trials in non-ambiguous trials
-        rational_catchTrials: Proportion of rational choices in catch trials,
-        above_chance: Proportion of trials with choices above chance level,
-        chosen_left_all: Proportion of trials where option A (safe) was chosen.
+        Variables
+        ----------
+        - userID: Unique identifier for each participant,
+        - day_of_week: Day of the week of the trial,
+        - time: Time of the trial,
+        - time_of_day: Time of day of the trial (morning, afternoon, evening, night),
+        - mean_RT: Mean reaction time,
+        - median_RT: Median reaction time,
+        - median_RT_safe: Median reaction time for safe choices,
+        - median_RT_risky: Median reaction time for risky choices,
+        - median_RT_ambg: Median reaction time for ambiguous trials,
+        - median_RT_NoAmbg: Median reaction time for non-ambiguous trials,
+        - median_RT_safe_ambg: Median reaction time for safe choices in ambiguous trials,
+        - median_RT_safe_NoAmbg: Median reaction time for safe choices in non-ambiguous trials,
+        - median_RT_risky_ambg: Median reaction time for risky choices in ambiguous trials,
+        - median_RT_risky_NoAmbg: Median reaction time for risky choices in non-ambiguous trials,
+        - mean_points: Mean points received across all trials,
+        - mean_points_safe: Mean points received for safe choices,
+        - mean_points_risky: Mean points received for risky choices,
+        - mean_points_ambg: Mean points received in ambiguous trials,
+        - mean_points_NoAmbg: Mean points received in non-ambiguous
+        - mean_points_safe_ambg: Mean points received for safe choices in ambiguous trials,
+        - mean_points_safe_NoAmbg: Mean points received for safe choices in non-ambiguous trials,
+        - mean_points_risky_ambg: Mean points received for risky choices in ambiguous trials,
+        - mean_points_risky_NoAmbg: Mean points received for risky choices in non-ambiguous,
+        - risky_choices: Proportion of risky choices overall,
+        - win_risk: Proportion of risky wins,
+        - loss_risk: Proportion of risky losses,
+        - win_risk_abg: Proportion of risky wins in ambiguous trials,
+        - win_risk_NoAbg: Proportion of risky wins in non-ambiguous trials,
+        - loss_risk_abg: Proportion of risky losses in ambiguous trials,
+        - loss_risk_NoAbg: Proportion of risky losses in non-ambiguous trials,
+        - diff_loss_win_risk: Difference between proportion of risky losses and wins,
+        - diff_Ambg_NoAmbg_risk: Difference between proportion of risky choices in ambiguous and non-ambiguous trials,
+        - diff_Ambg_NoAmbg_win_risk: Difference between proportion of risky wins in ambiguous and non-ambiguous trials,
+        - diff_Ambg_NoAmbg_loss_risk: Difference between proportion of risky losses in ambiguous and non-ambiguous trials,
+        - rational_all: Proportion of rational choices,
+        - rational_win: Proportion of rational choices in wins,
+        - rational_loss: Proportion of rational choices in losses,
+        - rational_all_abg: Proportion of rational choices in ambiguous trials,
+        - rational_win_abg: Proportion of rational choices in wins in ambiguous trials,
+        - rational_loss_abg: Proportion of rational choices in losses in ambiguous trials,
+        - rational_all_NoAbg: Proportion of rational choices in non-ambiguous trials,
+        - diff_NoAmbg_win_loss_rational: Difference between proportion of rational choices in wins and losses in non-ambiguous trials,
+        - rational_win_NoAbg: Proportion of rational choices in wins in non-ambiguous trials,
+        - rational_loss_NoAbg: Proportion of rational choices in losses in non-ambiguous trials,
+        - diff_Ambg_NoAmbg_rational: Difference between proportion of rational choices in ambiguous and non-ambiguous trials,
+        - diff_Ambg_NoAmbg_win_rational: Difference between proportion of rational choices in wins in ambiguous and non-ambiguous trials,
+        - diff_Ambg_NoAmbg_loss_rational: Difference between proportion of rational choices in losses in ambiguous and non-ambiguous trials,
+        - nb_incorrect_gain: Number of incorrect choices in gain trials,
+        - above_chance: Proportion of trials with choices above chance level,
+        - chosen_prop_LeftRight: Proportion of trials where option A (safe) was chosen,
+        - chosen_prop_SafeRisky: Proportion of trials where the safe option was chosen
 
         
         Notes
@@ -159,11 +222,8 @@ class Scavenger:
 
         # Loop through each group of user data
         for user_id, user_data in grouped_data:
-            print(user_data.head())
             t_abg = np.array(user_data["ambiguousTrial"], dtype=bool)
-            catch_trials = np.array(user_data["catchtrial"], dtype=bool)
             abovechance = np.array(user_data["abovechance"])
-            chosen_left = np.array(user_data["chosenLeft"])
             ev_diff_chosen = np.array(user_data["EV_diff_chosen"], dtype=object)
             rsk = np.array(user_data["chosen"])
             t_loss = np.array(user_data["safe_EV"] < 0)
@@ -171,78 +231,172 @@ class Scavenger:
 
             user_results = {"userID": user_id}
 
-            user_results["mean_RT"] = np.mean(user_data["RT"])
-            user_results["median_RT"] = np.median(user_data["RT"])
+            date = user_data["date"].iloc[0]
+            if isinstance(date, str):
+                date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
+            user_results["day_of_week"] = date.day_name()
+            user_results["time"] = date.time() if hasattr(date, 'time') else date.strftime("%H:%M:%S.%f")
+            # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
+            user_results["time_of_day"] = (
+                "morning" if date.hour < 12 else
+                "afternoon" if date.hour < 18 else
+                "evening" if date.hour < 24 else
+                "night"
+            )
+
+
+            user_results["mean_RT"] = np.nanmean(user_data["RT"])
+            user_results["median_RT"] = np.nanmedian(user_data["RT"])
+            # mediean RT for each condition
+            user_results["median_RT_safe"] = np.nanmedian(user_data[rsk == 0]["RT"])
+            user_results["median_RT_risky"] = np.nanmedian(user_data[rsk == 1]["RT"])
+            user_results["median_RT_ambg"] = np.nanmedian(user_data[t_abg]["RT"])
+            user_results["median_RT_NoAmbg"] = np.nanmedian(user_data[~t_abg]["RT"])
+            user_results["median_RT_safe_ambg"] = np.nanmedian(user_data[t_abg & (rsk == 0)]["RT"])
+            user_results["median_RT_safe_NoAmbg"] = np.nanmedian(user_data[~t_abg & (rsk == 0)]["RT"])
+            user_results["median_RT_risky_ambg"] = np.nanmedian(user_data[t_abg & (rsk == 1)]["RT"])
+            user_results["median_RT_risky_NoAmbg"] = np.nanmedian(user_data[~t_abg & (rsk == 1)]["RT"])
 
             user_results["total_rewards"] = np.sum(user_data["outcome"])
+            user_results["mean_points"] = np.nanmean(user_data["outcome"])
 
-            # calculate choice stickiness      
-            user_results["choice_stickiness"] = np.sum(user_data["chosen"].iloc[i] == 1 and user_data["chosen"].iloc[i + 1] == 1 for i in range(len(user_data["chosen"]) - 1))
+            # mean points for risky and safe choices
+            user_results["mean_points_safe"] = np.nanmean(user_data[rsk == 0]["outcome"])
+            user_results["mean_points_risky"] = np.nanmean(user_data[rsk == 1]["outcome"])
+
+            # mean points for ambigous and non-ambiguous trials
+            user_results["mean_points_ambg"] = np.nanmean(user_data[t_abg]["outcome"])
+            user_results["mean_points_NoAmbg"] = np.nanmean(user_data[~t_abg]["outcome"])
+
+            # mean points for risky and safe choices in ambiguous and non-ambiguous trials
+            user_results["mean_points_safe_ambg"] = np.nanmean(user_data[t_abg & (rsk == 0)]["outcome"])
+            user_results["mean_points_safe_NoAmbg"] = np.nanmean(user_data[~t_abg & (rsk == 0)]["outcome"])
+            user_results["mean_points_risky_ambg"] = np.nanmean(user_data[t_abg & (rsk == 1)]["outcome"])
+            user_results["mean_points_risky_NoAmbg"] = np.nanmean(user_data[~t_abg & (rsk == 1)]["outcome"])
+
+            # choice stickiness      
+            user_results["choice_stickiness"] = np.sum(user_data["chosen"].iloc[i] == 1 and user_data["chosen"].iloc[i + 1] == 1 
+                                                       for i in range(len(user_data["chosen"]) - 1)
+                                                       )
 
             # Number of risky choices
-            user_results["risky_choices"] = np.mean(rsk == 1)
+            user_results["risky_choices"] = np.nanmean(rsk == 1)
+
             user_results["win_risk"] = np.sum(rsk[~t_loss]) / np.sum(~t_loss)
             user_results["loss_risk"] = np.sum(rsk[t_loss]) / np.sum(t_loss)
-            user_results["risk_ambg"] = np.sum(rsk[t_abg]) / np.sum(t_abg)
-            user_results["win_risk_abg"] = np.sum(rsk[~t_loss & t_abg]) / np.sum(
-                ~t_loss & t_abg
+            user_results["diff_loss_win_risk"] = user_results["loss_risk"] - user_results["win_risk"]
+
+            user_results["risk_Ambg"] = np.sum(rsk[t_abg]) / np.sum(t_abg)
+            user_results["risk_NoAmbg"] = np.sum(rsk[~t_abg]) / np.sum(~t_abg)
+            user_results["diff_Ambg_NoAmbg_risk"] = user_results["risk_Ambg"] - user_results["risk_NoAmbg"]
+
+            user_results["win_risk_abg"] = np.sum(rsk[~t_loss & t_abg]) / np.sum(~t_loss & t_abg)
+            user_results["win_risk_NoAbg"] = np.sum(rsk[~t_loss & ~t_abg]) / np.sum(~t_loss & ~t_abg)
+            user_results["loss_risk_abg"] = np.sum(rsk[t_loss & t_abg]) / np.sum(t_loss & t_abg)
+            user_results["loss_risk_NoAbg"] = np.sum(rsk[t_loss & ~t_abg]) / np.sum(t_loss & ~t_abg)
+            user_results["diff_Ambg_NoAmbg_win_risk"] = (
+                user_results["win_risk_abg"] - user_results["win_risk_NoAbg"]
             )
-            user_results["win_risk_NoAbg"] = np.sum(rsk[~t_loss & ~t_abg]) / np.sum(
-                ~t_loss & ~t_abg
+            user_results["diff_Ambg_NoAmbg_loss_risk"] = (
+                user_results["loss_risk_abg"] - user_results["loss_risk_NoAbg"]
             )
-            user_results["loss_risk_abg"] = np.sum(rsk[t_loss & t_abg]) / np.sum(
-                t_loss & t_abg
+            user_results["diff_Ambg_win_loss_risk"] = (
+                user_results["win_risk_abg"] - user_results["loss_risk_abg"]
             )
-            user_results["loss_risk_NoAbg"] = np.sum(rsk[t_loss & ~t_abg]) / np.sum(
-                t_loss & ~t_abg
+            user_results["diff_NoAmbg_win_loss_risk"] = (
+                user_results["win_risk_NoAbg"] - user_results["loss_risk_NoAbg"]
             )
 
             # Number of rational choices
-            user_results["rational_all"] = np.sum(ev_diff_chosen >= 0) / len(
-                ev_diff_chosen
-            )
-            user_results["rational_win"] = np.sum(ev_diff_chosen[~t_loss] >= 0) / np.sum(
-                ~t_loss
-            )
-            user_results["rational_loss"] = np.sum(ev_diff_chosen[t_loss] >= 0) / np.sum(
-                t_loss
+            user_results["rational_all"] = np.nanmean(ev_diff_chosen >= 0)
+
+            # rational choices in win and loss trials
+            user_results["rational_win"] = np.sum(ev_diff_chosen[~t_loss] >= 0) / np.sum(~t_loss)
+            user_results["rational_loss"] = np.sum(ev_diff_chosen[t_loss] >= 0) / np.sum(t_loss)
+            user_results["diff_loss_win_rational"] = (
+                user_results["rational_loss"] - user_results["rational_win"]
             )
 
-            user_results["rational_all_abg"] = np.sum(
-                ev_diff_chosen[t_abg] >= 0
-            ) / np.sum(t_abg)
-            user_results["rational_all_NoAbg"] = np.sum(
-                ev_diff_chosen[~t_abg] >= 0
-            ) / np.sum(~t_abg)
-
-            user_results["rational_win_abg"] = np.sum(
-                ev_diff_chosen[~t_loss & t_abg] >= 0
-            ) / np.sum(~t_loss & t_abg)
-            user_results["rational_win_NoAbg"] = np.sum(
-                ev_diff_chosen[~t_loss & ~t_abg] >= 0
-            ) / np.sum(~t_loss & ~t_abg)
-
-            user_results["rational_loss_abg"] = np.sum(
-                ev_diff_chosen[t_loss & t_abg] >= 0
-            ) / np.sum(t_loss & t_abg)
-            user_results["rational_loss_NoAbg"] = np.sum(
-                ev_diff_chosen[t_loss & ~t_abg] >= 0
-            ) / np.sum(t_loss & ~t_abg)
-
-            # proportion rational chocies on catch trials
-            user_results["rational_catchTrials"] = np.mean(
-                ev_diff_chosen[catch_trials] >= 0
+            # rational choices in ambiguous and non-ambiguous trials
+            user_results["rational_abg"] = np.sum(ev_diff_chosen[t_abg] >= 0) / np.sum(t_abg)
+            user_results["rational_NoAbg"] = np.sum(ev_diff_chosen[~t_abg] >= 0) / np.sum(~t_abg)
+            user_results["diff_Ambg_NoAmbg_rational"] = (
+                user_results["rational_abg"] - user_results["rational_NoAbg"]
             )
+            
+            # rational choices in ambiguous and non-ambiguous trials for wins and losses
+            user_results["rational_win_abg"] = np.sum(ev_diff_chosen[~t_loss & t_abg] >= 0) / np.sum(~t_loss & t_abg)
+            user_results["rational_win_NoAbg"] = np.sum(ev_diff_chosen[~t_loss & ~t_abg] >= 0) / np.sum(~t_loss & ~t_abg)
+            user_results["rational_loss_abg"] = np.sum(ev_diff_chosen[t_loss & t_abg] >= 0) / np.sum(t_loss & t_abg)
+            user_results["rational_loss_NoAbg"] = np.sum(ev_diff_chosen[t_loss & ~t_abg] >= 0) / np.sum(t_loss & ~t_abg)
+            user_results["diff_rational_Ambg_NoAmbg_win"] = (
+                user_results["rational_win_abg"] - user_results["rational_win_NoAbg"]
+            )
+            user_results["diff_rational_Ambg_NoAmbg_loss"] = (
+                user_results["rational_loss_abg"] - user_results["rational_loss_NoAbg"]
+            )
+            user_results["diff_rational_Ambg_win_loss"] = (
+                user_results["rational_win_abg"] - user_results["rational_loss_abg"]
+            )
+            user_results["diff_rational_NoAmbg_win_loss"] = (
+                user_results["rational_win_NoAbg"] - user_results["rational_loss_NoAbg"]
+            )
+
+            # rational choices in safe and risky trials
+            user_results["rational_safe"] = np.sum(ev_diff_chosen[rsk == 0] >= 0) / np.sum(rsk == 0)
+            user_results["rational_risky"] = np.sum(ev_diff_chosen[rsk == 1] >= 0) / np.sum(rsk == 1)
+            user_results["diff_rational_safe_risky"] = (
+                user_results["rational_safe"] - user_results["rational_risky"]
+            )
+
+            # rational choices in safe and risky trials for wins and losses
+            user_results["rational_safe_win"] = np.sum(ev_diff_chosen[~t_loss & rsk == 0] >= 0) / np.sum(~t_loss & rsk == 0)
+            user_results["rational_safe_loss"] = np.sum(ev_diff_chosen[t_loss & rsk == 0] >= 0) / np.sum(t_loss & rsk == 0)
+            user_results["rational_risky_win"] = np.sum(ev_diff_chosen[~t_loss & rsk == 1] >= 0) / np.sum(~t_loss & rsk == 1)
+            user_results["rational_risky_loss"] = np.sum(ev_diff_chosen[t_loss & rsk == 1] >= 0) / np.sum(t_loss & rsk == 1)
+            user_results["diff_rational_safe_win_risky_win"] = (
+                user_results["rational_safe_win"] - user_results["rational_risky_win"]
+            )
+            user_results["diff_rational_safe_loss_risky_loss"] = (
+                user_results["rational_safe_loss"] - user_results["rational_risky_loss"]
+            )
+            user_results["diff_rational_safe_win_risky_loss"] = (
+                user_results["rational_safe_win"] - user_results["rational_risky_loss"]
+            )
+            user_results["diff_rational_safe_loss_risky_win"] = (
+                user_results["rational_safe_loss"] - user_results["rational_risky_win"]
+            )
+
+            # rational choices in risky and safe trials for ambiguous and non-ambiguous trials
+            user_results["rational_safe_abg"] = np.sum(ev_diff_chosen[t_abg & rsk == 0] >= 0) / np.sum(t_abg & rsk == 0)
+            user_results["rational_safe_NoAbg"] = np.sum(ev_diff_chosen[~t_abg & rsk == 0] >= 0) / np.sum(~t_abg & rsk == 0)
+            user_results["rational_risky_abg"] = np.sum(ev_diff_chosen[~t_abg & rsk == 1] >= 0) / np.sum(~t_abg & rsk == 1)
+            user_results["rational_risky_NoAbg"] = np.sum(ev_diff_chosen[t_abg & rsk == 1] >= 0) / np.sum(t_abg & rsk == 1)
+            user_results["diff_rational_safe_Ambg_NoAmbg"] = (
+                user_results["rational_safe_abg"] - user_results["rational_safe_NoAbg"]
+            )
+            user_results["diff_rational_risky_Ambg_NoAmbg"] = (
+                user_results["rational_risky_abg"] - user_results["rational_risky_NoAbg"]
+            )
+            user_results["diff_rational_safe_risky_Ambg"] = (
+                user_results["rational_safe_abg"] - user_results["rational_risky_abg"]
+            )
+            user_results["diff_rational_safe_risky_NoAmbg"] = (
+                user_results["rational_safe_NoAbg"] - user_results["rational_risky_NoAbg"]
+            )
+
+            # No Brainer Trial Choices
+            # count how man wrong choices were made in catch trials
+            user_results["nb_incorrect_gain"] = user_data[user_data["nbcorrect_gain"] == 0].shape[0]
 
             # proportion above chance level
-            user_results["above_chance"] = np.sum(
-                abovechance == 1
-            ) / len(abovechance)
+            user_results["above_chance"] = np.nanmean(abovechance)
 
-            # proportion chosen left
-            user_results["chosen_left_all"] = np.sum(
-                chosen_left == 1
-            ) / len(chosen_left)
+            # proportion of repeated choices for left/right
+            user_results["chosen_prop_LeftRight"] = np.mean(user_data["resp_rep"])
+
+            # proportion of repeated choices for safe/risky
+            user_results["chosen_prop_SafeRisky"] = np.mean(user_data["resp_rep_sr"])
 
             # Append user-level results
             self.results = pd.concat(
@@ -281,9 +435,9 @@ class Scavenger:
         user_ids_to_keep = [uid for uid in self.data["userID"].unique() if uid not in user_ids_to_exclude]
         self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(user_ids_to_keep)]
 
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] < 5000]
+        #self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] < 5000]
+
         self.cleanedresults = self.cleanedresults[self.cleanedresults["rational_catchTrials"] > 0.5]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["risky_choices"] < 0.95]
         self.cleanedresults = self.cleanedresults[self.cleanedresults["chosen_left_all"] < 0.95]
 
         self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())

@@ -43,8 +43,9 @@ class spaceObserver:
         -----
         The columns required in data:
 
-        - **userID**: unique identifier for each participant
-        - **round**: the round of the trial
+        - **userID: unique identifier for each participant
+        - **date**: the date and time of the trial
+        - **run**: number of attempt by participant
         - **accuracy**: the accuracy of the trial (1 for correct, 0 for incorrect)
         - **choiceRT**: the reaction time of the choice in the trial
         - **confidence**: the confidence rating of the trial
@@ -52,7 +53,7 @@ class spaceObserver:
         - **stimulus_intensity**: the evidence strength of the trial, which is the difference of evidence for each group of stimuli.
 
         Trial-level exclusion critera:
-        - Attempts after the first attempt ("run" variable)
+        - Practice trials (run == 1)
         - Reaction time < 150 or > 10000 ms
         - Reaction time of confidence < 150 or > 10000 ms
         - Trials with missing confidence data
@@ -61,7 +62,7 @@ class spaceObserver:
         ## read data
         self.data = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
 
-        self.data = self.data[self.data["run"] == 1]  # only keep first attempt
+        self.data = self.data[self.data["run"] != 1]  # exclude practice trials
         self.data = self.data[self.data["choiceRT"] >= 150]  # only keep trials with reaction time > 150 ms
         self.data = self.data[self.data["choiceRT"] <= 10000]  # only keep trials with reaction time < 10000 ms
         self.data = self.data[self.data["confidenceRT"] >= 150]  # only keep trials with confidence reaction time > 150 ms
@@ -77,19 +78,38 @@ class spaceObserver:
         self.results = pd.DataFrame()
         self.codebook = {
             "userID": "Unique identifier for each participant",
-            "mean_accuracy": "Mean accuracy across all trials",
+            "day_of_week": "Day of the week of the trial",
+            "time": "Time of the trial",
+            "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
+            "accuracy": "Mean accuracy (if the choice was the majority choice)",
             "mean_RT": "Mean response time across all trials",
             "median_RT": "Median response time across all trials",
+            "median_RT_correct": "Median response time for trials where the participant made the correct choice",
+            "median_RT_incorrect": "Median response time for trials where the participant made the incorrect",
+            "diff_median_RT_correct_incorrect": "Difference between the median response time for correct and incorrect choices",
             "mean_confidence": "Mean confidence rating across all trials",
+            "sd_confidence": "Standard deviation of the confidence rating across all trials",
+            "median_confidence": "Median confidence rating across all trials",
+            "median_confidence_correct": "Median confidence rating for trials where the participant made the correct choice",
+            "median_confidence_incorrect": "Median confidence rating for trials where the participant made the incorrect choice",
+            "diff_median_conf_correct_incorrect": "Difference between the median confidence rating for correct and incorrect choices",
+            "sd_confidence_correct": "Standard deviation of the confidence rating for trials where the participant made the correct choice",
+            "sd_confidence_incorrect": "Standard deviation of the confidence rating for trials where the participant made the incorrect choice",
+            "diff_sd_confidence_correct_incorrect": "Difference between the standard deviation of the confidence rating for correct and incorrect choices",
             "mean_confidenceRT": "Mean confidence response time across all trials",
             "median_confidenceRT": "Median confidence response time across all trials",
-            "mean_RT_correct": "Mean response time for correct choices",
-            "median_RT_correct": "Median response time for correct choices",
-            "mean_RT_incorrect": "Mean response time for incorrect choices",
-            "median_RT_incorrect": "Median response time for incorrect choices",
-            "conf_corr_mean": "Mean confidence rating for correct choices",
-            "conf_incorr_mean": "Mean confidence rating for incorrect choices",
-            "ES_bins": "Mean evidence strength for each of the bins (4 bins)"
+            "median_confidenceRT_correct": "Median confidence response time for trials where the participant made the correct choice",
+            "median_confidenceRT_incorrect": "Median confidence response time for trials where the participant made the incorrect choice",
+            "diff_median_confidenceRT_correct_incorrect": "Difference between the median confidence response time for correct and incorrect choices",
+            "confidence_10": "10th percentile of the confidence rating across all trials",
+            "confidence_25": "25th percentile of the confidence rating across all trials",
+            "confidence_75": "75th percentile of the confidence rating across all trials",
+            "confidence_90": "90th percentile of the confidence rating across all trials",
+            "evidence_strength_mean": "Mean evidence strength across all trials",
+            "evidence_strength_correct_mean": "Mean evidence strength for trials where the participant made the correct choice",
+            "evidence_strength_incorrect_mean": "Mean evidence strength for trials where the participant made the incorrect choice",
+            "diff_evidence_strength_correct_incorrect": "Difference between the mean evidence strength for correct and incorrect choices",
+            "ES_bins": "Mean evidence strength for each of the bins. The trials here are split into 4 quarters. The evidence strength is divided into four equal bins and the mean is calculated for each bin."
         }
 
     def metrics(self, mode=None):
@@ -102,45 +122,39 @@ class spaceObserver:
 
         Variables
         ---------
-
-        mean_accuracy : float
-            The mean accuracy across all trials.
-
-        mean_RT : float
-            The mean response time across all trials.
-
-        median_RT : float
-            The median response time across all trials.
-
-        mean_confidence : float
-            The mean confidence rating across all trials.
-
-        mean_confidenceRT : float
-            The mean confidence response time across all trials.
-
-        median_confidenceRT : float
-            The median confidence response time across all trials.
-
-        mean_RT_correct : float
-            The mean response time for trials where the participant made the correct choice.
-
-        median_RT_correct : float
-            The median response time for trials where the participant made the correct choice.
-
-        mean_RT_incorrect : float
-            The mean response time for trials where the participant made the incorrect choice.
-
-        median_RT_incorrect : float
-            The median response time for trials where the participant made the incorrect choice.
-
-        conf_corr_mean : float
-            The mean confidence rating for trials where the participant made the correct choice.
-
-        conf_incorr_mean : float
-            The mean confidence rating for trials where the participant made the incorrect choice.
-        
-        ES_bins : np.array
-            The mean evidence strength for each of the bins. The trials here are split into 4 quarters. The evidence strength is divided into four equal bins and the mean is calculated for each bin.
+        - userID: unique identifier for each participant
+        - day_of_week: day of the week of the trial
+        - time: time of the trial
+        - time_of_day: time of day of the trial (morning, afternoon, evening, night)
+        - accuracy : The mean accuracy across all trials.
+        - mean_RT : The mean response time across all trials.
+        - median_RT : The median response time across all trials.
+        - median_RT_correct : The median response time for trials where the participant made the correct choice.
+        - median_RT_incorrect : The median response time for trials where the participant made the incorrect choice.
+        - diff_median_RT_correct_incorrect : The difference between the median response time for correct and incorrect choices.
+        - mean_confidence : The mean confidence rating across all trials.
+        - median_confidence : The median confidence rating across all trials.
+        - median_confidence_correct : The median confidence rating for trials where the participant made the correct choice.
+        - median_confidence_incorrect : The median confidence rating for trials where the participant made the incorrect choice.
+        - diff_median_conf_correct_incorrect : The difference between the median confidence rating for correct and incorrect choices.
+        - sd_confidence : The standard deviation of the confidence rating across all trials.
+        - sd_confidence_correct : The standard deviation of the confidence rating for trials where the participant made the correct choice.   
+        - sd_confidence_incorrect : The standard deviation of the confidence rating for trials where the participant made the incorrect choice.
+        - diff_sd_confidence_correct_incorrect : The difference between the standard deviation of the confidence rating for correct and incorrect choices.
+        - mean_confidenceRT : The mean confidence response time across all trials.
+        - median_confidenceRT : The median confidence response time across all trials.
+        - median_confidenceRT_correct : The median confidence response time for trials where the participant made the correct choice.
+        - median_confidenceRT_incorrect : The median confidence response time for trials where the participant made the incorrect choice.
+        - diff_median_confidenceRT_correct_incorrect : The difference between the median confidence response time for correct and incorrect choices.
+        - confidence_10 : The 10th percentile of the confidence rating across all trials.
+        - confidence_25 : The 25th percentile of the confidence rating across all trials.
+        - confidence_75 : The 75th percentile of the confidence rating across all trials.
+        - confidence_90 : The 90th percentile of the confidence rating across all trials.
+        - evidence_strength_mean : The mean evidence strength across all trials.
+        - evidence_strength_correct_mean : The mean evidence strength for trials where the participant made the correct choice.
+        - evidence_strength_incorrect_mean : The mean evidence strength for trials where the participant made the incorrect choice.
+        - diff_evidence_strength_correct_incorrect : The difference between the mean evidence strength for correct and incorrect choices.
+        - ES_bins : The mean evidence strength for each of the bins. The trials here are split into 4 quarters. The evidence strength is divided into four equal bins and the mean is calculated for each bin.
         """            
 
         # Group data by subject
@@ -150,34 +164,79 @@ class spaceObserver:
 
             user_results = {"userID": user_id}
 
-            user_results["mean_accuracy"] = np.mean(user_data["accuracy"])
+
+            user_results = {"userID": user_id}
+
+            date = user_data["date"].iloc[0]
+            if isinstance(date, str):
+                date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
+            user_results["date"] = date
+            user_results["day_of_week"] = date.day_name()
+            user_results["time"] = date.time() if hasattr(date, 'time') else date.strftime("%H:%M:%S.%f")
+            # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
+            user_results["time_of_day"] = (
+                "morning" if date.hour < 12 else
+                "afternoon" if date.hour < 18 else
+                "evening" if date.hour < 24 else
+                "night"
+            )
+
+            user_results["accuracy"] = np.mean(user_data["accuracy"])
 
             user_results["mean_RT"] = np.mean(user_data["choiceRT"])
             user_results["median_RT"] = np.median(user_data["choiceRT"])
+            # different RT for correct and incorrect trials
+            user_results["median_RT_correct"] = np.median(user_data["choiceRT"][user_data["accuracy"] == 1])
+            user_results["median_RT_incorrect"] = np.median(user_data["choiceRT"][user_data["accuracy"] != 1])
+            user_results["diff_median_RT_correct_incorrect"] = (
+                user_results["median_RT_correct"] - user_results["median_RT_incorrect"]
+            )
 
             user_results["mean_confidence"] = np.nanmean(user_data["confidence"])
+            user_results["sd_confidence"] = np.nanstd(user_data["confidence"])
+            user_results["median_confidence"] = np.nanmedian(user_data["confidence"])
+            # confidence difference for correct and incorrect trials    
+            user_results["median_confidence_correct"] = np.nanmedian(user_data["confidence"][user_data["accuracy"] == 1])
+            user_results["median_confidence_incorrect"] = np.nanmedian(user_data["confidence"][user_data["accuracy"] != 1])
+            user_results["diff_median_conf_correct_incorrect"] = (
+                user_results["median_confidence_correct"] - user_results["median_confidence_incorrect"]
+            )
+            # standard deviation of confidence for correct and incorrect trials
+            user_results["sd_confidence_correct"] = np.nanstd(user_data["confidence"][user_data["accuracy"] == 1])
+            user_results["sd_confidence_incorrect"] = np.nanstd(user_data["confidence"][user_data["accuracy"] != 1])    
+            user_results["diff_sd_confidence_correct_incorrect"] = (
+                user_results["sd_confidence_correct"] - user_results["sd_confidence_incorrect"]
+            )
 
             user_results["mean_confidenceRT"] = np.nanmean(user_data["confidenceRT"])
             user_results["median_confidenceRT"] = np.nanmedian(user_data["confidenceRT"])
+            # different RT for correct and incorrect trials
+            user_results["median_confidenceRT_correct"] = np.nanmedian(user_data["confidenceRT"][user_data["accuracy"] == 1])
+            user_results["median_confidenceRT_incorrect"] = np.nanmedian(user_data["confidenceRT"][user_data["accuracy"] != 1])
+            user_results["diff_median_confidenceRT_correct_incorrect"] = (
+                user_results["median_confidenceRT_correct"] - user_results["median_confidenceRT_incorrect"]
+            )
 
-            # confidence and RT by performance
-            correct = np.array(user_data["accuracy"])
-            confidence = np.array(user_data["confidence"])
-            
-            conf_corr = confidence[(correct == 1) & ~np.isnan(confidence)]
-            conf_incorr = confidence[(correct != 1) & ~np.isnan(confidence)]
-            user_results["conf_corr_mean"] = np.mean(conf_corr) if len(conf_corr) > 0 else np.nan
-            user_results["conf_incorr_mean"] = np.mean(conf_incorr) if len(conf_incorr) > 0 else np.nan
+            # calculate confidence percentiles 
+            confidence = user_data["confidence"]
+            user_results["confidence_10"] = np.nanpercentile(confidence, 10)
+            user_results["confidence_25"] = np.nanpercentile(confidence, 25)
+            user_results["confidence_75"] = np.nanpercentile(confidence, 75)
+            user_results["confidence_90"] = np.nanpercentile(confidence, 90)
 
-            user_results["mean_RT_correct"] = np.mean(np.array(user_data["choiceRT"])[correct == 1])
-            user_results["median_RT_correct"] = np.median(np.array(user_data["choiceRT"])[correct == 1])
-            user_results["mean_RT_incorrect"] = np.mean(np.array(user_data["choiceRT"])[correct != 1])
-            user_results["median_RT_incorrect"] = np.median(np.array(user_data["choiceRT"])[correct != 1])
-
+            # calculate evidence strength 
             evidence_strength = user_data["stimulus_intensity"]
 
-            # calcualte evidence strength for each bin
+            user_results["evidence_strength_mean"] = np.nanmean(evidence_strength)
 
+            # evidence strenth per correct and incorrect trials
+            user_results["evidence_strength_correct_mean"] = np.nanmean(evidence_strength[user_data["accuracy"] == 1])
+            user_results["evidence_strength_incorrect_mean"] = np.nanmean(evidence_strength[user_data["accuracy"] != 1])
+            user_results["diff_evidence_strength_correct_incorrect"] = (
+                user_results["evidence_strength_correct_mean"] - user_results["evidence_strength_incorrect_mean"]
+            )
+
+            # calcualte evidence strength for each bin
             bin_size = 4
 
             # Divide evidence strength into 4 equal bins and calculate the mean for each bin
@@ -188,7 +247,6 @@ class spaceObserver:
             ES_4 = np.mean(bins[3]) if len(bins[3]) > 0 else np.nan
             user_results["ES_bins"] = np.array([ES_1, ES_2, ES_3, ES_4])
 
-            user_results["ES_total_mean"] = np.nanmean(evidence_strength)
 
             # Append user-level results
             self.results = pd.concat(
@@ -211,25 +269,28 @@ class spaceObserver:
         - Median evidence strength > 25
         - Mean confidence > 97       
         - Participants with more than 80 trials (due to technical error) 
+        - Exclude participants if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
         """
 
         nr_part_before = len(self.results["userID"].unique())
 
         self.cleanedresults = self.results.copy()
 
-        users_80trials = set(
-            self.data.loc[
-                self.data.groupby("userID")["userID"].transform('count') <= 80, 
-                "userID"
-            ].unique()
-        )
+        # exclude participants who have more than 80 trials with run == 1
+        users_80trials = self.cleanedresults.groupby("userID").filter(lambda x: len(x) >= 80)["userID"].unique()
         self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(users_80trials)]
 
         self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_accuracy"] >= 0.5]
         self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] <= 3000]
         self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidenceRT"] <= 3000]
         self.cleanedresults = self.cleanedresults[self.cleanedresults["ES_total_mean"] <= 25]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_confidence"] <= 97]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidence"] <= 97]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidence"] >= 3]
+
+        # exclude if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
+        self.cleanedresults = self.cleanedresults[~(
+            (self.cleanedresults["confidence_10"] == self.cleanedresults["confidence_25"]) & self.cleanedresults["confidence_75"] == self.cleanedresults["confidence_90"]   
+        )]
 
         self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
 

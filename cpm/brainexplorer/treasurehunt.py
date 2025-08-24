@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import warnings
 from scipy.stats import zscore
-import statsmodels.api as sm        
-import statsmodels.formula.api as smf
+#import statsmodels.api as sm        
+#import statsmodels.formula.api as smf
 
 
 class treasurehunt:
@@ -43,12 +43,15 @@ class treasurehunt:
         -----
         The columns required in data:
         - userID: unique identifier for each participant
+        - "date": the date and time of the trial
         - run: number of attempt by participant
         - outcome: the outcome of the trial
         - confidence: the confidence of the trial
         - RT: the reaction time of the trial
         - confidenceRT: the confidence reaction time of the trial
-        - ev: the evidence of the trial
+        - draws: number of draws in the trial
+        - choseCurEv: whether the choice was in line with current evidence (1 = yes, 0 = no)
+        - ev: the evidence in the trial as a list of integers
 
         Trial-level exclusion criteria:
 
@@ -63,20 +66,15 @@ class treasurehunt:
 
         self.codebook = {
             "userID": "Unique identifier for each participant",
-            "mean_accuracy": "Mean accuracy across all trials",
+            "day_of_week": "Day of the week of the trial",
+            "time": "Time of the trial",
+            "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
+            "accuracy": "Mean accuracy (if the choice was the majority choice)",
             "mean_points": "Mean points received across all trials",
-            "mean_confidence": "Mean confidence rating across all trials",
-            "mean_RTuntildec": "Mean reaction time until decision across all trials",
-            "median_RTuntildec": "Median reaction time until decision across all trials",
-            "mean_diffRT": "Mean difference in reaction time between the last two stimulus presentations",
-            "median_diffRT": "Median difference in reaction time between the last two stimulus presentations",
-            "mean_lastRT": "Mean reaction time after the last stimulus presentation",
-            "median_lastRT": "Median reaction time after the last stimulus presentation",
-            "mean_confidenceRT": "Mean confidence reaction time across all trials",
-            "median_confidenceRT": "Median confidence reaction time across all trials",
             "mean_n_draws": "Mean number of stimulus draws before making a decision",
-            "totevminus_coef": "Coefficient for the previous total evidence in the regression model",
-            "deltaev_coef": "Coefficient for the change in total evidence in the regression model"  
+            "sd_n_draws": "Standard deviation of the number of stimulus draws before making a decision",
+            "median_RT_between_actions": "Median reaction time between actions",
+            "median_confidenceRT": "Median confidence reaction time across all trials"
         }
 
     def metrics(self):
@@ -89,20 +87,16 @@ class treasurehunt:
 
         Variables
         ----------
-        - mean_accuracy: mean accuracy (if the choice was the majority choice)
-        - mean_points: mean points received
-        - mean_confidence: mean confidence of the choice
-        - mean_RTuntildec: mean reaction time until decision
-        - median_RTuntildec: median reaction time until decision
-        - mean_diffRT: mean difference in reaction time between the last two stimulus presentations
-        - median_diffRT: median difference in reaction time between the last two stimulus presentations
-        - mean_lastRT: mean reaction time after the last stimulus presentation
-        - median_lastRT: median reaction time after the last stimulus presentation
-        - mean_confidenceRT: mean confidence reaction time
-        - median_confidenceRT: median confidence reaction time
-        - n_draws: mean number of stimulus draws before making a decision
-        - totevminus_coef: coefficient for the previous total evidence in the regression model
-        - deltaev_coef: coefficient for the change in total evidence in the regression model
+        - userID: unique identifier for each participant
+        - day_of_week: day of the week of the trial
+        - time: time of the trial
+        - time_of_day: time of day of the trial (morning, afternoon, evening
+        - accuracy: mean accuracy (if the choice was the majority choice)
+        - mean_points: mean points received across all trials
+        - mean_n_draws: mean number of stimulus draws before making a decision
+        - sd_n_draws: standard deviation of the number of stimulus draws before making a decision
+        - median_RT_between_actions: median reaction time between actions
+        - median_confidenceRT: median confidence reaction time across all trials
         """
         # turn string fields into list of ints
         self.data["ev"] = self.data["ev"].apply(lambda x: [int(i) for i in x.strip("[]").split(" ")])
@@ -115,29 +109,35 @@ class treasurehunt:
 
             user_results = {"userID": user_id}
 
-            user_results["mean_points"] = np.mean(user_data["outcome"])   
+            date = user_data["date"].iloc[0]
+            if isinstance(date, str):
+                date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
+            user_results["day_of_week"] = date.day_name()
+            user_results["time"] = date.time() if hasattr(date, 'time') else date.strftime("%H:%M:%S.%f")
+            # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
+            user_results["time_of_day"] = (
+                "morning" if date.hour < 12 else
+                "afternoon" if date.hour < 18 else
+                "evening" if date.hour < 24 else
+                "night"
+            )
 
-            user_results["mean_accuracy"] = np.mean(user_data["correctChoice"])
+            user_results["mean_points"] = np.nanmean(user_data["outcome"])   
 
-            user_results["mean_confidence"] = np.mean(user_data["confidence"])
+            user_results["accuracy"] = np.nanmean(user_data["choseCurEv"]) 
 
-            user_results["mean_RTuntildec"] = np.mean(user_data["RTuntildec"])
-            user_results["median_RTuntildec"] = np.median(user_data["RTuntildec"])
-            user_results["mean_diffRT"] = np.mean(user_data["mean_diffRT"])
-            user_results["median_diffRT"] = np.median(user_data["median_diffRT"])
-            user_results["mean_lastRT"] = np.mean(user_data["lastRT"])
-            user_results["median_lastRT"] = np.median(user_data["lastRT"])
+            user_results["mean_confidence"] = np.nanmean(user_data["confidence"])
+            user_results["sd_confidence"] = np.nanstd(user_data["confidence"])
 
-            user_results["mean_confidenceRT"] = np.mean(user_data["confidenceRT"])
+            user_results["mean_n_draws"] = np.nanmean(user_data["draws"])
+            user_results["sd_n_draws"] = np.nanstd(user_data["draws"])
+
+            user_results["median_RT_between_actions"] = np.nanmedian(user_data["median_diffRT"])  
+
             user_results["median_confidenceRT"] = np.median(user_data["confidenceRT"])
 
-            user_results["mean_n_draws"] = np.mean(user_data["draws"])
-
-            # if chocie in line with current evidence
-            user_results["mean_chosEv"] = np.mean(user_data["chEv"])
-
-            # regression for influence of recent results on current choice  
-
+            # regression for influence of recent results on current choice 
+            """
             ev = []
 
             for idx, row in user_data.iterrows():
@@ -176,7 +176,7 @@ class treasurehunt:
             else:
                 user_results["totevminus_coef"] = np.nan
                 user_results["deltaev_coef"] = np.nan
-
+            """
 
             # Append user-level results
             self.results = pd.concat(
@@ -196,19 +196,11 @@ class treasurehunt:
         ---------
         - Mean number of draws < 2 or > 23
         - Make choice not in line with current evidence in >= 20% of trials
-        - Mean confidence < 15 or > 98
-        - < 3 unique values in confidence rating 
         - < 3 unique values in number of samples
         """
         nr_part_before = len(self.results["userID"].unique())
 
         self.cleanedresults = self.results.copy()
-        
-        # Filter out participants who have less than 3 unique values for confidence 
-        valid_users = self.data.groupby("userID").filter(
-            lambda group: group["confidence"].nunique() >= 3 
-        )["userID"].unique()
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(valid_users)]
         
         # Filter out participants who have less than 3 unique values for draws
         valid_users = self.data.groupby("userID").filter(
@@ -218,9 +210,6 @@ class treasurehunt:
 
         self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] >= 2]  # only keep participants with mean number of draws > 2
         self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] <= 23]  # only keep participants with mean number of draws < 23
-
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_confidence"] >= 15]  # only keep participants with mean confidence > 15
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_confidence"] <= 98]  # only keep participants with mean confidence < 98
 
         self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_chosEv"] > 0.8]  # only keep participants with mean choice in line with current evidence >= 80%
 

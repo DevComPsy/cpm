@@ -75,6 +75,7 @@ class treasurehunt:
             "sd_n_draws": "Standard deviation of the number of stimulus draws before making a decision",
             "median_RT_between_actions": "Median reaction time between actions",
             "median_confidenceRT": "Median confidence reaction time across all trials"
+            "unique_draws": "Number of unique values in number of draws"
         }
 
     def metrics(self):
@@ -97,6 +98,7 @@ class treasurehunt:
         - sd_n_draws: standard deviation of the number of stimulus draws before making a decision
         - median_RT_between_actions: median reaction time between actions
         - median_confidenceRT: median confidence reaction time across all trials
+        - unique_draws: number of unique values in number of draws
         """
         # turn string fields into list of ints
         self.data["ev"] = self.data["ev"].apply(lambda x: [int(i) for i in x.strip("[]").split(" ")])
@@ -135,6 +137,9 @@ class treasurehunt:
             user_results["median_RT_between_actions"] = np.nanmedian(user_data["median_diffRT"])  
 
             user_results["median_confidenceRT"] = np.median(user_data["confidenceRT"])
+
+            # check if < 3 unique values in number of samples
+            user_results["unique_draws"] = user_data["draws"].nunique()
 
             # regression for influence of recent results on current choice 
             """
@@ -208,10 +213,12 @@ class treasurehunt:
         )["userID"].unique()
         self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(valid_users)]
 
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] >= 2]  # only keep participants with mean number of draws > 2
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] <= 23]  # only keep participants with mean number of draws < 23
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] >= 2]  # only keep participants with mean number of draws >= 2
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] <= 23]  # only keep participants with mean number of draws <= 23
 
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_chosEv"] > 0.8]  # only keep participants with mean choice in line with current evidence >= 80%
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["accuracy"] > 0.8]  # only keep participants with mean choice in line with current evidence > 80%
+        
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["unique_draws"] >= 3] # only keep participants with at least 3 unique values in number of draws
 
         self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
 

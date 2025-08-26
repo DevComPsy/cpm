@@ -247,6 +247,9 @@ class spaceObserver:
             ES_4 = np.mean(bins[3]) if len(bins[3]) > 0 else np.nan
             user_results["ES_bins"] = np.array([ES_1, ES_2, ES_3, ES_4])
 
+            # median evidence strength
+            user_results["median_ES"] = np.nanmedian(evidence_strength)
+
 
             # Append user-level results
             self.results = pd.concat(
@@ -264,10 +267,10 @@ class spaceObserver:
         Exclusion criteria:
         ---------
         - Mean accuracy < 0.5 
-        - Median reaction time > 5000 ms
-        - Median reaction time for confidence ratings > 5000 ms
+        - Median reaction time > 3000 ms
+        - Median reaction time for confidence ratings > 3000 ms
         - Median evidence strength > 25
-        - Mean confidence > 97       
+        - Mean confidence <3 or > 97       
         - Participants with more than 80 trials (due to technical error) 
         - Exclude participants if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
         """
@@ -280,12 +283,12 @@ class spaceObserver:
         users_80trials = self.cleanedresults.groupby("userID").filter(lambda x: len(x) >= 80)["userID"].unique()
         self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(users_80trials)]
 
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_accuracy"] >= 0.5]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] <= 3000]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidenceRT"] <= 3000]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["ES_total_mean"] <= 25]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidence"] <= 97]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidence"] >= 3]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_accuracy"] >= 0.5] # only keep participants with mean accuracy >= 50%
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] <= 3000] # only keep participants with median reaction time <= 3000 ms
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidenceRT"] <= 3000] # only keep participants with median confidence reaction time <= 3000 ms
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_ES"] <= 25] # only keep participants with median evidence strength <= 25
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidence"] <= 97] # only keep participants with mean confidence <= 97
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidence"] >= 3] # only keep participants with mean confidence >= 3
 
         # exclude if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
         self.cleanedresults = self.cleanedresults[~(

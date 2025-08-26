@@ -414,31 +414,28 @@ class Scavenger:
 
         Exclusion criteria:
         ----------
-        - Median reaction time > 5000 ms
-        - Same choice safe/risky on >= 95% of trials
         - Same choice left/right on >= 95% of trials
-        - Fail >= 50% of catch trials
+        - Fail >= 2 of catch trials
         - Participants with more than 40 trials (due to technical error)
-        - Participants with configID = 242
+        - Participants with configID = 242 (version with 60 trials)
         """
         nr_part_before = len(self.results["userID"].unique())
 
         self.cleanedresults = self.results.copy()
 
         user_id_counts = self.data["userID"].value_counts()
+        # find user IDs with more than 40 trials
         user_ids_to_keep = user_id_counts[user_id_counts <= 40].index
         self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(user_ids_to_keep)]
 
+        # find user IDs with specific configID to exclude
         user_ids_to_exclude = (
             self.data.loc[self.data["config_id"] == 242, "userID"].unique()
             )
         user_ids_to_keep = [uid for uid in self.data["userID"].unique() if uid not in user_ids_to_exclude]
         self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(user_ids_to_keep)]
 
-        #self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] < 5000]
-
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["rational_catchTrials"] > 0.5]
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["chosen_left_all"] < 0.95]
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["nb_incorrect_gain"] < 2] # exclude participants who failed 2 or more catch trials
 
         self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
 

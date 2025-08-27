@@ -56,11 +56,11 @@ class milkyWay:
         self.PM_data = self.data[self.data['trial_type'] == 'punish']
         
         #Take first attempt (i.e., not neccessarily run == 1 for PM)
-        #min_run_per_user = self.MW_data.groupby('userID')['run'].transform('min')
-        #self.MW_data = self.MW_data[self.MW_data['run'] == min_run_per_user].reset_index(drop=True)
+        min_run_per_user = self.MW_data.groupby('userID')['run'].transform('min')
+        self.MW_data = self.MW_data[self.MW_data['run'] == min_run_per_user].reset_index(drop=True)
         
-        #min_run_per_user = self.PM_data.groupby('userID')['run'].transform('min')
-        #self.PM_data = self.PM_data[self.PM_data['run'] == min_run_per_user].reset_index(drop=True)               
+        min_run_per_user = self.PM_data.groupby('userID')['run'].transform('min')
+        self.PM_data = self.PM_data[self.PM_data['run'] == min_run_per_user].reset_index(drop=True)               
 
         self.results_MW = pd.DataFrame()
         self.results_PM = pd.DataFrame()
@@ -68,6 +68,7 @@ class milkyWay:
 
         self.codebook = {
             "userID": "Unique identifier for each participant",
+            "n_trials": "Number of trials completed by the participant",
             "trial_type": "Type of trial (Milky Way or Pirate Market)",
             "day_of_week": "Day of the week when the trial was conducted",
             "time": "Time when the trial was conducted",
@@ -102,6 +103,12 @@ class milkyWay:
 
         Variables
         ----------
+        - userID: unique identifier for each participant
+        - n_trials: number of trials completed by the participant
+        - day_of_week: day of the week of the trial
+        - time: time of the trial
+        - time_of_day: time of day of the trial (morning, afternoon, evening
+        - trial_type: type of trial (Milky Way or Pirate Market)
         - mean_RT_MW: Mean reaction time for Milky Way trials
         - median_RT_MW: Median reaction time for Milky Way trials
         - mean_RT_PM: Mean reaction time for Pirate Market trials
@@ -129,6 +136,8 @@ class milkyWay:
 
             user_results_MW = {"userID": user_id}
 
+            user_results_MW["n_trials"] = len(user_data_MW)
+
             user_results_MW["trial_type"] = "Milky Way"
 
             date = user_data_MW["date"].iloc[0]
@@ -141,7 +150,8 @@ class milkyWay:
                 "morning" if date.hour < 12 else
                 "afternoon" if date.hour < 18 else
                 "evening" if date.hour < 24 else
-                "night"
+                "night" if date.hour < 6
+                else "-"
             )
 
             #user_results_MW["mean_RT_MW"] = np.mean(user_data_MW['rt_adj'])
@@ -176,6 +186,8 @@ class milkyWay:
         for user_id, user_data_PM in PM_data:
 
             user_results_PM = {"userID": user_id}
+
+            user_results_PM["n_trials"] = len(user_data_PM)
 
             user_results_PM["trial_type"] = "Pirate Market"
 
@@ -300,6 +312,20 @@ class milkyWay:
         
         self.deleted_participants_MW = nr_part_before_MW - len(pd.unique(self.cleanedresults_MW["userID"]))
         self.deleted_participants_PM = nr_part_before_PM - len(pd.unique(self.cleanedresults_PM["userID"]))
+
+        #Also clean the diff file by keeping only participants who are in both the cleanedresults_MW and in the cleanedresults_PM file
+        self.cleanedresults_diff = self.results_diff.copy()
+
+        nr_part_before_diff = len(self.results_diff["userID"].unique())
+
+        user_ids_MW = set(self.cleanedresults_MW["userID"].unique())         # Get userIDs from both cleaned datasets
+        user_ids_PM = set(self.cleanedresults_PM["userID"].unique())
+        valid_user_ids_diff = user_ids_MW.intersection(user_ids_PM)         # Keep only userIDs that are in both
+        self.cleanedresults_diff = self.cleanedresults_diff[self.cleanedresults_diff["userID"].isin(valid_user_ids_diff)]
+
+        self.deleted_participants_diff = nr_part_before_diff - len(self.cleanedresults_diff["userID"].unique())
+
+        return self.cleanedresults_MW, self.cleanedresults_PM, self.cleanedresults_diff
 
     def codebook(self):
         """

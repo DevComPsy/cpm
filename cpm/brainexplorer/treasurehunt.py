@@ -66,6 +66,7 @@ class treasurehunt:
 
         self.codebook = {
             "userID": "Unique identifier for each participant",
+            "n_trials": "Number of trials completed by the participant",
             "day_of_week": "Day of the week of the trial",
             "time": "Time of the trial",
             "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
@@ -74,7 +75,7 @@ class treasurehunt:
             "mean_n_draws": "Mean number of stimulus draws before making a decision",
             "sd_n_draws": "Standard deviation of the number of stimulus draws before making a decision",
             "median_RT_between_actions": "Median reaction time between actions",
-            "median_confidenceRT": "Median confidence reaction time across all trials"
+            "median_confidenceRT": "Median confidence reaction time across all trials",
             "unique_draws": "Number of unique values in number of draws"
         }
 
@@ -89,6 +90,7 @@ class treasurehunt:
         Variables
         ----------
         - userID: unique identifier for each participant
+        - n_trials: number of trials completed by the participant
         - day_of_week: day of the week of the trial
         - time: time of the trial
         - time_of_day: time of day of the trial (morning, afternoon, evening
@@ -111,6 +113,8 @@ class treasurehunt:
 
             user_results = {"userID": user_id}
 
+            user_results["n_trials"] = len(user_data)
+
             date = user_data["date"].iloc[0]
             if isinstance(date, str):
                 date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
@@ -121,7 +125,8 @@ class treasurehunt:
                 "morning" if date.hour < 12 else
                 "afternoon" if date.hour < 18 else
                 "evening" if date.hour < 24 else
-                "night"
+                "night" if date.hour < 6 else
+                "-"
             )
 
             user_results["mean_points"] = np.nanmean(user_data["outcome"])   
@@ -221,6 +226,8 @@ class treasurehunt:
         self.cleanedresults = self.cleanedresults[self.cleanedresults["unique_draws"] >= 3] # only keep participants with at least 3 unique values in number of draws
 
         self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
+
+        return self.cleanedresults
 
     def codebook(self):
         """

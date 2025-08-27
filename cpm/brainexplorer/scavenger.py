@@ -68,6 +68,7 @@ class Scavenger:
         self.group_results = pd.DataFrame()
         self.codebook = {
                 "userID": "Unique identifier for each participant",
+                "n_trials": "Number of trials completed by the participant",
                 "day_of_week": "Day of the week of the trial",
                 "time": "Time of the trial",
                 "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
@@ -139,6 +140,7 @@ class Scavenger:
         Variables
         ----------
         - userID: Unique identifier for each participant,
+        - n_trials: Number of trials completed by the participant,
         - day_of_week: Day of the week of the trial,
         - time: Time of the trial,
         - time_of_day: Time of day of the trial (morning, afternoon, evening, night),
@@ -231,6 +233,8 @@ class Scavenger:
 
             user_results = {"userID": user_id}
 
+            user_results["n_trials"] = len(user_data)
+
             date = user_data["date"].iloc[0]
             if isinstance(date, str):
                 date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
@@ -241,7 +245,8 @@ class Scavenger:
                 "morning" if date.hour < 12 else
                 "afternoon" if date.hour < 18 else
                 "evening" if date.hour < 24 else
-                "night"
+                "night" if date.hour < 6 else
+                "-"
             )
 
 
@@ -250,12 +255,32 @@ class Scavenger:
             # mediean RT for each condition
             user_results["median_RT_safe"] = np.nanmedian(user_data[rsk == 0]["RT"])
             user_results["median_RT_risky"] = np.nanmedian(user_data[rsk == 1]["RT"])
+            user_results["median_RT_win"] = np.nanmedian(user_data[~t_loss]["RT"])
+            user_results["median_RT_loss"] = np.nanmedian(user_data[t_loss]["RT"])
             user_results["median_RT_ambg"] = np.nanmedian(user_data[t_abg]["RT"])
             user_results["median_RT_NoAmbg"] = np.nanmedian(user_data[~t_abg]["RT"])
-            user_results["median_RT_safe_ambg"] = np.nanmedian(user_data[t_abg & (rsk == 0)]["RT"])
-            user_results["median_RT_safe_NoAmbg"] = np.nanmedian(user_data[~t_abg & (rsk == 0)]["RT"])
-            user_results["median_RT_risky_ambg"] = np.nanmedian(user_data[t_abg & (rsk == 1)]["RT"])
-            user_results["median_RT_risky_NoAmbg"] = np.nanmedian(user_data[~t_abg & (rsk == 1)]["RT"])
+            user_results["median_RT_win_ambg"] = np.nanmedian(user_data[~t_loss & t_abg]["RT"])
+            user_results["median_RT_win_NoAmbg"] = np.nanmedian(user_data[~t_loss & ~t_abg]["RT"])
+            user_results["median_RT_loss_ambg"] = np.nanmedian(user_data[t_loss & t_abg]["RT"])
+            user_results["median_RT_loss_NoAmbg"] = np.nanmedian(user_data[t_loss & ~t_abg]["RT"])
+            user_results["diff_RT_win_amg_win_noAmbg"] = (
+                user_results["median_RT_win_ambg"] - user_results["median_RT_win_NoAmbg"]
+            )
+            user_results["diff_RT_loss_amg_loss_noAmbg"] = (
+                user_results["median_RT_loss_ambg"] - user_results["median_RT_loss_NoAmbg"]
+            )
+            user_results["diff_RT_win_loss_ambg"] = (
+                user_results["median_RT_win_ambg"] - user_results["median_RT_loss_ambg"]
+            )
+            user_results["diff_RT_win_loss_noAmbg"] = (
+                user_results["median_RT_win_NoAmbg"] - user_results["median_RT_loss_NoAmbg"]
+            )
+            user_results["diff_RT_win_ambg_loss_noAmbg"] = (
+                user_results["median_RT_win_ambg"] - user_results["median_RT_loss_NoAmbg"]
+            )
+            user_results["diff_RT_loss_ambg_win_noAmbg"] = (
+                user_results["median_RT_loss_ambg"] - user_results["median_RT_win_NoAmbg"]
+            )
 
             user_results["total_rewards"] = np.sum(user_data["outcome"])
             user_results["mean_points"] = np.nanmean(user_data["outcome"])
@@ -268,11 +293,30 @@ class Scavenger:
             user_results["mean_points_ambg"] = np.nanmean(user_data[t_abg]["outcome"])
             user_results["mean_points_NoAmbg"] = np.nanmean(user_data[~t_abg]["outcome"])
 
-            # mean points for risky and safe choices in ambiguous and non-ambiguous trials
-            user_results["mean_points_safe_ambg"] = np.nanmean(user_data[t_abg & (rsk == 0)]["outcome"])
-            user_results["mean_points_safe_NoAmbg"] = np.nanmean(user_data[~t_abg & (rsk == 0)]["outcome"])
-            user_results["mean_points_risky_ambg"] = np.nanmean(user_data[t_abg & (rsk == 1)]["outcome"])
-            user_results["mean_points_risky_NoAmbg"] = np.nanmean(user_data[~t_abg & (rsk == 1)]["outcome"])
+            # mean points for win and loss trials in ambigous and non-ambiguous trials
+            user_results["mean_points_win_ambg"] = np.nanmean(user_data[~t_loss & t_abg]["outcome"])
+            user_results["mean_points_win_NoAmbg"] = np.nanmean(user_data[~t_loss & ~t_abg]["outcome"])
+            user_results["mean_points_loss_ambg"] = np.nanmean(user_data[t_loss & t_abg]["outcome"])
+            user_results["mean_points_loss_NoAmbg"] = np.nanmean(user_data[t_loss & ~t_abg]["outcome"])
+            user_results["diff_points_win_amg_win_noAmbg"] = (
+                user_results["mean_points_win_ambg"] - user_results["mean_points_win_NoAmbg"]
+            )
+            user_results["diff_points_loss_amg_loss_noAmbg"] = (
+                user_results["mean_points_loss_ambg"] - user_results["mean_points_loss_NoAmbg"]
+            )
+            user_results["diff_points_win_loss_ambg"] = (
+                user_results["mean_points_win_ambg"] - user_results["mean_points_loss_ambg"]
+            )
+            user_results["diff_points_win_loss_noAmbg"] = (
+                user_results["mean_points_win_NoAmbg"] - user_results["mean_points_loss_NoAmbg"]
+            )
+            user_results["diff_points_win_ambg_loss_noAmbg"] = (
+                user_results["mean_points_win_ambg"] - user_results["mean_points_loss_NoAmbg"]
+            )
+            user_results["diff_points_loss_ambg_win_noAmbg"] = (
+                user_results["mean_points_loss_ambg"] - user_results["mean_points_win_NoAmbg"]
+            ) 
+                                                                
 
             # choice stickiness      
             user_results["choice_stickiness"] = np.sum(user_data["chosen"].iloc[i] == 1 and user_data["chosen"].iloc[i + 1] == 1 
@@ -286,10 +330,12 @@ class Scavenger:
             user_results["loss_risk"] = np.sum(rsk[t_loss]) / np.sum(t_loss)
             user_results["diff_loss_win_risk"] = user_results["loss_risk"] - user_results["win_risk"]
 
+            # Number of risky choices in ambiguous and non-ambiguous trials
             user_results["risk_Ambg"] = np.sum(rsk[t_abg]) / np.sum(t_abg)
             user_results["risk_NoAmbg"] = np.sum(rsk[~t_abg]) / np.sum(~t_abg)
             user_results["diff_Ambg_NoAmbg_risk"] = user_results["risk_Ambg"] - user_results["risk_NoAmbg"]
 
+            # Number of risky choices in ambiguous and non-ambiguous trials for wins and losses
             user_results["win_risk_abg"] = np.sum(rsk[~t_loss & t_abg]) / np.sum(~t_loss & t_abg)
             user_results["win_risk_NoAbg"] = np.sum(rsk[~t_loss & ~t_abg]) / np.sum(~t_loss & ~t_abg)
             user_results["loss_risk_abg"] = np.sum(rsk[t_loss & t_abg]) / np.sum(t_loss & t_abg)
@@ -306,6 +352,12 @@ class Scavenger:
             user_results["diff_NoAmbg_win_loss_risk"] = (
                 user_results["win_risk_NoAbg"] - user_results["loss_risk_NoAbg"]
             )
+            user_results["diff_amg_win_nonAmg_loss_risk"] = (
+                user_results["win_risk_abg"] - user_results["loss_risk_NoAbg"]
+            )
+            user_results["diff_amg_loss_nonAmg_win_risk"] = (
+                user_results["loss_risk_abg"] - user_results["win_risk_NoAbg"]
+            )   
 
             # Number of rational choices
             user_results["rational_all"] = np.nanmean(ev_diff_chosen >= 0)
@@ -340,6 +392,12 @@ class Scavenger:
             )
             user_results["diff_rational_NoAmbg_win_loss"] = (
                 user_results["rational_win_NoAbg"] - user_results["rational_loss_NoAbg"]
+            )
+            user_results["diff_rational_Ambg_win_NoAmbg_loss"] = (
+                user_results["rational_win_abg"] - user_results["rational_loss_NoAbg"]
+            )
+            user_results["diff_rational_Ambg_loss_NoAmbg_win"] = (
+                user_results["rational_loss_abg"] - user_results["rational_win_NoAbg"]
             )
 
             # rational choices in safe and risky trials
@@ -438,6 +496,8 @@ class Scavenger:
         self.cleanedresults = self.cleanedresults[self.cleanedresults["nb_incorrect_gain"] < 2] # exclude participants who failed 2 or more catch trials
 
         self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
+
+        return self.cleanedresults
 
     def codebook(self):
         """

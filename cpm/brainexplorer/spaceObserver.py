@@ -62,22 +62,23 @@ class spaceObserver:
         ## read data
         self.data = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
 
-        self.data = self.data[self.data["run"] != 1]  # exclude practice trials
+        self.data = self.data[self.data["run"] == 1]  # exclude attempts after the first one
         self.data = self.data[self.data["choiceRT"] >= 150]  # only keep trials with reaction time > 150 ms
         self.data = self.data[self.data["choiceRT"] <= 10000]  # only keep trials with reaction time < 10000 ms
         self.data = self.data[self.data["confidenceRT"] >= 150]  # only keep trials with confidence reaction time > 150 ms
         self.data = self.data[self.data["confidenceRT"] <= 10000]  # only keep trials with confidence reaction time < 10000 ms
-        self.data = self.data[self.data["confidence"].notna()]  # only keep trials with confidence data
-        
+    
         self.data["confidence"] = self.data["confidence"].replace(
             ["NaN", "nan", "NAN", ""], pd.NA
         )
+        self.data = self.data[self.data["confidence"].notna()]  # only keep trials with confidence data because trials without confidence data are practice trials
 
         self.data["confidence"] = pd.to_numeric(self.data["confidence"], errors='coerce')
 
         self.results = pd.DataFrame()
         self.codebook = {
             "userID": "Unique identifier for each participant",
+            "n_trials": "Number of trials completed by the participant",
             "day_of_week": "Day of the week of the trial",
             "time": "Time of the trial",
             "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
@@ -123,6 +124,7 @@ class spaceObserver:
         Variables
         ---------
         - userID: unique identifier for each participant
+        - n_trials: number of trials completed by the participant
         - day_of_week: day of the week of the trial
         - time: time of the trial
         - time_of_day: time of day of the trial (morning, afternoon, evening, night)
@@ -164,8 +166,7 @@ class spaceObserver:
 
             user_results = {"userID": user_id}
 
-
-            user_results = {"userID": user_id}
+            user_results["n_trials"] = len(user_data)
 
             date = user_data["date"].iloc[0]
             if isinstance(date, str):
@@ -178,16 +179,17 @@ class spaceObserver:
                 "morning" if date.hour < 12 else
                 "afternoon" if date.hour < 18 else
                 "evening" if date.hour < 24 else
-                "night"
+                "night" if date.hour < 6 else
+                "-"
             )
 
-            user_results["accuracy"] = np.mean(user_data["accuracy"])
+            user_results["accuracy"] = np.nanmean(user_data["accuracy"])
 
-            user_results["mean_RT"] = np.mean(user_data["choiceRT"])
-            user_results["median_RT"] = np.median(user_data["choiceRT"])
+            user_results["mean_RT"] = np.nanmean(user_data["choiceRT"])
+            user_results["median_RT"] = np.nanmedian(user_data["choiceRT"])
             # different RT for correct and incorrect trials
-            user_results["median_RT_correct"] = np.median(user_data["choiceRT"][user_data["accuracy"] == 1])
-            user_results["median_RT_incorrect"] = np.median(user_data["choiceRT"][user_data["accuracy"] != 1])
+            user_results["median_RT_correct"] = np.nanmedian(user_data["choiceRT"][user_data["accuracy"] == 1])
+            user_results["median_RT_incorrect"] = np.nanmedian(user_data["choiceRT"][user_data["accuracy"] != 1])
             user_results["diff_median_RT_correct_incorrect"] = (
                 user_results["median_RT_correct"] - user_results["median_RT_incorrect"]
             )
@@ -196,10 +198,10 @@ class spaceObserver:
             user_results["sd_confidence"] = np.nanstd(user_data["confidence"])
             user_results["median_confidence"] = np.nanmedian(user_data["confidence"])
             # confidence difference for correct and incorrect trials    
-            user_results["median_confidence_correct"] = np.nanmedian(user_data["confidence"][user_data["accuracy"] == 1])
-            user_results["median_confidence_incorrect"] = np.nanmedian(user_data["confidence"][user_data["accuracy"] != 1])
+            user_results["mean_confidence_correct"] = np.nanmean(user_data["confidence"][user_data["accuracy"] == 1])
+            user_results["mean_confidence_incorrect"] = np.nanmean(user_data["confidence"][user_data["accuracy"] != 1])
             user_results["diff_median_conf_correct_incorrect"] = (
-                user_results["median_confidence_correct"] - user_results["median_confidence_incorrect"]
+                user_results["mean_confidence_correct"] - user_results["mean_confidence_incorrect"]
             )
             # standard deviation of confidence for correct and incorrect trials
             user_results["sd_confidence_correct"] = np.nanstd(user_data["confidence"][user_data["accuracy"] == 1])
@@ -280,10 +282,10 @@ class spaceObserver:
         self.cleanedresults = self.results.copy()
 
         # exclude participants who have more than 80 trials with run == 1
-        users_80trials = self.cleanedresults.groupby("userID").filter(lambda x: len(x) >= 80)["userID"].unique()
+        users_80trials = self.data.groupby("userID").filter(lambda x: len(x) <= 80)["userID"].unique()
         self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(users_80trials)]
 
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_accuracy"] >= 0.5] # only keep participants with mean accuracy >= 50%
+        self.cleanedresults = self.cleanedresults[self.cleanedresults["accuracy"] >= 0.5] # only keep participants with mean accuracy >= 50%
         self.cleanedresults = self.cleanedresults[self.cleanedresults["median_RT"] <= 3000] # only keep participants with median reaction time <= 3000 ms
         self.cleanedresults = self.cleanedresults[self.cleanedresults["median_confidenceRT"] <= 3000] # only keep participants with median confidence reaction time <= 3000 ms
         self.cleanedresults = self.cleanedresults[self.cleanedresults["median_ES"] <= 25] # only keep participants with median evidence strength <= 25
@@ -292,10 +294,13 @@ class spaceObserver:
 
         # exclude if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
         self.cleanedresults = self.cleanedresults[~(
-            (self.cleanedresults["confidence_10"] == self.cleanedresults["confidence_25"]) & self.cleanedresults["confidence_75"] == self.cleanedresults["confidence_90"]   
+            (self.cleanedresults["confidence_10"] == self.cleanedresults["confidence_25"]) & 
+            (self.cleanedresults["confidence_75"] == self.cleanedresults["confidence_90"])   
         )]
 
         self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
+
+        return self.cleanedresults
 
     def codebook(self):
         """

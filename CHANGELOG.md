@@ -5,7 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.23.18] - 2025-09-03
+
+### Added
+
+- Add input validation and error handling in all `cpm.optimisation.minimise` methods
+- Add test units for `cpm.optimisation.minimise`
+- Added three models based on Prospect Theory: `cpm.applications.decision_making.PTSM`, `cpm.applications.decision_making.PTSM1992`, and `cpm.applications.decision_making.PTSM2025`
+- The `cpm.generators.Parameters` class now supports None-type parameters, allowing for more flexible model configurations
+- The `cpm.generators.Parameters` class now supports the use of user-defined functions as attributes in addition to freely-varying parameters
+- Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset
+- Expanded `cpm.models.activation.ProspectUtility` class to include additional parameters for more flexible modeling of decision-making under risk, more closely approximating Tversky & Kahneman's (1992) version of Prospect Theory
+
+### Fixed
+
+- Fix `simulation_export` function to handle DataFrame output correctly
+- Fix `detailed_pandas_compiler` function to support new numpy versions
+- Fix probability adjustements in `cpm.optimisation.minimise.LogLikelihood` method to ensure correct parameter estimates
+
+### Changed
+
+- Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
+
+## [0.23.7] - 2025-07-02
 
 ### Added
 
@@ -18,13 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add meta-_d_ to applications
 - Provide utility functions for data preprocessing with meta-_d_ type models
 - Introduce new likelihoods (`multinomial` and `product`)
-- Add input validation and error handling in all `cpm.optimisation.minimise` methods
-- Add test units for `cpm.optimisation.minimise`
-- Added three models based on Prospect Theory: `cpm.applications.decision_making.PTSM`, `cpm.applications.decision_making.PTSM1992`, and `cpm.applications.decision_making.PTSM2025`
-- The `cpm.generators.Parameters` class now supports None-type parameters, allowing for more flexible model configurations
-- The `cpm.generators.Parameters` class now supports the use of user-defined functions as attributes in addition to freely-varying parameters
-- Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset
-- Expanded `cpm.models.activation.ProspectUtility` class to include additional parameters for more flexible modeling of decision-making under risk, more closely approximating Tversky & Kahneman's (1992) version of Prospect Theory
 
 ### Fixed
 
@@ -36,9 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix tests by updating ProspectUtility parameters in tests to reflect changes in constructor
 - Fix wrong probability adjustments in `cpm.optimisation.minimise.LogLikelihood` method causing strange parameter estimates
 - Fix Issue [#55](https://github.com/DevComPsy/cpm/issues/55): AttributeError: np.float_ was removed in NumPy 2.0 during export
-- Fix `simulation_export` function to handle DataFrame output correctly
-- Fix `detailed_pandas_compiler` function to support new numpy versions
-- Fix probability adjustements in `cpm.optimisation.minimise.LogLikelihood` method to ensure correct parameter estimates
 
 ### Changed
 
@@ -46,7 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix column names in `cpm.applications.signal_detection.EstimatordMetaD` class
 - Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
 - Fix column name issues in `cpm.applications.signal_detection.EstimatordMetaD` class
-- Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
 
 ### Changed
 

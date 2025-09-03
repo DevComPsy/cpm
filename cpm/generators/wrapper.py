@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 import pickle as pkl
+import warnings
 
 ## import local modules
 from .parameters import Parameters, Value
@@ -56,6 +57,16 @@ class Wrapper:
 
         self.__run__ = False
         self.__init_parameters__ = copy.deepcopy(parameters)
+
+        if isinstance(self.data, pd.DataFrame):
+            self.has_observed = "observed" in self.data.columns
+        elif isinstance(self.data, dict):
+            self.has_observed = "observed" in self.data
+        else:
+            self.has_observed = False
+
+        if not self.has_observed:
+            warnings.warn("The data does not contain an 'observed' column.")
 
     def run(self):
         """
@@ -215,6 +226,8 @@ class Wrapper:
         """
         if loss is None:
             raise ValueError("Loss function must be provided.")
+        if self.has_observed is False:
+            raise ValueError("Data must contain an 'observed' column to compute loss.")
         observed = self.data.observed.to_numpy()
         def parser(pars):
             return objective(

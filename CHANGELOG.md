@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Introduce a third-party connector for the `cpm.generators.Wrapper` class to facilitate integration with external optimisation procedures
 - Add validation for 'observed' column in Wrapper class to ensure it exists before running model or computing loss
 - Add warnings to inform users if 'observed' column is missing in the data provided to Wrapper class
 

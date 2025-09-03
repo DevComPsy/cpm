@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add validation for 'observed' column in Wrapper class to ensure it exists before running model or computing loss
 - Add warnings to inform users if 'observed' column is missing in the data provided to Wrapper class
 
+### Changed
+
+- Update `cpm.applications.reinforcement_learning.RLRW` class to use `numpy.asarray` for the `values` parameter, ensuring compatibility with numpy=>2.0
+- Increased bandit task dataset size
+- Update test units for `cpm.applications.reinforcement_learning.RLRW` to include handling of new changes, such as using `numpy.asarray` for `values` and adding an 'observed' column in the test dataset
+
 ## [0.23.18] - 2025-09-03
 
 ### Added

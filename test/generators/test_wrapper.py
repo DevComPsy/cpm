@@ -82,12 +82,15 @@ def test_connector_raises_without_loss():
     with pytest.raises(ValueError):
         wrapper.connector()
 
-def test_run_raises_without_observed():
+def test_run_warning_without_observed():
     df = pd.DataFrame({"stimulus": [1, 2, 3], "step": [1, 2, 3]})  # No 'observed' column
     parameters = Parameters(alpha=Value(0.1))
-    wrapper = Wrapper(model=dummy_model, data=df, parameters=parameters)
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning, match="The data does not contain an 'observed' column."):
+        wrapper = Wrapper(model=dummy_model, data=df, parameters=parameters)
         wrapper.run()
+    with pytest.raises(ValueError, match="Data must contain an 'observed' column to compute loss."):
+        wrapper = Wrapper(model=dummy_model, data=df, parameters=parameters)
+        wrapper.connector(loss=dummy_loss)
 
 if __name__ == "__main__":
     pytest.main()

@@ -1,8 +1,60 @@
-from scipy.stats import norm, bernoulli
+from scipy.stats import norm, bernoulli, multinomial
 import numpy as np
 
 __all__ = ["LogLikelihood", "Bayesian", "CrossEntropy"]
 
+
+def check_nan_and_bounds_in_input(predicted, observed):
+    """
+    Check if predicted or observed values contain NaN, Inf, nothing, and also check for shape mismatching.
+    Accepts array-like inputs.
+    If any of the above is found, raise an error with details.
+    Returns squeezed arrays for shape compatibility.
+    """
+    if predicted is None or observed is None:
+        raise ValueError("Predicted and observed values must not be None.")
+
+    if not isinstance(predicted, (np.ndarray, list)) or not isinstance(observed, (np.ndarray, list)):
+        raise TypeError("Predicted and observed values must be array-like (numpy.ndarray or list).")
+    predicted = np.asarray(predicted)
+    predicted = np.asarray(predicted)
+    observed = np.asarray(observed)
+    if predicted.size == 0:
+        raise ValueError("Model output must not be empty.")
+    if observed.size == 0:
+        raise ValueError("Observed values must not be empty.")
+    predicted_s = np.squeeze(predicted)
+    observed_s = np.squeeze(observed)
+    if np.any(np.isnan(predicted_s)):
+        idx = np.where(np.isnan(predicted_s))
+        raise ValueError(f"Predicted values contain NaN at indices {idx}.")
+    if np.any(np.isnan(observed_s)):
+        idx = np.where(np.isnan(observed_s))
+        raise ValueError(f"Observed values contain NaN at indices {idx}.")
+    if np.any(np.isinf(predicted_s)):
+        idx = np.where(np.isinf(predicted_s))
+        raise ValueError(f"Predicted values contain Inf at indices {idx}.")
+    if np.any(np.isinf(observed_s)):
+        idx = np.where(np.isinf(observed_s))
+        raise ValueError(f"Observed values contain Inf at indices {idx}.")
+    if predicted_s.shape != observed_s.shape:
+        raise ValueError(f"Shape mismatch: predicted shape {predicted.shape} (squeezed {predicted_s.shape}) does not match observed shape {observed.shape} (squeezed {observed_s.shape}).")
+    return predicted_s, observed_s
+
+def check_nan_bounds_in_log(value, bound=-1e100):
+    """
+    Check if the value is NaN, Inf, or out of bounds, and then replace it with a bound value.
+
+    Parameters
+    ----------
+    value : array-like
+        The value(s) to check.
+    bound : float, optional
+        The value to exchange NaN, Inf, and out-of-bounds with, by default -1e100.
+    """
+    output = np.asarray(value, copy=True)
+    output = np.nan_to_num(output, copy=False, nan=bound, posinf=bound, neginf=bound)
+    return output
 
 # Define your custom objective function
 class LogLikelihood:
@@ -10,6 +62,7 @@ class LogLikelihood:
     def __init__(self) -> None:
         pass
 
+    @staticmethod
     def categorical(predicted=None, observed=None, negative=True, **kwargs):
         """
         Compute the log likelihood of the predicted values given the observed values for categorical data.
@@ -46,20 +99,21 @@ class LogLikelihood:
         >>> LogLikelihood.categorical(predicted, observed)
         1.7350011354094463
         """
-        observed_format = np.apply_along_axis(
-            lambda x: np.eye(observed.max() + 1)[x], 0, observed
-        )
-        observed_format = np.concatenate(observed_format, axis=0).reshape(-1, 2)
-        values = np.array(predicted * observed_format).flatten()
-        values = values[values != 0]
-        values = values.sum(axis=1)
-        np.clip(values, 1e-100, 1 - 1e-100, out=values)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
+        bound = -1e100
+        values = np.array(predicted * observed).flatten()
+        values = values[observed.flatten() != 0]
+        ## bump up the probabilities to avoid log(0)
+        np.clip(values, 1e-10, 1 - 1e-10, out=values)
+        LL = np.log(values)
+        LL = check_nan_bounds_in_log(LL, bound=bound)
         # Compute the negative log likelihood
-        LL = np.sum(np.log(values))
+        LL = np.sum(LL)
         if negative:
             LL = -1 * LL
         return LL
 
+    @staticmethod
     def bernoulli(predicted=None, observed=None, negative=True, **kwargs):
         """
         Compute the log likelihood of the predicted values given the observed values for Bernoulli data.
@@ -98,19 +152,20 @@ class LogLikelihood:
         1.7350011354094463
 
         """
-        limit = np.log(1e-200)
-        bound = np.finfo(np.float64).min
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
+        bound = -1e100
         probabilities = predicted.flatten()
-        np.clip(probabilities, 1e-100, 1 - 1e-100, out=probabilities)
+        ## bump up the probabilities to avoid log(0)
+        np.clip(probabilities, 1e-10, 1 - 1e-10, out=probabilities)
 
         LL = bernoulli.logpmf(k=observed.flatten(), p=probabilities)
-        LL[np.isnan(LL)] = -np.inf
-        LL[LL < bound] = limit  # Set the lower bound to avoid overflow
+        LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)
         if negative:
             LL = -1 * LL
         return LL
 
+    @staticmethod
     def continuous(predicted, observed, negative=True, **kwargs):
         """
         Compute the log likelihood of the predicted values given the observed values for continuous data.
@@ -137,12 +192,17 @@ class LogLikelihood:
         >>> LogLikelihood.continuous(predicted, observed)
         1.7350011354094463
         """
-        LL = np.sum(norm.logpdf(predicted, observed, 1))
-        LL[np.isnan(LL)] = -np.inf
+
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
+        bound = -1e100
+        LL = norm.logpdf(predicted, observed, 1)
+        LL = check_nan_bounds_in_log(LL, bound=bound)
+        LL = np.sum(LL)
         if negative:
             LL = -1 * LL
         return LL
 
+    @staticmethod
     def multinomial(predicted, observed, negative=True, clip=1e-10, **kwargs):
         """
         Compute the log likelihood of the predicted values given the observed values for multinomial data.
@@ -172,32 +232,19 @@ class LogLikelihood:
         >>> print("Log Likelihood (multinomial):", ll)
         Log Likelihood (multinomial): 4.596597454123483
         """
-        if isinstance(observed, np.ndarray) and len(observed) == 1:
-            observed = np.array(observed[0], dtype=float)
-        else:
-            observed = np.array(observed, dtype=float)
-        predicted, observed = np.squeeze(predicted), np.squeeze(observed)
-        if predicted.shape != observed.shape:
-            raise ValueError("The predicted and observed values must have the same shape.")
-        if not np.allclose(predicted.sum(axis=-1), 1):
-            raise ValueError("The predicted values must sum to 1 within a tolerance.")
-        predicted = np.clip(predicted, clip, np.inf)  # Avoid log(0)
-        predicted = predicted / predicted.sum(axis=-1, keepdims=True)
-        LL = np.sum(
-            [
-                multinomial.logpmf(observed[i], n=observed[i].sum(), p=predicted[i])
-                for i in range(observed.shape[0])
-            ]
-        )
-        LL[np.isnan(LL)] = -np.inf
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
+        bound = -1e100
+        LL = multinomial.logpmf(observed, n=np.sum(observed, axis=-1), p=predicted)
+        LL = check_nan_bounds_in_log(LL, bound=bound)
+        LL = np.sum(LL)
         if negative:
             LL = -1 * LL
         return LL
 
+    @staticmethod
     def product(predicted, observed, negative=True, clip=1e-10, **kwargs):
         """
-        Compute the log likelihood of the predicted values given the observed values for continuous data,
-        according to the following equation:
+        Compute the log likelihood of the predicted values given the observed values for continuous data, according to the following equation:
 
             likelihood = sum(observed * log(predicted))
 
@@ -226,14 +273,12 @@ class LogLikelihood:
         >>> print("Log Likelihood :", ll_float)
         Log Likelihood : 18.314715666079106
         """
-        limit = np.log(1e-200)
-        bound = np.finfo(np.float64).min
-        predicted, observed = np.squeeze(predicted), np.squeeze(observed)
-        predicted = np.clip(predicted, clip, np.inf)  # Avoid log(0)
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
+
+        bound = -1e100
+        np.clip(predicted, 1e-10, 1 - 1e-10, out=predicted)
         LL = observed.flatten() * np.log(predicted.flatten())
-        ## swap NA with -Inf
-        LL[np.isnan(LL)] = -np.inf
-        LL[LL < bound] = limit  # Set the lower bound to avoid overflow
+        LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)
         if negative:
             LL = -1 * LL
@@ -245,6 +290,7 @@ class Distance:
     def __init__(self):
         pass
 
+    @staticmethod
     def SSE(predicted, observed, **kwargs):
         """
         Compute the sum of squared errors (SSE).
@@ -261,10 +307,12 @@ class Distance:
         float
             The sum of squared errors.
         """
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         sse = np.sum((predicted.flatten() - observed.flatten()) ** 2)
-        sse[np.isnan(sse)] = np.inf  # Handle NaN values
+        sse = np.float64(sse)  # Ensure the result is a float
         return sse
 
+    @staticmethod
     def MSE(predicted, observed, **kwargs):
         """
         Compute the Mean Squared Errors (EDE).
@@ -281,10 +329,11 @@ class Distance:
         float
             The Euclidean distance.
         """
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         euclidean = np.mean((predicted.flatten() - observed.flatten()) ** 2)
-        euclidean[np.isnan(euclidean)] = np.inf  # Handle NaN values
         return euclidean
 
+    @staticmethod
     def RMSE(predicted, observed, **kwargs):
         """
         Compute the Root Mean Squared Errors (RMSE).
@@ -301,17 +350,16 @@ class Distance:
         float
             The Root Mean Squared Errors.
         """
-        shape = predicted.shape
-        n=1
-        n *= [shape[i] for i in range(len(shape))]
-        rmse = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2)/n)
-        rmse[np.isnan(rmse)] = np.inf
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
+        rmse = np.sqrt(np.mean((predicted.flatten() - observed.flatten()) ** 2))
+        return rmse
 
 class Discrete:
 
     def __init__(self) -> None:
         pass
 
+    @staticmethod
     def ChiSquare(predicted, observed, **kwargs):
         """
         Compute the Chi-Square statistic.
@@ -328,13 +376,14 @@ class Discrete:
         float
             The Chi-Square statistic.
         """
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         predicted = np.array(predicted, dtype=float)
         observed = np.array(observed, dtype=float)
         chi_square = ((observed - (np.sum(observed) * predicted)) ** 2 / (np.sum(observed) * predicted))
         chi_square = np.sum(chi_square)
-        chi_square[np.isnan(chi_square)] = np.inf
         return chi_square
 
+    @staticmethod
     def G2(predicted, observed, **kwargs):
         """
         Compute the G2 statistic.
@@ -351,10 +400,10 @@ class Discrete:
         float
             The G2 statistic.
         """
+        predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         predicted = np.array(predicted, dtype=float)
         observed = np.array(observed, dtype=float)
         g2 = 2 * np.sum(observed * np.log(observed / (np.sum(observed) * predicted)))
-        g2[np.isnan(g2)] = np.inf
         return g2
 
 class Bayesian:
@@ -362,7 +411,8 @@ class Bayesian:
     def __init__(self) -> None:
         pass
 
-    def BIC(likelihood, n, k, **kwargs):
+    @staticmethod
+    def BIC(likelihood: float, n: int, k: int, **kwargs) -> float:
         """
         Calculate the Bayesian Information Criterion (BIC).
 
@@ -380,10 +430,17 @@ class Bayesian:
         float
             The BIC value.
         """
+        if n <= 0:
+            raise ValueError("Number of data points (n) must be greater than 0.")
+        if k < 0:
+            raise ValueError("Number of parameters (k) must be non-negative.")
+        if not isinstance(likelihood, (int, float)):
+            raise TypeError("Likelihood must be a numeric value.")
         bic = -2 * likelihood + k * np.log(n)
         return bic
 
-    def AIC(likelihood, n, k, **kwargs):
+    @staticmethod
+    def AIC(likelihood: float, n: int, k: int, **kwargs) -> float:
         """
         Calculate the Akaike Information Criterion (AIC).
 
@@ -401,6 +458,8 @@ class Bayesian:
         float
             The AIC value.
         """
+        if k < 0:
+            raise ValueError("Number of parameters (k) must be non-negative.")
         aic = -2 * likelihood + 2 * k
         return aic
 
@@ -421,5 +480,6 @@ def CrossEntropy(predicted, observed, **kwargs):
     float
         The cross entropy value.
     """
+    check_nan_and_bounds_in_input(predicted, observed)
     ce = np.sum(-observed * np.log(predicted) + (1 - observed) * np.log(1 - predicted))
     return ce

@@ -10,7 +10,7 @@ import ipyparallel as ipp  ## for parallel computing with ipython (specific for 
 class RLRW(Wrapper):
     """
     The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
-    The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019).
+    The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019), which largely corresponds to the model presented by Suttong & Barto (2021) in Chapter 14.
 
     Parameters
     ----------
@@ -40,6 +40,11 @@ class RLRW(Wrapper):
 
     Notes
     -----
+
+    The model implementation uses two parameters:
+    - alpha: the learning rate, which determines how much the model updates its values based on the prediction error.
+    - temperature: the inverse temperature, which determines the choice stochasticity -- how sensitive is the model to value differences.
+    
     Data must contain the following columns:
 
     - choice: the choice of the participant from the available options, starting from 0.
@@ -50,7 +55,7 @@ class RLRW(Wrapper):
 
     References
     ----------
-    Robert C Wilson Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.
+    Robert C Wilson & Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.
 
     """
 

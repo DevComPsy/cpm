@@ -12,6 +12,7 @@ readme = "README.md"
 authors = [
     { name = "Lenard Dome" },
     { name = "Frank Hezemans" },
+    { name = "Ben J. Wagner" },
     { name = "Andrew Webb" },
     { name = "Marc Carrera" },
     { name = "Tobias Hauser" }

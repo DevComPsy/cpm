@@ -41,7 +41,7 @@ class TestProspectUtility:
             [np.array([0.95, 0.05]), np.array([1])], dtype=object
         )
         self.prospect_utility = ProspectUtility(
-            magnitudes=self.vals, probabilities=self.probs, alpha_pos=0.85, beta=0.9
+            magnitudes=self.vals, probabilities=self.probs, alpha=0.85, gamma=0.9
         )
 
     def test_compute(self):

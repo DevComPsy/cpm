@@ -54,11 +54,12 @@ nav:
       - examples/fitting-hierarchical.ipynb
       - examples/hpc-example.ipynb
   - API Reference:
-      - cpm.generators: api/generators.md
+      - cpm.applications: api/applications.md
+      - cpm.datasets: api/datasets.md
       - cpm.models: api/models.md
+      - cpm.generators: api/generators.md
       - cpm.optimisation: api/optimisation.md
       - cpm.hierarchical: api/hierarchical.md
-      - cpm.applications: api/applications.md
       - cpm.utils: api/utils.md
 
 markdown_extensions:

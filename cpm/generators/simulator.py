@@ -144,14 +144,21 @@ class Simulator:
         ----------
         variable: str
             Name of the variable to pull out from model output.
-
         """
+        if not self.__run__:
+            raise ValueError("The simulation has not been run yet.")
+            
         append = []
-        for ppt in self.simulation:
-            one = {"observed": np.zeros((self.wrapper.__len__, 1))}
-            for k in range(self.wrapper.__len__):
-                one.get("observed")[k] = np.array([ppt[k].get(variable)])
+        # Group by participant
+        for ppt_id, ppt_data in self.simulation.groupby("ppt"):
+            # Get the length of trials for this participant
+            n_trials = len(ppt_data)
+            # Create the observation container
+            one = {"observed": np.zeros((n_trials, 1))}
+            # Extract the variable values for this participant
+            one["observed"][:, 0] = ppt_data[variable].values
             append.append(one)
+        
         self.generated = copy.deepcopy(append)
         return None
 
@@ -159,8 +166,9 @@ class Simulator:
         """
         Resets the simulation.
         """
-        self.simulation = []
+        self.simulation = pd.DataFrame()
         self.generated = []
+        self.__run__ = False
         return None
 
     def save(self, filename=None):

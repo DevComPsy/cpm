@@ -147,7 +147,7 @@ def detailed_pandas_compiler(details):
                 value = value.to_numpy().flatten()
             elif isinstance(value, dict):
                 value = pd.DataFrame(value).T
-            elif isinstance(value, (np.float64, np.int64, np.bool, int, float, str, bool)):
+            elif isinstance(value, (np.float64, np.int64, int, float, str, bool)):  #removed np.pool as this causes a bug with new numpy versions
                 value = np.array([value])
             else:
                 raise ValueError(

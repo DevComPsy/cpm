@@ -2,12 +2,13 @@ import numpy as np
 import pandas as pd
 import copy
 import pickle as pkl
+import warnings
 
 ## import local modules
 from .parameters import Parameters, Value
 from ..core.data import unpack_trials, determine_data_length
 from ..core.exports import simulation_export
-
+from ..core.optimisers import objective
 
 class Wrapper:
     """
@@ -56,6 +57,16 @@ class Wrapper:
 
         self.__run__ = False
         self.__init_parameters__ = copy.deepcopy(parameters)
+
+        if isinstance(self.data, pd.DataFrame):
+            self.has_observed = "observed" in self.data.columns
+        elif isinstance(self.data, dict):
+            self.has_observed = "observed" in self.data
+        else:
+            self.has_observed = False
+
+        if not self.has_observed:
+            warnings.warn("The data does not contain an 'observed' column.")
 
     def run(self):
         """
@@ -185,3 +196,46 @@ class Wrapper:
             filename = "simulation"
         pkl.dump(self, open(filename + ".pkl", "wb"))
         return None
+
+    def connector(self, loss=None, prior=False):
+        """
+        A method to connect the model to an objective function.
+        This method is used to create a parser function that can be used in third-party optimisation routine (e.g., scipy, pybads, genetic algorithms).
+
+        Parameters
+        ----------
+        loss : function
+            The loss function that is used to calculate the metric value. 
+        prior : bool, optional
+            If True, the prior distribution of the parameters is added to the metric value. Default is False.
+
+        Notes
+        -----
+        The `loss` function should take the following named arguments:
+            - `predicted`: The predicted values from the model.
+            - `observed`: The observed values from the data.
+
+        It should return a single numeric value representing the loss.
+
+
+        Returns
+        -------
+        parser : function
+            A function that takes a single argument `pars`, which is a one-dimensional array of parameters, where each element corresponds to the parameters as they were defined in the `cpm.generators.Parameters`.
+        
+        """
+        if loss is None:
+            raise ValueError("Loss function must be provided.")
+        if self.has_observed is False:
+            raise ValueError("Data must contain an 'observed' column to compute loss.")
+        observed = self.data.observed.to_numpy()
+        def parser(pars):
+            return objective(
+                pars,
+                function=self,
+                data=observed,
+                loss=loss,
+                prior=prior,
+            )
+
+        return parser

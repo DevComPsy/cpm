@@ -82,5 +82,12 @@ def test_connector_raises_without_loss():
     with pytest.raises(ValueError):
         wrapper.connector()
 
+def test_run_raises_without_observed():
+    df = pd.DataFrame({"stimulus": [1, 2, 3], "step": [1, 2, 3]})  # No 'observed' column
+    parameters = Parameters(alpha=Value(0.1))
+    wrapper = Wrapper(model=dummy_model, data=df, parameters=parameters)
+    with pytest.raises(ValueError):
+        wrapper.run()
+
 if __name__ == "__main__":
     pytest.main()

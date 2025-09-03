@@ -221,7 +221,7 @@ class Wrapper:
         Returns
         -------
         parser : function
-            A function that takes a single argument `pars`, which is a dictionary of parameters.
+            A function that takes a single argument `pars`, which is a one-dimensional array of parameters, where each element corresponds to the parameters as they were defined in the `cpm.generators.Parameters`.
         
         """
         if loss is None:

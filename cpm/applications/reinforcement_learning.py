@@ -89,7 +89,7 @@ class RLRW(Wrapper):
             # pull out the parameters
             alpha = parameters.alpha
             temperature = parameters.temperature
-            values = numpy.asarray(parameters.values, copy=True)
+            values = numpy.asarray(parameters.values).copy()
             ## first we get the bandits and their corresponding stimulus identifier
             arm_names = [
                 col for col in trial.index if "arm" in col
@@ -143,9 +143,9 @@ class RLRW(Wrapper):
             output = {
                 "policy": response.policies,  # policies
                 "reward": teacher,  # reward of the chosen action
-                "values": values,  # updated values
+                "values": values.copy(),  # updated values
                 "change": update.weights,  # change in the values - prediction error
-                "dependent": numpy.array(
+                "dependent": numpy.asarray(
                     [response.policies[1]]
                 ),  # dependent variable P(choosing the right | stimuli on right)
             }

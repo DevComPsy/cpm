@@ -89,7 +89,7 @@ class RLRW(Wrapper):
             # pull out the parameters
             alpha = parameters.alpha
             temperature = parameters.temperature
-            values = numpy.asarray(parameters.values)
+            values = numpy.asarray(parameters.values, copy=True)
             ## first we get the bandits and their corresponding stimulus identifier
             arm_names = [
                 col for col in trial.index if "arm" in col

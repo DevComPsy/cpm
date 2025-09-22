@@ -694,7 +694,7 @@ class PTSM2025(Wrapper):
                 np.exp(temperature * utility_risky_option  + phi_t) + np.exp(temperature * utility_safe_option)
             )
             ## generate a random response between 0 and 1
-            model_choice = np.random.choice([0,1], p=[policies, 1-policies])
+            model_choice = np.random.choice([0,1], p=[1-policies, policies])
             
             output = {
                 "policy": policies,

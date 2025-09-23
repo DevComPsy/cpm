@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix wrong probabilities for generating data in `cpm.applications.decision_making.PTSM2025` model [#67](https://github.com/DevComPsy/cpm/issues/67)
+- Fix matplotlib>=3.10 dependency mismatch errors upon loading `cpm` by removing unused imports in `cpm.utils.metad`
 
 ## [0.23.18] - 2025-09-03
 

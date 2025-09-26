@@ -6,12 +6,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cpm-toolbox"
-version = "0.23.18"
+version = "0.24.4"
 description = "A fundamental scientific toolbox for computational psychiatry and psychology."
 readme = "README.md"
 authors = [
     { name = "Lenard Dome" },
     { name = "Frank Hezemans" },
+    { name = "Ben J. Wagner" },
     { name = "Andrew Webb" },
     { name = "Marc Carrera" },
     { name = "Tobias Hauser" }

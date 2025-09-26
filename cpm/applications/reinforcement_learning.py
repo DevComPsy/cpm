@@ -89,13 +89,14 @@ class RLRW(Wrapper):
             # pull out the parameters
             alpha = parameters.alpha
             temperature = parameters.temperature
-            values = numpy.array(parameters.values)
+            values = numpy.asarray(parameters.values)
             ## first we get the bandits and their corresponding stimulus identifier
             arm_names = [
                 col for col in trial.index if "arm" in col
             ]  ## get column names beginning with stimulus
             arms = numpy.array(
-                [trial[i] for i in arm_names]
+                [trial[i] for i in arm_names],
+                dtype=int,
             )  ## stimulus identifier for each arm of the bandit
             k_arms = arms.shape[0]  ## number of arms
             dims = values.shape[0]  ## number of stimuli

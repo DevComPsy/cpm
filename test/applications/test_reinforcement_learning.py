@@ -93,6 +93,7 @@ def test_model_accuracy(setup_data):
 
 def test_model_warnings(setup_data):
     data, dimensions, _ = setup_data
+    data["observed"] = data["response"]
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         model = RLRW(
@@ -116,7 +117,7 @@ def test_model_warnings(setup_data):
         assert len(w) > 0, "Warnings not raised"
         assert issubclass(w[-1].category, UserWarning), "Warning is not a UserWarning"
         assert (
-            "NaN in policy with parameters: 0.5, 1000, \nand with policy: [ 0. nan]\n"
+            "NaN in policy with parameters: 0.5, 1000, \nand with policy: [nan  0.]\n"
             in str(w[-1].message)
         ), "Warning message mismatch"
 

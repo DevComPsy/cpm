@@ -75,17 +75,20 @@ def load_risky_choices():
     Notes
     -----
     
-    The data are from a risky decision-making task called "Scavenger". On each trial, participants are presented with two stranded spaceships, and are instructed to salvage one of the two ships and observe the outcome of this action. 
-    They have a radar showing them what the possible outcomes are for each spaceship, and what the probabilities are of obtaining these outcomes.
-    One of the spaceships always returns an outcome with 100% probability (i.e., the safe option). The other spaceship has a 50% probability of returning an outcome of 0, and a 50% probability of returning a different outcome (i.e., the risky option). 
-    After selecting one of the two options, participants receive feedback on the resulting outcome. 
-    In gain trials, all possible outcomes are positive (except the outcome of 0). In loss trials, all possible outcomes are negative (except the outcome of 0).  
-    In ambiguous trials, the radar provides only partial information about the probabilities of the possible outcomes of the risky choice option. In these trials, the risky choice option is shown to have at least a 25% probability of returning an outcome of 0, and at least a 25% probability of returning a different outcome. 
-    Unbeknownst to the participant, the true probability of both outcomes is always 50/50 (which is why the risky_probability values in the dataset are always 0.5).  
-    Participants play one block with 40 trials, including 10 non-ambiguous gain trials, 10 non-ambiguous loss trials, 10 ambiguous gain trials, and 10 ambiguous loss trials.  
+    The data are from a risky decision-making task (REF?), a two-alternative forced-choice task, which is implemented as a smartphone-compatible gamified application available in the BrainExplorer app (https://brainexplorer.net/) as the game called "_Scavenger_".
+    On each trial, participants are presented with two stimuli and asked to select one of them. After they made their response, they also receive feedback in the form of rewards.
+    The stimuli are cartoonish depictions of stranded spaceships that participants have to salvage in order to collect INSERT-WHAT-THEY-COLLECT.
+    In addition, participants are also shown a radar, two circles drawn at the bottom of the screen, revealing the likelihood of attaining a reward given each option.
+    It depicts the possible outcomes are for each spaceship and their associated probabilities.
+    One of the spaceships always returns an outcome with 100% probability (i.e., the safe option). The other spaceship has a 50% probability of returning an either a 0 or non-zero outcome (i.e., the risky option).
+    In gain trials, all possible outcomes are positive (except the outcome of 0). In loss trials, all possible outcomes are negative (except the outcome of 0).
+    Furthermore, there are two additional within-subject manipulations: ambiguous and non-ambiguous trials.
+    In ambiguous trials, the radar provides only partial information about the probabilities of the possible outcomes of the risky choice option.
+    In these trials, the risky choice option is shown to have at least a 25% probability of returning an outcome of 0, and at least a 25% probability of returning a different outcome.
+    Unbeknownst to the participant, the true probability of both outcomes is always 50/50 (which is why the risky_probability values in the dataset are always 0.5).
+    Participants play one block with 40 trials, including 10 non-ambiguous gain trials, 10 non-ambiguous loss trials, 10 ambiguous gain trials, and 10 ambiguous loss trials.
 
-    
-    The dataset will include the following columns:
+    The dataset includes the following columns:
 
         - `ppt`: the participant number.
         - `safe_magnitudes`: the magnitudes of the safe option.
@@ -97,6 +100,18 @@ def load_risky_choices():
         - `ambiguity`: whether the choice was ambiguous (1 for yes, 0 for no).
         - `attempt`: the number of the experimental session for a given participant (e.g. 2 here means that participant is completing the experiment the second time).
         - `rt_flip`: the reaction time for the choice, measured in seconds, multiplied by -1 if the choice is not an optimal choice. It is used for fitting various drift diffusion models.
+
+    See Also
+    --------
+
+    [cpm.applications.decision_making.PTSM][cpm.applications.decision_making.PTSM]:  simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992).
+
+    [cpm.applications.decision_making.PTSM1992][cpm.applications.decision_making.PTSM1992]: full version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992).
+
+    [cpm.applications.decision_making.PTSM2025][cpm.applications.decision_making.PTSM2025]: Prospect Theory Softmax Model loosely based on Chew et al. (2019).
+
+    References
+    ----------
 
     """
     return load_csv("risky_choices.csv")
@@ -119,15 +134,20 @@ def load_metacognition_data():
     Notes
     -----
     
-    The data are from a perceptual metacognitive task called "Space Observer" (see Marzuki et al., 2025; Moses-Payne et al., 2021). The task assesses the ability to accurately reflect on and evaluate one’s own cognitive processes, known as metacognition.  
-    In each trial of the game, participants are presented with a planet in the centre of the screen. For a very brief time window (250 ms), 68 aliens appear into view, overlaying the planet. 
-    Aliens can be one of eight colours; two colours are selected at random for each trial. Aliens are identical except for their colour. 
-    After the 68 aliens disappear, participants are presented with an example of the two aliens and asked to choose which of the two had been more abundant on that trial. 
-    After each of the trials, they are asked to indicate how confident they are about their decision on a visual analogue scale ranging from “totally guessing” (0) to “totally certain” (100). 
-    A staircase procedure is used throughout the task to determine the stimulus intensity or evidence strength, defined as the difference in aliens required to keep participants’ performance at approximately 70%. 
+    The data are from an experiment combining a perceptual decision making task with an additional post-decision component assessing participants' confidence in their choices (Marzuki et al., 2025; Moses-Payne et al., 2021).
+    The experiment is implemented as a gamified smartphone-compatible application available in the BrainExplorer platform (https://brainexplorer.net/) as the game "_Space Observer_".
+    The task is designed to assess aspects of metacognition, specifically the extent to which one can accurately reflect on and evaluate their own performance.
+    For a more thourough description of the experimental procedure, please refer to Marzuki et al. (2025).
+    Briefly, in each trial of the game, participants are presented with a planet in the centre of the screen.
+    On top of the planet, participant's are shown 68 differently coloured aliens for 250 ms, overlaying the planet.
+    The aliens are drawn from two distinct categories (S1 and S2), which differ in colour, but are identical in shape.
+    After the 68 aliens disappear, participants are presented with an example of the two differently coloured aliens and asked to choose which of the two had been more abundant on that trial. 
+    After each of the trials, they are asked to indicate how confident they are about their decision on a visual analogue scale ranging from “totally guessing” (0) to “totally certain” (100).
+    The scale is not labelled with numbers and participants are not informed about the numerical values associated with their confidence ratings.
+    A staircase procedure (Cornsweet, 1962; García-Pérez, 1998; Levitt, 1971) is used throughout the task to dynamically adjust the stimulus intensity, defined as the difference in aliens required to keep participants’ performance at approximately 70%.
 
     
-    The dataset will include the following columns:
+    The dataset includes the following columns:
 
         - `participant`: the participant number.
         - `signal`: which alien is more abundant (0 = S1, 1 = S2).
@@ -135,6 +155,18 @@ def load_metacognition_data():
         - `response`: participant's choice (0 = S1, 1 = S2).
         - `confidence`: participant's confidence rating for their response.
         - `accuracy`: accuracy of the participant's response (0 = incorrect, 1 = 1 correct).
+
+    See Also
+    --------
+    [cpm.applications.signal_detection.EstimatorMetaD][cpm.applications.signal_detection.EstimatorMetaD]: Class to estimate metacognitive sensitivity (meta-d') from confidence ratings and choices.
+
+    References
+    ----------
+
+    Chen, Y., Daly, H. R., Pitt, M. A., & Van Zandt, T. (2024). Assessing the distortions introduced when calculating d’: A simulation approach. _Behavior Research Methods_. doi: 10.3758/s13428-024-02447-8
+
+    Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. _Research Square_. doi: 10.21203/rs.3.rs-7544256/v1
+
 
     """
     return load_csv("metacognition_data.csv")

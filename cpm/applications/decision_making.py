@@ -100,7 +100,9 @@ class PTSM(Wrapper):
     
     ## Details for fitting the model to data
 
-    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0). If you get overflow warnings during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these overflow warnings is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
+    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
+
+    If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
 
     See Also
     ---------
@@ -349,7 +351,9 @@ class PTSM1992(Wrapper):
 
     ## Details for fitting the model to data
 
-    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0). If you get overflow warnings during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these overflow warnings is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials.
+    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
+
+    If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
         
 
     See Also
@@ -590,7 +594,9 @@ class PTSM2025(Wrapper):
 
     ## Details for fitting the model to data
 
-    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0). If you get overflow warnings during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these overflow warnings is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials.
+    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
+
+    If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
 
     References
     ----------

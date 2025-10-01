@@ -25,26 +25,24 @@ def check_nan_and_bounds_in_input(predicted, observed):
         raise ValueError("Observed values must not be empty.")
     predicted_s = np.squeeze(predicted)
     observed_s = np.squeeze(observed)
+    error_msgs = {
+        "pred_nan": "Predicted values contain NaN at indices {}. This is often due to out-of-bounds parameter values during model fitting. Investigate the parameter values and consider setting bounds or rescaling the model input to prevent this issue.",
+        "obs_nan": "Observed values contain NaN at indices {}. This is often due to missing data in your dataset. Consider handling missing data appropriately before fitting the model.",
+        "pred_inf": "Predicted values contain Inf at indices {}. This is often due to out-of-bounds parameter values during model fitting. Investigate the parameter values and consider setting bounds or rescaling the model input to prevent this issue.",
+        "obs_inf": "Observed values contain Inf at indices {}. This is often due to issues in your dataset. Consider handling such values appropriately before fitting the model.",
+    }
     if np.any(np.isnan(predicted_s)):
         idx = np.where(np.isnan(predicted_s))
-        error_msgs = {
-            "pred_nan": "Predicted values contain NaN at indices {}. This is often due to out-of-bounds parameter values during model fitting. Investigate the parameter values and consider setting bounds or rescaling the model input to prevent this issue.",
-            "obs_nan": "Observed values contain NaN at indices {}. This is often due to missing data in your dataset. Consider handling missing data appropriately before fitting the model.",
-            "pred_inf": "Predicted values contain Inf at indices {}. This is often due to out-of-bounds parameter values during model fitting. Investigate the parameter values and consider setting bounds or rescaling the model input to prevent this issue.",
-            "obs_inf": "Observed values contain Inf at indices {}. This is often due to issues in your dataset. Consider handling such values appropriately before fitting the model.",
-        }
-        if np.any(np.isnan(predicted_s)):
-            idx = np.where(np.isnan(predicted_s))
-            raise ValueError(error_msgs["pred_nan"].format(idx))
-        if np.any(np.isnan(observed_s)):
-            idx = np.where(np.isnan(observed_s))
-            raise ValueError(error_msgs["obs_nan"].format(idx))
-        if np.any(np.isinf(predicted_s)):
-            idx = np.where(np.isinf(predicted_s))
-            raise ValueError(error_msgs["pred_inf"].format(idx))
-        if np.any(np.isinf(observed_s)):
-            idx = np.where(np.isinf(observed_s))
-            raise ValueError(error_msgs["obs_inf"].format(idx))
+        raise ValueError(error_msgs["pred_nan"].format(idx))
+    if np.any(np.isnan(observed_s)):
+        idx = np.where(np.isnan(observed_s))
+        raise ValueError(error_msgs["obs_nan"].format(idx))
+    if np.any(np.isinf(predicted_s)):
+        idx = np.where(np.isinf(predicted_s))
+        raise ValueError(error_msgs["pred_inf"].format(idx))
+    if np.any(np.isinf(observed_s)):
+        idx = np.where(np.isinf(observed_s))
+        raise ValueError(error_msgs["obs_inf"].format(idx))
     if predicted_s.shape != observed_s.shape:
         raise ValueError(f"Shape mismatch: predicted shape {predicted.shape} (squeezed {predicted_s.shape}) does not match observed shape {observed.shape} (squeezed {observed_s.shape}).")
     return predicted_s, observed_s

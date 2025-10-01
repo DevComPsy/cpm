@@ -12,17 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduce a third-party connector for the `cpm.generators.Wrapper` class to facilitate integration with external optimisation procedures
 - Add validation for 'observed' column in Wrapper class to ensure it exists before running model or computing loss
 - Add warnings to inform users if 'observed' column is missing in the data provided to Wrapper class
+- Added detailed guidance on fitting the models (PTSM, PTSM1992, and PTSM2025) to data, including recommendations for setting the temperature parameter, handling overflow warnings, and normalizing utility values to avoid numerical instability.
 
 ### Changed
 
 - Update `cpm.applications.reinforcement_learning.RLRW` class to use `numpy.asarray` for the `values` parameter, ensuring compatibility with numpy=>2.0
 - Increased bandit task dataset size
 - Update test units for `cpm.applications.reinforcement_learning.RLRW` to include handling of new changes, such as using `numpy.asarray` for `values` and adding an 'observed' column in the test dataset
+- Improved the error messages in check_nan_and_bounds_in_input to provide more actionable feedback when encountering NaN or Inf values in predicted or observed data, including likely causes and suggested remedies.
 
 ### Fixed
 
 - Fix wrong probabilities for generating data in `cpm.applications.decision_making.PTSM2025` model [#67](https://github.com/DevComPsy/cpm/issues/67)
 - Fix matplotlib>=3.10 dependency mismatch errors upon loading `cpm` by removing unused imports in `cpm.utils.metad`
+
+### Removed
+
+- Removed unused imports in `cpm.utils.metad` to prevent dependency issues with matplotlib>=3.10
 
 ## [0.23.18] - 2025-09-03
 

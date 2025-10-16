@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Increased bandit task dataset size
 - Update test units for `cpm.applications.reinforcement_learning.RLRW` to include handling of new changes, such as using `numpy.asarray` for `values` and adding an 'observed' column in the test dataset
 - Improved the error messages in check_nan_and_bounds_in_input to provide more actionable feedback when encountering NaN or Inf values in predicted or observed data, including likely causes and suggested remedies.
-
+- Display option now blocks all prints in optimization module ([#71](https://github.com/DevComPsy/cpm/pull/71))
 ### Fixed
 
 - Fix wrong probabilities for generating data in `cpm.applications.decision_making.PTSM2025` model [#67](https://github.com/DevComPsy/cpm/issues/67)

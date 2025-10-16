@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cpm-toolbox"
-version = "0.24.5"
+version = "0.24.6"
 description = "A fundamental scientific toolbox for computational psychiatry and psychology."
 readme = "README.md"
 authors = [

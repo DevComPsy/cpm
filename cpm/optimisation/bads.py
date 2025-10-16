@@ -66,6 +66,7 @@ class Bads:
         cl=None,
         libraries=["numpy", "pandas"],
         ppt_identifier=None,
+        display=True,
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -74,7 +75,7 @@ class Bads:
         self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
             data, self.ppt_identifier
         )
-
+        self.display = display
         self.loss = minimisation
         self.prior = prior
         self.kwargs = kwargs
@@ -189,9 +190,10 @@ class Bads:
         prior = self.prior
 
         for i in range(len(self.initial_guess)):
-            print(
-                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
-            )
+            if self.display:
+                print(
+                    f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+                )
             self.__current_guess__ = self.initial_guess[i]
             if self.__parallel__:
                 results = execute_parallel(

@@ -35,7 +35,18 @@ class DeltaRule:
     error term, see the Bush and Mosteller (1951) rule.
 
     The current implementation is based on the Gluck and Bower's (1988) delta rule, an
-    extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning.
+    extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning. Such that
+
+
+    $$
+    \\Delta w_{ij} = \\alpha \\cdot (\\lambda_i - \\sum_j w_{ij}) \\cdot x_j
+    $$
+
+    where $\\Delta w_{ij}$ is the change in weight for the $j$-th stimulus for the $i$-th outcome,
+    $\\lambda_i$ is the target (feedback) value for the i-th outcome, $w_ij$ is the weights of stimulus $j$ 
+    for the $i$-th outcome,
+    $x_j$ is the j-th stimulus input, and $\\alpha$ is the learning rate. This is consistent with the
+    Rescorla and Wagner (1972)'s learning rule incorporating the summed error term. 
 
     Examples
     --------
@@ -190,7 +201,14 @@ class SeparableRule:
 
     Notes
     -----
-    This type of learning rule was among the earliest formal models of associative learning (Le Pelley, 2004), which were based on standard linear operators (Bush & Mosteller, 1951; Estes, 1950; Kendler, 1971).
+    This type of learning rule was among the earliest formal models of associative learning (Le Pelley, 2004), which were based on standard linear operators (Bush & Mosteller, 1951; Estes, 1950; Kendler, 1971). It is used in a variety of reinforcement learning models. This learning rule is defined in `cpm` as
+
+
+    $$
+    \\Delta w_{ij} = \\alpha \\cdot (\\lambda_i - w_{ij}) \\cdot x_j
+    $$
+
+    which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms. 
 
     References
     ----------
@@ -494,11 +512,32 @@ class HumbleTeacher:
 
     Notes
     -----
-    The humble teacher learning rule is a learning rule that is based on the idea that if output node activations large than the teaching signals should not be counted as error, but should be rewarded. So the humble teacher turns teaching signals into discrete (nominal) values, where they do not indicate the degree of membership between stimuli and outcome label, the degree of causality between stimuli and outcome, or the degree of correctness of the output.
+    The humble teacher is a learning rule that is based on the idea that if output node activations are larger than the teaching signal, they should not be counted as error, but should be rewarded. It is defined as:
+
+    $$
+    t_k = \\begin{cases}
+    \\min(-1, a_k) & \\text{if } t_k = 0 \\text{ if stimulus is not followed by outcome/category-label} \\\\
+    \\max(1, a_k) & \\text{if } t_k = 1 \\text{ if stimulus is followed by outcome/category-label}
+    \\end{cases}
+    $$
+
+    where $t_k$ is the teaching signal. Then the change in weights is computed according to the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton & Williams, 1986; Gluck & Bower, 1988):
+
+    $$
+    \\Delta w_{ij} = \\alpha \\cdot (t_k - a_k) \\cdot x_j
+    $$
+
+    where $\\Delta w_{ij}$ is the change in weight for the $j$-th stimulus for the $i$-th outcome, $t_k$ is the teaching signal for the $k$-th outcome, $a_k$ is the summed activation of all nodes connected to the $k$-th outcome, $x_j$ is the j-th stimulus input, and $\\alpha$ is the learning rate.
 
     References
     ----------
+    Gluck, M. A., & Bower, G. H. (1988). From conditioning to category learning: An adaptive network model. Journal of Experimental Psychology: General, 117(3), 227–247.
+
     Kruschke, J. K. (1992). ALCOVE: An exemplar-based connectionist model of category learning. Psychological Review, 99, 22–44.
+
+    Rescorla, R. A., & Wagner, A. R. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and nonreinforcement. In A. H. Black & W. F. Prokasy (Eds.), Classical conditioning II: Current research and theory (pp. 64-99). New York:Appleton-Century-Crofts.
+
+    Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. nature, 323(6088), 533-536.
 
     Examples
     --------
@@ -509,9 +548,8 @@ class HumbleTeacher:
     >>> input = np.array([1, 1, 1])
     >>> humble_teacher = HumbleTeacher(alpha=0.1, weights=weights, feedback=teacher, input=input)
     >>> humble_teacher.compute()
-    array([[-0.06, -0.06, -0.06],
-       [ 0.  ,  0.  ,  0.  ]])
-
+    array([[-0.06,  0.04,  0.14],
+        [ 0.4 ,  0.5 ,  0.6 ]])
     """
 
     def __init__(self, alpha=None, weights=None, feedback=None, input=None, **kwargs):
@@ -522,6 +560,7 @@ class HumbleTeacher:
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
+        self.delta = np.zeros(self.weights.shape)
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
@@ -539,8 +578,10 @@ class HumbleTeacher:
         for i in range(self.shape[0]):
             activations = np.sum(self.weights[i] * self.input)
             for j in range(self.shape[1]):
-                activations = np.clip(activations, 0, 1)
-                self.weights[i, j] = (
-                    self.alpha * (self.teacher[i] - activations) * self.input[j]
-                )
+                if self.teacher[i] == 0:
+                    teacher = np.min([-1, activations])
+                else:
+                    teacher = np.max([1, activations])
+                self.delta[i, j] = self.alpha * (teacher - activations) * self.input[j]
+                self.weights[i, j] += self.delta[i, j]
         return self.weights

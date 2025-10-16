@@ -1,5 +1,0 @@
-nav:
-    - example1.ipynb
-    - example2.ipynb
-    - example3.ipynb
-    - "Example 4: Scaling to the cluster" : example4.ipynb

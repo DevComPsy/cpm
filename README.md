@@ -1,10 +1,26 @@
 # cpm
 
+![the toolbox logo](./docs/img/cpm-logo.png)
+
+![PyPI - Version](https://img.shields.io/pypi/v/cpm-toolbox)
+
 cpm is a fundamental package for Computational Psychiatry. It is designed to provide a set of tools for researchers and clinicians to analyze and model data in the field of Computational Psychiatry.
 
-:warning: The package is under active development and is therefore currently in a beta version. :warning:
+## Installation and Usage
 
-## Install from GitHub
+To install the package, run the following command:
+
+```bash
+pip install cpm-toolbox
+```
+
+Once the package is installed, you can import it in your Python code:
+
+```python
+import cpm
+```
+
+## Install from GitHub for Nightly Builds
 
 In order to install the package from GitHub, run the following command:
 

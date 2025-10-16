@@ -9,9 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Introduce a third-party connector for the `cpm.generators.Wrapper` class to facilitate integration with external optimisation procedures
+- Add validation for 'observed' column in Wrapper class to ensure it exists before running model or computing loss
+- Add warnings to inform users if 'observed' column is missing in the data provided to Wrapper class
+- Added detailed guidance on fitting the models (PTSM, PTSM1992, and PTSM2025) to data, including recommendations for setting the temperature parameter, handling overflow warnings, and normalizing utility values to avoid numerical instability.
+
+### Changed
+
+- Update `cpm.applications.reinforcement_learning.RLRW` class to use `numpy.asarray` for the `values` parameter, ensuring compatibility with numpy=>2.0
+- Increased bandit task dataset size
+- Update test units for `cpm.applications.reinforcement_learning.RLRW` to include handling of new changes, such as using `numpy.asarray` for `values` and adding an 'observed' column in the test dataset
+- Improved the error messages in check_nan_and_bounds_in_input to provide more actionable feedback when encountering NaN or Inf values in predicted or observed data, including likely causes and suggested remedies.
+- Display option now blocks all prints in optimization module ([#71](https://github.com/DevComPsy/cpm/pull/71))
+### Fixed
+
+- Fix wrong probabilities for generating data in `cpm.applications.decision_making.PTSM2025` model [#67](https://github.com/DevComPsy/cpm/issues/67)
+- Fix matplotlib>=3.10 dependency mismatch errors upon loading `cpm` by removing unused imports in `cpm.utils.metad`
+
+### Removed
+
+- Removed unused imports in `cpm.utils.metad` to prevent dependency issues with matplotlib>=3.10
+
+## [0.23.18] - 2025-09-03
+
+### Added
+
+- Add input validation and error handling in all `cpm.optimisation.minimise` methods
+- Add test units for `cpm.optimisation.minimise`
+- Added three models based on Prospect Theory: `cpm.applications.decision_making.PTSM`, `cpm.applications.decision_making.PTSM1992`, and `cpm.applications.decision_making.PTSM2025`
+- The `cpm.generators.Parameters` class now supports None-type parameters, allowing for more flexible model configurations
+- The `cpm.generators.Parameters` class now supports the use of user-defined functions as attributes in addition to freely-varying parameters
+- Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset
+- Expanded `cpm.models.activation.ProspectUtility` class to include additional parameters for more flexible modeling of decision-making under risk, more closely approximating Tversky & Kahneman's (1992) version of Prospect Theory
+
+### Fixed
+
+- Fix `simulation_export` function to handle DataFrame output correctly
+- Fix `detailed_pandas_compiler` function to support new numpy versions
+- Fix probability adjustements in `cpm.optimisation.minimise.LogLikelihood` method to ensure correct parameter estimates
+
+### Changed
+
+- Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
+
+## [0.23.7] - 2025-07-02
+
+### Added
+
 - Detect parallel method to use given environment (support for parallelisation on Jupyter Notebooks)
 - Provide a complete n-dimensional and k-arm reinforcement learning model for multi-armed bandit tasks in applications
 - Add support for '>' and '<' operator in Value type
+- Add validation to export method and improve data handling in Simulator class
+- Update export tests to validate DataFrame output and adjust simulation assertions
+- Implement ProspectSoftmaxModel for decision-making under risk
 - Add meta-_d_ to applications
 - Provide utility functions for data preprocessing with meta-_d_ type models
 - Introduce new likelihoods (`multinomial` and `product`)
@@ -22,15 +72,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix pandas groupby method for parallelization when in Jupyter Notebook
 - Fix magnitude is not taking effect in Nominal
 - Fix choice kernel choice should check whether computations still need to carry out
+- Fix column assignment logic in simulation_export function
+- Fix tests by updating ProspectUtility parameters in tests to reflect changes in constructor
+- Fix wrong probability adjustments in `cpm.optimisation.minimise.LogLikelihood` method causing strange parameter estimates
+- Fix Issue [#55](https://github.com/DevComPsy/cpm/issues/55): AttributeError: np.float_ was removed in NumPy 2.0 during export
+
+### Changed
+
+- Update model description in RLRW class to include reference to Sutton & Barto (2021)
 - Fix column names in `cpm.applications.signal_detection.EstimatordMetaD` class
 - Fix `detailed_pandas_compiler` bug to handle various data types and ensure proper DataFrame formatting
 - Fix column name issues in `cpm.applications.signal_detection.EstimatordMetaD` class
-- Resolved a bug in the `detailed_pandas_compiler` function to handle various data types and ensure proper DataFrame formatting in `cpm/core/data.py`.
 
 ### Changed
 
 - Improved error handling in `cpm.applications.signal_detection.EstimatordMetaD`
 - Improved error handling and added input validation in several methods, such as the `detailed_pandas_compiler` function and parameter bounds handling in `cpm/generators/parameters.py`
+- Allow for larger variations in the estimation of the Hessian matrix in test units
+- Changed Softmax and Sigmoid function input shape requirements to ensure they accept 1D arrays only, with a warning for 2D arrays
 
 ## [Unreleased] <=0.18.4
 

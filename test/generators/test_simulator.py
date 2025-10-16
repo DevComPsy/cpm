@@ -46,8 +46,8 @@ def test_simulator_run():
         wrapper=wrapper, data=data.groupby("ppt"), parameters=parameters.sample(3)
     )
     simulator.run()
-    assert len(simulator.simulation) == 3, "Simulation not run correctly"
-    assert len(simulator.simulation[0]) == 3, "Simulation output length is incorrect"
+    assert len(simulator.simulation) == 9, "Simulation not run correctly"
+    assert len(simulator.simulation.iloc[0]) == 2, "Simulation output length is incorrect"
 
 
 def test_simulator_export():

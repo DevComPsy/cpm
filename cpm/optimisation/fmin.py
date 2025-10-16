@@ -169,9 +169,10 @@ class Fmin:
         prior = self.prior
 
         for i in range(len(self.initial_guess)):
-            print(
-                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
-            )
+            if self.display:
+                print(
+                    f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+                )
             self.__current_guess__ = self.initial_guess[i]
             if self.__parallel__:
                 results = execute_parallel(
@@ -412,9 +413,10 @@ class FminBound:
             return output.copy()
 
         for i in range(len(self.initial_guess)):
-            print(
-                f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
-            )
+            if self.display:
+                print(
+                    f"Starting optimization {i+1}/{len(self.initial_guess)} from {self.initial_guess[i]}"
+                )
             self.__current_guess__ = self.initial_guess[i]
             if self.__parallel__:
                 results = execute_parallel(

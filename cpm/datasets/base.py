@@ -139,7 +139,7 @@ def load_metacognition_data():
     The task is designed to assess aspects of metacognition, i.e., the extent to which one can accurately reflect on and evaluate their own performance, specifically how well one’s confidence is calibrated to their actual performance.
     For a more thorough description of the experimental procedure, please refer to Marzuki et al. (2025).
     Briefly, in each trial of the game, participants are presented with a planet in the centre of the screen.
-    On top of the planet, participant's are shown 68 differently coloured aliens for 250 ms, overlaying the planet.
+    On top of the planet, participants are shown 68 differently coloured aliens for 250 ms, overlaying the planet.
     The aliens are drawn from two distinct categories (S1 and S2), which differ in colour, but are identical in shape.
     After the 68 aliens disappear, participants are presented with an example of the two differently coloured aliens and asked to choose which of the two had been more abundant on that trial. 
     After each of the trials, they are asked to indicate how confident they are about their decision on a visual analogue scale ranging from “totally guessing” (0) to “totally certain” (100).

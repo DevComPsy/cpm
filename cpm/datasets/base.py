@@ -137,7 +137,7 @@ def load_metacognition_data():
     The data are from an experiment combining a perceptual decision making task with an additional post-decision component assessing participants' confidence in their choices (Marzuki et al., 2025; Moses-Payne et al., 2021).
     The experiment is implemented as a gamified smartphone-compatible application available in the BrainExplorer platform (https://brainexplorer.net/) as the game "_Space Observer_".
     The task is designed to assess aspects of metacognition, i.e., the extent to which one can accurately reflect on and evaluate their own performance, specifically how well one’s confidence is calibrated to their actual performance.
-    For a more thourough description of the experimental procedure, please refer to Marzuki et al. (2025).
+    For a more thorough description of the experimental procedure, please refer to Marzuki et al. (2025).
     Briefly, in each trial of the game, participants are presented with a planet in the centre of the screen.
     On top of the planet, participant's are shown 68 differently coloured aliens for 250 ms, overlaying the planet.
     The aliens are drawn from two distinct categories (S1 and S2), which differ in colour, but are identical in shape.

@@ -125,6 +125,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpm.generators.Wrapper">Wrapper</a>
         <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper.connector">connector</a>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper.export">export</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.generators.Wrapper.reset">reset</a>
@@ -318,7 +320,9 @@ See Notes for more details.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -651,7 +655,9 @@ provided for the function wrapped by the Value class.</p>
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -1106,6 +1112,7 @@ If a <code>dictionary</code>, it must contains information about the each state 
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -1115,6 +1122,93 @@ If a <code>dictionary</code>, it must contains information about the each state 
 
 
 
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cpm.generators.Wrapper.connector" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">connector</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>A method to connect the model to an objective function.
+This method is used to create a parser function that can be used in third-party optimisation routine (e.g., scipy, pybads, genetic algorithms).</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>loss</code></b>
+                  (<code><span title="function">function</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>The loss function that is used to calculate the metric value.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>prior</code></b>
+                  (<code><span title="bool">bool</span></code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>If True, the prior distribution of the parameters is added to the metric value. Default is False.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The <code>loss</code> function should take the following named arguments:
+    - <code>predicted</code>: The predicted values from the model.
+    - <code>observed</code>: The observed values from the data.</p>
+<p>It should return a single numeric value representing the loss.</p>
+</details>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>parser</code></b>(                  <code><span title="function">function</span></code>
+)              –
+              <div class="doc-md-description">
+                <p>A function that takes a single argument <code>pars</code>, which is a one-dimensional array of parameters, where each element corresponds to the parameters as they were defined in the <code>cpm.generators.Parameters</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -1466,7 +1560,9 @@ If it is a list of dictionaries, each dictionary must contain the data (or envir
 
 
 
+
   <div class="doc doc-children">
+
 
 
 

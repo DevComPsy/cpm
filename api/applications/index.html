@@ -97,6 +97,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM--model-output">Model output</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM--details-for-fitting-the-model-to-data">Details for fitting the model to data</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.decision_making.PTSM1992">PTSM1992</a>
@@ -105,6 +107,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM1992--model-output">Model output</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM1992--details-for-fitting-the-model-to-data">Details for fitting the model to data</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.applications.decision_making.PTSM2025">PTSM2025</a>
@@ -112,6 +116,8 @@
     <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM2025--model-description">Model Description</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM2025--model-output">Model Output</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.applications.decision_making.PTSM2025--details-for-fitting-the-model-to-data">Details for fitting the model to data</a>
     </li>
         </ul>
     </li>
@@ -290,7 +296,9 @@ The model is an n-dimensional and k-armed implementation of model 3 from Wilson 
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -463,6 +471,9 @@ p(o_i) = \frac{e^{\beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{\beta \cdot \
 - `u_safe`: the utility of the safe option.
 - `u_risk`: the utility of the risky option.
 </code></pre>
+<h5 id="cpm.applications.decision_making.PTSM--details-for-fitting-the-model-to-data">Details for fitting the model to data</h5>
+<p>The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).</p>
+<p>If you get <strong>overflow warnings</strong> during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these <strong>overflow warnings</strong> is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. </p>
 </details>
 
 <details class="see-also" open>
@@ -485,7 +496,9 @@ p(o_i) = \frac{e^{\beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{\beta \cdot \
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -666,6 +679,9 @@ p(o_i) = \frac{e^{beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{beta \cdot \ma
 - `u_safe`: the utility of the safe option.
 - `u_risk`: the utility of the risky option.
 </code></pre>
+<h5 id="cpm.applications.decision_making.PTSM1992--details-for-fitting-the-model-to-data">Details for fitting the model to data</h5>
+<p>The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).</p>
+<p>If you get <strong>overflow warnings</strong> during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these <strong>overflow warnings</strong> is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. </p>
 </details>
 
 <details class="see-also" open>
@@ -688,7 +704,9 @@ p(o_i) = \frac{e^{beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{beta \cdot \ma
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -849,6 +867,9 @@ p(A_{risky}) = \frac{e^{\beta (u_{risky} + \phi_{t})}}{e^{\beta (u_{risky} + \ph
 - `u_risk`: The utility of the risky option.
 - `dependent`: The computed probability of a risky choice according to the model, which can be used for further analysis or fitting
 </code></pre>
+<h5 id="cpm.applications.decision_making.PTSM2025--details-for-fitting-the-model-to-data">Details for fitting the model to data</h5>
+<p>The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).</p>
+<p>If you get <strong>overflow warnings</strong> during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these <strong>overflow warnings</strong> is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. </p>
 </details>
 
 <details class="references" open>
@@ -864,7 +885,9 @@ p(A_{risky}) = \frac{e^{\beta (u_{risky} + \phi_{t})}}{e^{\beta (u_{risky} + \ph
 
 
 
+
   <div class="doc doc-children">
+
 
 
 
@@ -1062,7 +1085,9 @@ p(A_{risky}) = \frac{e^{\beta (u_{risky} + \phi_{t})}}{e^{\beta (u_{risky} + \ph
 
 
 
+
   <div class="doc doc-children">
+
 
 
 

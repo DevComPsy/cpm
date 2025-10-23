@@ -89,6 +89,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#cpm.datasets.load_risky_choices">load_risky_choices</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.datasets.load_metacognition_data">load_metacognition_data</a>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../models/">cpm.models</a>
@@ -234,18 +236,126 @@
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The dataset will include the following columns:</p>
+  <p>The data are from a risky decision-making task (similar to e.g., Rutledge et al., 2014), a two-alternative forced-choice task, which is implemented as a smartphone-compatible gamified application available in the BrainExplorer app (https://brainexplorer.net/) as the game called "<em>Scavenger</em>".
+On each trial, participants are presented with two stimuli and asked to select one of them. After they make their choice, they receive feedback in the form of rewards (coins).
+The stimuli are cartoonish depictions of stranded spaceships that participants have to salvage in order to obtain coins.
+In addition, participants are shown a radar, two circles drawn at the bottom of the screen, revealing the possible outcomes for each spaceship and their associated probabilities.
+One of the spaceships always returns an outcome with 100% probability (i.e., the safe option). The other spaceship has a 50% probability of returning an either a 0 or non-zero outcome (i.e., the risky option).
+In gain trials, all possible outcomes are positive (except the outcome of 0). In loss trials, all possible outcomes are negative (except the outcome of 0).
+Furthermore, forming an additional within-participant manipulation, trials can be either ambiguous or non-ambiguous.
+In ambiguous trials, the radar provides only partial information about the probabilities of the possible outcomes of the risky choice option.
+In these trials, the risky choice option is shown to have at least a 25% probability of returning an outcome of 0, and at least a 25% probability of returning a different outcome.
+Unbeknownst to the participant, the true probability of both outcomes is always 50/50 (which is why the risky_probability values in the dataset are always 0.5).
+Participants play one block with 40 trials, including 10 non-ambiguous gain trials, 10 non-ambiguous loss trials, 10 ambiguous gain trials, and 10 ambiguous loss trials.</p>
+<p>The dataset includes the following columns:</p>
 <pre><code>- `ppt`: the participant number.
-- `safe_magnitudes`: the magnitudes of the safe option.
-- `risky_magnitudes`: the magnitudes of the risky options.
-- `risky_probability`: the probabilities of the risky options.
+- `safe_magnitudes`: the magnitude of the safe option.
+- `risky_magnitudes`: the non-zero outcome magnitude of the risky option.
+- `risky_probability`: the probability of the risky option.
 - `choice`: the choice of the participant (1 for risky, 0 for safe).
 - `optimal`: the optimal choice based on expected value (1 for risky, 0 for safe).
 - `feedback`: the feedback (reward) given to the participant.
-- `ambiguity`: whether the choice was ambiguous (1 for yes, 0 for no).
+- `ambiguity`: whether the trial was ambiguous (1 for yes, 0 for no).
 - `attempt`: the number of the experimental session for a given participant (e.g. 2 here means that participant is completing the experiment the second time).
 - `rt_flip`: the reaction time for the choice, measured in seconds, multiplied by -1 if the choice is not an optimal choice. It is used for fitting various drift diffusion models.
 </code></pre>
+</details>
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a class="autorefs autorefs-internal" title="cpm.applications.decision_making.PTSM(data=None, parameters_settings=None, generate=False, utility_curve=None, weighting='tk')" href="../applications/#cpm.applications.decision_making.PTSM">cpm.applications.decision_making.PTSM</a>:  simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky &amp; Kahneman (1992).</p>
+<p><a class="autorefs autorefs-internal" title="cpm.applications.decision_making.PTSM1992(data=None, parameters_settings=None, utility_curve=None, weighting='tk')" href="../applications/#cpm.applications.decision_making.PTSM1992">cpm.applications.decision_making.PTSM1992</a>: full version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky &amp; Kahneman (1992).</p>
+<p><a class="autorefs autorefs-internal" title="cpm.applications.decision_making.PTSM2025(data=None, parameters_settings=None, utility_curve=None, variant='alpha')" href="../applications/#cpm.applications.decision_making.PTSM2025">cpm.applications.decision_making.PTSM2025</a>: Prospect Theory Softmax Model loosely based on Chew et al. (2019).</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Rutledge, R. B., Skandali, N., Dayan, P., &amp; Dolan, R. J. (2014). A computational and neural model of momentary subjective well-being. Proceedings of the National Academy of Sciences of the United States of America, 111(33), 12252–12257. https://doi.org/10.1073/pnas.1407535111</p>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cpm.datasets.load_metacognition_data" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cpm</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">load_metacognition_data</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents first">
+
+        <p>Load the metacognition dataset from a CSV file.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+              –
+              <div class="doc-md-description">
+                <p>A pandas DataFrame containing the metacognition data.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">load_metacognition_data</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</code></pre></div>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The data are from an experiment combining a perceptual decision making task with an additional post-decision component assessing participants' confidence in their choices (Marzuki et al., 2025; Moses-Payne et al., 2021).
+The experiment is implemented as a gamified smartphone-compatible application available in the BrainExplorer platform (https://brainexplorer.net/) as the game "<em>Space Observer</em>".
+The task is designed to assess aspects of metacognition, i.e., the extent to which one can accurately reflect on and evaluate their own performance, specifically how well one’s confidence is calibrated to their actual performance.
+For a more thorough description of the experimental procedure, please refer to Marzuki et al. (2025).
+Briefly, in each trial of the game, participants are presented with a planet in the centre of the screen.
+On top of the planet, participants are shown 68 differently coloured aliens for 250 ms, overlaying the planet.
+The aliens are drawn from two distinct categories (S1 and S2), which differ in colour, but are identical in shape.
+After the 68 aliens disappear, participants are presented with an example of the two differently coloured aliens and asked to choose which of the two had been more abundant on that trial. 
+After each of the trials, they are asked to indicate how confident they are about their decision on a visual analogue scale ranging from “totally guessing” (0) to “totally certain” (100).
+The scale is not labelled with numbers and participants are not informed about the numerical values associated with their confidence ratings.
+A staircase procedure (Cornsweet, 1962; García-Pérez, 1998; Levitt, 1971) is used throughout the task to dynamically adjust the stimulus intensity, defined as the difference in aliens required to keep participants’ performance at approximately 70%.</p>
+<p>The dataset includes the following columns:</p>
+<pre><code>- `participant`: the participant number.
+- `signal`: which alien is more abundant (0 = S1, 1 = S2).
+- `stimulus_intensity`: absolute difference in number of aliens (i.e., evidence strength). 
+- `response`: participant's choice (0 = S1, 1 = S2).
+- `confidence`: participant's confidence rating for their response.
+- `accuracy`: accuracy of the participant's response (0 = incorrect, 1 = correct).
+</code></pre>
+</details>
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a class="autorefs autorefs-internal" title="cpm.applications.signal_detection.EstimatorMetaD(data=None, bins=None, cl=None, parallel=False, libraries=['numpy', 'pandas'], prior=False, display=False, ppt_identifier=None, ignore_invalid=False, **kwargs)" href="../applications/#cpm.applications.signal_detection.EstimatorMetaD">cpm.applications.signal_detection.EstimatorMetaD</a>: Class to estimate metacognitive sensitivity (meta-d') from confidence ratings and choices.</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Chen, Y., Daly, H. R., Pitt, M. A., &amp; Van Zandt, T. (2024). Assessing the distortions introduced when calculating d’: A simulation approach. <em>Behavior Research Methods</em>. https://doi.org/10.3758/s13428-024-02447-8</p>
+<p>Cornsweet, T. (1962). The staircase-method in psychophysics. Am. J. Psychol. 75, 485491. https://doi.org/10.2307/1419876</p>
+<p>García-Pérez M.A. (1998). Forced-choice staircases with fixed step sizes: asymptotic and small-sample properties. Vision Res., 38(12), 1861-81. https://doi.org/10.1016/s0042-6989(97)00340-4.</p>
+<p>Levitt, H. (1971). Transformed up-down methods in psychoacoustics. Journal of the Acoustical Society of America, 49, 467–477. https://doi.org/10.1121/1.1912375</p>
+<p>Marzuki, A., Kosina, L., Dome, L., Hewitt, S., &amp; Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. <em>Research Square</em>. https://doi.org/10.21203/rs.3.rs-7544256/v1</p>
+<p>Moses‐Payne, M. E., Habicht, J., Bowler, A., Steinbeis, N., &amp; Hauser, T. U. (2021). I know better! Emerging metacognition allows adolescents to ignore false advice. Developmental Science, 24(5), e13101. https://doi.org/10.1111/desc.13101</p>
 </details>
 
     </div>

@@ -11,3 +11,9 @@
         show_root_heading: true
         heading_level: 3
         show_source: false
+
+::: cpm.datasets.load_metacognition_data
+    options:
+        show_root_heading: true
+        heading_level: 3
+        show_source: false

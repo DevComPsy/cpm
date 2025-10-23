@@ -75,14 +75,13 @@ def load_risky_choices():
     Notes
     -----
     
-    The data are from a risky decision-making task (REF?), a two-alternative forced-choice task, which is implemented as a smartphone-compatible gamified application available in the BrainExplorer app (https://brainexplorer.net/) as the game called "_Scavenger_".
-    On each trial, participants are presented with two stimuli and asked to select one of them. After they made their response, they also receive feedback in the form of rewards.
-    The stimuli are cartoonish depictions of stranded spaceships that participants have to salvage in order to collect INSERT-WHAT-THEY-COLLECT.
-    In addition, participants are also shown a radar, two circles drawn at the bottom of the screen, revealing the likelihood of attaining a reward given each option.
-    It depicts the possible outcomes are for each spaceship and their associated probabilities.
+    The data are from a risky decision-making task (similar to e.g., Rutledge et al., 2014), a two-alternative forced-choice task, which is implemented as a smartphone-compatible gamified application available in the BrainExplorer app (https://brainexplorer.net/) as the game called "_Scavenger_".
+    On each trial, participants are presented with two stimuli and asked to select one of them. After they make their choice, they receive feedback in the form of rewards (coins).
+    The stimuli are cartoonish depictions of stranded spaceships that participants have to salvage in order to obtain coins.
+    In addition, participants are shown a radar, two circles drawn at the bottom of the screen, revealing the possible outcomes for each spaceship and their associated probabilities.
     One of the spaceships always returns an outcome with 100% probability (i.e., the safe option). The other spaceship has a 50% probability of returning an either a 0 or non-zero outcome (i.e., the risky option).
     In gain trials, all possible outcomes are positive (except the outcome of 0). In loss trials, all possible outcomes are negative (except the outcome of 0).
-    Furthermore, there are two additional within-subject manipulations: ambiguous and non-ambiguous trials.
+    Furthermore, forming an additional within-participant manipulation, trials can be either ambiguous or non-ambiguous.
     In ambiguous trials, the radar provides only partial information about the probabilities of the possible outcomes of the risky choice option.
     In these trials, the risky choice option is shown to have at least a 25% probability of returning an outcome of 0, and at least a 25% probability of returning a different outcome.
     Unbeknownst to the participant, the true probability of both outcomes is always 50/50 (which is why the risky_probability values in the dataset are always 0.5).
@@ -91,13 +90,13 @@ def load_risky_choices():
     The dataset includes the following columns:
 
         - `ppt`: the participant number.
-        - `safe_magnitudes`: the magnitudes of the safe option.
-        - `risky_magnitudes`: the magnitudes of the risky options.
-        - `risky_probability`: the probabilities of the risky options.
+        - `safe_magnitudes`: the magnitude of the safe option.
+        - `risky_magnitudes`: the non-zero outcome magnitude of the risky option.
+        - `risky_probability`: the probability of the risky option.
         - `choice`: the choice of the participant (1 for risky, 0 for safe).
         - `optimal`: the optimal choice based on expected value (1 for risky, 0 for safe).
         - `feedback`: the feedback (reward) given to the participant.
-        - `ambiguity`: whether the choice was ambiguous (1 for yes, 0 for no).
+        - `ambiguity`: whether the trial was ambiguous (1 for yes, 0 for no).
         - `attempt`: the number of the experimental session for a given participant (e.g. 2 here means that participant is completing the experiment the second time).
         - `rt_flip`: the reaction time for the choice, measured in seconds, multiplied by -1 if the choice is not an optimal choice. It is used for fitting various drift diffusion models.
 
@@ -112,6 +111,7 @@ def load_risky_choices():
 
     References
     ----------
+    Rutledge, R. B., Skandali, N., Dayan, P., & Dolan, R. J. (2014). A computational and neural model of momentary subjective well-being. Proceedings of the National Academy of Sciences of the United States of America, 111(33), 12252–12257. https://doi.org/10.1073/pnas.1407535111
 
     """
     return load_csv("risky_choices.csv")
@@ -136,7 +136,7 @@ def load_metacognition_data():
     
     The data are from an experiment combining a perceptual decision making task with an additional post-decision component assessing participants' confidence in their choices (Marzuki et al., 2025; Moses-Payne et al., 2021).
     The experiment is implemented as a gamified smartphone-compatible application available in the BrainExplorer platform (https://brainexplorer.net/) as the game "_Space Observer_".
-    The task is designed to assess aspects of metacognition, specifically the extent to which one can accurately reflect on and evaluate their own performance.
+    The task is designed to assess aspects of metacognition, i.e., the extent to which one can accurately reflect on and evaluate their own performance, specifically how well one’s confidence is calibrated to their actual performance.
     For a more thourough description of the experimental procedure, please refer to Marzuki et al. (2025).
     Briefly, in each trial of the game, participants are presented with a planet in the centre of the screen.
     On top of the planet, participant's are shown 68 differently coloured aliens for 250 ms, overlaying the planet.
@@ -162,10 +162,18 @@ def load_metacognition_data():
 
     References
     ----------
+    
+    Chen, Y., Daly, H. R., Pitt, M. A., & Van Zandt, T. (2024). Assessing the distortions introduced when calculating d’: A simulation approach. _Behavior Research Methods_. https://doi.org/10.3758/s13428-024-02447-8
+    
+    Cornsweet, T. (1962). The staircase-method in psychophysics. Am. J. Psychol. 75, 485491. https://doi.org/10.2307/1419876
+    
+    García-Pérez M.A. (1998). Forced-choice staircases with fixed step sizes: asymptotic and small-sample properties. Vision Res., 38(12), 1861-81. https://doi.org/10.1016/s0042-6989(97)00340-4.
+    
+    Levitt, H. (1971). Transformed up-down methods in psychoacoustics. Journal of the Acoustical Society of America, 49, 467–477. https://doi.org/10.1121/1.1912375
 
-    Chen, Y., Daly, H. R., Pitt, M. A., & Van Zandt, T. (2024). Assessing the distortions introduced when calculating d’: A simulation approach. _Behavior Research Methods_. doi: 10.3758/s13428-024-02447-8
-
-    Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. _Research Square_. doi: 10.21203/rs.3.rs-7544256/v1
+    Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. _Research Square_. https://doi.org/10.21203/rs.3.rs-7544256/v1
+    
+    Moses‐Payne, M. E., Habicht, J., Bowler, A., Steinbeis, N., & Hauser, T. U. (2021). I know better! Emerging metacognition allows adolescents to ignore false advice. Developmental Science, 24(5), e13101. https://doi.org/10.1111/desc.13101
 
 
     """

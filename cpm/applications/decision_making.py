@@ -98,7 +98,11 @@ class PTSM(Wrapper):
         - `u_safe`: the utility of the safe option.
         - `u_risk`: the utility of the risky option.
     
-        
+    ## Details for fitting the model to data
+
+    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
+
+    If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
 
     See Also
     ---------
@@ -344,7 +348,12 @@ class PTSM1992(Wrapper):
         - `ev_risk`: the expected value of the risky option.
         - `u_safe`: the utility of the safe option.
         - `u_risk`: the utility of the risky option.
-    
+
+    ## Details for fitting the model to data
+
+    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
+
+    If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
         
 
     See Also
@@ -583,6 +592,12 @@ class PTSM2025(Wrapper):
         - `dependent`: The computed probability of a risky choice according to the model, which can be used for further analysis or fitting
     
 
+    ## Details for fitting the model to data
+
+    The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
+
+    If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
+
     References
     ----------
     Chew, B., Hauser, T. U., Papoutsi, M., Magerkurth, J., Dolan, R. J., & Rutledge, R. B. (2019). Endogenous fluctuations in the dopaminergic midbrain drive behavioral choice variability. Proceedings of the National Academy of Sciences, 116(37), 18732–18737. https://doi.org/10.1073/pnas.1900872116
@@ -694,7 +709,7 @@ class PTSM2025(Wrapper):
                 np.exp(temperature * utility_risky_option  + phi_t) + np.exp(temperature * utility_safe_option)
             )
             ## generate a random response between 0 and 1
-            model_choice = np.random.choice([0,1], p=[policies, 1-policies])
+            model_choice = np.random.choice([0,1], p=[1-policies, policies])
             
             output = {
                 "policy": policies,

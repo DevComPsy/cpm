@@ -154,7 +154,7 @@ def load_metacognition_data():
         - `stimulus_intensity`: absolute difference in number of aliens (i.e., evidence strength). 
         - `response`: participant's choice (0 = S1, 1 = S2).
         - `confidence`: participant's confidence rating for their response.
-        - `accuracy`: accuracy of the participant's response (0 = incorrect, 1 = 1 correct).
+        - `accuracy`: accuracy of the participant's response (0 = incorrect, 1 = correct).
 
     See Also
     --------

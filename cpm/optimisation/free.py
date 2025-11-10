@@ -151,8 +151,9 @@ class Minimize:
             hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
 
             result.update({"hessian": hessian})
-            # if participant data contains identifiers, return the identifiers too
-            result.update({"ppt": ppt})
+            # if participant data contains identifiers, add the identifier key to the result
+            if self.ppt_identifier is not None:
+                result.update({self.ppt_identifier: ppt})
             return result
 
         def __extract_nll(result):

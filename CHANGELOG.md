@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add validation for 'observed' column in Wrapper class to ensure it exists before running model or computing loss
 - Add warnings to inform users if 'observed' column is missing in the data provided to Wrapper class
 - Added detailed guidance on fitting the models (PTSM, PTSM1992, and PTSM2025) to data, including recommendations for setting the temperature parameter, handling overflow warnings, and normalizing utility values to avoid numerical instability.
+- Added documentations for the datasets included in `cpm.datasets`, detailing the experimental procedure, data structure and usage ([#69](https://github.com/DevComPsy/cpm/pull/69)) @FloorJBurghoorn
 
 ### Changed
 
@@ -20,11 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Increased bandit task dataset size
 - Update test units for `cpm.applications.reinforcement_learning.RLRW` to include handling of new changes, such as using `numpy.asarray` for `values` and adding an 'observed' column in the test dataset
 - Improved the error messages in check_nan_and_bounds_in_input to provide more actionable feedback when encountering NaN or Inf values in predicted or observed data, including likely causes and suggested remedies.
-- Display option now blocks all prints in optimization module ([#71](https://github.com/DevComPsy/cpm/pull/71))
+- Display option now blocks all prints in optimization module ([#71](https://github.com/DevComPsy/cpm/pull/71)) @tzukpolinsky
+
 ### Fixed
 
-- Fix wrong probabilities for generating data in `cpm.applications.decision_making.PTSM2025` model [#67](https://github.com/DevComPsy/cpm/issues/67)
+- Fix wrong probabilities for generating data in `cpm.applications.decision_making.PTSM2025` model [#67](https://github.com/DevComPsy/cpm/issues/67) @FloorJBurghoorn
 - Fix matplotlib>=3.10 dependency mismatch errors upon loading `cpm` by removing unused imports in `cpm.utils.metad`
+- Fix the usage of ppt_identifier in Minimize class ([#72](https://github.com/DevComPsy/cpm/pull/72)) @tzukpolinsky
 
 ### Removed
 
@@ -36,10 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add input validation and error handling in all `cpm.optimisation.minimise` methods
 - Add test units for `cpm.optimisation.minimise`
-- Added three models based on Prospect Theory: `cpm.applications.decision_making.PTSM`, `cpm.applications.decision_making.PTSM1992`, and `cpm.applications.decision_making.PTSM2025`
+- Added three models based on Prospect Theory: `cpm.applications.decision_making.PTSM`, `cpm.applications.decision_making.PTSM1992`, and `cpm.applications.decision_making.PTSM2025` @BenJonathanWagner
 - The `cpm.generators.Parameters` class now supports None-type parameters, allowing for more flexible model configurations
 - The `cpm.generators.Parameters` class now supports the use of user-defined functions as attributes in addition to freely-varying parameters
-- Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset
+- Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset @BenJonathanWagner @tuhauser
 - Expanded `cpm.models.activation.ProspectUtility` class to include additional parameters for more flexible modeling of decision-making under risk, more closely approximating Tversky & Kahneman's (1992) version of Prospect Theory
 
 ### Fixed

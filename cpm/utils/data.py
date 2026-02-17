@@ -75,3 +75,32 @@ def dict_to_pandas(dict):
         else:
             output[key] = pd.Series(value.tolist())
     return output
+
+
+def convert_to_RLRW(data, human_response, feedback, stimulus, participant, **kwargs):
+    """
+    Convert a dictionary to a pandas dataframe.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        The dictionary to convert.
+    human_response : str or list
+        The column name for the human response.
+    feedback : str or list
+        The column name for the feedback.
+    stimulus : str or list
+        The column name(s) for the stimulus.
+    participant : str
+        The column name for the participant identifier.
+    kwargs : dict, optional
+        Any other keyword arguments to pass to the pandas DataFrame.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The pandas.DataFrame compatible with the RLRW wrapper, containing the stimulus, human response, and feedback columns.
+    """
+    output = pd.DataFrame()
+
+    return output

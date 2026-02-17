@@ -72,6 +72,15 @@ class Softmax:
             self.activations = activations.copy()
         else:
             self.activations = np.zeros(1)
+        ## Throw error if activations contain missing values of infities
+        if np.isnan(self.activations).any():
+            raise ValueError(
+                "Activations contain NaN values. Please remove or impute missing values."
+            )
+        if np.isinf(self.activations).any():
+            raise ValueError(
+                "Activations contain infinite values. Please remove or impute infinite values."
+            )
         self.policies = np.zeros(self.activations.shape[0])
         self.shape = self.activations.shape
         if len(self.shape) > 1:
@@ -80,12 +89,6 @@ class Softmax:
             warnings.warn(
                 "Activations should be a 1D array, but a 2D array was provided. "
                 "Flattening the activations to a 1D array."
-            )
-        if np.isnan(self.policies).any():
-            self.policies[np.isnan(self.policies)] = 1
-            self.policies /= self.policies.sum()
-            warnings.warn(
-                "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
             )
 
         self.__run__ = False
@@ -102,6 +105,14 @@ class Softmax:
             np.exp(self.activations * self.temperature)
         )
         self.policies = output
+
+        if np.isnan(self.policies).any():
+            self.policies[np.isnan(self.policies)] = 1
+            self.policies /= self.policies.sum()
+            warnings.warn(
+                "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
+            )
+
         self.__run__ = True
         return self.policies
 
@@ -202,12 +213,6 @@ class Sigmoid:
                 "Flattening the activations to a 1D array."
             )
 
-        if np.isnan(self.policies).any():
-            self.policies[np.isnan(self.policies)] = 1
-            self.policies /= self.policies.sum()
-            warnings.warn(
-                "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
-            )
         self.__run__ = False
 
     def compute(self):
@@ -221,6 +226,14 @@ class Sigmoid:
         """
         output = 1 / (1 + np.exp((self.activations - self.beta) * -self.temperature))
         self.policies = output
+
+        if np.isnan(self.policies).any():
+            self.policies[np.isnan(self.policies)] = 1
+            self.policies /= self.policies.sum()
+            warnings.warn(
+                "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
+            )
+
         self.__run__ = True
         return output
 

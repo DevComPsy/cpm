@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `simulation_export` function to handle DataFrame output correctly
 - Fix `detailed_pandas_compiler` function to support new numpy versions
 - Fix probability adjustements in `cpm.optimisation.minimise.LogLikelihood` method to ensure correct parameter estimates
+- Fix NaN handling in `cpm.models.decision.Softmax`, and `cpm.models.decision.Sigmoid` due to infinities in the exponential function for out-of-bounds parameters
 
 ### Changed
 

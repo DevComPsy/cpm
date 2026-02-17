@@ -55,7 +55,7 @@ class Softmax:
     >>> softmax.compute()
     array([0.30719589, 0.18632372, 0.50648039])
     >>> softmax.choice() # This will randomly choose one of the actions based on the computed probabilities.
-    2  
+    2
     >>> Softmax(temperature=temperature, activations=activations).compute()
     array([0.30719589, 0.18632372, 0.50648039])
     """
@@ -81,7 +81,12 @@ class Softmax:
                 "Activations should be a 1D array, but a 2D array was provided. "
                 "Flattening the activations to a 1D array."
             )
-            
+        if np.isnan(self.policies).any():
+            self.policies[np.isnan(self.policies)] = 1
+            self.policies /= self.policies.sum()
+            warnings.warn(
+                "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
+            )
 
         self.__run__ = False
 
@@ -196,6 +201,13 @@ class Sigmoid:
                 "Activations should be a 1D array, but a 2D array was provided. "
                 "Flattening the activations to a 1D array."
             )
+
+        if np.isnan(self.policies).any():
+            self.policies[np.isnan(self.policies)] = 1
+            self.policies /= self.policies.sum()
+            warnings.warn(
+                "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
+            )
         self.__run__ = False
 
     def compute(self):
@@ -207,10 +219,7 @@ class Sigmoid:
         output: ndarray
             A 2D array of outputs computed using the sigmoid function.
         """
-        output = 1 / (
-            1
-            + np.exp((self.activations - self.beta) * -self.temperature)
-        )
+        output = 1 / (1 + np.exp((self.activations - self.beta) * -self.temperature))
         self.policies = output
         self.__run__ = True
         return output

@@ -26,7 +26,7 @@ def combine_lists(**kwargs):
 
 def convert_to_RLRW(data, human_response, reward, stimulus, participant, **kwargs):
     """
-    Convert a dictionary to a pandas dataframe.
+    Convert a pandas DataFrame into a format compatible with the RLRW wrapper. This function takes in a DataFrame and the column names for the human response, reward, stimulus, and participant identifier, and returns a new DataFrame that is structured in a way that can be used with the RLRW wrapper. The function also checks to ensure that the specified columns exist in the input data and raises informative error messages if any of the columns are missing. Additionally, it can handle cases where there are multiple columns for stimulus, human response, or reward by creating new column names that match the number of columns provided.
 
     Parameters
     ----------
@@ -72,10 +72,14 @@ def convert_to_RLRW(data, human_response, reward, stimulus, participant, **kwarg
     ...     condition="condition"
     ... )
     >>> print(output)
-       arm_0  arm_1  response  reward_0  reward_1  participant  block condition
+        arm_0  arm_1  response  reward_0  reward_1  participant  block condition
     0       0       1         1         1         0            1      1         A
     1       1       0         0         0         1            1      1         A
     2       0       1         1         1         0            2      2         B
+
+    See also
+    --------
+    [cpm.applications.reinforcement_learning.RLRW][cpm.applications.reinforcement_learning.RLRW]: The RLRW wrapper that this function is designed to be compatible with.
     """
     ## perform a series of checks to ensure that the specified columns exist in the input data
     if participant not in data.columns:
@@ -140,4 +144,77 @@ def convert_to_RLRW(data, human_response, reward, stimulus, participant, **kwarg
         for i, col in enumerate(cols):
             new_col_name = f"{key}_{i}" if length > 1 else key
             output[new_col_name] = data[col]
+    return output
+
+
+def convert_to_PTSM(
+    data, safe_magnitudes, risky_magnitudes, risky_probability, response, **kwargs
+):
+    """
+    Convert a pandas DataFrame into a format compatible with the PTSM wrapper. This function takes in a DataFrame and the column names for the human response, reward, stimulus, and participant identifier, and returns a new DataFrame that is structured in a way that can be used with the PTSM wrapper. The function also checks to ensure that the specified columns exist in the input data and raises informative error messages if any of the columns are missing. Additionally, it can handle cases where there are multiple columns for stimulus, human response, or reward by creating new column names that match the number of columns provided.
+    """
+    if isinstance(safe_magnitudes, str):
+        if safe_magnitudes not in data.columns:
+            raise ValueError(
+                f"Safe magnitudes column '{safe_magnitudes}' not found in data."
+            )
+    elif isinstance(safe_magnitudes, list):
+        raise ValueError("Safe magnitudes must be a single column name as a string.")
+    else:
+        raise ValueError("Safe magnitudes must be a string.")
+    if isinstance(risky_magnitudes, str):
+        if risky_magnitudes not in data.columns:
+            raise ValueError(
+                f"Risky magnitudes column '{risky_magnitudes}' not found in data."
+            )
+    elif isinstance(risky_magnitudes, list):
+        raise ValueError("Risky magnitudes must be a single column name as a string.")
+    else:
+        raise ValueError("Risky magnitudes must be a string.")
+    if isinstance(risky_probability, str):
+        if risky_probability not in data.columns:
+            raise ValueError(
+                f"Risky probability column '{risky_probability}' not found in data."
+            )
+    elif isinstance(risky_probability, list):
+        raise ValueError("Risky probability must be a single column name as a string.")
+    else:
+        raise ValueError("Risky probability must be a string.")
+    if isinstance(response, str):
+        if response not in data.columns:
+            raise ValueError(f"Response column '{response}' not found in data.")
+    elif isinstance(response, list):
+        raise ValueError("Response must be a single column name as a string.")
+    else:
+        raise ValueError("Response must be a string.")
+    ## check kwargs for any additional columns that need to be included in the output dataframe
+    if kwargs is not None:
+        for key, value in kwargs.items():
+            if isinstance(value, list):
+                for col in value:
+                    if col not in data.columns:
+                        raise ValueError(
+                            f"Additional column '{col}' not found in data."
+                        )
+            elif isinstance(value, str):
+                if value not in data.columns:
+                    raise ValueError(f"Additional column '{value}' not found in data.")
+            else:
+                raise ValueError(
+                    "Additional column names must be strings or lists of strings."
+                )
+
+    output = pd.DataFrame()
+    output["safe_magnitudes"] = data[safe_magnitudes]
+    output["risky_magnitudes"] = data[risky_magnitudes]
+    output["risky_probability"] = data[risky_probability]
+    output["observed"] = data[response]
+    ## add any additional columns specified in kwargs to the output dataframe
+    if kwargs is not None:
+        for key, value in kwargs.items():
+            if isinstance(value, list):
+                for col in value:
+                    output[col] = data[col]
+            elif isinstance(value, str):
+                output[value] = data[value]
     return output

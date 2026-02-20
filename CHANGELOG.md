@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `cpm.generators.Parameters` class now supports the use of user-defined functions as attributes in addition to freely-varying parameters
 - Add `cpm.datasets.load_risky_choices` function to load built-in risky choices dataset @BenJonathanWagner @tuhauser
 - Expanded `cpm.models.activation.ProspectUtility` class to include additional parameters for more flexible modeling of decision-making under risk, more closely approximating Tversky & Kahneman's (1992) version of Prospect Theory
+- Added `cpm.utils.data.convert_to_RLRW` data conversion utility to create dataframes compatible with `cpm.applications.reinforcement_learning.RLRW`
 
 ### Fixed
 

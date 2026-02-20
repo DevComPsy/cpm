@@ -15,6 +15,9 @@
 ## cpm.utils.data
 
 ::: cpm.utils.data.convert_to_RLRW
+    options:
+        show_root_heading: true
+        heading_level: 3
 
 ::: cpm.utils.data.pandas_to_dict
     options:

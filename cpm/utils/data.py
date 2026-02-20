@@ -31,13 +31,13 @@ def convert_to_RLRW(data, human_response, reward, stimulus, participant, **kwarg
     Parameters
     ----------
     data : pandas.DataFrame
-        The dictionary to convert.
+        The pandas DataFrame to convert.
     human_response : str or list
         The column name for the human response.
     reward : str or list
-        The column name for the reward.
+        The column name(s) for the rewards in an order corresponding to the stimulus columns.
     stimulus : str or list
-        The column name(s) for the stimulus.
+        The column name(s) for the stimulus in an order corresponding to the reward columns.
     participant : str
         The column name for the participant identifier.
     kwargs : dict, optional
@@ -152,6 +152,59 @@ def convert_to_PTSM(
 ):
     """
     Convert a pandas DataFrame into a format compatible with the PTSM wrapper. This function takes in a DataFrame and the column names for the human response, reward, stimulus, and participant identifier, and returns a new DataFrame that is structured in a way that can be used with the PTSM wrapper. The function also checks to ensure that the specified columns exist in the input data and raises informative error messages if any of the columns are missing. Additionally, it can handle cases where there are multiple columns for stimulus, human response, or reward by creating new column names that match the number of columns provided.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        The pandas DataFrame to convert.
+    safe_magnitudes : str or list
+        The column name for the safe magnitudes (safe options).
+    risky_magnitudes : str or list
+        The column name for the risky magnitudes (risky options).
+    risky_probability : str or list
+        The column name for the probabilities of the risky options.
+    response : str or list
+        The column name for the human response (choices).
+    kwargs : dict, optional
+        Any other keyword arguments to pass to the pandas DataFrame.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The pandas.DataFrame compatible with the PTSM wrapper, containing the safe magnitudes, risky magnitudes, risky probabilities, and human response columns.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from cpm.utils.data import convert_to_PTSM
+    >>> data = pd.DataFrame({
+    ...     "safe": [10, 20, 30],
+    ...     "risky": [0, 50, 100],
+    ...     "prob": [0.2, 0.5, 0.8],
+    ...     "choice": [0, 1, 0],
+    ...     "block": [1, 1, 2],
+    ...     "condition": ["A", "A", "B"]
+    ... })
+    >>> output = convert_to_PTSM(
+    ...     data=data,
+    ...     safe_magnitudes="safe",
+    ...     risky_magnitudes="risky",
+    ...     risky_probability="prob",
+    ...     response="choice",
+    ...     block="block",
+    ...     condition="condition"
+    ... )
+    >>> print(output)
+        safe_magnitudes  risky_magnitudes  risky_probability  observed  block  condition
+    0               10                 0                0.2         0       1        A
+    1               20                50                0.5         1       1        A
+    2               30               100                0.8         0       2        B
+
+    See also
+    --------
+    [cpm.applications.decision_making.PTSM][cpm.applications.decision_making.PTSM]: The PTSM wrapper that this function is designed to be compatible with.
+    [cpm.applications.decision_making.PTSM1992][cpm.applications.decision_making.PTSM1992]: The PTSM1992 wrapper that this function is designed to be compatible with.
+    [cpm.applications.decision_making.PTSM2025][cpm.applications.decision_making.PTSM2025]: The PTSM2025 wrapper that this function is designed to be compatible with.
     """
     if isinstance(safe_magnitudes, str):
         if safe_magnitudes not in data.columns:

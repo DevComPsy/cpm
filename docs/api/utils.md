@@ -18,13 +18,3 @@
     options:
         show_root_heading: true
         heading_level: 3
-
-::: cpm.utils.data.pandas_to_dict
-    options:
-        show_root_heading: true
-        heading_level: 3
-
-::: cpm.utils.data.dict_to_pandas
-    options:
-        show_root_heading: true
-        heading_level: 3

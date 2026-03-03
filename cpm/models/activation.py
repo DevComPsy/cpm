@@ -420,7 +420,6 @@ class Offset:
     **kwargs : dict, optional
         Additional keyword arguments.
 
-
     Examples
     --------
     >>> vals = np.array([2.1, 1.1])

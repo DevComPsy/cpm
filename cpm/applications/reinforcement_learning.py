@@ -53,9 +53,36 @@ class RLRW(Wrapper):
 
     parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 1 and an upper bound of 10.
 
+    The model is defined as follows:
+
+    Let each stimulus have an associated value, which is the expected reward that can be obtained from selecting that stimulus. Let also $Q(a)$ be the estimated value of action $a$. In each trial, $t$, there are two stimuli present, so $Q(a)$ could be $Q(\text{left})$ or $Q(\\text{right})$, where the corresponding $Q$ values are derived from the associated value of the stimulus present on the left or right. In each trial $t$ , the Softmax choice rule (Bridle, 1990) will convert the estimated value of each action into a probability according to the following policy:
+
+    $$
+    P(a) = \\frac{e^{Q(a)/\\tau}}{\sum_{a'} e^{Q(a')/\\tau}}
+    $$
+
+    where $\\tau$ is the temperature parameter. After the choice is made and feedback is received, the value of the chosen stimulus is updated. The current implementation uses the variant of the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton, & Williams, 1986) adapted for multi-armed bandit problems where each option has a single stimulus dimension (Sutton & Barto, 2020), reducing Rescorla-Wagner's summed error-term to the following equation, similar to (Bush & Mosteller, 1951):
+
+    $$
+    \\Delta Q(a_t) = \\alpha \\times [R - Q(a_t)]
+    $$
+
+    where $\\alpha$ is the learning rate, $R$ is the reward received for the chosen action, and $Q(a_t)$ is the estimated value of the chosen action before updating. The values of unchosen stimuli remain unchanged.
+
     References
     ----------
+
+    Bridle, J. S. (1990). Probabilistic Interpretation of Feedforward Classification Network Outputs, with Relationships to Statistical Pattern Recognition. In F. F. Soulié & J. Hérault (Eds.), Neurocomputing (pp. 227–236). Springer. https://doi.org/10.1007/978-3-642-76153-9_28
+
+    Bush, R. R., & Mosteller, F. (1951). A mathematical model for simple learning. Psychological Review, 58(5), 313–323. https://doi.org/10.1037/h0054388
+
+    Rescorla, R. A. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and non-reinforcement. Classical Conditioning, Current Research and Theory, 2, 64–69.
+
     Robert C Wilson & Anne GE Collins (2019) Ten simple rules for the computational modeling of behavioral data eLife 8:e49547.
+
+    Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors. Nature, 323(6088), 533–536. https://doi.org/10.1038/323533a0
+
+    Sutton, R. S., & Barto, A. (2020). Reinforcement learning: An introduction (Second edition). The MIT Press.
 
     """
 

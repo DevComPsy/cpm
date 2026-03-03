@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Removed unused imports in `cpm.utils.metad` to prevent dependency issues with matplotlib>=3.10
+- Removed `cpm.models.learning.KernelUpdate` due to inconsistencies between equations reported in paper and code available in GitHub
 
 ## [0.23.18] - 2025-09-03
 

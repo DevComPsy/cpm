@@ -12,9 +12,7 @@ __all__ = [
 
 class Softmax:
     """
-    Softmax class for computing policies based on activations and temperature.
-
-        The softmax function is defined as: e^(temperature * x) / sum(e^(temperature * x)).
+    Softmax class for computing policies based on activations and temperature (Bridle, 1990).
 
     Parameters
     ----------
@@ -30,20 +28,17 @@ class Softmax:
     Notes
     -----
 
+    The softmax is defined as:
+
+    $$
+    P(x) = \\frac{e^{\\beta x}}{\\sum_{i} e^{\\beta x_i}}
+    $$
+
     The inverse temperature parameter beta represents the degree of randomness in the choice process.
     As beta approaches positive infinity, choices becomes more deterministic,
     such that the choice option with the greatest activation is more likely to be chosen - it approximates a step function.
     By contrast, as beta approaches zero, choices becomes random (i.e., the probabilities the choice options are approximately equal)
     and therefore independent of the options' activations.
-
-    `activations` must be a 2D array, where each row represents an outcome and each column represents a stimulus or other arbitrary features and variables.
-    If multiple values are provided for each outcome, the softmax function will sum these values up.
-
-    Note that if you have one value for each outcome (i.e. a classical bandit-like problem), and you represent it as a 1D
-    array, you must reshape it in the format specified for activations. So that if you have 3 stimuli
-    which all are actionable, `[0.1, 0.5, 0.22]`, you should have a 2D array of shape (3, 1), `[[0.1], [0.5], [0.22]]`.
-    You can see [Example 2]("./examples/examples2") for a demonstration.
-
 
     Examples
     --------
@@ -58,6 +53,11 @@ class Softmax:
     2
     >>> Softmax(temperature=temperature, activations=activations).compute()
     array([0.30719589, 0.18632372, 0.50648039])
+
+    References
+    ----------
+    Bridle, J. S. (1990). Probabilistic Interpretation of Feedforward Classification Network Outputs, with Relationships to Statistical Pattern Recognition. In F. F. Soulié & J. Hérault (Eds.), Neurocomputing (pp. 227–236). Springer. https://doi.org/10.1007/978-3-642-76153-9_28
+
     """
 
     def __init__(self, temperature=None, xi=None, activations=None, **kwargs):
@@ -175,8 +175,6 @@ class Sigmoid:
     array of outputs, where n is the number of output and m is the number of
     inputs.
 
-        The sigmoid function is defined as: 1 / (1 + e^(-temperature * (x - beta))).
-
     Parameters
     ----------
     temperature : float
@@ -196,6 +194,19 @@ class Sigmoid:
     >>> sigmoid = Sigmoid(temperature=temperature, activations=activations)
     >>> sigmoid.compute()
     array([[0.66818777, 0.80218389]])
+
+    Notes
+    -----
+    The sigmoid function is a special case of the softmax function, where the output is of length 1.
+    The current implementation is based on Gluck and Bower's (1988) logistic choice function.
+    Our current implementation is based on the following equation:
+
+    $$
+    P(x) = \\frac{1}{1 + e^{-\\theta (x - \\beta)}}
+    $$
+
+    where $\\theta$ is the inverse temperature parameter, $x$ is the input array of activations, and $\\beta$ is the bias parameter.
+    The bias parameter is not part of the original Gluck and Bower (1988) model. bias in the current implementation helps comparisons between simulations using the act2probrat logistic choice function. Set bias to 0 for operation as specified in Gluck & Bower (1988). Also note that, where there is more than one output node, the same bias value is subtracted from the output of each node. This form of decision mechanism is not present in the literature as far as we are aware, although using a negative bias value would, in multi-outcome cases, approximate a 'background noise' decision rule, as used in, for example, Nosofsky et al. (1994).
 
     """
 
@@ -281,9 +292,24 @@ class GreedyRule:
         An array of outputs computed using the greedy rule.
     shape : tuple
         The shape of the activations array.
+        
+        
+    Notes
+    -----
+    The greedy rule is defined as follows:
+    
+    $$
+    P(x) = \\begin{cases}
+    1 - (n - 1)\\epsilon & \\text{if } x = \\text{argmax}(a) \\\\
+    \\frac{\\epsilon}{n} & \\text{otherwise}
+    \\end{cases}
+    $$
+
+    where $x$ is the action, $a$ is the array of activations or the expected reward for each action, $n$ is the number of actions, and $\\epsilon$ is the exploration parameter. Values are normalised to keep the probabilities valid. The greedy rule selects the action with the highest activation with probability $1 - (n - 1)\\epsilon$, and selects a random action with probability $\\frac{\\epsilon}{n}$.
 
     References
     ----------
+    
     Daw, N. D., O’Doherty, J. P., Dayan, P., Seymour, B., & Dolan, R. J. (2006). Cortical substrates for exploratory decisions in humans. Nature, 441(7095), Article 7095. https://doi.org/10.1038/nature04766
     """
 
@@ -382,11 +408,16 @@ class ChoiceKernel:
     Notes
     -----
 
+    The choice kernel is defined as follows:
+
+    $$
+    P(x) = \\frac{e^{\\theta_a a + \\theta_k k}}{\\sum_{i} e^{\\theta_a a_i + \\theta_k k_i}}
+    $$
+
+    where $\\theta_a$ is the inverse temperature parameter for the activations, $\\theta_k$ is the inverse temperature parameter for the kernel, $a$ is the array of activations for each action, and $k$ is the array of kernel values for each action. The kernel values represent the frequency of choosing each action in the past, and they are updated after each choice.
+
     In order to get Equation 6 from Wilson and Collins (2019), either set `activations` to None (default) or set it to 0.
 
-    See Also
-    --------
-    [cpm.models.learning.KernelUpdate][cpm.models.learning.KernelUpdate]: A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.
 
     References
     ----------

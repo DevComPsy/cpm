@@ -322,9 +322,11 @@ class QLearningRule:
     The Q-learning rule is a model-free reinforcement learning algorithm that is used to learn the value of an action in a given state.
     It is defined as
 
-        Q(s, a) = Q(s, a) + alpha * (r + gamma * max(Q(s', a')) - Q(s, a)),
+    $$
+    \\Delta \\mathcal{Q}(s, a) =  \\alpha \\cdot (r + \\gamma \\cdot \\max_{a'} \\mathcal{Q}(s', a') - \\mathcal{Q}(s, a))
+    $$
 
-    where `Q(s, a)` is the value of action `a` in state `s`, `r` is the reward received on the current state, `gamma` is the discount factor, and `max(Q(s', a'))` is the maximum estimated reward for the next state.
+    where $\\Delta \\mathcal{Q}(s, a)$ is the change in value of action $a$ in state $s$, $r$ is the reward received on the current state, $\\gamma$ is the discount factor, and $\\max_{a'} \\mathcal{Q}(s', a')$ is the maximum estimated reward for the next state.
 
     Examples
     --------
@@ -394,95 +396,9 @@ class QLearningRule:
         return self.compute()
 
 
-class KernelUpdate:
-    """
-    A class representing a learning rule for updating the choice kernel as specified by Equation 5 in Wilson and Collins (2019).
-
-    Parameters
-    ----------
-    response : ndarray
-        The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as `[0, 1, 0, 0]`.
-    alpha : float
-        The kernel learning rate.
-    kernel : ndarray
-        The kernel used for learning. It is a 1D array of kernel values, where each element corresponds to a response option. Each element must correspond to the same response option in the `response` vector.
-
-    Notes
-    -----
-    The kernel update component is used to represent how likely a given response is to be chosen based on the frequency it was chosen in the past.
-    This can then be integrated into a choice kernel decision policy.
-
-    See Also
-    --------
-    [cpm.models.decision.ChoiceKernel][cpm.models.decision.ChoiceKernel] : A class representing a choice kernel decision policy.
-
-    References
-    ----------
-    Wilson, Robert C., and Anne GE Collins. Ten simple rules for the computational modeling of behavioral data. Elife 8 (2019): e49547.
-
-    """
-
-    def __init__(self, response, alpha, kernel, input, **kwargs):
-        if len(response) != len(kernel):
-            raise ValueError(
-                "The response and kernel must have the same number of elements."
-            )
-        self.response = response
-        self.alpha = alpha
-        self.kernel = kernel.copy()
-        self.input = input
-
-    def compute(self):
-        """
-        Compute the change in the kernel based on the given response, rate, and kernel, and return the updated kernel.
-
-        Returns
-        -------
-        output: numpy.ndarray:
-            The computed change of the kernel.
-        """
-        out = self.alpha * (self.response - self.kernel) * self.input
-        return out
-
-    def config(self):
-        """
-        Get the configuration of the kernel update component.
-
-        Returns
-        -------
-        config: dict
-            A dictionary containing the configuration parameters of the kernel update component.
-
-            - response (float): The response of the system.
-            - rate (float): The learning rate.
-            - kernel (list): The kernel used for learning.
-            - input (str): The name of the input.
-            - name (str): The name of the kernel update component class.
-            - type (str): The type of the kernel update component.
-        """
-        config = {
-            "response": self.response,
-            "rate": self.rate,
-            "kernel": self.kernel,
-            "input": self.input,
-            "name": self.__class__.__name__,
-            "type": "learning",
-        }
-        return config
-
-    def __repr__(self):
-        return f"KernelUpdate(response={self.response},\n rate={self.rate},\n kernel={self.kernel},\n input={self.input})"
-
-    def __str__(self):
-        return f"KernelUpdate(response={self.response},\n rate={self.rate},\n kernel={self.kernel},\n input={self.input})"
-
-    def __call__(self):
-        return self.compute()
-
-
 class HumbleTeacher:
     """
-    A humbe teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
+    A humble teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
 
     Attributes
     ----------

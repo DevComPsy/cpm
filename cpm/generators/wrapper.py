@@ -10,6 +10,7 @@ from ..core.data import unpack_trials, determine_data_length
 from ..core.exports import simulation_export
 from ..core.optimisers import objective
 
+
 class Wrapper:
     """
     A `Wrapper` class for a model function in the CPM toolbox. It is designed to run a model for a **single** experiment (participant) and store the output in a format that can be used for further analysis.
@@ -205,7 +206,7 @@ class Wrapper:
         Parameters
         ----------
         loss : function
-            The loss function that is used to calculate the metric value. 
+            The loss function that is used to calculate the metric value.
         prior : bool, optional
             If True, the prior distribution of the parameters is added to the metric value. Default is False.
 
@@ -222,13 +223,14 @@ class Wrapper:
         -------
         parser : function
             A function that takes a single argument `pars`, which is a one-dimensional array of parameters, where each element corresponds to the parameters as they were defined in the `cpm.generators.Parameters`.
-        
+
         """
         if loss is None:
             raise ValueError("Loss function must be provided.")
         if self.has_observed is False:
             raise ValueError("Data must contain an 'observed' column to compute loss.")
         observed = self.data.observed.to_numpy()
+
         def parser(pars):
             return objective(
                 pars,

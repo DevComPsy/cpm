@@ -167,14 +167,6 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#cpm.models.learning.KernelUpdate">KernelUpdate</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.models.learning.KernelUpdate.compute">compute</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#cpm.models.learning.KernelUpdate.config">config</a>
-    </li>
-        </ul>
-    </li>
     <li class="toctree-l3"><a class="reference internal" href="#cpm.models.learning.QLearningRule">QLearningRule</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#cpm.models.learning.QLearningRule.compute">compute</a>
@@ -345,6 +337,19 @@ It formalises the hypothesis that each stimulus has an underlying salience that 
 <span class="go">       [0.2       , 0.13333333, 0.        ]])</span>
 </code></pre></div>
 
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The competitive gating function is defined as follows:</p>
+<div class="arithmatex">\[
+a = \frac{g}{||g||_p}
+\]</div>
+<p>where <span class="arithmatex">\(g\)</span> is the attentional gain, defined as the element-wise product of the stimulus vector and the salience vector, and <span class="arithmatex">\(||g||_p\)</span> is the p-norm of the attentional gain:</p>
+<div class="arithmatex">\[
+||g||_p = \left(\sum_{i=1}^{n} g_i^p \right)^{1/p}
+\]</div>
+<p>The parameter <span class="arithmatex">\(p\)</span> controls the brutality of the competition between the stimuli. When <span class="arithmatex">\(p\)</span> is close to 0, the competition is very brutal. When <span class="arithmatex">\(p\)</span> is close to infinity, the competition is very mild, and all stimuli will receive attention proportional to their gain.</p>
+</details>
 
 <details class="references" open>
   <summary>References</summary>
@@ -862,6 +867,15 @@ w(p) = \frac{\delta \cdot p^\gamma}{\delta \cdot p^\gamma + (1 - p)^\gamma}
         <p>Represents a sigmoid activation function.</p>
 
 
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The sigmoid activation function is defined as follows:</p>
+<div class="arithmatex">\[
+a = \frac{1}{1 + e^{-x \cdot w}}
+\]</div>
+<p>where <span class="arithmatex">\(x\)</span> is the stimulus representation (vector), and <span class="arithmatex">\(w\)</span> is a 2D array of weights, where each row represents an outcome and each column represents a single stimulus.</p>
+</details>
+
 
 <table class="field-list">
   <colgroup>
@@ -1093,12 +1107,12 @@ It is based on Equation 7 in Wilson and Collins (2019).</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>In order to get Equation 6 from Wilson and Collins (2019), either set <code>activations</code> to None (default) or set it to 0.</p>
-</details>
-
-<details class="see-also" open>
-  <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="KernelUpdate(response, alpha, kernel, input, **kwargs)" href="#cpm.models.learning.KernelUpdate">cpm.models.learning.KernelUpdate</a>: A class representing a kernel update (Equation 5; Wilson and Collins, 2019) that updates the kernel values.</p>
+  <p>The choice kernel is defined as follows:</p>
+<div class="arithmatex">\[
+P(x) = \frac{e^{\theta_a a + \theta_k k}}{\sum_{i} e^{\theta_a a_i + \theta_k k_i}}
+\]</div>
+<p>where <span class="arithmatex">\(\theta_a\)</span> is the inverse temperature parameter for the activations, <span class="arithmatex">\(\theta_k\)</span> is the inverse temperature parameter for the kernel, <span class="arithmatex">\(a\)</span> is the array of activations for each action, and <span class="arithmatex">\(k\)</span> is the array of kernel values for each action. The kernel values represent the frequency of choosing each action in the past, and they are updated after each choice.</p>
+<p>In order to get Equation 6 from Wilson and Collins (2019), either set <code>activations</code> to None (default) or set it to 0.</p>
 </details>
 
 <details class="references" open>
@@ -1242,6 +1256,18 @@ It is based on Equation 7 in Wilson and Collins (2019).</p>
     </tr>
   </tbody>
 </table>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The greedy rule is defined as follows:</p>
+<div class="arithmatex">\[
+P(x) = \begin{cases}
+1 - (n - 1)\epsilon &amp; \text{if } x = \text{argmax}(a) \\
+\frac{\epsilon}{n} &amp; \text{otherwise}
+\end{cases}
+\]</div>
+<p>where <span class="arithmatex">\(x\)</span> is the action, <span class="arithmatex">\(a\)</span> is the array of activations or the expected reward for each action, <span class="arithmatex">\(n\)</span> is the number of actions, and <span class="arithmatex">\(\epsilon\)</span> is the exploration parameter. Values are normalised to keep the probabilities valid. The greedy rule selects the action with the highest activation with probability <span class="arithmatex">\(1 - (n - 1)\epsilon\)</span>, and selects a random action with probability <span class="arithmatex">\(\frac{\epsilon}{n}\)</span>.</p>
+</details>
 
 <details class="references" open>
   <summary>References</summary>
@@ -1420,8 +1446,6 @@ It is based on Equation 7 in Wilson and Collins (2019).</p>
         <p>A class representing a sigmoid function that takes an n by m array of activations and returns an n
 array of outputs, where n is the number of output and m is the number of
 inputs.</p>
-<pre><code>The sigmoid function is defined as: 1 / (1 + e^(-temperature * (x - beta))).
-</code></pre>
 
 
 <table class="field-list">
@@ -1481,6 +1505,18 @@ of P = 0.5.</p>
 <span class="go">array([[0.66818777, 0.80218389]])</span>
 </code></pre></div>
 
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The sigmoid function is a special case of the softmax function, where the output is of length 1.
+The current implementation is based on Gluck and Bower's (1988) logistic choice function.
+Our current implementation is based on the following equation:</p>
+<div class="arithmatex">\[
+P(x) = \frac{1}{1 + e^{-\theta (x - \beta)}}
+\]</div>
+<p>where <span class="arithmatex">\(\theta\)</span> is the inverse temperature parameter, <span class="arithmatex">\(x\)</span> is the input array of activations, and <span class="arithmatex">\(\beta\)</span> is the bias parameter.
+The bias parameter is not part of the original Gluck and Bower (1988) model. bias in the current implementation helps comparisons between simulations using the act2probrat logistic choice function. Set bias to 0 for operation as specified in Gluck &amp; Bower (1988). Also note that, where there is more than one output node, the same bias value is subtracted from the output of each node. This form of decision mechanism is not present in the literature as far as we are aware, although using a negative bias value would, in multi-outcome cases, approximate a 'background noise' decision rule, as used in, for example, Nosofsky et al. (1994).</p>
+</details>
 
 
 
@@ -1612,9 +1648,7 @@ are normalised to sum to 1 when generating a discrete choice.</p>
     <div class="doc doc-contents ">
 
 
-        <p>Softmax class for computing policies based on activations and temperature.</p>
-<pre><code>The softmax function is defined as: e^(temperature * x) / sum(e^(temperature * x)).
-</code></pre>
+        <p>Softmax class for computing policies based on activations and temperature (Bridle, 1990).</p>
 
 
 <table class="field-list">
@@ -1667,17 +1701,15 @@ represents a single stimulus.</p>
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The inverse temperature parameter beta represents the degree of randomness in the choice process.
+  <p>The softmax is defined as:</p>
+<div class="arithmatex">\[
+P(x) = \frac{e^{\beta x}}{\sum_{i} e^{\beta x_i}}
+\]</div>
+<p>The inverse temperature parameter beta represents the degree of randomness in the choice process.
 As beta approaches positive infinity, choices becomes more deterministic,
 such that the choice option with the greatest activation is more likely to be chosen - it approximates a step function.
 By contrast, as beta approaches zero, choices becomes random (i.e., the probabilities the choice options are approximately equal)
 and therefore independent of the options' activations.</p>
-<p><code>activations</code> must be a 2D array, where each row represents an outcome and each column represents a stimulus or other arbitrary features and variables.
-If multiple values are provided for each outcome, the softmax function will sum these values up.</p>
-<p>Note that if you have one value for each outcome (i.e. a classical bandit-like problem), and you represent it as a 1D
-array, you must reshape it in the format specified for activations. So that if you have 3 stimuli
-which all are actionable, <code>[0.1, 0.5, 0.22]</code>, you should have a 2D array of shape (3, 1), <code>[[0.1], [0.5], [0.22]]</code>.
-You can see <a href="" title="./examples/examples2">Example 2</a> for a demonstration.</p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
@@ -1689,11 +1721,16 @@ You can see <a href="" title="./examples/examples2">Example 2</a> for a demonstr
 <span class="gp">&gt;&gt;&gt; </span><span class="n">softmax</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
 <span class="go">array([0.30719589, 0.18632372, 0.50648039])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">softmax</span><span class="o">.</span><span class="n">choice</span><span class="p">()</span> <span class="c1"># This will randomly choose one of the actions based on the computed probabilities.</span>
-<span class="go">2  </span>
+<span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Softmax</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="n">activations</span><span class="p">)</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
 <span class="go">array([0.30719589, 0.18632372, 0.50648039])</span>
 </code></pre></div>
 
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Bridle, J. S. (1990). Probabilistic Interpretation of Feedforward Classification Network Outputs, with Relationships to Statistical Pattern Recognition. In F. F. Soulié &amp; J. Hérault (Eds.), Neurocomputing (pp. 227–236). Springer. https://doi.org/10.1007/978-3-642-76153-9_28</p>
+</details>
 
 
 
@@ -2012,10 +2049,10 @@ extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learn
 \Delta w_{ij} = \alpha \cdot (\lambda_i - \sum_j w_{ij}) \cdot x_j
 \]</div>
 <p>where <span class="arithmatex">\(\Delta w_{ij}\)</span> is the change in weight for the <span class="arithmatex">\(j\)</span>-th stimulus for the <span class="arithmatex">\(i\)</span>-th outcome,
-<span class="arithmatex">\(\lambda_i\)</span> is the target (feedback) value for the i-th outcome, <span class="arithmatex">\(w_ij\)</span> is the weights of stimulus <span class="arithmatex">\(j\)</span> 
+<span class="arithmatex">\(\lambda_i\)</span> is the target (feedback) value for the i-th outcome, <span class="arithmatex">\(w_ij\)</span> is the weights of stimulus <span class="arithmatex">\(j\)</span>
 for the <span class="arithmatex">\(i\)</span>-th outcome,
 <span class="arithmatex">\(x_j\)</span> is the j-th stimulus input, and <span class="arithmatex">\(\alpha\)</span> is the learning rate. This is consistent with the
-Rescorla and Wagner (1972)'s learning rule incorporating the summed error term. </p>
+Rescorla and Wagner (1972)'s learning rule incorporating the summed error term.</p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
@@ -2202,7 +2239,7 @@ It has the same shape as the weights input argument.</p>
     <div class="doc doc-contents ">
 
 
-        <p>A humbe teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.</p>
+        <p>A humble teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.</p>
 
 
 <table class="field-list">
@@ -2437,196 +2474,6 @@ t_k = \begin{cases}
 
 
 
-<h3 id="cpm.models.learning.KernelUpdate" class="doc doc-heading">
-              <code class="highlight language-python"><span class="n">KernelUpdate</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-
-
-        <p>A class representing a learning rule for updating the choice kernel as specified by Equation 5 in Wilson and Collins (2019).</p>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Parameters:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-              <b><code>response</code></b>
-                  (<code><span title="ndarray">ndarray</span></code>)
-              –
-              <div class="doc-md-description">
-                <p>The response vector. It must be a binary numpy.ndarray, so that each element corresponds to a response option. If there are 4 response options, and the second was selected, it would be represented as <code>[0, 1, 0, 0]</code>.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>alpha</code></b>
-                  (<code><span title="float">float</span></code>)
-              –
-              <div class="doc-md-description">
-                <p>The kernel learning rate.</p>
-              </div>
-            </li>
-            <li>
-              <b><code>kernel</code></b>
-                  (<code><span title="ndarray">ndarray</span></code>)
-              –
-              <div class="doc-md-description">
-                <p>The kernel used for learning. It is a 1D array of kernel values, where each element corresponds to a response option. Each element must correspond to the same response option in the <code>response</code> vector.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<details class="note" open>
-  <summary>Notes</summary>
-  <p>The kernel update component is used to represent how likely a given response is to be chosen based on the frequency it was chosen in the past.
-This can then be integrated into a choice kernel decision policy.</p>
-</details>
-
-<details class="see-also" open>
-  <summary>See Also</summary>
-  <p><a class="autorefs autorefs-internal" title="ChoiceKernel(temperature_activations=0.5, temperature_kernel=0.5, activations=None, kernel=None, **kwargs)" href="#cpm.models.decision.ChoiceKernel">cpm.models.decision.ChoiceKernel</a> : A class representing a choice kernel decision policy.</p>
-</details>
-
-<details class="references" open>
-  <summary>References</summary>
-  <p>Wilson, Robert C., and Anne GE Collins. Ten simple rules for the computational modeling of behavioral data. Elife 8 (2019): e49547.</p>
-</details>
-
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="cpm.models.learning.KernelUpdate.compute" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">compute</span><span class="p">()</span></code>
-
-</h4>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Compute the change in the kernel based on the given response, rate, and kernel, and return the updated kernel.</p>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Returns:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-<b><code>output</code></b>(                  <code>numpy.ndarray:</code>
-)              –
-              <div class="doc-md-description">
-                <p>The computed change of the kernel.</p>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="cpm.models.learning.KernelUpdate.config" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">config</span><span class="p">()</span></code>
-
-</h4>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Get the configuration of the kernel update component.</p>
-
-
-<table class="field-list">
-  <colgroup>
-    <col class="field-name" />
-    <col class="field-body" />
-  </colgroup>
-  <tbody valign="top">
-    <tr class="field">
-      <th class="field-name">Returns:</th>
-      <td class="field-body">
-        <ul class="first simple">
-            <li>
-<b><code>config</code></b>(                  <code><span title="dict">dict</span></code>
-)              –
-              <div class="doc-md-description">
-                <p>A dictionary containing the configuration parameters of the kernel update component.</p>
-<ul>
-<li>response (float): The response of the system.</li>
-<li>rate (float): The learning rate.</li>
-<li>kernel (list): The kernel used for learning.</li>
-<li>input (str): The name of the input.</li>
-<li>name (str): The name of the kernel update component class.</li>
-<li>type (str): The type of the kernel update component.</li>
-</ul>
-              </div>
-            </li>
-        </ul>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
 <h3 id="cpm.models.learning.QLearningRule" class="doc doc-heading">
               <code class="highlight language-python"><span class="n">QLearningRule</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reward</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
@@ -2709,9 +2556,10 @@ This can then be integrated into a choice kernel decision policy.</p>
   <summary>Notes</summary>
   <p>The Q-learning rule is a model-free reinforcement learning algorithm that is used to learn the value of an action in a given state.
 It is defined as</p>
-<pre><code>Q(s, a) = Q(s, a) + alpha * (r + gamma * max(Q(s', a')) - Q(s, a)),
-</code></pre>
-<p>where <code>Q(s, a)</code> is the value of action <code>a</code> in state <code>s</code>, <code>r</code> is the reward received on the current state, <code>gamma</code> is the discount factor, and <code>max(Q(s', a'))</code> is the maximum estimated reward for the next state.</p>
+<div class="arithmatex">\[
+\Delta \mathcal{Q}(s, a) =  \alpha \cdot (r + \gamma \cdot \max_{a'} \mathcal{Q}(s', a') - \mathcal{Q}(s, a))
+\]</div>
+<p>where <span class="arithmatex">\(\Delta \mathcal{Q}(s, a)\)</span> is the change in value of action <span class="arithmatex">\(a\)</span> in state <span class="arithmatex">\(s\)</span>, <span class="arithmatex">\(r\)</span> is the reward received on the current state, <span class="arithmatex">\(\gamma\)</span> is the discount factor, and <span class="arithmatex">\(\max_{a'} \mathcal{Q}(s', a')\)</span> is the maximum estimated reward for the next state.</p>
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
@@ -2903,7 +2751,7 @@ Bush and Mosteller (1951).</p>
 <div class="arithmatex">\[
 \Delta w_{ij} = \alpha \cdot (\lambda_i - w_{ij}) \cdot x_j
 \]</div>
-<p>which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms. </p>
+<p>which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms.</p>
 </details>
 
 <details class="references" open>

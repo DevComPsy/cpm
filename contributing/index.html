@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Developer Guidelines - CPM library</title>
+    <title>Contributing to cpm - CPM library</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -14,7 +14,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Developer Guidelines";
+        var mkdocs_page_name = "Contributing to cpm";
         var mkdocs_page_input_path = "contributing.md";
         var mkdocs_page_url = null;
       </script>
@@ -110,7 +110,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Developer Guidelines</li>
+      <li class="breadcrumb-item active">Contributing to cpm</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -119,46 +119,122 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="developer-guidelines">Developer Guidelines</h1>
-<h2 id="what-is-the-purpose-of-this-document">What is the purpose of this document?</h2>
-<p>This document is intended to provide guidelines for developers working on the project.
-It details the internal operations of the toolbox that are not visible to the user.</p>
-<h2 id="structure">Structure</h2>
-<h3 id="classes">Classes</h3>
-<h3 id="functions">Functions</h3>
-<h3 id="dictionary">Dictionary</h3>
-<h2 id="development-process">Development process</h2>
-<p>To work on the toolbox, create a new branch from the <code>main</code> branch. Then, create a pull request to merge the new feature into the <code>main</code> branch. Once the pull request is approved, merge the new feature into the <code>main</code> branch.</p>
-<h3 id="branch-naming-convention">Branch naming convention</h3>
-<p>A git branch should start with a category. Pick one of these: feature, bugfix, hotfix, or test.</p>
+                <h1 id="contributing-to-cpm">Contributing to <code>cpm</code></h1>
+<p>Thank you for contributing to <strong>cpm</strong>.
+This guide explains how to set up your environment, make changes, and submit a pull request.</p>
+<h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li><code>feature</code> is for adding, refactoring or removing a feature</li>
-<li><code>bugfix</code> is for fixing a bug</li>
-<li><code>hotfix</code> is for changing code with a temporary solution and/or without following the usual process (usually because of an emergency)</li>
-<li><code>test</code> is for experimenting outside of an issue/ticket</li>
+<li>Python <code>&gt;=3.12</code></li>
+<li><code>pip</code></li>
+<li><code>git</code></li>
 </ul>
-<p>See this <a href="https://dev.to/couchcamote/git-branching-name-convention-cch">link</a> for some great description of the naming convention.</p>
-<h3 id="commit-message-conventions">Commit message conventions</h3>
-<p>Please follow the <a href="https://www.conventionalcommits.org/en/v1.0.0/#summary">Conventional Commits</a> guidelines for commit messages.
-Feel free to use gitmoji for commit messages, but insert them at the end of the problem description.
-See this <a href="https://gitmoji.dev/">link</a> for more information.</p>
-<h3 id="pull-request-conventions">Pull request conventions</h3>
-<p>When creating a pull request, make sure to follow these conventions: <a href="https://github.blog/2015-01-21-how-to-write-the-perfect-pull-request/">link</a></p>
-<h3 id="compiling-the-package">Compiling the package</h3>
-<p>To compile the package, run the following command in the root directory:</p>
+<h2 id="local-setup">Local setup</h2>
+<ol>
+<li>Fork the repository and clone your fork.</li>
+<li>Create and activate a virtual environment.</li>
+<li>Install the package in editable mode:</li>
+</ol>
+<pre><code class="language-bash">pip install -e .
+</code></pre>
+<ol>
+<li>(Optional, for docs work) Install docs dependencies:</li>
+</ol>
+<pre><code class="language-bash">pip install -r docs/requirements.txt
+</code></pre>
+<h2 id="development-workflow-with-direct-access-to-repository">Development workflow (with direct access to repository)</h2>
+<ol>
+<li>Create a branch from <code>main</code>.</li>
+<li>Make focused changes with clear commit history. See commit message conventions below.</li>
+<li>Run tests locally before opening a pull request.</li>
+<li>Update documentation and changelog when relevant.</li>
+<li>Open a <a href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests">Pull Request</a> on GitHub.</li>
+</ol>
+<h2 id="development-workflow-without-direct-access">Development workflow (without direct access)</h2>
+<ol>
+<li><a href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo">Fork</a> the repository.</li>
+<li>(optional) Create a branch from <code>main</code>.</li>
+<li>Make focused changes with clear commit history. See commit message conventions below.</li>
+<li>Run tests locally before opening a pull request.</li>
+<li>Update documentation and changelog when relevant.</li>
+<li>Open a <a href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests">Pull Request</a> on GitHub.</li>
+</ol>
+<h3 id="branch-naming-convention">Branch naming convention</h3>
+<p>Start your branch name with one of:</p>
+<ul>
+<li><code>feature/</code> for adding, refactoring, or removing a feature</li>
+<li><code>bugfix/</code> for fixing a bug</li>
+<li><code>hotfix/</code> for urgent, temporary, or process-exception changes</li>
+<li><code>test/</code> for experiments and test-related work</li>
+<li><code>docs/</code> for adding documentation or examples.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-text">feature/add-hierarchical-export
+</code></pre>
+<h2 id="code-style-and-quality">Code style and quality</h2>
+<ul>
+<li>Format Python code with <strong>Black</strong>.</li>
+<li>Keep code readable and focused; avoid unrelated refactors in the same PR.</li>
+<li>Use <strong>NumPy-style docstrings</strong> where applicable.</li>
+<li>Keep public API changes backward-compatible where possible.</li>
+</ul>
+<h2 id="testing">Testing</h2>
+<p>Run the test suite from the repository root:</p>
+<pre><code class="language-bash">pytest
+</code></pre>
+<p>If you changed specific functionality, also run targeted tests first (for example, under <code>test/models/</code> or <code>test/optimisation/</code>).</p>
+<h2 id="documentation">Documentation</h2>
+<p>Documentation lives in docstrings and Markdown files under <code>docs/</code>.</p>
+<p>For local docs preview:</p>
+<pre><code class="language-bash">mkdocs build
+mkdocs serve
+</code></pre>
+<p>Then open <code>http://127.0.0.1:8000/</code>.</p>
+<h2 id="commit-messages">Commit messages</h2>
+<p>Please follow <a href="https://www.conventionalcommits.org/en/v1.0.0/#summary">Conventional Commits</a>.</p>
+<p>Examples:</p>
+<ul>
+<li><code>feat(models): add drift-bias parameter</code></li>
+<li><code>fix(optimisation): handle empty bounds</code></li>
+<li><code>docs(api): clarify hierarchical fitting inputs</code></li>
+</ul>
+<h2 id="pull-requests">Pull requests</h2>
+<p>When opening a PR:</p>
+<ul>
+<li>Keep the PR scope small and focused.</li>
+<li>Include a clear description of <strong>what</strong> changed and <strong>why</strong>.</li>
+<li>Link related issues.</li>
+<li>Add/update tests for behavior changes.</li>
+<li>Update docs when user-facing behavior changes.</li>
+</ul>
+<p>Before requesting review, verify:</p>
+<ul>
+<li>Tests pass locally.</li>
+<li>Docs build if docs were changed.</li>
+<li>No unrelated files are included.</li>
+</ul>
+<h2 id="troubleshooting-and-getting-help">Troubleshooting and getting help</h2>
+<p>If you run into issues at any point, please reach out.
+We are happy to help with anything.</p>
+<p>For faster support, please include:</p>
+<ul>
+<li>What you were trying to do</li>
+<li>The exact error message or traceback</li>
+<li>Your Python version and operating system</li>
+<li>Steps to reproduce the issue</li>
+</ul>
+<p>Best ways to get help:</p>
+<ul>
+<li>Open a GitHub issue for bugs, setup problems, or unclear behavior</li>
+<li>Open a draft PR if you want feedback while you are still working</li>
+<li>Ask your question directly in the PR conversation if it is related to your change</li>
+</ul>
+<h2 id="build-and-release-notes">Build and release notes</h2>
+<p>If you are preparing a release artifact:</p>
 <pre><code class="language-bash">python setup.py sdist bdist_wheel
 </code></pre>
-<h3 id="uploading-the-package-to-pypi">Uploading the package to PyPi</h3>
-<p>To upload the package to PyPi, run the following command in the root directory:</p>
+<p>Publishing to PyPI is maintainer-only and typically done with:</p>
 <pre><code class="language-bash">twine upload dist/*
 </code></pre>
-<h2 id="development-tools-we-use">Development tools we use</h2>
-<ul>
-<li>Black linter for python code formatting</li>
-<li>Numpy-style docstrings for documentation</li>
-<li>mkdocs for documentation generation</li>
-<li>pytest for testing</li>
-</ul>
               
             </div>
           </div><footer>

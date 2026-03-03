@@ -145,3 +145,22 @@ Publishing to PyPI is maintainer-only and typically done with:
 ```bash
 twine upload dist/*
 ```
+
+## Troubleshooting and getting help
+
+If you run into issues at any point, please reach out.
+We are happy to help with anything.
+
+For faster support, please include:
+
+- What you were trying to do
+- The exact error message or traceback
+- Your Python version and operating system
+- Steps to reproduce the issue
+
+Best ways to get help:
+
+- Open a GitHub issue for bugs, setup problems, or unclear behavior
+- Open a draft PR if you want feedback while you are still working
+- Ask your question directly in the PR conversation if it is related to your change
+

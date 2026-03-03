@@ -44,10 +44,10 @@ class RLRW(Wrapper):
     The model implementation uses two parameters:
     - alpha: the learning rate, which determines how much the model updates its values based on the prediction error.
     - temperature: the inverse temperature, which determines the choice stochasticity -- how sensitive is the model to value differences.
-    
+
     Data must contain the following columns:
 
-    - choice: the choice of the participant from the available options, starting from 0.
+    - response: the choice of the participant from the available options, starting from 0.
     - arm_n: the stimulus identifier for each option (arms in the bandit task), where n is the option available on a given trial. If there are more than one options, the stimulus identifier should be specified as separate columns of arm_1, arm_2, arm_3, etc. or arm_left, arm_middle, arm_right, etc.
     - reward_n: the reward given after each options, where n is the corresponding arm of the bandit available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
 
@@ -109,7 +109,7 @@ class RLRW(Wrapper):
             )  ## compile reward vector
             ## get the activations for each arm given q-values for each stimulus
             activations = numpy.array([values[i - 1] for i in arms])
-            
+
             ## compute softmax
             response = cpm.models.decision.Softmax(
                 activations=activations, temperature=temperature

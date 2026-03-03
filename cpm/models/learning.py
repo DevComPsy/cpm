@@ -43,10 +43,10 @@ class DeltaRule:
     $$
 
     where $\\Delta w_{ij}$ is the change in weight for the $j$-th stimulus for the $i$-th outcome,
-    $\\lambda_i$ is the target (feedback) value for the i-th outcome, $w_ij$ is the weights of stimulus $j$ 
+    $\\lambda_i$ is the target (feedback) value for the i-th outcome, $w_ij$ is the weights of stimulus $j$
     for the $i$-th outcome,
     $x_j$ is the j-th stimulus input, and $\\alpha$ is the learning rate. This is consistent with the
-    Rescorla and Wagner (1972)'s learning rule incorporating the summed error term. 
+    Rescorla and Wagner (1972)'s learning rule incorporating the summed error term.
 
     Examples
     --------
@@ -208,7 +208,7 @@ class SeparableRule:
     \\Delta w_{ij} = \\alpha \\cdot (\\lambda_i - w_{ij}) \\cdot x_j
     $$
 
-    which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms. 
+    which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms.
 
     References
     ----------

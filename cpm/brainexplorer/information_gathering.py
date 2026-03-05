@@ -2,14 +2,15 @@ import pandas as pd
 import numpy as np
 import warnings
 from scipy.stats import zscore
-#import statsmodels.api as sm        
-#import statsmodels.formula.api as smf
+
+# import statsmodels.api as sm
+# import statsmodels.formula.api as smf
 
 
-class treasurehunt:
-    """ 
+class TreasureHunt:
+    """
     Class to calculate metrics for the Treasure Hunt task. Includes regresssion model to predict the influence of previous evidence on current choice.
-    
+
     Attributes
     ----------
     data : pd.DataFrame
@@ -76,13 +77,13 @@ class treasurehunt:
             "sd_n_draws": "Standard deviation of the number of stimulus draws before making a decision",
             "median_RT_between_actions": "Median reaction time between actions",
             "median_confidenceRT": "Median confidence reaction time across all trials",
-            "unique_draws": "Number of unique values in number of draws"
+            "unique_draws": "Number of unique values in number of draws",
         }
 
     def metrics(self):
         """
 
-        Returns 
+        Returns
         -------
         results : pd.DataFrame
             A DataFrame containing the results of the metrics.
@@ -103,7 +104,9 @@ class treasurehunt:
         - unique_draws: number of unique values in number of draws
         """
         # turn string fields into list of ints
-        self.data["ev"] = self.data["ev"].apply(lambda x: [int(i) for i in x.strip("[]").split(" ")])
+        self.data["ev"] = self.data["ev"].apply(
+            lambda x: [int(i) for i in x.strip("[]").split(" ")]
+        )
 
         # Group data by userID
         grouped_data = self.data.groupby("userID")
@@ -119,19 +122,27 @@ class treasurehunt:
             if isinstance(date, str):
                 date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
             user_results["day_of_week"] = date.day_name()
-            user_results["time"] = date.time() if hasattr(date, 'time') else date.strftime("%H:%M:%S.%f")
+            user_results["time"] = (
+                date.time() if hasattr(date, "time") else date.strftime("%H:%M:%S.%f")
+            )
             # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
             user_results["time_of_day"] = (
-                "morning" if date.hour < 12 else
-                "afternoon" if date.hour < 18 else
-                "evening" if date.hour < 24 else
-                "night" if date.hour < 6 else
-                "-"
+                "morning"
+                if date.hour < 12
+                else (
+                    "afternoon"
+                    if date.hour < 18
+                    else (
+                        "evening"
+                        if date.hour < 24
+                        else "night" if date.hour < 6 else "-"
+                    )
+                )
             )
 
-            user_results["mean_points"] = np.nanmean(user_data["outcome"])   
+            user_results["mean_points"] = np.nanmean(user_data["outcome"])
 
-            user_results["accuracy"] = np.nanmean(user_data["choseCurEv"]) 
+            user_results["accuracy"] = np.nanmean(user_data["choseCurEv"])
 
             user_results["mean_confidence"] = np.nanmean(user_data["confidence"])
             user_results["sd_confidence"] = np.nanstd(user_data["confidence"])
@@ -139,14 +150,16 @@ class treasurehunt:
             user_results["mean_n_draws"] = np.nanmean(user_data["draws"])
             user_results["sd_n_draws"] = np.nanstd(user_data["draws"])
 
-            user_results["median_RT_between_actions"] = np.nanmedian(user_data["median_diffRT"])  
+            user_results["median_RT_between_actions"] = np.nanmedian(
+                user_data["median_diffRT"]
+            )
 
             user_results["median_confidenceRT"] = np.median(user_data["confidenceRT"])
 
             # check if < 3 unique values in number of samples
             user_results["unique_draws"] = user_data["draws"].nunique()
 
-            # regression for influence of recent results on current choice 
+            # regression for influence of recent results on current choice
             """
             ev = []
 
@@ -195,10 +208,10 @@ class treasurehunt:
 
         # Convert results to a DataFrame
         self.results = pd.DataFrame(self.results)
-        
+
         return self.results
-    
-    def clean_data(self): 
+
+    def clean_data(self):
         """
         Clean the aggregated data by applying participant-level exclusion criteria.
 
@@ -211,21 +224,35 @@ class treasurehunt:
         nr_part_before = len(self.results["userID"].unique())
 
         self.cleanedresults = self.results.copy()
-        
+
         # Filter out participants who have less than 3 unique values for draws
-        valid_users = self.data.groupby("userID").filter(
-            lambda group: group["draws"].nunique() >= 3 
-        )["userID"].unique()
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["userID"].isin(valid_users)]
+        valid_users = (
+            self.data.groupby("userID")
+            .filter(lambda group: group["draws"].nunique() >= 3)["userID"]
+            .unique()
+        )
+        self.cleanedresults = self.cleanedresults[
+            self.cleanedresults["userID"].isin(valid_users)
+        ]
 
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] >= 2]  # only keep participants with mean number of draws >= 2
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["mean_n_draws"] <= 23]  # only keep participants with mean number of draws <= 23
+        self.cleanedresults = self.cleanedresults[
+            self.cleanedresults["mean_n_draws"] >= 2
+        ]  # only keep participants with mean number of draws >= 2
+        self.cleanedresults = self.cleanedresults[
+            self.cleanedresults["mean_n_draws"] <= 23
+        ]  # only keep participants with mean number of draws <= 23
 
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["accuracy"] > 0.8]  # only keep participants with mean choice in line with current evidence > 80%
-        
-        self.cleanedresults = self.cleanedresults[self.cleanedresults["unique_draws"] >= 3] # only keep participants with at least 3 unique values in number of draws
+        self.cleanedresults = self.cleanedresults[
+            self.cleanedresults["accuracy"] > 0.8
+        ]  # only keep participants with mean choice in line with current evidence > 80%
 
-        self.deleted_participants = nr_part_before - len(self.cleanedresults["userID"].unique())
+        self.cleanedresults = self.cleanedresults[
+            self.cleanedresults["unique_draws"] >= 3
+        ]  # only keep participants with at least 3 unique values in number of draws
+
+        self.deleted_participants = nr_part_before - len(
+            self.cleanedresults["userID"].unique()
+        )
 
         return self.cleanedresults
 

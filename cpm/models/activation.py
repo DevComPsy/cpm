@@ -7,6 +7,17 @@ class SigmoidActivation:
     """
     Represents a sigmoid activation function.
 
+    Notes
+    -----
+
+    The sigmoid activation function is defined as follows:
+
+    $$
+    a = \\frac{1}{1 + e^{-x \\cdot w}}
+    $$
+
+    where $x$ is the stimulus representation (vector), and $w$ is a 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
+
     """
 
     def __init__(self, input=None, weights=None, **kwargs):
@@ -63,8 +74,25 @@ class CompetitiveGating:
     array([[0.03333333, 0.6       , 0.        ],
            [0.2       , 0.13333333, 0.        ]])
 
+    Notes
+    -----
+    The competitive gating function is defined as follows:
+
+    $$
+    a = \\frac{g}{||g||_p}
+    $$
+
+    where $g$ is the attentional gain, defined as the element-wise product of the stimulus vector and the salience vector, and $||g||_p$ is the p-norm of the attentional gain:
+
+    $$
+    ||g||_p = \\left(\\sum_{i=1}^{n} g_i^p \\right)^{1/p}
+    $$
+
+    The parameter $p$ controls the brutality of the competition between the stimuli. When $p$ is close to 0, the competition is very brutal. When $p$ is close to infinity, the competition is very mild, and all stimuli will receive attention proportional to their gain.
+
     References
     ----------
+
     Kruschke, J. K. (2001). Toward a unified model of attention in associative learning. Journal of Mathematical Psychology, 45(6), 812-863.
 
     Paskewitz, S., & Jones, M. (2020). Dissecting exit. Journal of mathematical psychology, 97, 102371.
@@ -234,12 +262,18 @@ class ProspectUtility:
     ):
         self.magnitudes = np.asarray(magnitudes.copy())
         self.magnitudes = np.array(
-            [np.array(self.magnitudes[i], dtype=float) for i in range(self.magnitudes.shape[0])],
+            [
+                np.array(self.magnitudes[i], dtype=float)
+                for i in range(self.magnitudes.shape[0])
+            ],
             dtype=object,
         )
         self.probabilities = np.asarray(probabilities.copy())
         self.probabilities = np.array(
-            [np.array(self.probabilities[i], dtype=float) for i in range(self.probabilities.shape[0])],
+            [
+                np.array(self.probabilities[i], dtype=float)
+                for i in range(self.probabilities.shape[0])
+            ],
             dtype=object,
         )
         self.alpha = alpha
@@ -268,7 +302,9 @@ class ProspectUtility:
         elif weighting == "gw":
             self.__weighting_fun = self.__weighting_gw
         else:
-            raise ValueError("Invalid weighting type. Must be one of: 'tk', 'power', 'prelec', 'gw'.")
+            raise ValueError(
+                "Invalid weighting type. Must be one of: 'tk', 'power', 'prelec', 'gw'."
+            )
 
         if utility_curve is None:
             self.__utility_curve = self.__utility_power
@@ -276,7 +312,7 @@ class ProspectUtility:
             self.__utility_curve = utility_curve
         else:
             raise ValueError("Utility curve must be a callable function.")
-            
+
         self.utilities = []
         self.weights = []
         self.expected_utility = []
@@ -328,12 +364,22 @@ class ProspectUtility:
         """
         # Determine the utilities of the potential outcomes, for each choice option and each trial.
         self.utilities = np.array(
-            [self.__utility_curve(x=self.magnitudes[j], alpha=self.alpha, lambda_loss=self.lambda_loss) for j in range(self.shape[0])],
+            [
+                self.__utility_curve(
+                    x=self.magnitudes[j], alpha=self.alpha, lambda_loss=self.lambda_loss
+                )
+                for j in range(self.shape[0])
+            ],
             dtype=object,
         )
         # Determine the weights of the potential outcomes, for each choice option and each trial.
         self.weights = np.array(
-            [self.__weighting_fun(x=self.probabilities[j], magnitudes=self.magnitudes[j]) for j in range(self.shape[0])],
+            [
+                self.__weighting_fun(
+                    x=self.probabilities[j], magnitudes=self.magnitudes[j]
+                )
+                for j in range(self.shape[0])
+            ],
             dtype=object,
         )
         # Determine the expected utility of each choice option for each trial.
@@ -357,6 +403,7 @@ class ProspectUtility:
     def __str__(self):
         return self.__repr__()
 
+
 class Offset:
     """
     A class for adding a scalar to one element of an input array.
@@ -372,7 +419,6 @@ class Offset:
         The index of the element of the input vector to which the offset should be added.
     **kwargs : dict, optional
         Additional keyword arguments.
-
 
     Examples
     --------

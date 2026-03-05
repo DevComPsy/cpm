@@ -117,7 +117,7 @@ def test_model_warnings(setup_data):
         assert len(w) > 0, "Warnings not raised"
         assert issubclass(w[-1].category, UserWarning), "Warning is not a UserWarning"
         assert (
-            "NaN in policy with parameters: 0.5, 1000, \nand with policy: [nan  0.]\n"
+            "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
             in str(w[-1].message)
         ), "Warning message mismatch"
 

@@ -34,12 +34,26 @@ def test_softmax_choice():
     activations = np.array([0.1, 0, 0.2])
     softmax = Softmax(temperature=1, activations=activations)
     choice = softmax.choice()
-    assert choice in [0, 1, 2], "The Softmax.choice output is not in the expected range."
+    assert choice in [
+        0,
+        1,
+        2,
+    ], "The Softmax.choice output is not in the expected range."
+
 
 def test_softmax_input_shape():
     activations = np.array([[0.1, 0, 0.2], [0.3, 0.4, 0.5]])
     softmax = Softmax(temperature=1, activations=activations)
     assert len(softmax.shape) == 1, "The Softmax model should flatten 2D input arrays."
+
+
+def test_softmax_nan_handling():
+    activations = np.array([0.1, np.nan, 0.2])
+    softmax = Softmax(temperature=1, activations=activations)
+    policies = softmax.compute()
+    assert not np.isnan(
+        policies
+    ).any(), "The Softmax model should handle NaN values in activations."
 
 
 def test_sigmoid():
@@ -58,7 +72,11 @@ def test_sigmoid_choice():
     activations = np.array([0.1, 0, 0.2])
     sigmoid = Sigmoid(temperature=1, activations=activations)
     choice = sigmoid.choice()
-    assert choice in [0, 1, 2], "The Sigmoid.choice output is not in the expected range."
+    assert choice in [
+        0,
+        1,
+        2,
+    ], "The Sigmoid.choice output is not in the expected range."
 
 
 def test_greedy_rule():

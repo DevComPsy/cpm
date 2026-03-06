@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ["DeltaRule", "SeparableRule", "QLearningRule", "KernelUpdate"]
+__all__ = ["DeltaRule", "SeparableRule", "QLearningRule", "HumbleTeacher"]
 
 
 class DeltaRule:

@@ -6,15 +6,14 @@ from scipy.stats import zscore
 
 class SpaceObserver:
     """
-    A class to analyze and compute statistics from behavioural data from a metacognition task
-    in BrainExplorer, Space Observer. Participants have to choose if stimulus has more of one type of alien or the other,
-    and rate their confidence in their choice.
+    A class to analyze and compute statistics from behavioural data from a perceptual decision-making task with confidence judgements in BrainExplorer, Space Observer. In these tasks, participants have to choose if stimulus has more of one type of alien or the other,
+    and rate their confidence in their choice. For a more complete description of the task, see Dome, Moses-Payne, and Hauser (in prep.) or Marzuki et al. (2025).
 
     Attributes
     ----------
-    data : pd.DataFrame
+    data_raw : pd.DataFrame
         The data loaded from the CSV or Excel file.
-    results : pd.DataFrame
+    data_processed : pd.DataFrame
         A DataFrame to store the computed metrics.
     codebook : dict
         A dictionary containing the codebook for the computed metrics.
@@ -46,51 +45,50 @@ class SpaceObserver:
 
         - **userID: unique identifier for each participant
         - **date**: the date and time of the trial
-        - **run**: number of attempt by participant
+        - **run**: number of sessions completed by the participant (where 1 is the practice phase)
         - **accuracy**: the accuracy of the trial (1 for correct, 0 for incorrect)
-        - **choiceRT**: the reaction time of the choice in the trial
+        - **RT_choice**: the reaction time of the choice in the trial
         - **confidence**: the confidence rating of the trial
         - **confidenceRT**: the reaction time of the confidence rating in the trial
         - **stimulus_intensity**: the evidence strength of the trial, which is the difference of evidence for each group of stimuli.
 
-        Trial-level exclusion critera:
-        - Practice trials (run == 1)
-        - Reaction time < 150 or > 10000 ms
-        - Reaction time of confidence < 150 or > 10000 ms
-        - Trials with missing confidence data
+        Currently, we are excluding trials that took too long or too short to respond (RT < 150 ms or RT > 10000 ms) and trials without confidence data because those are practice trials. We are only including trials with confidence data because those without confidence data are practice trials. For participant exclusion, we recommend to follow Dome, Moses-Payne, and Hauser (in prep.).
+
+        Reference
+        ---------
+        Dome, L., Moses-Payne, M. E., & Hauser, T. U. (in prep.). Age-related shifts in metacognition reveals converging confidence for correct and error judgments across the lifespan.
+
+        Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. Research Square. https://doi.org/10.21203/rs.3.rs-7544256/v1
         """
 
         ## read data
-        self.data = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
+        self.data_raw = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
 
-        self.data = self.data[
-            self.data["run"] == 1
-        ]  # exclude attempts after the first one
-        self.data = self.data[
-            self.data["choiceRT"] >= 150
+        self.data_raw = self.data_raw[
+            self.data_raw["RT_choice"] >= 150
         ]  # only keep trials with reaction time > 150 ms
-        self.data = self.data[
-            self.data["choiceRT"] <= 10000
+        self.data_raw = self.data_raw[
+            self.data_raw["RT_choice"] <= 10000
         ]  # only keep trials with reaction time < 10000 ms
-        self.data = self.data[
-            self.data["confidenceRT"] >= 150
+        self.data_raw = self.data_raw[
+            self.data_raw["confidenceRT"] >= 150
         ]  # only keep trials with confidence reaction time > 150 ms
-        self.data = self.data[
-            self.data["confidenceRT"] <= 10000
+        self.data_raw = self.data_raw[
+            self.data_raw["confidenceRT"] <= 10000
         ]  # only keep trials with confidence reaction time < 10000 ms
 
-        self.data["confidence"] = self.data["confidence"].replace(
+        self.data_raw["confidence"] = self.data_raw["confidence"].replace(
             ["NaN", "nan", "NAN", ""], pd.NA
         )
-        self.data = self.data[
-            self.data["confidence"].notna()
+        self.data_raw = self.data_raw[
+            self.data_raw["confidence"].notna()
         ]  # only keep trials with confidence data because trials without confidence data are practice trials
 
-        self.data["confidence"] = pd.to_numeric(
-            self.data["confidence"], errors="coerce"
+        self.data_raw["confidence"] = pd.to_numeric(
+            self.data_raw["confidence"], errors="coerce"
         )
 
-        self.results = pd.DataFrame()
+        self.data_processed = pd.DataFrame()
         self.codebook = {
             "userID": "Unique identifier for each participant",
             "n_trials": "Number of trials completed by the participant",
@@ -101,7 +99,7 @@ class SpaceObserver:
             "mean_RT": "Mean response time across all trials",
             "median_RT": "Median response time across all trials",
             "median_RT_correct": "Median response time for trials where the participant made the correct choice",
-            "median_RT_incorrect": "Median response time for trials where the participant made the incorrect",
+            "median_RT_incorrect": "Median response time for trials where the participant made the incorrect choice",
             "diff_median_RT_correct_incorrect": "Difference between the median response time for correct and incorrect choices",
             "mean_confidence": "Mean confidence rating across all trials",
             "sd_confidence": "Standard deviation of the confidence rating across all trials",
@@ -112,11 +110,11 @@ class SpaceObserver:
             "sd_confidence_correct": "Standard deviation of the confidence rating for trials where the participant made the correct choice",
             "sd_confidence_incorrect": "Standard deviation of the confidence rating for trials where the participant made the incorrect choice",
             "diff_sd_confidence_correct_incorrect": "Difference between the standard deviation of the confidence rating for correct and incorrect choices",
-            "mean_confidenceRT": "Mean confidence response time across all trials",
-            "median_confidenceRT": "Median confidence response time across all trials",
-            "median_confidenceRT_correct": "Median confidence response time for trials where the participant made the correct choice",
-            "median_confidenceRT_incorrect": "Median confidence response time for trials where the participant made the incorrect choice",
-            "diff_median_confidenceRT_correct_incorrect": "Difference between the median confidence response time for correct and incorrect choices",
+            "mean_RT_confidence": "Mean confidence response time across all trials",
+            "median_RT_confidence": "Median confidence response time across all trials",
+            "median_RT_confidence_correct": "Median confidence response time for trials where the participant made the correct choice",
+            "median_RT_confidence_incorrect": "Median confidence response time for trials where the participant made the incorrect choice",
+            "diff_median_RT_confidence_correct_incorrect": "Difference between the median confidence response time for correct and incorrect choices",
             "confidence_10": "10th percentile of the confidence rating across all trials",
             "confidence_25": "25th percentile of the confidence rating across all trials",
             "confidence_75": "75th percentile of the confidence rating across all trials",
@@ -130,6 +128,7 @@ class SpaceObserver:
 
     def metrics(self, mode=None):
         """
+        Compute metrics for each participant and return a DataFrame with the results. The metrics are computed for each run separately.
 
         Returns
         -------
@@ -175,15 +174,15 @@ class SpaceObserver:
         """
 
         # Group data by subject
-        grouped_data = self.data.groupby("userID")
+        grouped_data = self.data_raw.groupby(["userID", "run"])
 
-        for user_id, user_data in grouped_data:
+        for (user_id, run), user_data in grouped_data:
 
-            user_results = {"userID": user_id}
+            user_results = {"userID": user_id, "run": run}
 
             user_results["n_trials"] = len(user_data)
 
-            date = user_data["date"].iloc[0]
+            date = user_data["Date"].iloc[0]
             if isinstance(date, str):
                 date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
             user_results["date"] = date
@@ -208,14 +207,14 @@ class SpaceObserver:
 
             user_results["accuracy"] = np.nanmean(user_data["accuracy"])
 
-            user_results["mean_RT"] = np.nanmean(user_data["choiceRT"])
-            user_results["median_RT"] = np.nanmedian(user_data["choiceRT"])
+            user_results["mean_RT"] = np.nanmean(user_data["RT_choice"])
+            user_results["median_RT"] = np.nanmedian(user_data["RT_choice"])
             # different RT for correct and incorrect trials
             user_results["median_RT_correct"] = np.nanmedian(
-                user_data["choiceRT"][user_data["accuracy"] == 1]
+                user_data["RT_choice"][user_data["accuracy"] == 1]
             )
             user_results["median_RT_incorrect"] = np.nanmedian(
-                user_data["choiceRT"][user_data["accuracy"] != 1]
+                user_data["RT_choice"][user_data["accuracy"] != 1]
             )
             user_results["diff_median_RT_correct_incorrect"] = (
                 user_results["median_RT_correct"] - user_results["median_RT_incorrect"]
@@ -302,14 +301,14 @@ class SpaceObserver:
             user_results["median_ES"] = np.nanmedian(evidence_strength)
 
             # Append user-level results
-            self.results = pd.concat(
-                [self.results, pd.DataFrame([user_results])], ignore_index=True
+            self.data_processed = pd.concat(
+                [self.data_processed, pd.DataFrame([user_results])], ignore_index=True
             )
 
         # Convert results to a DataFrame
-        self.results = pd.DataFrame(self.results)
+        self.data_processed = pd.DataFrame(self.data_processed)
 
-        return self.results
+        return self.data_processed
 
     def clean_data(self):
         """
@@ -325,13 +324,13 @@ class SpaceObserver:
         - Exclude participants if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
         """
 
-        nr_part_before = len(self.results["userID"].unique())
+        nr_part_before = len(self.data_processed["userID"].unique())
 
-        self.cleanedresults = self.results.copy()
+        self.cleanedresults = self.data_processed.copy()
 
         # exclude participants who have more than 80 trials with run == 1
         users_80trials = (
-            self.data.groupby("userID")
+            self.data_raw.groupby("userID")
             .filter(lambda x: len(x) <= 80)["userID"]
             .unique()
         )

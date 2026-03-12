@@ -9,6 +9,7 @@ import ipyparallel as ipp  ## for parallel computing with ipython (specific for 
 
 from scipy.special import logsumexp
 
+
 class RLRW(Wrapper):
     """
     The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
@@ -60,7 +61,7 @@ class RLRW(Wrapper):
     Let each stimulus have an associated value, which is the expected reward that can be obtained from selecting that stimulus. Let also $Q(a)$ be the estimated value of action $a$. In each trial, $t$, there are two stimuli present, so $Q(a)$ could be $Q(\text{left})$ or $Q(\\text{right})$, where the corresponding $Q$ values are derived from the associated value of the stimulus present on the left or right. In each trial $t$ , the Softmax choice rule (Bridle, 1990) will convert the estimated value of each action into a probability according to the following policy:
 
     $$
-    P(a) = \\frac{e^{Q(a)/\\tau}}{\sum_{a'} e^{Q(a')/\\tau}}
+    P(a) = \\frac{e^{Q(a)/\\tau}}{\\sum_{a'} e^{Q(a')/\\tau}}
     $$
 
     where $\\tau$ is the temperature parameter. After the choice is made and feedback is received, the value of the chosen stimulus is updated. The current implementation uses the variant of the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton, & Williams, 1986) adapted for multi-armed bandit problems where each option has a single stimulus dimension (Sutton & Barto, 2020), reducing Rescorla-Wagner's summed error-term to the following equation, similar to (Bush & Mosteller, 1951):
@@ -185,7 +186,7 @@ class RLRW(Wrapper):
 
 class MBMF(Wrapper):
     """
-    This class implements a model for model-based vs model-free decision making in a decision making task. 
+    This class implements a model for model-based vs model-free decision making in a decision making task.
     The model uses a combination of model-based and model-free learning to predict choices based on the rewards received for each stimulus.
     It is based on the model described in Kool et al. (2016) and adds choice stickiness calcualtions to the model.
 
@@ -195,7 +196,7 @@ class MBMF(Wrapper):
             The individual user data to be processed. The column names in the data must subscribe to a prespecified convention, see Notes.
 
     parameters: list, optional
-        A list of parameters to be used in the model. If not specified, default parameters are used. 
+        A list of parameters to be used in the model. If not specified, default parameters are used.
         Order of parameters: inverse temperature, learning rate, eligibility trace decay, mixing weight for low stake trials, mixing weight for high stake trials, stickiness, response stickiness.
 
     Example
@@ -214,150 +215,163 @@ class MBMF(Wrapper):
     - userID: unique identifier for each participant
     - stimuli: which planets presented in stage of the trial
     - s: the state of the trial
-    - rews: the rewards for each stimulus / planet 
+    - rews: the rewards for each stimulus / planet
     - choice: the choice made by the participant
-    - stake: the stake of the trial (1 or 5) 
+    - stake: the stake of the trial (1 or 5)
     - points: the points received in the trial
 
-    parameters_settings must be a 2D array, like [[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]], where the first list specifies the inverse temperature, the second list specifies the learning rate, the third list specifies the eligibility trace decay, the fourth list specifies the mixing weight for low stake trials, the fifth list specifies the mixing weight for high stake trials, the sixth list specifies the stickiness, and the seventh list specifies the response stickiness. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. 
+    parameters_settings must be a 2D array, like [[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]], where the first list specifies the inverse temperature, the second list specifies the learning rate, the third list specifies the eligibility trace decay, the fourth list specifies the mixing weight for low stake trials, the fifth list specifies the mixing weight for high stake trials, the sixth list specifies the stickiness, and the seventh list specifies the response stickiness. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound.
 
     References
-    ----------  
+    ----------
 
     Kool W, Cushman FA, Gershman SJ (2016) When Does Model-Based Control Pay Off? PLoS Comput Biol 12
 
     Smid, C.R., K. Ganesan, A. Thompson, R. Cañigueral, S. Veselic, J. Royer, W. Kool, T.U. Hauser, B. Bernhardt, and N. Steinbeis. “Neurocognitive Basis of Model-Based Decision Making and Its Metacontrol in Childhood.” Developmental Cognitive Neuroscience 62 (August 1, 2023): 101269.
-      
+
     """
 
-    def __init__(
-        self, data=None, parameters_settings=None
-    ):
+    def __init__(self, data=None, parameters_settings=None):
         if parameters_settings is None:
-            parameters_settings = [[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]]
+            parameters_settings = [
+                [0.8, 0, 2],
+                [0.5, 0, 1],
+                [0.8, 0, 1],
+                [0.8, 0, 1],
+                [0.8, 0, 2],
+                [-0.1, -0.5, 0.5],
+                [-0.1, -0.5, 0.5],
+            ]
         parameters = Parameters(
             temperature=Value(
                 value=parameters_settings[0][0],
                 lower=parameters_settings[0][1],
-                upper=parameters_settings[0][2]
+                upper=parameters_settings[0][2],
             ),
             learning_rate=Value(
                 value=parameters_settings[1][0],
                 lower=parameters_settings[1][1],
-                upper=parameters_settings[1][2]
+                upper=parameters_settings[1][2],
             ),
             eligibility_trace_decay=Value(
                 value=parameters_settings[2][0],
                 lower=parameters_settings[2][1],
-                upper=parameters_settings[2][2]
+                upper=parameters_settings[2][2],
             ),
             mixing_weight_low_stake=Value(
                 value=parameters_settings[3][0],
                 lower=parameters_settings[3][1],
-                upper=parameters_settings[3][2]
+                upper=parameters_settings[3][2],
             ),
             mixing_weight_high_stake=Value(
                 value=parameters_settings[4][0],
                 lower=parameters_settings[4][1],
-                upper=parameters_settings[4][2]
+                upper=parameters_settings[4][2],
             ),
             stickiness=Value(
                 value=parameters_settings[5][0],
                 lower=parameters_settings[5][1],
-                upper=parameters_settings[5][2]
+                upper=parameters_settings[5][2],
             ),
             response_stickiness=Value(
                 value=parameters_settings[6][0],
                 lower=parameters_settings[6][1],
-                upper=parameters_settings[6][2]
+                upper=parameters_settings[6][2],
             ),
-            Q_MF = numpy.ones((2,2))*4.5,
-            Q2 = numpy.ones((2,1))*4.5,
-            M = numpy.zeros((2,2)), # last action matrix
-            R = numpy.zeros(2)     # last choice structure
+            Q_MF=numpy.ones((2, 2)) * 4.5,
+            Q2=numpy.ones((2, 1)) * 4.5,
+            M=numpy.zeros((2, 2)),  # last action matrix
+            R=numpy.zeros(2),  # last choice structure
         )
 
         @ipp.require("numpy")
-
         def MF_MB_model(parameters, trial):
-
             """
             Model for model-based vs model-free decision making in a decison making task
 
 
             Returns
             -------
-            LL: 
-                Log Likelihood 
+            LL:
+                Log Likelihood
             Q:
                 Q values for the mixing model
             Q_MF:
                 Q values for model-free learning
             Q_MB:
-                Q values for model-based learning       
+                Q values for model-based learning
             """
 
             # pull out the paramters
-            b = parameters.temperature # softmax inverse temperature
-            lr = parameters.learning_rate # learning rate
-            lamb = parameters.eligibility_trace_decay # eligibility trace decay
-            w_lo = parameters.mixing_weight_low_stake # mixing weight for low stake trials
-            w_hi = parameters.mixing_weight_high_stake # mixing weight for high stake trials
-            st = parameters.stickiness # stickiness
-            respst = parameters.response_stickiness # response stickiness
+            b = parameters.temperature  # softmax inverse temperature
+            lr = parameters.learning_rate  # learning rate
+            lamb = parameters.eligibility_trace_decay  # eligibility trace decay
+            w_lo = (
+                parameters.mixing_weight_low_stake
+            )  # mixing weight for low stake trials
+            w_hi = (
+                parameters.mixing_weight_high_stake
+            )  # mixing weight for high stake trials
+            st = parameters.stickiness  # stickiness
+            respst = parameters.response_stickiness  # response stickiness
 
             # initialization
 
             # initialization
-            Q_MF = numpy.array(parameters.Q_MF) # Q values for model-free learning
-            Q2 = numpy.array(parameters.Q2) # Q values for model-based learning
+            Q_MF = numpy.array(parameters.Q_MF)  # Q values for model-free learning
+            Q2 = numpy.array(parameters.Q2)  # Q values for model-based learning
 
-            M = numpy.array(parameters.M) # last action matrix
-            R = numpy.array(parameters.R) # last choice structure
+            M = numpy.array(parameters.M)  # last action matrix
+            R = numpy.array(parameters.R)  # last choice structure
 
-            TM = [numpy.eye(2), numpy.eye(2)] #transition matrix
-                
+            TM = [numpy.eye(2), numpy.eye(2)]  # transition matrix
+
             if trial["stimuli"][0] == 2 or trial["stimuli"][0] == 4:
-                R = R = numpy.flipud(R) 
+                R = R = numpy.flipud(R)
 
-            s1 = trial["s"][0] # first choice stage
-            s2 = trial["s"][1] # second choice stage
+            s1 = trial["s"][0]  # first choice stage
+            s2 = trial["s"][1]  # second choice stage
             action = trial["choice"]
             a = action[0] - (s1 == 2) * 2
 
             # choose which weight to update based on stake of trial
             if trial["stake"] == 1:
                 w = w_lo
-            else: 
+            else:
                 w = w_hi
 
             # calculating the Q values for model-based learning
-            Q_MB = TM[s1-1].T @ Q2
+            Q_MB = TM[s1 - 1].T @ Q2
 
             # calculating the Q values for mixing model
-            Q = w*Q_MB + (1-w)*Q_MF[s1-1, :].T + st * M[s1-1, :].T + respst * numpy.array(R)
+            Q = (
+                w * Q_MB
+                + (1 - w) * Q_MF[s1 - 1, :].T
+                + st * M[s1 - 1, :].T
+                + respst * numpy.array(R)
+            )
 
             # calculating the probability choosing action a given Q
             policy = numpy.exp(b * Q) / numpy.sum(numpy.exp(b * Q))
 
             # update choice structure
-            M = numpy.zeros((2,2))
-            M[s1-1, a-1] = 1
+            M = numpy.zeros((2, 2))
+            M[s1 - 1, a - 1] = 1
 
-            R = numpy.zeros((2,1))
+            R = numpy.zeros((2, 1))
             if action == trial["stimuli"][0]:
                 R[0] = 1
-            else: 
+            else:
                 R[1] = 1
 
             # update Q values for model-free learning
             # first choice stage
-            dtQ1 = Q2[s2-1] - Q_MF[s1-1, a-1]
-            Q_MF[s1-1, a-1] = Q_MF[s1-1, a-1] + lr * dtQ1
+            dtQ1 = Q2[s2 - 1] - Q_MF[s1 - 1, a - 1]
+            Q_MF[s1 - 1, a - 1] = Q_MF[s1 - 1, a - 1] + lr * dtQ1
             # second choice stage
-            dtQ2 = trial["points"] - Q2[s2-1]
-            Q2[s2-1] = Q2[s2-1] + lr * dtQ2
-            Q_MF[s1-1, a-1] = Q_MF[s1-1, a-1] + lamb * lr * dtQ2
+            dtQ2 = trial["points"] - Q2[s2 - 1]
+            Q2[s2 - 1] = Q2[s2 - 1] + lr * dtQ2
+            Q_MF[s1 - 1, a - 1] = Q_MF[s1 - 1, a - 1] + lamb * lr * dtQ2
 
             # compile results
             results = {
@@ -368,9 +382,9 @@ class MBMF(Wrapper):
                 "Q2": numpy.array(Q2),
                 "Q_MF": numpy.array(Q_MF),
                 "Q_MB": numpy.array(Q_MB.flatten()),
-                "dependent": numpy.array([policy[1]])
+                "dependent": numpy.array([policy[1]]),
             }
 
-            return results    
+            return results
 
         super().__init__(data=data, model=MF_MB_model, parameters=parameters)

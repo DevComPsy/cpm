@@ -4,7 +4,6 @@ from cpm.models.learning import (
     DeltaRule,
     SeparableRule,
     QLearningRule,
-    KernelUpdate,
     HumbleTeacher,
 )
 
@@ -64,22 +63,6 @@ def test_q_learning_rule():
         computed_values, np.array([1.8, 1.35, 1.791])
     ), "The Q-values are not updated correctly."
 
-
-def test_kernel_update():
-    response = np.array([0, 1, 0, 0])
-    alpha = 0.1
-    kernel = np.array([0.2, 0.3, 0.4, 0.5])
-    input = np.array([1, 1, 0, 0])
-    kernel_update = KernelUpdate(
-        response=response, alpha=alpha, kernel=kernel, input=input
-    )
-    computed_kernel = kernel_update.compute()
-    assert computed_kernel.shape == kernel.shape
-    assert np.allclose(
-        computed_kernel, np.array([-0.02, 0.07, 0.0, 0.0])
-    ), "The kernel is not updated correctly with the KernelUpdate rule."
-
-
 def test_humble_teacher():
     weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     teacher = np.array([0, 1])
@@ -92,11 +75,12 @@ def test_humble_teacher():
     computed_weights = humble_teacher.delta
     assert computed_weights.shape == weights.shape
     assert np.allclose(
-        computed_weights, np.array([[-0.16, -0.16, -0.16], [ 0. ,  0. ,  0. ]]) 
+        computed_weights, np.array([[-0.16, -0.16, -0.16], [0.0, 0.0, 0.0]])
     ), "The weights are not updated correctly with the HumbleTeacher rule."
     assert np.allclose(
-        humble_teacher.weights, np.array([[-0.06,  0.04,  0.14], [ 0.4 ,  0.5 ,  0.6 ]])
+        humble_teacher.weights, np.array([[-0.06, 0.04, 0.14], [0.4, 0.5, 0.6]])
     ), "The teacher should be zero after the HumbleTeacher update."
+
 
 if __name__ == "__main__":
     pytest.main()

@@ -47,13 +47,19 @@ def test_softmax_input_shape():
     assert len(softmax.shape) == 1, "The Softmax model should flatten 2D input arrays."
 
 
-def test_softmax_nan_handling():
-    activations = np.array([0.1, np.nan, 0.2])
-    softmax = Softmax(temperature=1, activations=activations)
+def test_softmax_nan_handling_output():
+    activations = np.array([0.1, 100, 0.2])
+    softmax = Softmax(temperature=100, activations=activations)
     policies = softmax.compute()
     assert not np.isnan(
         policies
     ).any(), "The Softmax model should handle NaN values in activations."
+
+
+def test_softmax_nan_handling_input():
+    activations = np.array([0.1, np.nan, 0.2])
+    with pytest.raises(ValueError, match="Activations contain NaN values"):
+        Softmax(temperature=1, activations=activations)
 
 
 def test_sigmoid():
@@ -65,7 +71,7 @@ def test_sigmoid():
     assert np.all(policies >= 0) and np.all(policies <= 1)
     assert np.allclose(
         policies, expected
-    ), "The probabilities in the softmax are incorrect."
+    ), "The probabilities in the sigmoid are incorrect."
 
 
 def test_sigmoid_choice():

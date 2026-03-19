@@ -37,7 +37,7 @@ class SpaceObserver:
         >>> spaceObserver.clean_data()
         >>> results = spaceObserver.results
         >>> results.to_csv("/example/spaceObserver_results.csv", index=False)
-        >>> spaceObserver.codebook()
+        >>> spaceObserver.get_codebook()
 
         Notes
         -----
@@ -62,7 +62,12 @@ class SpaceObserver:
         """
 
         ## read data
-        self.data_raw = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
+        if filepath is None:
+            raise ValueError("filepath must be provided")
+        if filepath.endswith(".xlsx"):
+            self.data_raw = pd.read_excel(filepath, header=0, na_values=["NaN", "nan"])
+        else:
+            self.data_raw = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
 
         self.data_raw = self.data_raw[
             self.data_raw["RT_choice"] >= 150
@@ -90,43 +95,59 @@ class SpaceObserver:
 
         self.data_processed = pd.DataFrame()
         self.codebook = {
+            # --- Participant info ---
             "userID": "Unique identifier for each participant",
+            "run": "Session number for the participant",
+            "date": "Date and time of the first trial in the session",
             "n_trials": "Number of trials completed by the participant",
-            "day_of_week": "Day of the week of the trial",
-            "time": "Time of the trial",
-            "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
-            "accuracy": "Mean accuracy (if the choice was the majority choice)",
-            "mean_RT": "Mean response time across all trials",
-            "median_RT": "Median response time across all trials",
-            "median_RT_correct": "Median response time for trials where the participant made the correct choice",
-            "median_RT_incorrect": "Median response time for trials where the participant made the incorrect choice",
-            "diff_median_RT_correct_incorrect": "Difference between the median response time for correct and incorrect choices",
+            "day_of_week": "Day of the week the session started",
+            "time": "Clock time of the first trial",
+            "time_of_day": "Time of day of the session (night: 0-6h, morning: 6-12h, afternoon: 12-18h, evening: 18-24h)",
+            # --- Accuracy ---
+            "accuracy": "Mean accuracy across all trials (proportion correct)",
+            # --- Choice reaction time ---
+            "mean_RT": "Mean choice response time across all trials (ms)",
+            "median_RT": "Median choice response time across all trials (ms)",
+            "median_RT_correct": "Median choice response time for correct trials (ms)",
+            "median_RT_incorrect": "Median choice response time for incorrect trials (ms)",
+            "diff_median_RT_correct_incorrect": "Difference in median choice RT: correct minus incorrect (ms)",
+            # --- Confidence ---
             "mean_confidence": "Mean confidence rating across all trials",
-            "sd_confidence": "Standard deviation of the confidence rating across all trials",
+            "sd_confidence": "Standard deviation of confidence ratings across all trials",
             "median_confidence": "Median confidence rating across all trials",
-            "median_confidence_correct": "Median confidence rating for trials where the participant made the correct choice",
-            "median_confidence_incorrect": "Median confidence rating for trials where the participant made the incorrect choice",
-            "diff_median_conf_correct_incorrect": "Difference between the median confidence rating for correct and incorrect choices",
-            "sd_confidence_correct": "Standard deviation of the confidence rating for trials where the participant made the correct choice",
-            "sd_confidence_incorrect": "Standard deviation of the confidence rating for trials where the participant made the incorrect choice",
-            "diff_sd_confidence_correct_incorrect": "Difference between the standard deviation of the confidence rating for correct and incorrect choices",
-            "mean_RT_confidence": "Mean confidence response time across all trials",
-            "median_RT_confidence": "Median confidence response time across all trials",
-            "median_RT_confidence_correct": "Median confidence response time for trials where the participant made the correct choice",
-            "median_RT_confidence_incorrect": "Median confidence response time for trials where the participant made the incorrect choice",
-            "diff_median_RT_confidence_correct_incorrect": "Difference between the median confidence response time for correct and incorrect choices",
-            "confidence_10": "10th percentile of the confidence rating across all trials",
-            "confidence_25": "25th percentile of the confidence rating across all trials",
-            "confidence_75": "75th percentile of the confidence rating across all trials",
-            "confidence_90": "90th percentile of the confidence rating across all trials",
-            "evidence_strength_mean": "Mean evidence strength across all trials",
-            "evidence_strength_correct_mean": "Mean evidence strength for trials where the participant made the correct choice",
-            "evidence_strength_incorrect_mean": "Mean evidence strength for trials where the participant made the incorrect choice",
-            "diff_evidence_strength_correct_incorrect": "Difference between the mean evidence strength for correct and incorrect choices",
-            "ES_bins": "Mean evidence strength for each of the bins. The trials here are split into 4 quarters. The evidence strength is divided into four equal bins and the mean is calculated for each bin.",
+            "mean_confidence_correct": "Mean confidence rating for correct trials",
+            "mean_confidence_incorrect": "Mean confidence rating for incorrect trials",
+            "median_confidence_correct": "Median confidence rating for correct trials",
+            "median_confidence_incorrect": "Median confidence rating for incorrect trials",
+            "diff_median_conf_correct_incorrect": "Difference in median confidence: correct minus incorrect trials",
+            "sd_confidence_correct": "Standard deviation of confidence ratings for correct trials",
+            "sd_confidence_incorrect": "Standard deviation of confidence ratings for incorrect trials",
+            "diff_sd_confidence_correct_incorrect": "Difference in confidence SD: correct minus incorrect trials",
+            # --- Confidence reaction time ---
+            "mean_confidenceRT": "Mean confidence response time across all trials (ms)",
+            "median_confidenceRT": "Median confidence response time across all trials (ms)",
+            "median_confidenceRT_correct": "Median confidence response time for correct trials (ms)",
+            "median_confidenceRT_incorrect": "Median confidence response time for incorrect trials (ms)",
+            "diff_median_confidenceRT_correct_incorrect": "Difference in median confidence RT: correct minus incorrect (ms)",
+            # --- Confidence percentiles ---
+            "confidence_10": "10th percentile of confidence ratings across all trials",
+            "confidence_25": "25th percentile of confidence ratings across all trials",
+            "confidence_75": "75th percentile of confidence ratings across all trials",
+            "confidence_90": "90th percentile of confidence ratings across all trials",
+            # --- Evidence strength ---
+            "evidence_strength_mean": "Mean evidence strength (stimulus intensity) across all trials",
+            "evidence_strength_correct_mean": "Mean evidence strength for correct trials",
+            "evidence_strength_incorrect_mean": "Mean evidence strength for incorrect trials",
+            "diff_evidence_strength_correct_incorrect": "Difference in mean evidence strength: correct minus incorrect trials",
+            "median_ES": "Median evidence strength across all trials",
+            # --- Evidence strength bins (trial-order quarters) ---
+            "ES_bin_1": "Mean evidence strength for the first quarter of trials",
+            "ES_bin_2": "Mean evidence strength for the second quarter of trials",
+            "ES_bin_3": "Mean evidence strength for the third quarter of trials",
+            "ES_bin_4": "Mean evidence strength for the fourth quarter of trials",
         }
 
-    def metrics(self, mode=None):
+    def metrics(self):
         """
         Compute metrics for each participant and return a DataFrame with the results. The metrics are computed for each run separately.
 
@@ -226,9 +247,15 @@ class SpaceObserver:
             user_results["mean_confidence_incorrect"] = np.nanmean(
                 user_data["confidence"][user_data["accuracy"] != 1]
             )
+            user_results["median_confidence_correct"] = np.nanmedian(
+                user_data["confidence"][user_data["accuracy"] == 1]
+            )
+            user_results["median_confidence_incorrect"] = np.nanmedian(
+                user_data["confidence"][user_data["accuracy"] != 1]
+            )
             user_results["diff_median_conf_correct_incorrect"] = (
-                user_results["mean_confidence_correct"]
-                - user_results["mean_confidence_incorrect"]
+                user_results["median_confidence_correct"]
+                - user_results["median_confidence_incorrect"]
             )
             # standard deviation of confidence for correct and incorrect trials
             user_results["sd_confidence_correct"] = np.nanstd(
@@ -286,12 +313,11 @@ class SpaceObserver:
             bin_size = 4
 
             # Divide evidence strength into 4 equal bins and calculate the mean for each bin
-            bins = np.array_split(evidence_strength, bin_size)
-            ES_1 = np.mean(bins[0]) if len(bins[0]) > 0 else np.nan
-            ES_2 = np.mean(bins[1]) if len(bins[1]) > 0 else np.nan
-            ES_3 = np.mean(bins[2]) if len(bins[2]) > 0 else np.nan
-            ES_4 = np.mean(bins[3]) if len(bins[3]) > 0 else np.nan
-            user_results["ES_bins"] = np.array([ES_1, ES_2, ES_3, ES_4])
+            bins = np.array_split(evidence_strength.values, bin_size)
+            user_results["ES_bin_1"] = np.nanmean(bins[0]) if len(bins[0]) > 0 else np.nan
+            user_results["ES_bin_2"] = np.nanmean(bins[1]) if len(bins[1]) > 0 else np.nan
+            user_results["ES_bin_3"] = np.nanmean(bins[2]) if len(bins[2]) > 0 else np.nan
+            user_results["ES_bin_4"] = np.nanmean(bins[3]) if len(bins[3]) > 0 else np.nan
 
             # median evidence strength
             user_results["median_ES"] = np.nanmedian(evidence_strength)
@@ -300,9 +326,6 @@ class SpaceObserver:
             self.data_processed = pd.concat(
                 [self.data_processed, pd.DataFrame([user_results])], ignore_index=True
             )
-
-        # Convert results to a DataFrame
-        self.data_processed = pd.DataFrame(self.data_processed)
 
         return self.data_processed
 
@@ -373,7 +396,7 @@ class SpaceObserver:
 
         return self.cleanedresults
 
-    def codebook(self):
+    def get_codebook(self):
         """
         Return a codebook describing the metrics.
         """

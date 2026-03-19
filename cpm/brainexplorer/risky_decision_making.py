@@ -37,7 +37,7 @@ class Scavenger:
         >>> scavenger.clean_data()
         >>> results = scavenger.results
         >>> results.to_csv("/example/scavenger_results.csv", index=False)
-        >>> scavenger.codebook()
+        >>> scavenger.get_codebook()
 
         Notes
         -----
@@ -58,7 +58,12 @@ class Scavenger:
         - Reaction time < 150 or > 10000 ms
         - Attempts after the first attempt ("run" variable)
         """
-        self.data = pd.read_csv(filepath, header=0)
+        if filepath is None:
+            raise ValueError("filepath must be provided")
+        if filepath.endswith(".xlsx"):
+            self.data = pd.read_excel(filepath, header=0)
+        else:
+            self.data = pd.read_csv(filepath, header=0)
 
         self.data = self.data[self.data["run"] == 1]  # only keep first attempt
         self.data = self.data[
@@ -71,58 +76,111 @@ class Scavenger:
         self.results = pd.DataFrame()
         self.group_results = pd.DataFrame()
         self.codebook = {
+            # --- Participant info ---
             "userID": "Unique identifier for each participant",
             "n_trials": "Number of trials completed by the participant",
-            "day_of_week": "Day of the week of the trial",
-            "time": "Time of the trial",
-            "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
-            "mean_RT": "Mean reaction time",
-            "median_RT": "Median reaction time",
-            "median_RT_safe": "Median reaction time for safe choices",
-            "median_RT_risky": "Median reaction time for risky choices",
-            "median_RT_ambg": "Median reaction time for ambiguous trials",
-            "median_RT_NoAmbg": "Median reaction time for non-ambiguous trials",
-            "median_RT_safe_ambg": "Median reaction time for safe choices in ambiguous trials",
-            "median_RT_safe_NoAmbg": "Median reaction time for safe choices in non-ambiguous trials",
-            "median_RT_risky_ambg": "Median reaction time for risky choices in ambiguous trials",
-            "median_RT_risky_NoAmbg": "Median reaction time for risky choices in non-ambiguous trials",
+            "day_of_week": "Day of the week the session started",
+            "time": "Clock time of the first trial",
+            "time_of_day": "Time of day of the session (night: 0-6h, morning: 6-12h, afternoon: 12-18h, evening: 18-24h)",
+            # --- Reaction time ---
+            "mean_RT": "Mean reaction time across all trials (ms)",
+            "median_RT": "Median reaction time across all trials (ms)",
+            "median_RT_safe": "Median reaction time for safe choices (ms)",
+            "median_RT_risky": "Median reaction time for risky choices (ms)",
+            "median_RT_win": "Median reaction time for win trials (ms)",
+            "median_RT_loss": "Median reaction time for loss trials (ms)",
+            "median_RT_ambg": "Median reaction time for ambiguous trials (ms)",
+            "median_RT_NoAmbg": "Median reaction time for non-ambiguous trials (ms)",
+            "median_RT_win_ambg": "Median reaction time for win trials that were ambiguous (ms)",
+            "median_RT_win_NoAmbg": "Median reaction time for win trials that were non-ambiguous (ms)",
+            "median_RT_loss_ambg": "Median reaction time for loss trials that were ambiguous (ms)",
+            "median_RT_loss_NoAmbg": "Median reaction time for loss trials that were non-ambiguous (ms)",
+            "diff_RT_win_amg_win_noAmbg": "Difference in median RT: win-ambiguous minus win-non-ambiguous (ms)",
+            "diff_RT_loss_amg_loss_noAmbg": "Difference in median RT: loss-ambiguous minus loss-non-ambiguous (ms)",
+            "diff_RT_win_loss_ambg": "Difference in median RT: win minus loss in ambiguous trials (ms)",
+            "diff_RT_win_loss_noAmbg": "Difference in median RT: win minus loss in non-ambiguous trials (ms)",
+            "diff_RT_win_ambg_loss_noAmbg": "Difference in median RT: win-ambiguous minus loss-non-ambiguous (ms)",
+            "diff_RT_loss_ambg_win_noAmbg": "Difference in median RT: loss-ambiguous minus win-non-ambiguous (ms)",
+            # --- Points / outcomes ---
+            "total_rewards": "Total points received across all trials",
             "mean_points": "Mean points received across all trials",
-            "mean_points_safe": "Mean points received for safe choices",
-            "mean_points_risky": "Mean points received for risky choices",
+            "mean_points_safe": "Mean points received when choosing safe",
+            "mean_points_risky": "Mean points received when choosing risky",
             "mean_points_ambg": "Mean points received in ambiguous trials",
-            "mean_points_NoAmbg": "Mean points received in non-ambiguous",
-            "mean_points_safe_ambg": "Mean points received for safe choices in ambiguous trials",
-            "mean_points_safe_NoAmbg": "Mean points received for safe choices in non-ambiguous trials",
-            "mean_points_risky_ambg": "Mean points received for risky choices in ambiguous trials",
-            "mean_points_risky_NoAmbg": "Mean points received for risky choices in non-ambiguous",
+            "mean_points_NoAmbg": "Mean points received in non-ambiguous trials",
+            "mean_points_win_ambg": "Mean points received in win trials that were ambiguous",
+            "mean_points_win_NoAmbg": "Mean points received in win trials that were non-ambiguous",
+            "mean_points_loss_ambg": "Mean points received in loss trials that were ambiguous",
+            "mean_points_loss_NoAmbg": "Mean points received in loss trials that were non-ambiguous",
+            "diff_points_win_amg_win_noAmbg": "Difference in mean points: win-ambiguous minus win-non-ambiguous",
+            "diff_points_loss_amg_loss_noAmbg": "Difference in mean points: loss-ambiguous minus loss-non-ambiguous",
+            "diff_points_win_loss_ambg": "Difference in mean points: win minus loss in ambiguous trials",
+            "diff_points_win_loss_noAmbg": "Difference in mean points: win minus loss in non-ambiguous trials",
+            "diff_points_win_ambg_loss_noAmbg": "Difference in mean points: win-ambiguous minus loss-non-ambiguous",
+            "diff_points_loss_ambg_win_noAmbg": "Difference in mean points: loss-ambiguous minus win-non-ambiguous",
+            # --- Choice stickiness ---
+            "choice_stickiness": "Number of consecutive trial pairs where the same option (safe or risky) was chosen",
+            # --- Risky choice rates ---
             "risky_choices": "Proportion of risky choices overall",
-            "win_risk": "Proportion of risky wins",
-            "loss_risk": "Proportion of risky losses",
-            "win_risk_abg": "Proportion of risky wins in ambiguous trials",
-            "win_risk_NoAbg": "Proportion of risky wins in non-ambiguous trials",
-            "loss_risk_abg": "Proportion of risky losses in ambiguous trials",
-            "loss_risk_NoAbg": "Proportion of risky losses in non-ambiguous trials",
-            "diff_loss_win_risk": "Difference between proportion of risky losses and wins",
-            "diff_Ambg_NoAmbg_risk": "Difference between proportion of risky choices in ambiguous and non-ambiguous trials",
-            "diff_Ambg_NoAmbg_win_risk": "Difference between proportion of risky wins in ambiguous and non-ambiguous trials",
-            "diff_Ambg_NoAmbg_loss_risk": "Difference between proportion of risky losses in ambiguous and non-ambiguous trials",
-            "rational_all": "Proportion of rational choices",
-            "rational_win": "Proportion of rational choices in wins",
-            "rational_loss": "Proportion of rational choices in losses",
-            "rational_all_abg": "Proportion of rational choices in ambiguous trials",
-            "rational_win_abg": "Proportion of rational choices in wins in ambiguous trials",
-            "rational_loss_abg": "Proportion of rational choices in losses in ambiguous trials",
-            "rational_all_NoAbg": "Proportion of rational choices in non-ambiguous trials",
-            "diff_NoAmbg_win_loss_rational": "Difference between proportion of rational choices in wins and losses in non-ambiguous trials",
-            "rational_win_NoAbg": "Proportion of rational choices in wins in non-ambiguous trials",
-            "rational_loss_NoAbg": "Proportion of rational choices in losses in non-ambiguous trials",
-            "diff_Ambg_NoAmbg_rational": "Difference between proportion of rational choices in ambiguous and non-ambiguous trials",
-            "diff_Ambg_NoAmbg_win_rational": "Difference between proportion of rational choices in wins in ambiguous and non-ambiguous trials",
-            "diff_Ambg_NoAmbg_loss_rational": "Difference between proportion of rational choices in losses in ambiguous and non-ambiguous trials",
-            "nb_incorrect_gain": "Number of incorrect choices in gain trials",
-            "above_chance": "Proportion of trials with choices above chance level",
-            "chosen_prop_LeftRight": "Proportion of trials where option A (safe) was chosen",
-            "chosen_prop_SafeRisky": "Proportion of trials where the safe option was chosen",
+            "win_risk": "Proportion of risky choices in win trials",
+            "loss_risk": "Proportion of risky choices in loss trials",
+            "diff_loss_win_risk": "Difference in risky choice rate: loss minus win trials",
+            "risk_Ambg": "Proportion of risky choices in ambiguous trials",
+            "risk_NoAmbg": "Proportion of risky choices in non-ambiguous trials",
+            "diff_Ambg_NoAmbg_risk": "Difference in risky choice rate: ambiguous minus non-ambiguous trials",
+            "win_risk_abg": "Proportion of risky choices in win-ambiguous trials",
+            "win_risk_NoAbg": "Proportion of risky choices in win-non-ambiguous trials",
+            "loss_risk_abg": "Proportion of risky choices in loss-ambiguous trials",
+            "loss_risk_NoAbg": "Proportion of risky choices in loss-non-ambiguous trials",
+            "diff_Ambg_NoAmbg_win_risk": "Difference in risky win rate: ambiguous minus non-ambiguous",
+            "diff_Ambg_NoAmbg_loss_risk": "Difference in risky loss rate: ambiguous minus non-ambiguous",
+            "diff_Ambg_win_loss_risk": "Difference in risky choice rate: win minus loss in ambiguous trials",
+            "diff_NoAmbg_win_loss_risk": "Difference in risky choice rate: win minus loss in non-ambiguous trials",
+            "diff_amg_win_nonAmg_loss_risk": "Difference in risky choice rate: win-ambiguous minus loss-non-ambiguous",
+            "diff_amg_loss_nonAmg_win_risk": "Difference in risky choice rate: loss-ambiguous minus win-non-ambiguous",
+            # --- Rational choices (overall, win/loss, ambiguity) ---
+            "rational_all": "Proportion of rational choices across all trials",
+            "rational_win": "Proportion of rational choices in win trials",
+            "rational_loss": "Proportion of rational choices in loss trials",
+            "diff_loss_win_rational": "Difference in rational choice rate: loss minus win trials",
+            "rational_abg": "Proportion of rational choices in ambiguous trials",
+            "rational_NoAbg": "Proportion of rational choices in non-ambiguous trials",
+            "diff_Ambg_NoAmbg_rational": "Difference in rational choice rate: ambiguous minus non-ambiguous",
+            "rational_win_abg": "Proportion of rational choices in win-ambiguous trials",
+            "rational_win_NoAbg": "Proportion of rational choices in win-non-ambiguous trials",
+            "rational_loss_abg": "Proportion of rational choices in loss-ambiguous trials",
+            "rational_loss_NoAbg": "Proportion of rational choices in loss-non-ambiguous trials",
+            "diff_rational_Ambg_NoAmbg_win": "Difference in rational win rate: ambiguous minus non-ambiguous",
+            "diff_rational_Ambg_NoAmbg_loss": "Difference in rational loss rate: ambiguous minus non-ambiguous",
+            "diff_rational_Ambg_win_loss": "Difference in rational choice rate: win minus loss in ambiguous trials",
+            "diff_rational_NoAmbg_win_loss": "Difference in rational choice rate: win minus loss in non-ambiguous trials",
+            "diff_rational_Ambg_win_NoAmbg_loss": "Difference in rational choice rate: win-ambiguous minus loss-non-ambiguous",
+            "diff_rational_Ambg_loss_NoAmbg_win": "Difference in rational choice rate: loss-ambiguous minus win-non-ambiguous",
+            # --- Rational choices (safe/risky) ---
+            "rational_safe": "Proportion of rational choices when choosing safe",
+            "rational_risky": "Proportion of rational choices when choosing risky",
+            "diff_rational_safe_risky": "Difference in rational choice rate: safe minus risky choices",
+            "rational_safe_win": "Proportion of rational choices for safe choices in win trials",
+            "rational_safe_loss": "Proportion of rational choices for safe choices in loss trials",
+            "rational_risky_win": "Proportion of rational choices for risky choices in win trials",
+            "rational_risky_loss": "Proportion of rational choices for risky choices in loss trials",
+            "diff_rational_safe_win_risky_win": "Difference in rational win rate: safe minus risky choices",
+            "diff_rational_safe_loss_risky_loss": "Difference in rational loss rate: safe minus risky choices",
+            "diff_rational_safe_win_risky_loss": "Difference in rational choice rate: safe-win minus risky-loss",
+            "diff_rational_safe_loss_risky_win": "Difference in rational choice rate: safe-loss minus risky-win",
+            "rational_safe_abg": "Proportion of rational choices for safe choices in ambiguous trials",
+            "rational_safe_NoAbg": "Proportion of rational choices for safe choices in non-ambiguous trials",
+            "rational_risky_abg": "Proportion of rational choices for risky choices in ambiguous trials",
+            "rational_risky_NoAbg": "Proportion of rational choices for risky choices in non-ambiguous trials",
+            "diff_rational_safe_Ambg_NoAmbg": "Difference in rational safe rate: ambiguous minus non-ambiguous",
+            "diff_rational_risky_Ambg_NoAmbg": "Difference in rational risky rate: ambiguous minus non-ambiguous",
+            "diff_rational_safe_risky_Ambg": "Difference in rational choice rate: safe minus risky in ambiguous trials",
+            "diff_rational_safe_risky_NoAmbg": "Difference in rational choice rate: safe minus risky in non-ambiguous trials",
+            # --- Quality / exclusion metrics ---
+            "nb_incorrect_gain": "Number of incorrect choices in no-brainer gain catch trials",
+            "above_chance": "Proportion of trials where choice was above chance level",
+            "chosen_prop_LeftRight": "Proportion of trials where the same left/right response was repeated",
+            "chosen_prop_SafeRisky": "Proportion of trials where the same safe/risky choice was repeated",
         }
 
     def metrics(self):
@@ -246,17 +304,10 @@ class Scavenger:
             )
             # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
             user_results["time_of_day"] = (
-                "morning"
-                if date.hour < 12
-                else (
-                    "afternoon"
-                    if date.hour < 18
-                    else (
-                        "evening"
-                        if date.hour < 24
-                        else "night" if date.hour < 6 else "-"
-                    )
-                )
+                "night" if date.hour < 6
+                else "morning" if date.hour < 12
+                else "afternoon" if date.hour < 18
+                else "evening"
             )
 
             user_results["mean_RT"] = np.nanmean(user_data["RT"])
@@ -361,8 +412,7 @@ class Scavenger:
 
             # choice stickiness
             user_results["choice_stickiness"] = np.sum(
-                user_data["chosen"].iloc[i] == 1
-                and user_data["chosen"].iloc[i + 1] == 1
+                user_data["chosen"].iloc[i] == user_data["chosen"].iloc[i + 1]
                 for i in range(len(user_data["chosen"]) - 1)
             )
 
@@ -510,17 +560,17 @@ class Scavenger:
 
             # rational choices in risky and safe trials for ambiguous and non-ambiguous trials
             user_results["rational_safe_abg"] = np.sum(
-                ev_diff_chosen[t_abg & rsk == 0] >= 0
-            ) / np.sum(t_abg & rsk == 0)
+                ev_diff_chosen[t_abg & (rsk == 0)] >= 0
+            ) / np.sum(t_abg & (rsk == 0))
             user_results["rational_safe_NoAbg"] = np.sum(
-                ev_diff_chosen[~t_abg & rsk == 0] >= 0
-            ) / np.sum(~t_abg & rsk == 0)
+                ev_diff_chosen[~t_abg & (rsk == 0)] >= 0
+            ) / np.sum(~t_abg & (rsk == 0))
             user_results["rational_risky_abg"] = np.sum(
-                ev_diff_chosen[~t_abg & rsk == 1] >= 0
-            ) / np.sum(~t_abg & rsk == 1)
+                ev_diff_chosen[t_abg & (rsk == 1)] >= 0
+            ) / np.sum(t_abg & (rsk == 1))
             user_results["rational_risky_NoAbg"] = np.sum(
-                ev_diff_chosen[t_abg & rsk == 1] >= 0
-            ) / np.sum(t_abg & rsk == 1)
+                ev_diff_chosen[~t_abg & (rsk == 1)] >= 0
+            ) / np.sum(~t_abg & (rsk == 1))
             user_results["diff_rational_safe_Ambg_NoAmbg"] = (
                 user_results["rational_safe_abg"] - user_results["rational_safe_NoAbg"]
             )
@@ -555,9 +605,6 @@ class Scavenger:
             self.results = pd.concat(
                 [self.results, pd.DataFrame([user_results])], ignore_index=True
             )
-
-        # Convert results to a DataFrame
-        self.results = pd.DataFrame(self.results)
 
         return self.results
 
@@ -606,7 +653,7 @@ class Scavenger:
 
         return self.cleanedresults
 
-    def codebook(self):
+    def get_codebook(self):
         """
         Return a codebook describing the metrics.
         """

@@ -192,16 +192,12 @@ class SpaceObserver:
             )
             # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
             user_results["time_of_day"] = (
-                "morning"
-                if date.hour < 12
+                "night"
+                if date.hour < 6
                 else (
-                    "afternoon"
-                    if date.hour < 18
-                    else (
-                        "evening"
-                        if date.hour < 24
-                        else "night" if date.hour < 6 else "-"
-                    )
+                    "morning"
+                    if date.hour < 12
+                    else ("afternoon" if date.hour < 18 else "evening")
                 )
             )
 

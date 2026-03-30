@@ -25,7 +25,7 @@
         show_root_heading: true
         heading_level: 2
 
-## minimise
+## cpm.optimisation.minimise
 
 ::: cpm.optimisation.minimise.LogLikelihood
     options:
@@ -37,7 +37,9 @@
         show_root_heading: true
         heading_level: 3
 
-::: cpm.optimisation.minimise.Bayesian
+## cpm.optimisation.compare
+
+::: cpm.optimisation.compare.PenalisedLikelihoods
     options:
         show_root_heading: true
         heading_level: 3

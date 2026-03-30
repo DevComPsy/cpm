@@ -24,7 +24,7 @@ class AttentionShift:
         P : float
             Power parameter.
         rho : float
-            Learning rate.
+            Attention shift rate (step size).
         **kwargs : dict, optional
             Additional keyword arguments.
 
@@ -37,7 +37,7 @@ class AttentionShift:
         The rapid attention shift is defined as the change in attention gain for stimulus $j$ on a given iteration, computed as:
 
         $$
-            \\Delta gain_j' = \\rho ||g'||_p^{-1} \\circ \\sum_{k} \\delta_k (W_{ki}s_{i} - {a'_{i}}^{p-1}{z'_{k}}^{T})
+            \\Delta g_j' = \\rho ||g'||_p^{-1} \\circ \\sum_{k} \\delta_k (W_{ki}s_{i} - {a'_{i}}^{p-1}{z'_{k}}^{T})
         $$
 
         where $a_i$ is the normalised attention gain for stimulus $i$ and $g$ is the attention gain vector calculated from saliences, $\\eta$, by $g_i = s_i*\\eta_i$. The $\\circ$ denotes element-wise multiplication. The normalised attention gain is computed as:
@@ -58,7 +58,7 @@ class AttentionShift:
         \\delta_k = t_k - z_k
         $$
         
-        where $t_k$ is the target outcome for outcome $k$ and $z_k$ is the model prediction for outcome $k$. The attention shift is a non-linear function of attention gain. This means that the attention shift has to be computed iteratively, with the attention gain, prediction error, and model predictions being updated after each iteration until convergence. The learning rate, $\\rho$, controls the speed of convergence. Previous research (Kruschke, 2001) set the number of iterations to 10, but this can be adjusted based on the specific use case and convergence criteria. Here we only implement a single iteration of the attention shift, and the user can call the function multiple times to compute the attention shift iteratively until convergence.
+        where $t_k$ is the target outcome for outcome $k$ and $z_k$ is the model prediction for outcome $k$. The attention shift is a non-linear function of attention gain. This means that the attention shift has to be computed iteratively, with the attention gain, prediction error, and model predictions being updated after each iteration until convergence. The attention shift rate, $\\rho$, controls the speed of convergence. Previous research (Kruschke, 2001) set the number of iterations to 10, but this can be adjusted based on the specific use case and convergence criteria. Here we only implement a single iteration of the attention shift, and the user can call the function multiple times to compute the attention shift iteratively until convergence.
         
         References
         ----------

@@ -1,11 +1,11 @@
 import numpy as np
 
-__all__ = ["AttentionShift", "RapidAttentionShift"]
+__all__ = ["RapidAttentionShift"]
 
 
-class AttentionShift:
+class RapidAttentionShift:
     """
-        AttentionShift implements the rapid attention shift from models such as EXIT (Kruschke, 2001) and its simplified version (Paskewitz & Jones, 2020). The rapid attention shift mechanism allows the model to quickly adjust attention to stimuli based on prediction errors, enabling faster learning, and is an essential component in models of associative learning that incorporate attention mechanisms in the tradition of Mackintosh (1975).
+        RapidAttentionShift implements the rapid attention shift from models such as EXIT (Kruschke, 2001) and its simplified version (Paskewitz & Jones, 2020). The rapid attention shift mechanism allows the model to quickly adjust attention to stimuli based on prediction errors, enabling faster learning, and is an essential component in models of associative learning that incorporate attention mechanisms in the tradition of Mackintosh (1975).
         
         Parameters
         ----------
@@ -30,7 +30,7 @@ class AttentionShift:
 
         See Also
         --------
-        [cpm.models.activation.CompetitiveGating][cpm.models.activation.CompetitiveGating] : A class representing competitive attention gating, which can be used in conjunction with AttentionShift to model attention mechanisms.
+        [cpm.models.activation.CompetitiveGating][cpm.models.activation.CompetitiveGating] : A class representing competitive attention gating, which can be used in conjunction with RapidAttentionShift to model attention mechanisms.
 
         Notes
         -----
@@ -115,7 +115,7 @@ class AttentionShift:
 
     def __repr__(self):
         return (
-            f"AttentionShift(gain={self.gain},\n"
+            f"RapidAttentionShift(gain={self.gain},\n"
             f" pnorm={self.pnorm}, P={self.P}, rho={self.rho})"
         )
 

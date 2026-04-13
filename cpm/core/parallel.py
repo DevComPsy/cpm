@@ -37,8 +37,8 @@ def in_ipynb():
         True if the code is running in an ipython notebook, False otherwise
     """
     try:
-        cfg = get_ipython().config
-        return True
+        shell = get_ipython().__class__.__name__
+        return shell == "ZMQInteractiveShell"
     except NameError:
         return False
 
@@ -71,7 +71,7 @@ def detect_parallel_method():
 
 
 def execute_parallel(
-    job, data, method=None, cl=None, pandas=True, libraries=["numpy", "pandas"]
+    job, data, method=None, cl=None, pandas=True, libraries=None
 ):
     """
     Execute a job in parallel using the specified method.
@@ -95,6 +95,9 @@ def execute_parallel(
     result
         The result of the parallel execution.
     """
+    if libraries is None:
+        libraries = ["numpy", "pandas"]
+
     if pandas:
         data = ipyparallel_pandas_to_list(data)
 
@@ -104,16 +107,19 @@ def execute_parallel(
     if method == "ipyparallel":
         cluster = ipp.Cluster(n=cl)  # Create a cluster with 'cl' cores
         rc = cluster.start_and_connect_sync()
-        rc.wait_for_engines(n=cl)
-        rc[:].use_dill()
+        try:
+            rc.wait_for_engines(n=cl)
+            rc[:].use_dill()
 
-        @ipp.require(*libraries)
-        def wrapped_job(*args, **kwargs):
-            for lib in libraries:
-                exec(f"import {lib}")
-            return job(*args, **kwargs)
+            @ipp.require(*libraries)
+            def wrapped_job(*args, **kwargs):
+                for lib in libraries:
+                    exec(f"import {lib}")
+                return job(*args, **kwargs)
 
-        return rc[:].map_sync(wrapped_job, data)
+            return rc[:].map_sync(wrapped_job, data)
+        finally:
+            cluster.stop_cluster_sync()
     elif method == "multiprocess":
         with mp.Pool(cl) as pool:
             return pool.map(job, data)

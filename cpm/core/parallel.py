@@ -1,3 +1,4 @@
+import logging
 import multiprocess as mp
 import ipyparallel as ipp
 import dill
@@ -105,7 +106,7 @@ def execute_parallel(
         method = detect_parallel_method()
 
     if method == "ipyparallel":
-        cluster = ipp.Cluster(n=cl)  # Create a cluster with 'cl' cores
+        cluster = ipp.Cluster(n=cl, log_level=logging.ERROR)
         rc = cluster.start_and_connect_sync()
         try:
             rc.wait_for_engines(n=cl)

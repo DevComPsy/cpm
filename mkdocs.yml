@@ -45,6 +45,7 @@ nav:
       - Troubleshooting: troubleshooting.md
       - Roadmap: roadmap.md
   - Examples:
+      - examples/cpm-toolbox-complete-walkthrough.ipynb
       - examples/associative-learning.ipynb
       - examples/bandit-task.ipynb
       - examples/metacognition.ipynb

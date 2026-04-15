@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `cpm.core.parallel.execute_parallel` now suppresses ipyparallel cluster status messages by setting log level to ERROR
+- `cpm.core.parallel.execute_parallel` `libraries` parameter default is no longer a mutable list
 - Update `cpm.applications.reinforcement_learning.RLRW` class to use `numpy.asarray` for the `values` parameter, ensuring compatibility with numpy=>2.0
 - Increased bandit task dataset size
 - Update test units for `cpm.applications.reinforcement_learning.RLRW` to include handling of new changes, such as using `numpy.asarray` for `values` and adding an 'observed' column in the test dataset
@@ -27,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix `cpm.core.parallel.in_ipynb` to correctly distinguish Jupyter notebooks from IPython terminal sessions by checking for `ZMQInteractiveShell`
+- Fix `cpm.core.parallel.execute_parallel` ipyparallel cluster not being shut down after execution, causing engine process leaks
 - Fix wrong probabilities for generating data in `cpm.applications.decision_making.PTSM2025` model [#67](https://github.com/DevComPsy/cpm/issues/67) @FloorJBurghoorn
 - Fix matplotlib>=3.10 dependency mismatch errors upon loading `cpm` by removing unused imports in `cpm.utils.metad`
 - Fix the usage of ppt_identifier in Minimize class ([#72](https://github.com/DevComPsy/cpm/pull/72)) @tzukpolinsky

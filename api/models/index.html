@@ -185,6 +185,16 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#cpm.models.attention">attention</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cpm.models.attention.RapidAttentionShift">RapidAttentionShift</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#cpm.models.attention.RapidAttentionShift.compute">compute</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../generators/">cpm.generators</a>
@@ -2869,6 +2879,270 @@ It has the same shape as the weights input argument.</p>
 
         <p>Resets the weights to zero.</p>
 
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="cpm.models.attention" class="doc doc-heading">
+            <code>cpm.models.attention</code>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cpm.models.attention.RapidAttentionShift" class="doc doc-heading">
+              <code class="highlight language-python"><span class="n">RapidAttentionShift</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">predictions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pnorm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>RapidAttentionShift implements the rapid attention shift from models such as EXIT (Kruschke, 2001) and its simplified version (Paskewitz &amp; Jones, 2020). The rapid attention shift mechanism allows the model to quickly adjust attention to stimuli based on prediction errors, enabling faster learning, and is an essential component in models of associative learning that incorporate attention mechanisms in the tradition of Mackintosh (1975).</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>weights</code></b>
+                  (<code><span title="array">array</span> - <span title="like">like</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Weight matrix of shape (n_outcomes, n_stimuli).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>predictions</code></b>
+                  (<code><span title="array">array</span> - <span title="like">like</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Model predictions, a 1D array of length n_outcomes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>input</code></b>
+                  (<code><span title="array">array</span> - <span title="like">like</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Stimulus input, a 1D array of length n_stimuli.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>error</code></b>
+                  (<code><span title="array">array</span> - <span title="like">like</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Prediction errors, a 1D array of length n_outcomes.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>gain</code></b>
+                  (<code><span title="array">array</span> - <span title="like">like</span></code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Current attention gain values, a 1D array of length n_stimuli.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>pnorm</code></b>
+                  (<code><span title="float">float</span></code>, default:
+                      <code>1.0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Normalisation constant.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>P</code></b>
+                  (<code><span title="float">float</span></code>, default:
+                      <code>2.0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Power parameter.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>rho</code></b>
+                  (<code><span title="float">float</span></code>, default:
+                      <code>0.1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Attention shift rate (step size).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>**kwargs</code></b>
+                  (<code><span title="dict">dict</span></code>, default:
+                      <code>{}</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Additional keyword arguments.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a class="autorefs autorefs-internal" title="CompetitiveGating(input=None, values=None, salience=None, P=1, **kwargs)" href="#cpm.models.activation.CompetitiveGating">cpm.models.activation.CompetitiveGating</a> : A class representing competitive attention gating, which can be used in conjunction with RapidAttentionShift to model attention mechanisms.</p>
+</details>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The rapid attention shift is defined as the change in attention gain for stimulus <span class="arithmatex">\(j\)</span> on a given iteration, computed as:</p>
+<div class="arithmatex">\[
+    \Delta g_j' = \rho ||g'||_p^{-1} \circ \sum_{k} \delta_k (W_{ki}s_{i} - {a'_{i}}^{p-1}{z'_{k}}^{T})
+\]</div>
+<p>where <span class="arithmatex">\(a_i\)</span> is the normalised attention gain for stimulus <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(g\)</span> is the attention gain vector calculated from saliences, <span class="arithmatex">\(\eta\)</span>, by <span class="arithmatex">\(g_i = s_i*\eta_i\)</span>. The <span class="arithmatex">\(\circ\)</span> denotes element-wise multiplication. The normalised attention gain is computed as:</p>
+<div class="arithmatex">\[
+a_i = \frac{g_i}{||g||_p} \
+\]</div>
+<p>The model prediction <span class="arithmatex">\(z_k\)</span> is computed as:</p>
+<div class="arithmatex">\[
+z_k = \sum_{i} W_{ki} s_i a_i
+\]</div>
+<p>Error is computed as:</p>
+<div class="arithmatex">\[
+\delta_k = t_k - z_k
+\]</div>
+<p>where <span class="arithmatex">\(t_k\)</span> is the target outcome for outcome <span class="arithmatex">\(k\)</span> and <span class="arithmatex">\(z_k\)</span> is the model prediction for outcome <span class="arithmatex">\(k\)</span>. The attention shift is a non-linear function of attention gain. This means that the attention shift has to be computed iteratively, with the attention gain, prediction error, and model predictions being updated after each iteration until convergence. The attention shift rate, <span class="arithmatex">\(\rho\)</span>, controls the speed of convergence. Previous research (Kruschke, 2001) set the number of iterations to 10, but this can be adjusted based on the specific use case and convergence criteria. Here we only implement a single iteration of the attention shift, and the user can call the function multiple times to compute the attention shift iteratively until convergence.</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Kruschke, J. K. (2001). Toward a Unified Model of Attention in Associative Learning. Journal of Mathematical Psychology, 45(6), 812–863. https://doi.org/10.1006/jmps.2000.1354</p>
+<p>Mackintosh, N. J. (1975). A theory of attention: variations in the associability of stimuli with reinforcement. Psychological review, 82(4), 276.</p>
+<p>Paskewitz, S., &amp; Jones, M. (2020). Dissecting EXIT. Journal of Mathematical Psychology, 97, 102371. https://doi.org/10.1016/j.jmp.2020.102371</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cpm.models.attention.RapidAttentionShift.compute" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">compute</span><span class="p">()</span></code>
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the attention gain update.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="ndarray">ndarray</span></code>
+              –
+              <div class="doc-md-description">
+                <p>Gain update, a 1D array of length n_stimuli.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
     </div>
 

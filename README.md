@@ -3,6 +3,8 @@
 ![the toolbox logo](./docs/img/cpm-logo.png)
 
 ![PyPI - Version](https://img.shields.io/pypi/v/cpm-toolbox)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/cpm-toolbox?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/cpm-toolbox)
+
 
 cpm is a fundamental package for Computational Psychiatry. It is designed to provide a set of tools for researchers and clinicians to analyze and model data in the field of Computational Psychiatry.
 

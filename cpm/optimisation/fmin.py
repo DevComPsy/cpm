@@ -276,7 +276,7 @@ class FminBound:
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
-        The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
+        The number of cores to use for parallel processing. Default is `None`.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
     libraries : list, optional
         The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`.

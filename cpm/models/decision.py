@@ -122,17 +122,59 @@ class Softmax:
 
         The softmax function with irreducible noise is defined as:
 
-            (e^(beta * x) / sum(e^(beta * x))) * (1 - xi) + (xi / length(x)),
+        $$
+        P(x) = \\frac{e^{\\beta x}}{\\sum_{i} e^{\\beta x_i}} * (1 - \\xi) + \\frac{\\xi}{n}
+        $$
 
-        where x is the input array of activations, beta is the inverse temperature parameter, and xi is the irreducible noise parameter.
+        where x is the input array of activations or Q-values, $\\beta$ is the inverse temperature parameter, $n$ is the number of options, and $\\xi$ is the irreducible noise parameter.
 
         Notes
         -----
 
-        The irreducible noise parameter xi accounts for attentional lapses in the choice process.
-        Specifically, the terms (1-xi) + (xi/length(x)) cause the choice probabilities to be proportionally scaled towards 1/length(x).
+        The irreducible noise parameter $\\xi$ accounts for attentional lapses in the choice process.
+        Specifically, the terms $(1-\\xi) + (\\xi/n)$ cause the choice probabilities to be proportionally scaled towards $1/n$.
         Relatively speaking, this increases the probability that an option is selected if its activation is exceptionally low.
         This may seem counterintuitive in theory, but in practice it enables the model to capture highly surprising responses that can occur during attentional lapses.
+
+        This particular formalisation is a combination of the softmax policy with the uniform
+        distribution: with (noise weight) probability $(1 - \\xi)$ the value-based rule is followed, and with
+        probability $\\xi$ an option is drawn uniformly. The uniform floor is $\\xi/n$,
+        i.e. $1/|A|$; the original formulation in Guitart-Masip et al. (2012) used $\\xi/2$ because
+        the task had two actions, whereas the form implemented here generalises to an arbitrary
+        number of options.
+
+        The exact functional form originates in Talmi et al. (2009; Supplementary Methods, Eq. 4),
+        where the equivalent parameter is called the *tremble* $\\tau$ and weights the value-based
+        term directly. The two parameterisations are complementary: $\\xi = 1 - \\tau$. Note also
+        that for two actions the softmax kernel equals the logistic,
+        $\\exp(W_+) / (\\exp(W_+) + \\exp(W_-)) = \\sigma(W_+ - W_-)$, so the softmax and logistic
+        statements of this rule are identical in the binary case.
+
+        The same equation appears under two independent traditions. As a *lapse rate* it is the
+        symmetric special case (guess rate = lapse rate = $\\xi/2$) of the four-parameter
+        psychometric function in Wichmann and Hill (2001); it is a more general case,
+        since it permits asymmetric lower and upper asymptotes that are collapsed here. As a
+        *tremble* the term traces to the trembling-hand in Selten (1975), in which an
+        intended action is taken with high probability while probability mass slips uniformly onto
+        the alternatives. The terminology in Talmi et al. (2009) follows the latter tradition.
+
+        References
+        ----------
+        Guitart-Masip, M., Huys, Q. J. M., Fuentemilla, L., Dayan, P., Düzel, E., & Dolan, R. J.
+            (2012). Go and no-go learning in reward and punishment: Interactions between affect and
+            effect. *NeuroImage, 62*(1), 154-166. https://doi.org/10.1016/j.neuroimage.2012.04.024
+
+        Selten, R. (1975). Reexamination of the perfectness concept for equilibrium points in
+            extensive games. *International Journal of Game Theory, 4*(1), 25-55.
+            https://doi.org/10.1007/BF01766400
+
+        Talmi, D., Dayan, P., Kiebel, S. J., Frith, C. D., & Dolan, R. J. (2009). How humans
+            integrate the prospects of pain and reward during choice. *The Journal of Neuroscience,
+            29*(46), 14617-14626. https://doi.org/10.1523/JNEUROSCI.2026-09.2009
+
+        Wichmann, F. A., & Hill, N. J. (2001). The psychometric function: I. Fitting, sampling, and
+            goodness of fit. *Perception & Psychophysics, 63*(8), 1293-1313.
+            https://doi.org/10.3758/BF03194544
 
         Returns
         -------
@@ -140,10 +182,10 @@ class Softmax:
 
         Examples
         --------
-        >>> activations = np.array([[0.1, 0, 0.2], [-0.6, 0, 0.9]])
+        >>> activations = np.array([0.4, 0.9])
         >>> noisy_softmax = Softmax(temperature=1.5, xi=0.1, activations=activations)
         >>> noisy_softmax.irreducible_noise()
-        array([0.4101454, 0.5898546])
+        array([0.33873917, 0.66126083])
         """
         if self.__run__:
             policies = self.policies

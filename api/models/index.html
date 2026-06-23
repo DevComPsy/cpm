@@ -62,6 +62,8 @@
               </ul>
               <p class="caption"><span class="caption-text">Examples</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="" href="../../examples/cpm-toolbox-complete-walkthrough.ipynb">None</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/associative-learning/">Two associative learning models and blocking (cpm.models, cpm.generators)</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../examples/bandit-task/">Reinforcement learning with a two-armed bandit (cpm.models, cpm.generators, cpm.optimisation)</a>
@@ -1857,17 +1859,53 @@ and therefore independent of the options' activations.</p>
 
         <p>Extended softmax class for computing policies based on activations, with parameters inverse temperature and irreducible noise.</p>
 <p>The softmax function with irreducible noise is defined as:</p>
-<pre><code>(e^(beta * x) / sum(e^(beta * x))) * (1 - xi) + (xi / length(x)),
-</code></pre>
-<p>where x is the input array of activations, beta is the inverse temperature parameter, and xi is the irreducible noise parameter.</p>
+<div class="arithmatex">\[
+P(x) = \frac{e^{\beta x}}{\sum_{i} e^{\beta x_i}} * (1 - \xi) + \frac{\xi}{n}
+\]</div>
+<p>where x is the input array of activations or Q-values, <span class="arithmatex">\(\beta\)</span> is the inverse temperature parameter, <span class="arithmatex">\(n\)</span> is the number of options, and <span class="arithmatex">\(\xi\)</span> is the irreducible noise parameter.</p>
 
 
 <details class="note" open>
   <summary>Notes</summary>
-  <p>The irreducible noise parameter xi accounts for attentional lapses in the choice process.
-Specifically, the terms (1-xi) + (xi/length(x)) cause the choice probabilities to be proportionally scaled towards 1/length(x).
+  <p>The irreducible noise parameter <span class="arithmatex">\(\xi\)</span> accounts for attentional lapses in the choice process.
+Specifically, the terms <span class="arithmatex">\((1-\xi) + (\xi/n)\)</span> cause the choice probabilities to be proportionally scaled towards <span class="arithmatex">\(1/n\)</span>.
 Relatively speaking, this increases the probability that an option is selected if its activation is exceptionally low.
 This may seem counterintuitive in theory, but in practice it enables the model to capture highly surprising responses that can occur during attentional lapses.</p>
+<p>This particular formalisation is a combination of the softmax policy with the uniform
+distribution: with (noise weight) probability <span class="arithmatex">\((1 - \xi)\)</span> the value-based rule is followed, and with
+probability <span class="arithmatex">\(\xi\)</span> an option is drawn uniformly. The uniform floor is <span class="arithmatex">\(\xi/n\)</span>,
+i.e. <span class="arithmatex">\(1/|A|\)</span>; the original formulation in Guitart-Masip et al. (2012) used <span class="arithmatex">\(\xi/2\)</span> because
+the task had two actions, whereas the form implemented here generalises to an arbitrary
+number of options.</p>
+<p>The exact functional form originates in Talmi et al. (2009; Supplementary Methods, Eq. 4),
+where the equivalent parameter is called the <em>tremble</em> <span class="arithmatex">\(\tau\)</span> and weights the value-based
+term directly. The two parameterisations are complementary: <span class="arithmatex">\(\xi = 1 - \tau\)</span>. Note also
+that for two actions the softmax kernel equals the logistic,
+<span class="arithmatex">\(\exp(W_+) / (\exp(W_+) + \exp(W_-)) = \sigma(W_+ - W_-)\)</span>, so the softmax and logistic
+statements of this rule are identical in the binary case.</p>
+<p>The same equation appears under two independent traditions. As a <em>lapse rate</em> it is the
+symmetric special case (guess rate = lapse rate = <span class="arithmatex">\(\xi/2\)</span>) of the four-parameter
+psychometric function in Wichmann and Hill (2001); it is a more general case,
+since it permits asymmetric lower and upper asymptotes that are collapsed here. As a
+<em>tremble</em> the term traces to the trembling-hand in Selten (1975), in which an
+intended action is taken with high probability while probability mass slips uniformly onto
+the alternatives. The terminology in Talmi et al. (2009) follows the latter tradition.</p>
+</details>
+
+<details class="references" open>
+  <summary>References</summary>
+  <p>Guitart-Masip, M., Huys, Q. J. M., Fuentemilla, L., Dayan, P., Düzel, E., &amp; Dolan, R. J.
+    (2012). Go and no-go learning in reward and punishment: Interactions between affect and
+    effect. <em>NeuroImage, 62</em>(1), 154-166. https://doi.org/10.1016/j.neuroimage.2012.04.024</p>
+<p>Selten, R. (1975). Reexamination of the perfectness concept for equilibrium points in
+    extensive games. <em>International Journal of Game Theory, 4</em>(1), 25-55.
+    https://doi.org/10.1007/BF01766400</p>
+<p>Talmi, D., Dayan, P., Kiebel, S. J., Frith, C. D., &amp; Dolan, R. J. (2009). How humans
+    integrate the prospects of pain and reward during choice. <em>The Journal of Neuroscience,
+    29</em>(46), 14617-14626. https://doi.org/10.1523/JNEUROSCI.2026-09.2009</p>
+<p>Wichmann, F. A., &amp; Hill, N. J. (2001). The psychometric function: I. Fitting, sampling, and
+    goodness of fit. <em>Perception &amp; Psychophysics, 63</em>(8), 1293-1313.
+    https://doi.org/10.3758/BF03194544</p>
 </details>
 
 <table class="field-list">
@@ -1894,10 +1932,10 @@ This may seem counterintuitive in theory, but in practice it enables the model t
 </table>
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">activations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]])</span>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">activations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">noisy_softmax</span> <span class="o">=</span> <span class="n">Softmax</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">activations</span><span class="o">=</span><span class="n">activations</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">noisy_softmax</span><span class="o">.</span><span class="n">irreducible_noise</span><span class="p">()</span>
-<span class="go">array([0.4101454, 0.5898546])</span>
+<span class="go">array([0.33873917, 0.66126083])</span>
 </code></pre></div>
 
 

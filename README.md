@@ -34,6 +34,25 @@ pip install git+https://github.com/DevComPsy/cpm.git
 
 The documentation can be viewed here: [link](https://devcompsy.github.io/cpm/).
 
+## Citing _cpm_
+
+If you are using _cpm_, we recommend citing the titular software paper [(Dome et al., 2026)](https://doi.org/10.1371/journal.pcbi.1014481):
+
+```
+@article{dome2026cpm,
+  title = {cpm: {{A}} Python Library for Theory-Driven Modelling in Computational Psychiatry},
+  author = {Dome, Lenard and Hezemans, Frank H. and Kadri, Kenza and Wagner, Ben J. and Webb, Andrew and Hauser, Tobias U.},
+  year = 2026,
+  journal = {PLOS Computational Biology},
+  volume = {22},
+  number = {7},
+  pages = {1--31},
+  publisher = {Public Library of Science},
+  doi = {10.1371/journal.pcbi.1014481}
+}
+
+```
+
 ### Development of documentation
 
 The documentation is written in docstrings and markdown files. The markdown files are located in the `docs` directory. The documentation is built using mkdocs.

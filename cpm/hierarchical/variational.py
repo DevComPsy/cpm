@@ -629,9 +629,9 @@ class VariationalBayes:
 
         # convert null to pandas dataframe if it is a dictionary
         if isinstance(null, dict):
-            null_pd = pd.DataFrame(list(null.items()), columns=["parameter", "null"])
+            null_df = pd.DataFrame(list(null.items()), columns=["parameter", "null"])
         elif isinstance(null, pd.DataFrame):
-            null_df = null_pd
+            null_df = null.copy()
             null_df.columns = ["parameter", "null"]
         elif null is None:
             raise ValueError("The null hypothesis must be provided.")

@@ -109,11 +109,7 @@ class EmpiricalBayes:
 
     def step(self):
         self.optimiser.optimise()
-        hessian = []
-        for _, n in enumerate(self.optimiser.fit):
-            hessian.append(n.get("hessian"))
-
-        hessian = np.asarray(hessian)
+        hessian = np.asarray([n.get("hessian") for n in self.optimiser.fit])
         return self.optimiser.parameters, hessian, self.optimiser.fit
 
     def stair(self, chain_index=0):
@@ -134,6 +130,17 @@ class EmpiricalBayes:
                 inv_x = np.linalg.pinv(x)
 
             return inv_x
+
+        # invert all participants' Hessian matrices in a single vectorised call.
+        # numpy natively batches `inv` over stacked matrices, which is much faster
+        # than inverting one participant at a time in a Python loop. We only fall
+        # back to the (slower) per-matrix loop -- with its pinv fallback -- if the
+        # batched call fails for any participant.
+        def __inv_hessian_batch(hessian):
+            try:
+                return np.linalg.inv(hessian)
+            except np.linalg.LinAlgError:
+                return np.asarray([__inv_mat(h) for h in hessian])
 
         # convenience function to obtain the log determinant of a Hessian matrix
         def __log_det_hessian(x):
@@ -173,9 +180,38 @@ class EmpiricalBayes:
 
             return log_det
 
+        # compute the log determinant for all participants' Hessian matrices at
+        # once via a batched Cholesky decomposition, which numpy vectorises over
+        # stacked matrices. This covers the common case (all Hessians well-behaved)
+        # without a Python-level loop. If it fails for any participant, we fall
+        # back to the per-matrix cascade above (Cholesky -> LU -> QR) for the
+        # whole batch, to preserve the original edge-case handling exactly.
+        def __log_det_hessian_batch(hessian):
+            try:
+                L = np.linalg.cholesky(hessian)
+                diag = np.diagonal(L, axis1=1, axis2=2)
+                log_det = 2.0 * np.sum(np.log(diag), axis=1)
+                if np.iscomplexobj(log_det):
+                    if np.any(np.imag(log_det) != 0):
+                        raise np.linalg.LinAlgError
+                    log_det = np.real(log_det)
+                if not np.all(np.isfinite(log_det)):
+                    raise np.linalg.LinAlgError
+                return log_det
+            except np.linalg.LinAlgError:
+                return np.asarray([__log_det_hessian(h) for h in hessian])
+
         # Equation numbers refer to equations in the Gershman (2016) Empirical priors for reinforcement learning models
         lme_old = 0
         lmes = []
+        # parameter names are fixed for the whole chain -- compute once instead
+        # of on every iteration
+        parameter_names = self.optimiser.model.parameters.free()
+        # accumulate per-iteration results locally and concatenate once at the
+        # end of the chain, instead of concatenating into the (growing) instance
+        # DataFrames on every iteration/parameter, which is quadratic in cost
+        fit_records = []
+        hyper_records = []
 
         for iteration in range(self.iteration):
 
@@ -199,20 +235,17 @@ class EmpiricalBayes:
             if self.objective != "minimise":
                 hessian = -1 * hessian
 
-            # organise parameter estimates in an array
-            parameter_names = self.optimiser.model.parameters.free()
-            param = np.zeros(
-                (len(parameters), len(parameter_names))
-            )  # shape: ppt x params
-            for i, name in enumerate(parameter_names):
-                for ppt, content in enumerate(parameters):
-                    param[ppt, i] = content.get(name)
+            # organise parameter estimates in an array. `parameters` is a list of
+            # per-participant dicts, so building a DataFrame directly (rather than
+            # looping over participants x parameters in Python) both vectorises
+            # the construction and gives us `parameter_long` for free.
+            parameter_long = pd.DataFrame(parameters)[parameter_names]
+            param = parameter_long.to_numpy(copy=True)  # shape: ppt x params
 
-            parameter_long = pd.DataFrame(param, columns=parameter_names)
-            parameter_long["ppt"] = [i for i in range(len(parameters))]
+            parameter_long["ppt"] = np.arange(len(parameters))
             parameter_long["iteration"] = iteration + 1
             parameter_long["chain"] = chain_index
-            self.fit = pd.concat([self.fit, parameter_long]).reset_index(drop=True)
+            fit_records.append(parameter_long)
             # turn any non-finite values into NaN, to avoid subsequent issues
             # with calculating parameter means and variances
             param[np.isinf(param)] = np.nan
@@ -227,9 +260,7 @@ class EmpiricalBayes:
 
             # the Hessian matrix should correspond to the precision matrix, hence its
             # inverse is the variance-covariance matrix.
-            inv_hessian = np.asarray(
-                list(map(__inv_mat, hessian))
-            )  # shape: ppt x params x params
+            inv_hessian = __inv_hessian_batch(hessian)  # shape: ppt x params x params
             # diagonal elements should correspond to variances (uncertainties)
             param_uncertainty = np.diagonal(
                 inv_hessian, axis1=1, axis2=2
@@ -271,7 +302,7 @@ class EmpiricalBayes:
             # how to approximate the log model evidence (lme) a.k.a. marginal likelihood:
             # obtain the log determinant of the hessian matrix for each ppt, and incorporate
             # the number of free parameters to define a penalty term
-            log_determinants = np.asarray(list(map(__log_det_hessian, hessian)))
+            log_determinants = __log_det_hessian_batch(hessian)
             penalty = 0.5 * (
                 self.__number_of_parameters__ * np.log(2 * np.pi) - log_determinants
             )
@@ -283,30 +314,24 @@ class EmpiricalBayes:
             # sum the log model evidence across participants
             # it is a log-converted version of Equation 8 in Gershman (2016)
             summed_lme = log_model_evidence.sum()
-            lmes.append(copy.deepcopy(summed_lme))
+            lmes.append(summed_lme)
 
-            hyper = pd.DataFrame(
-                [0, 0, 0, 0, 0, 0, 0],
-                index=[
-                    "chain",
-                    "iteration",
-                    "parameter",
-                    "mean",
-                    "sd",
-                    "lme",
-                    "reject",
-                ],
-            ).T
-
+            # collect this iteration's hyperparameter rows (one per parameter)
+            # locally, rather than concatenating into the growing instance
+            # DataFrame on every single row -- see fit_records/hyper_records above
+            reject = summed_lme < lme_old
             for i, name in enumerate(parameter_names):
-                hyper["parameter"] = name
-                hyper["mean"] = means[i]
-                hyper["sd"] = stdev[i]
-                hyper["iteration"] = iteration + 1
-                hyper["chain"] = chain_index
-                hyper["lme"] = copy.deepcopy(summed_lme)
-                hyper["reject"] = summed_lme < lme_old
-                self.hyperparameters = pd.concat([self.hyperparameters, hyper])
+                hyper_records.append(
+                    {
+                        "chain": chain_index,
+                        "iteration": iteration + 1,
+                        "parameter": name,
+                        "mean": means[i],
+                        "sd": stdev[i],
+                        "lme": summed_lme,
+                        "reject": reject,
+                    }
+                )
 
             if self.quiet is False:
                 print(f"Iteration: {iteration + 1}, LME: {summed_lme}. ")
@@ -316,6 +341,16 @@ class EmpiricalBayes:
                     break
                 else:  # update the summed log model evidence
                     lme_old = summed_lme
+
+        # concatenate this chain's accumulated results into the instance
+        # DataFrames once, instead of on every iteration/parameter
+        if fit_records:
+            self.fit = pd.concat([self.fit, *fit_records], ignore_index=True)
+        if hyper_records:
+            self.hyperparameters = pd.concat(
+                [self.hyperparameters, pd.DataFrame(hyper_records)],
+                ignore_index=True,
+            )
 
         output = {
             "lme": lmes,

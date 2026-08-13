@@ -50,7 +50,6 @@ If you are using _cpm_, we recommend citing the titular software paper [(Dome et
   publisher = {Public Library of Science},
   doi = {10.1371/journal.pcbi.1014481}
 }
-
 ```
 
 ### Development of documentation

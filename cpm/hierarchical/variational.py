@@ -144,9 +144,39 @@ class VariationalBayes:
         self.details = []
         self.lmes = []
 
-        self.hyperparameters = pd.DataFrame()
+        # `fit` and `hyperparameters` are exposed as properties (see below).
+        # update_participants()/update_population() only append a small chunk
+        # to a private buffer on every call (O(1)); the buffered chunks are
+        # merged into the cached DataFrame lazily, the moment `.fit` /
+        # `.hyperparameters` is actually read. This avoids paying an O(n^2)
+        # pd.concat cost across a long EM run (many iterations x chains),
+        # while still behaving exactly like an always up-to-date DataFrame
+        # attribute for any caller -- including calling update_participants()/
+        # update_population() directly, outside of the EM loop.
+        self.__fit_cache__ = pd.DataFrame()
+        self.__fit_chunks__ = []
+        self.__hyper_cache__ = pd.DataFrame()
+        self.__hyper_chunks__ = []
         self.mu_stats = pd.DataFrame()
-        self.fit = pd.DataFrame()
+
+    @property
+    def fit(self):
+        if self.__fit_chunks__:
+            self.__fit_cache__ = pd.concat(
+                [self.__fit_cache__, *self.__fit_chunks__], ignore_index=True
+            )
+            self.__fit_chunks__ = []
+        return self.__fit_cache__
+
+    @property
+    def hyperparameters(self):
+        if self.__hyper_chunks__:
+            self.__hyper_cache__ = pd.concat(
+                [self.__hyper_cache__, pd.DataFrame(self.__hyper_chunks__)],
+                ignore_index=True,
+            )
+            self.__hyper_chunks__ = []
+        return self.__hyper_cache__
 
     # function to update participant-level variables
     def update_participants(self, iter_idx=0, chain_idx=0):
@@ -161,20 +191,22 @@ class VariationalBayes:
         details = self.optimiser.fit
         self.details.append(copy.deepcopy(details))
 
-        # extract the parameter estimates and organise them into an array
+        # extract the parameter estimates and organise them into an array.
+        # `parameters` is a list of per-participant dicts, so building the
+        # DataFrame directly (rather than looping over participants x
+        # parameters in Python) both vectorises the construction and gives us
+        # `parameter_long` for free.
         parameters = self.optimiser.parameters
-        param = np.zeros((self.__n_ppt__, self.__n_param__))
-        for i, name in enumerate(self.__param_names__):
-            for ppt, content in enumerate(parameters):
-                param[ppt, i] = content.get(name)
+        parameter_long = pd.DataFrame(parameters)[self.__param_names__]
+        param = parameter_long.to_numpy(copy=True)
 
         # additionally organise the parameter estimates in a pandas dataframe
-        # in long format, to be appended to self.fit
-        parameter_long = pd.DataFrame(param, columns=self.__param_names__)
-        parameter_long["ppt"] = [i for i in range(self.__n_ppt__)]
+        # in long format, to be appended to self.fit (buffered -- see the
+        # `fit` property above)
+        parameter_long["ppt"] = np.arange(self.__n_ppt__)
         parameter_long["iteration"] = iter_idx + 1
         parameter_long["chain"] = chain_idx
-        self.fit = pd.concat([self.fit, parameter_long]).reset_index(drop=True)
+        self.__fit_chunks__.append(parameter_long)
 
         # extract the participant-wise unnormalised log posterior density at the
         # optimised parameter values
@@ -187,11 +219,7 @@ class VariationalBayes:
 
         # extract the Hessian matrix of the target function evaluated at the
         # optimised parameter values
-        hessian = []
-        for i, ppt in enumerate(details):
-            hessian.append(ppt.get("hessian"))
-
-        hessian = np.asarray(hessian)
+        hessian = np.asarray([ppt.get("hessian") for ppt in details])
 
         # the Hessian matrix is assumed to contain the second derivatives of the
         # negative of the log posterior density function. So, if the objective
@@ -257,8 +285,29 @@ class VariationalBayes:
 
             return log_det
 
+        # compute the log determinant for all participants' Hessian matrices at
+        # once via a batched Cholesky decomposition, which numpy vectorises over
+        # stacked matrices. This covers the common case (all Hessians well-
+        # behaved) without a Python-level loop. If it fails for any participant,
+        # we fall back to the per-matrix cascade above (Cholesky -> LU -> QR) for
+        # the whole batch, to preserve the original edge-case handling exactly.
+        def __log_det_hessian_batch(hessian):
+            try:
+                L = np.linalg.cholesky(hessian)
+                diag = np.diagonal(L, axis1=1, axis2=2)
+                log_det = 2.0 * np.sum(np.log(diag), axis=1)
+                if np.iscomplexobj(log_det):
+                    if np.any(np.imag(log_det) != 0):
+                        raise np.linalg.LinAlgError
+                    log_det = np.real(log_det)
+                if not np.all(np.isfinite(log_det)):
+                    raise np.linalg.LinAlgError
+                return log_det
+            except np.linalg.LinAlgError:
+                return np.asarray([__log_det_hessian(h) for h in hessian])
+
         # apply the function defined above to the input hessian matrices
-        log_dets = np.asarray(list(map(__log_det_hessian, hessian)))
+        log_dets = __log_det_hessian_batch(hessian)
 
         # compute the participant-wise log model evidence (lme)
         # Following line corresponds to Piray et al. (2019) Equation 22, page 29:
@@ -311,6 +360,17 @@ class VariationalBayes:
 
             return inv_x
 
+        # invert all participants' Hessian matrices in a single vectorised call.
+        # numpy natively batches `inv` over stacked matrices, which is much
+        # faster than inverting one participant at a time in a Python loop. We
+        # only fall back to the (slower) per-matrix loop -- with its pinv
+        # fallback -- if the batched call fails for any participant.
+        def __inv_hessian_batch(hessian):
+            try:
+                return np.linalg.inv(hessian)
+            except np.linalg.LinAlgError:
+                return np.asarray([__inv_mat(h) for h in hessian])
+
         # Equation and page numbers refer to Piray et al. (2019).
         # Compared to Piray et al. (2019), we use the following simplifying
         # assumptions:
@@ -339,9 +399,7 @@ class VariationalBayes:
         # we first need to obtain the "within-participant" variances (uncertainties)
         # of the parameter estimates, which are given by the diagonal elements of
         # the matrix inverse of the Hessian
-        inv_hessian = np.asarray(
-            list(map(__inv_mat, hessian))
-        )  # shape: ppt x params x params
+        inv_hessian = __inv_hessian_batch(hessian)  # shape: ppt x params x params
         param_uncertainty = np.diagonal(
             inv_hessian, axis1=1, axis2=2
         )  # shape: ppt x params
@@ -417,28 +475,22 @@ class VariationalBayes:
 
         self.optimiser.model.parameters.update_prior(**population_updates)
 
-        # organise population-level variables into a pandas dataframe in long format
-        hyper = pd.DataFrame(
-            [0, 0, 0, 0, 0, 0, 0],
-            index=[
-                "chain",
-                "iteration",
-                "parameter",
-                "mean",
-                "mean_errorbar",
-                "sd",
-                "lme",
-            ],
-        ).T
+        # organise population-level variables into per-parameter records,
+        # buffered (see the `hyperparameters` property above) rather than
+        # concatenated into self.hyperparameters on every single parameter,
+        # to avoid an O(n^2) cost across many iterations x parameters.
         for i, name in enumerate(self.__param_names__):
-            hyper["parameter"] = name
-            hyper["mean"] = E_mu[i]
-            hyper["mean_se"] = E_mu_error[i]
-            hyper["sd"] = E_sd[i]
-            hyper["iteration"] = iter_idx
-            hyper["chain"] = chain_idx
-            hyper["lme"] = lme
-            self.hyperparameters = pd.concat([self.hyperparameters, hyper])
+            self.__hyper_chunks__.append(
+                {
+                    "chain": chain_idx,
+                    "iteration": iter_idx,
+                    "parameter": name,
+                    "mean": E_mu[i],
+                    "mean_se": E_mu_error[i],
+                    "sd": E_sd[i],
+                    "lme": lme,
+                }
+            )
 
         # lastly, calculate the empirical means divided by the empirical SDs,
         # resulting in "normalised" means a.k.a. signal-to-noise ratios, which
@@ -537,9 +589,7 @@ class VariationalBayes:
             # STEP 2: Estimate the participant-wise log model evidence
             # TODO use participant-wise lme estimates (`lme_vector`) in output
             lme_vector, lme_sum = self.get_lme(log_post=log_posterior, hessian=hessian)
-            lme_sum = copy.deepcopy(lme_sum)
             lmes.append(lme_sum)
-            self.lmes.append(lmes)
 
             # STEP 3: Estimate posterior means of population-level means (mu) and
             # precisions (tau), and use these estimates to update the normal prior
@@ -567,6 +617,14 @@ class VariationalBayes:
             else:
                 lme_old = lme_sum
                 param_snr_old = param_snr
+
+        # record this chain's full lme trajectory. NB: this used to happen
+        # inside the loop above (`self.lmes.append(lmes)` on every iteration),
+        # which appended a *reference* to the same, still-mutating `lmes` list
+        # each time -- so every entry ended up aliasing the same final list
+        # rather than snapshotting its state at that iteration. Appending once,
+        # here, after the loop, is both correct and O(n) instead of O(n^2).
+        self.lmes.append(lmes)
 
         # put together a basic summary of results, and return
         output = {

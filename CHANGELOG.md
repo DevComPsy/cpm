@@ -5,7 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.25.7.dev0] - 2026-08-13
+
+### Added
+
+- Added test units for `cpm.hierarchical.EmpiricalBayes`
+- Added test units for `cpm.hierarchical.VariationalBayes`
+
+### Changed
+
+- Significantly improved the performance of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` for long/multi-chain EM runs: replaced `pd.concat` calls that ran on every iteration (and, for hyperparameters, every iteration x parameter) with buffered accumulation, and replaced per-participant Python loops for Hessian inversion and log-determinant computation with vectorised, batched NumPy operations (falling back to the original per-matrix logic only when needed)
+
+### Fixed
+
+- Fixed `cpm.hierarchical.VariationalBayes.ttest` raising a `NameError` when `null` was passed as a `pandas.DataFrame`, due to referencing an undefined variable from the wrong branch
+- Fixed `cpm.hierarchical.VariationalBayes.lmes` recording the same, fully-grown list of log model evidence values for every iteration of a chain instead of a snapshot of that iteration's value, due to appending a reference to a still-mutating list
+- Removed a dead, always-zero `mean_errorbar` column from `cpm.hierarchical.VariationalBayes.hyperparameters` that was left behind by a column-naming mismatch (values were actually being written to a separate `mean_se` column)
+
+## [0.25.6] - 2026-04-15
 
 ### Added
 

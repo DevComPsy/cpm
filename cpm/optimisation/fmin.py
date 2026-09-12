@@ -44,6 +44,19 @@ class Fmin:
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.fmin`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin.html) documentation for what is supported.
 
+    Attributes
+    ----------
+    number_of_starts : int
+        The number of starts requested, retained so that it is recoverable from
+        a constructed optimiser rather than only implied by
+        `initial_guess.shape[0]`.
+    initial_guess_supplied : bool
+        Whether `initial_guess` currently holds guesses supplied by the user
+        (`True`) or guesses drawn from the parameter bounds (`False`). This
+        distinguishes a fit started from a fixed point from one started from
+        random restarts, which is otherwise not recoverable after fitting.
+        `reset(initial_guess=True)` draws new random guesses and therefore sets
+        this attribute to `False`.
 
     Notes
     -----
@@ -95,6 +108,8 @@ class Fmin:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
+        self.number_of_starts = number_of_starts
+        self.initial_guess_supplied = initial_guess is not None
         self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
@@ -235,10 +250,13 @@ class Fmin:
         if initial_guess:
             self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
-                number_of_starts=self.initial_guess.shape[0],
+                number_of_starts=self.number_of_starts,
                 guesses=None,
                 shape=self.initial_guess.shape,
             )
+            # The guesses are now randomly generated, whatever was passed to
+            # __init__, so the flag must follow the array it describes.
+            self.initial_guess_supplied = False
         return None
 
     def export(self):
@@ -285,6 +303,19 @@ class FminBound:
     **kwargs : dict
         Additional keyword arguments. See the [`scipy.optimize.fmin_l_bfgs_b`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html) documentation for what is supported.
 
+    Attributes
+    ----------
+    number_of_starts : int
+        The number of starts requested, retained so that it is recoverable from
+        a constructed optimiser rather than only implied by
+        `initial_guess.shape[0]`.
+    initial_guess_supplied : bool
+        Whether `initial_guess` currently holds guesses supplied by the user
+        (`True`) or guesses drawn from the parameter bounds (`False`). This
+        distinguishes a fit started from a fixed point from one started from
+        random restarts, which is otherwise not recoverable after fitting.
+        `reset(initial_guess=True)` draws new random guesses and therefore sets
+        this attribute to `False`.
 
     Notes
     -----
@@ -336,6 +367,8 @@ class FminBound:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
+        self.number_of_starts = number_of_starts
+        self.initial_guess_supplied = initial_guess is not None
         self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
@@ -479,10 +512,13 @@ class FminBound:
         if initial_guess:
             self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
-                number_of_starts=self.initial_guess.shape[0],
+                number_of_starts=self.number_of_starts,
                 guesses=None,
                 shape=self.initial_guess.shape,
             )
+            # The guesses are now randomly generated, whatever was passed to
+            # __init__, so the flag must follow the array it describes.
+            self.initial_guess_supplied = False
         return None
 
     def export(self):

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added test units for `cpm.hierarchical.EmpiricalBayes`
 - Added test units for `cpm.hierarchical.VariationalBayes`
+- Added `number_of_starts` and `initial_guess_supplied` attributes to `cpm.optimisation.Fmin`, `cpm.optimisation.FminBound`, `cpm.optimisation.Minimize` and `cpm.optimisation.Bads`, so that the number of starts and the origin of the initial guesses are recoverable from a constructed or fitted optimiser. Previously `number_of_starts` was consumed in `__init__` and discarded, recoverable only as `initial_guess.shape[0]`, and there was no record of whether the guesses were supplied by the user or drawn from the parameter bounds - which meant a fit started from a fixed point was indistinguishable from one started from random restarts (#83)
+- Added test units for the new optimiser provenance attributes, covering all four optimisers
 
 ### Changed
 

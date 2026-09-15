@@ -43,6 +43,20 @@ class Bads:
     **kwargs : dict
         Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
 
+    Attributes
+    ----------
+    number_of_starts : int
+        The number of starts requested, retained so that it is recoverable from
+        a constructed optimiser rather than only implied by
+        `initial_guess.shape[0]`.
+    initial_guess_supplied : bool
+        Whether `initial_guess` currently holds guesses supplied by the user
+        (`True`) or guesses drawn from the parameter bounds (`False`). This
+        distinguishes a fit started from a fixed point from one started from
+        random restarts, which is otherwise not recoverable after fitting.
+        `reset(initial_guess=True)` draws new random guesses and therefore sets
+        this attribute to `False`.
+
     Notes
     -----
     The data parameter must contain all input to the model, including the observed data. The data parameter can be a pandas DataFrame, a pandas DataFrameGroupBy object, or a list of dictionaries. If the data parameter is a pandas DataFrame, it is assumed that the data needs to be grouped by the participant identifier, `ppt_identifier`. If the data parameter is a pandas DataFrameGroupBy object, the groups are assumed to be participants. If the data parameter is a list of dictionaries, each dictionary should contain the data for a single participant, including information about the experiment and the results. The observed data for each participant should be included in the dictionary under the key or column 'observed'. The 'observed' key should correspond, both in format and shape, to the 'dependent' variable calculated by the model Wrapper.
@@ -95,6 +109,8 @@ class Bads:
                 "The Bads algorithm is not compatible with the Simulator object."
             )
 
+        self.number_of_starts = number_of_starts
+        self.initial_guess_supplied = initial_guess is not None
         self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
@@ -258,10 +274,13 @@ class Bads:
         if initial_guess:
             self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
-                number_of_starts=self.initial_guess.shape[0],
+                number_of_starts=self.number_of_starts,
                 guesses=None,
                 shape=self.initial_guess.shape,
             )
+            # The guesses are now randomly generated, whatever was passed to
+            # __init__, so the flag must follow the array it describes.
+            self.initial_guess_supplied = False
         return None
 
     def export(self):

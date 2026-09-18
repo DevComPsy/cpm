@@ -1,6 +1,12 @@
 from . import minimise
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import (
+    objective,
+    evaluate_fit,
+    fit_extras,
+    numerical_hessian,
+    prepare_data,
+)
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 from ..core.parallel import detect_cores, execute_parallel
@@ -72,7 +78,9 @@ class Bads:
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
-        Whether to include the prior in the optimization. Default is `False`.
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -120,6 +128,7 @@ class Bads:
         data=None,
         minimisation=minimise.LogLikelihood.continuous,
         prior=False,
+        metrics=None,
         number_of_starts=1,
         initial_guess=None,
         parallel=False,
@@ -138,6 +147,7 @@ class Bads:
         self.display = display
         self.loss = minimisation
         self.prior = prior
+        self.metrics = metrics
         self.kwargs = numpy_bool_options(kwargs)
 
         self.fit = []
@@ -192,6 +202,7 @@ class Bads:
                 "total_time",
                 "hessian",
             ]
+            keys += fit_extras(self.prior, self.metrics)
             if id is not None:
                 keys.append(id)
             out = {}
@@ -236,6 +247,14 @@ class Bads:
 
             hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
             result.update({"hessian": hessian})
+
+            if prior or self.metrics:
+                result.update(
+                    evaluate_fit(
+                        result["x"], model, observed, loss, prior, self.metrics
+                    )
+                )
+
             # if participant data contains identifiers, return the identifiers too
 
             result.update({"ppt": ppt})

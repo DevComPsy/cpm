@@ -8,7 +8,7 @@ import multiprocess as mp
 from . import minimise
 from ..core.data import decompose, detailed_pandas_compiler, extract_params_from_fit
 from ..generators import Simulator, Wrapper
-from ..core.optimisers import objective, prepare_data
+from ..core.optimisers import objective, decompose_objective, prepare_data
 from ..core.parallel import detect_cores, execute_parallel
 
 
@@ -25,7 +25,7 @@ class DifferentialEvolution:
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.bernoulli`. See the `minimise` module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.
     prior: bool
-        Whether to include priors in the optimisation. Deafult is 'False'.
+        Whether to include priors in the optimisation. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
@@ -127,6 +127,11 @@ class DifferentialEvolution:
                 **self.kwargs,
             )
 
+            if prior:
+                result.log_likelihood, result.log_prior = decompose_objective(
+                    result.x, model, observed, loss, prior
+                )
+
             result.ppt = ppt
 
             return result
@@ -151,7 +156,15 @@ class DifferentialEvolution:
                     extract_params_from_fit(data=result.x, keys=self.parameter_names)
                 )
             )
-            self.fit.append({"parameters": result.x, "fun": copy.deepcopy(result.fun)})
+            entry = {"parameters": result.x, "fun": copy.deepcopy(result.fun)}
+            if self.prior:
+                entry.update(
+                    {
+                        "log_likelihood": copy.deepcopy(result.log_likelihood),
+                        "log_prior": copy.deepcopy(result.log_prior),
+                    }
+                )
+            self.fit.append(entry)
 
         return None
 
@@ -191,6 +204,9 @@ class DifferentialEvolution:
             current = pd.DataFrame(self.fit[i]["parameters"]).T
             current.columns = self.parameter_names[0 : len(current.columns)]
             current["fun"] = self.fit[i]["fun"]
+            if self.prior:
+                current["log_likelihood"] = self.fit[i]["log_likelihood"]
+                current["log_prior"] = self.fit[i]["log_prior"]
             output = pd.concat([output, current], axis=0)
 
         if details:

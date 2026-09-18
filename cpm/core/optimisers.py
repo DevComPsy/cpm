@@ -3,7 +3,12 @@ import pandas as pd
 import numdifftools as nd
 import copy
 
-__all__ = ["objective", "prepare_data", "numerical_hessian"]
+__all__ = [
+    "objective",
+    "decompose_objective",
+    "prepare_data",
+    "numerical_hessian",
+]
 
 
 def numerical_hessian(func=None, params=None, hessian=None):
@@ -62,6 +67,57 @@ def objective(pars, function, data, loss, prior=False):
         prior_pars = function.parameters.PDF(log=True)
         metric += -prior_pars
     return metric
+
+
+def decompose_objective(pars, function, data, loss, prior=False):
+    """
+    Split the value `objective` returns at `pars` into the summed log likelihood and the summed log prior density.
+
+    With `prior=True` the value `objective` minimises is the negative summed log
+    posterior density, which on its own cannot be turned back into a log
+    likelihood. Model comparison and goodness-of-fit indices generally need the
+    two parts separately, so this recomputes them at a given set of parameter
+    values.
+
+    Parameters
+    ----------
+    pars : array-like
+        The parameter values to evaluate, normally the optimised ones.
+    function : cpm.generators.Wrapper
+        The model, as passed to `objective`.
+    data
+        The observed data, as passed to `objective`.
+    loss : callable
+        The loss function, as passed to `objective`. See the `minimise` module.
+    prior : bool
+        Whether the fit included the prior. When `False` the log prior density is
+        `0.0`, because no prior entered the objective.
+
+    Returns
+    -------
+    tuple of float
+        The summed log likelihood and the summed log prior density at `pars`.
+
+    Notes
+    -----
+    This mirrors `objective` step for step, including its substitution of `1e10`
+    for a non-finite loss, so that
+
+    ``objective(pars, ...) == -(log_likelihood + log_prior)``
+
+    holds exactly for the same arguments, and the two parts always add back up to
+    the `fun` an optimiser reports.
+    """
+    function.reset(parameters=pars)
+    function.run()
+    predicted = copy.deepcopy(function.dependent)
+    observed = copy.deepcopy(data)
+    metric = loss(predicted=predicted, observed=observed)
+    del predicted, observed
+    if np.isnan(metric) or np.isinf(metric):
+        metric = 1e10
+    log_prior = function.parameters.PDF(log=True) if prior else 0.0
+    return -metric, log_prior
 
 
 def prepare_data(data, identifier):

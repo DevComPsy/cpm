@@ -1,5 +1,10 @@
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import (
+    objective,
+    decompose_objective,
+    numerical_hessian,
+    prepare_data,
+)
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 from ..core.parallel import detect_cores, execute_parallel
@@ -24,6 +29,8 @@ class Minimize:
         The data used for optimization. If a pd.Dataframe, it is grouped by the `ppt_identifier`. If it is a pd.DataFrameGroupby, groups are assumed to be participants. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
+    prior : bool
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -134,6 +141,8 @@ class Minimize:
 
         def __unpack(x, id=None):
             keys = ["x", "fun", "nit", "nfev", "status", "success", "message"]
+            if self.prior:
+                keys += ["log_likelihood", "log_prior"]
             if id is not None:
                 keys.append(id)
             out = {}
@@ -166,6 +175,15 @@ class Minimize:
             hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
 
             result.update({"hessian": hessian})
+
+            if prior:
+                log_likelihood, log_prior = decompose_objective(
+                    result["x"], model, observed, loss, prior
+                )
+                result.update(
+                    {"log_likelihood": log_likelihood, "log_prior": log_prior}
+                )
+
             # if participant data contains identifiers, add the identifier key to the result
             if self.ppt_identifier is not None:
                 result.update({self.ppt_identifier: ppt})

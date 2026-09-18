@@ -1,6 +1,11 @@
 from . import minimise
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import (
+    objective,
+    decompose_objective,
+    numerical_hessian,
+    prepare_data,
+)
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 from ..core.parallel import detect_cores, execute_parallel
@@ -26,7 +31,7 @@ class Bads:
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
-        Whether to include the prior in the optimization. Default is `False`.
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -146,6 +151,8 @@ class Bads:
                 "total_time",
                 "hessian",
             ]
+            if self.prior:
+                keys += ["log_likelihood", "log_prior"]
             if id is not None:
                 keys.append(id)
             out = {}
@@ -190,6 +197,15 @@ class Bads:
 
             hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
             result.update({"hessian": hessian})
+
+            if prior:
+                log_likelihood, log_prior = decompose_objective(
+                    result["x"], model, observed, loss, prior
+                )
+                result.update(
+                    {"log_likelihood": log_likelihood, "log_prior": log_prior}
+                )
+
             # if participant data contains identifiers, return the identifiers too
 
             result.update({"ppt": ppt})

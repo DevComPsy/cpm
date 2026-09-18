@@ -1,5 +1,10 @@
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import (
+    objective,
+    decompose_objective,
+    numerical_hessian,
+    prepare_data,
+)
 from ..core.data import detailed_pandas_compiler, decompose
 from ..core.parallel import detect_cores, execute_parallel
 from ..generators import Simulator, Wrapper
@@ -75,7 +80,7 @@ class Fmin:
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
-        Whether to include the prior in the optimization. Default is `False`.
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -184,6 +189,8 @@ class Fmin:
 
         def __unpack(x, id=None):
             keys = ["xopt", "fopt", "iter", "funcalls", "warnflag", "hessian"]
+            if self.prior:
+                keys += ["log_likelihood", "log_prior"]
             if id is not None:
                 keys.append(id)
             out = {}
@@ -216,6 +223,12 @@ class Fmin:
 
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
             result = (*result, hessian)
+
+            if prior:
+                result = (
+                    *result,
+                    *decompose_objective(result[0], model, observed, loss, prior),
+                )
 
             # if participant data contains identifiers, return the identifiers too
             result = (*result, ppt)
@@ -334,7 +347,7 @@ class FminBound:
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
-        Whether to include the prior in the optimization. Default is `False`.
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -443,6 +456,8 @@ class FminBound:
 
         def __unpack(x, id=None):
             keys = ["x", "f", "grad", "task", "funcalls", "nit", "warnflag", "hessian"]
+            if self.prior:
+                keys += ["log_likelihood", "log_prior"]
             if id is not None:
                 keys.append(id)
             out = {}
@@ -483,6 +498,12 @@ class FminBound:
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
 
             result = (*result[0:2], *tuple(list(result[2].values())), hessian)
+
+            if prior:
+                result = (
+                    *result,
+                    *decompose_objective(result[0], model, observed, loss, prior),
+                )
 
             result = (*result, ppt)
             return result

@@ -19,6 +19,52 @@ import copy
 import multiprocess as mp
 
 
+## pybads (<=1.0.6) evaluates `~options["gp_fixed_mean"]` in `local_gp_fitting`,
+## which runs on every BADS fit. `~` on a Python `bool` inverts the underlying
+## int - `~False` is -1 and `~True` is -2, both truthy - instead of negating it,
+## and Python 3.16 removes the operator for `bool` altogether, which would make
+## every fit raise `TypeError`. Handing pybads the option as a NumPy boolean
+## sidesteps both: `~np.bool_` negates correctly, emits no deprecation warning
+## and is unaffected by the removal. `not np.bool_` is correct too, so this
+## keeps working once pybads fixes the operator.
+## See https://github.com/DevComPsy/cpm/issues/88
+BITWISE_INVERTED_OPTIONS = ("gp_fixed_mean",)
+
+
+def numpy_bool_options(kwargs):
+    """
+    Coerce the pybads options that pybads inverts with `~` into NumPy booleans.
+
+    Parameters
+    ----------
+    kwargs : dict
+        The keyword arguments forwarded to `pybads.BADS`.
+
+    Returns
+    -------
+    dict
+        A copy of `kwargs` whose `options` entry holds a NumPy boolean for every
+        option in `BITWISE_INVERTED_OPTIONS`.
+
+    Notes
+    -----
+    Options absent from `kwargs` are added at the default pybads documents for
+    them, `False`, because the fit has to carry a NumPy boolean even when the
+    caller never mentioned the option. This changes no results: the branch the
+    option selects writes to a value pybads discards.
+    """
+    options = kwargs.get("options")
+    if options is not None and not isinstance(options, dict):
+        return kwargs
+
+    kwargs = dict(kwargs)
+    options = dict(options) if options else {}
+    for key in BITWISE_INVERTED_OPTIONS:
+        options[key] = np.bool_(options.get(key, False))
+    kwargs["options"] = options
+    return kwargs
+
+
 class Bads:
     """
     Class representing the Bayesian Adaptive Direct Search (BADS) optimization algorithm.
@@ -102,7 +148,7 @@ class Bads:
         self.loss = minimisation
         self.prior = prior
         self.metrics = metrics
-        self.kwargs = kwargs
+        self.kwargs = numpy_bool_options(kwargs)
 
         self.fit = []
         self.details = []

@@ -8,7 +8,7 @@ import multiprocess as mp
 from . import minimise
 from ..core.data import decompose, detailed_pandas_compiler, extract_params_from_fit
 from ..generators import Simulator, Wrapper
-from ..core.optimisers import objective, decompose_objective, prepare_data
+from ..core.optimisers import objective, evaluate_fit, fit_extras, prepare_data
 from ..core.parallel import detect_cores, execute_parallel
 
 
@@ -26,6 +26,8 @@ class DifferentialEvolution:
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.bernoulli`. See the `minimise` module for more information. User-defined loss functions are also supported, but they must conform to the format of currently implemented ones.
     prior: bool
         Whether to include priors in the optimisation. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
@@ -49,6 +51,7 @@ class DifferentialEvolution:
         data=None,
         minimisation=minimise.LogLikelihood.bernoulli,
         prior=False,
+        metrics=None,
         parallel=False,
         cl=None,
         libraries=["numpy", "pandas"],
@@ -71,6 +74,7 @@ class DifferentialEvolution:
         self.display = display
         self.ppt_identifier = ppt_identifier
         self.prior = prior
+        self.metrics = metrics
 
         self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
             data, self.ppt_identifier
@@ -127,9 +131,9 @@ class DifferentialEvolution:
                 **self.kwargs,
             )
 
-            if prior:
-                result.log_likelihood, result.log_prior = decompose_objective(
-                    result.x, model, observed, loss, prior
+            if prior or self.metrics:
+                result.update(
+                    evaluate_fit(result.x, model, observed, loss, prior, self.metrics)
                 )
 
             result.ppt = ppt
@@ -157,13 +161,8 @@ class DifferentialEvolution:
                 )
             )
             entry = {"parameters": result.x, "fun": copy.deepcopy(result.fun)}
-            if self.prior:
-                entry.update(
-                    {
-                        "log_likelihood": copy.deepcopy(result.log_likelihood),
-                        "log_prior": copy.deepcopy(result.log_prior),
-                    }
-                )
+            for name in fit_extras(self.prior, self.metrics):
+                entry[name] = copy.deepcopy(result[name])
             self.fit.append(entry)
 
         return None
@@ -204,9 +203,8 @@ class DifferentialEvolution:
             current = pd.DataFrame(self.fit[i]["parameters"]).T
             current.columns = self.parameter_names[0 : len(current.columns)]
             current["fun"] = self.fit[i]["fun"]
-            if self.prior:
-                current["log_likelihood"] = self.fit[i]["log_likelihood"]
-                current["log_prior"] = self.fit[i]["log_prior"]
+            for name in fit_extras(self.prior, self.metrics):
+                current[name] = self.fit[i][name]
             output = pd.concat([output, current], axis=0)
 
         if details:

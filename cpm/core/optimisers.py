@@ -6,6 +6,9 @@ import copy
 __all__ = [
     "objective",
     "decompose_objective",
+    "normalise_metrics",
+    "fit_extras",
+    "evaluate_fit",
     "prepare_data",
     "numerical_hessian",
 ]
@@ -108,16 +111,172 @@ def decompose_objective(pars, function, data, loss, prior=False):
     holds exactly for the same arguments, and the two parts always add back up to
     the `fun` an optimiser reports.
     """
+    log_likelihood, log_prior, _, _ = _evaluate(pars, function, data, loss, prior)
+    return log_likelihood, log_prior
+
+
+def _evaluate(pars, function, data, loss, prior=False):
+    """
+    Run `function` at `pars` and return the pieces `objective` is assembled from.
+
+    Kept separate so that `decompose_objective` and `evaluate_fit` agree by
+    construction and cost a single model run between them.
+
+    Returns
+    -------
+    tuple
+        The summed log likelihood, the summed log prior density, the predicted
+        values and the observed values.
+    """
     function.reset(parameters=pars)
     function.run()
     predicted = copy.deepcopy(function.dependent)
     observed = copy.deepcopy(data)
     metric = loss(predicted=predicted, observed=observed)
-    del predicted, observed
     if np.isnan(metric) or np.isinf(metric):
         metric = 1e10
     log_prior = function.parameters.PDF(log=True) if prior else 0.0
-    return -metric, log_prior
+    return -metric, log_prior, predicted, observed
+
+
+def normalise_metrics(metrics):
+    """
+    Turn whatever a user supplied as `metrics` into a name-to-callable mapping.
+
+    Parameters
+    ----------
+    metrics : dict, iterable, callable or None
+        A mapping of output names to callables, an iterable of callables named
+        after themselves, a single callable, or `None` for no extra metrics.
+
+    Returns
+    -------
+    dict
+        The metrics keyed by the name their values are recorded under.
+
+    Raises
+    ------
+    TypeError
+        If an entry is not callable, since it could not be evaluated later, when
+        the error would be much harder to trace back to the call that caused it.
+    """
+    if metrics is None:
+        return {}
+    if callable(metrics):
+        metrics = [metrics]
+    if not isinstance(metrics, dict):
+        metrics = {
+            getattr(metric, "__name__", f"metric_{index}"): metric
+            for index, metric in enumerate(metrics)
+        }
+    for name, metric in metrics.items():
+        if not callable(metric):
+            raise TypeError(
+                f"The metric {name!r} is not callable. Metrics are called with "
+                "keyword arguments, so each one has to be a function."
+            )
+    return dict(metrics)
+
+
+def fit_extras(prior=False, metrics=None):
+    """
+    The names `evaluate_fit` adds to a fit, in the order it adds them.
+
+    The optimisers that pack their results positionally need the names and the
+    values in the same order, so both come from here rather than being written
+    out twice.
+
+    Parameters
+    ----------
+    prior : bool
+        Whether the fit included the prior.
+    metrics : dict, iterable, callable or None
+        The user-supplied metrics.
+
+    Returns
+    -------
+    list of str
+        The names, in order.
+    """
+    names = ["log_likelihood", "log_prior"] if prior else []
+    return names + list(normalise_metrics(metrics))
+
+
+def evaluate_fit(pars, function, data, loss, prior=False, metrics=None):
+    """
+    Evaluate the quantities recorded alongside a fit at `pars`.
+
+    Parameters
+    ----------
+    pars : array-like
+        The parameter values to evaluate, normally the optimised ones.
+    function : cpm.generators.Wrapper
+        The model, as passed to `objective`.
+    data
+        The observed data, as passed to `objective`.
+    loss : callable
+        The loss function, as passed to `objective`.
+    prior : bool
+        Whether the fit included the prior. When `True`, the summed log
+        likelihood and the summed log prior density are recorded, because `fun`
+        is then the negative summed log posterior density and cannot be split
+        apart afterwards.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate. Each is called with keyword
+        arguments only, so a metric takes the ones it needs and absorbs the rest
+        in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the
+        loss functions in `cpm.optimisation.minimise` already do. The arguments
+        supplied are `likelihood` and `log_likelihood` (both the summed log
+        likelihood), `log_prior`, `predicted`, `observed`, `n` (the number of
+        observations for this participant), `k` (the number of free parameters)
+        and `parameters` (the model's `Parameters` object at the optimum).
+
+    Returns
+    -------
+    dict
+        The values to record, keyed as `fit_extras` lists them.
+
+    Raises
+    ------
+    ValueError
+        If a metric is named after a quantity already being recorded.
+
+    Notes
+    -----
+    `n` is the length of the first axis of the observed data, which is the number
+    of trials. A metric needing a different count can take `observed` and derive
+    its own.
+    """
+    log_likelihood, log_prior, predicted, observed = _evaluate(
+        pars, function, data, loss, prior
+    )
+
+    output = {}
+    if prior:
+        output["log_likelihood"] = log_likelihood
+        output["log_prior"] = log_prior
+
+    metrics = normalise_metrics(metrics)
+    if metrics:
+        arguments = {
+            "likelihood": log_likelihood,
+            "log_likelihood": log_likelihood,
+            "log_prior": log_prior,
+            "predicted": predicted,
+            "observed": observed,
+            "n": np.asarray(observed).shape[0],
+            "k": len(np.asarray(pars).ravel()),
+            "parameters": function.parameters,
+        }
+        for name, metric in metrics.items():
+            if name in output:
+                raise ValueError(
+                    f"The metric {name!r} would overwrite the {name!r} recorded for "
+                    "a fit with a prior. Metric names become column names in "
+                    "`export()`, so give it a different one."
+                )
+            output[name] = metric(**arguments)
+    return output
 
 
 def prepare_data(data, identifier):

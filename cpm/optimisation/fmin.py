@@ -1,7 +1,8 @@
 from ..core.generators import generate_guesses
 from ..core.optimisers import (
     objective,
-    decompose_objective,
+    evaluate_fit,
+    fit_extras,
     numerical_hessian,
     prepare_data,
 )
@@ -81,6 +82,8 @@ class Fmin:
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
         Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -128,6 +131,7 @@ class Fmin:
         parallel=False,
         libraries=["numpy", "pandas"],
         prior=False,
+        metrics=None,
         number_of_starts=1,
         ppt_identifier=None,
         display=False,
@@ -142,9 +146,9 @@ class Fmin:
 
         self.loss = minimisation
         self.prior = prior
+        self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
-        self.prior = prior
 
         self.fit = []
         self.details = []
@@ -189,8 +193,7 @@ class Fmin:
 
         def __unpack(x, id=None):
             keys = ["xopt", "fopt", "iter", "funcalls", "warnflag", "hessian"]
-            if self.prior:
-                keys += ["log_likelihood", "log_prior"]
+            keys += fit_extras(self.prior, self.metrics)
             if id is not None:
                 keys.append(id)
             out = {}
@@ -224,10 +227,12 @@ class Fmin:
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
             result = (*result, hessian)
 
-            if prior:
+            if prior or self.metrics:
                 result = (
                     *result,
-                    *decompose_objective(result[0], model, observed, loss, prior),
+                    *evaluate_fit(
+                        result[0], model, observed, loss, prior, self.metrics
+                    ).values(),
                 )
 
             # if participant data contains identifiers, return the identifiers too
@@ -348,6 +353,8 @@ class FminBound:
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
         Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -396,6 +403,7 @@ class FminBound:
         parallel=False,
         libraries=["numpy", "pandas"],
         prior=False,
+        metrics=None,
         ppt_identifier=None,
         display=False,
         **kwargs,
@@ -409,9 +417,9 @@ class FminBound:
 
         self.loss = minimisation
         self.prior = prior
+        self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
-        self.prior = prior
 
         self.fit = []
         self.details = []
@@ -456,8 +464,7 @@ class FminBound:
 
         def __unpack(x, id=None):
             keys = ["x", "f", "grad", "task", "funcalls", "nit", "warnflag", "hessian"]
-            if self.prior:
-                keys += ["log_likelihood", "log_prior"]
+            keys += fit_extras(self.prior, self.metrics)
             if id is not None:
                 keys.append(id)
             out = {}
@@ -499,10 +506,12 @@ class FminBound:
 
             result = (*result[0:2], *tuple(list(result[2].values())), hessian)
 
-            if prior:
+            if prior or self.metrics:
                 result = (
                     *result,
-                    *decompose_objective(result[0], model, observed, loss, prior),
+                    *evaluate_fit(
+                        result[0], model, observed, loss, prior, self.metrics
+                    ).values(),
                 )
 
             result = (*result, ppt)

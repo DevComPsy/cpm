@@ -39,6 +39,7 @@ dependencies = [
     "ipyparallel>=8.8.0",
     "numdifftools>=0.9.41",
     "pybads>=1.0.4",
+    "gpyreg>=1.2.1",
     "dill>=0.3.8"
 ]
 

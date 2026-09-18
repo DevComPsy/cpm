@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `cpm.optimisation.FminBound` raising `TypeError: fmin_l_bfgs_b() got an unexpected keyword argument 'disp'` on SciPy 1.18.0 and later, which removed the `disp` and `iprint` options of the L-BFGS-B solver. The options are now forwarded only where the installed SciPy still accepts them, and ignored with a `RuntimeWarning` otherwise. On SciPy 1.15.0 to 1.17.x, `display=False` no longer passes `disp` at all, so the default fit no longer emits SciPy's deprecation warning once per participant
 - Fixed `cpm.hierarchical.VariationalBayes.ttest` raising a `NameError` when `null` was passed as a `pandas.DataFrame`, due to referencing an undefined variable from the wrong branch
 - Fixed `cpm.hierarchical.VariationalBayes.lmes` recording the same, fully-grown list of log model evidence values for every iteration of a chain instead of a snapshot of that iteration's value, due to appending a reference to a still-mutating list
 - Removed a dead, always-zero `mean_errorbar` column from `cpm.hierarchical.VariationalBayes.hyperparameters` that was left behind by a column-naming mismatch (values were actually being written to a separate `mean_se` column)

@@ -10,8 +10,56 @@ import numpy as np
 import pandas as pd
 import multiprocess as mp
 import copy
+import inspect
+import warnings
 
 __all__ = ["Fmin", "FminBound"]
+
+## SciPy 1.18.0 removed the `disp` and `iprint` options of the L-BFGS-B solver,
+## deprecated since 1.15.0, so they can only be forwarded to older SciPy.
+LBFGSB_VERBOSITY_SUPPORTED = "disp" in inspect.signature(fmin_l_bfgs_b).parameters
+
+
+def lbfgsb_options(display=False, **kwargs):
+    """
+    Assemble the keyword arguments for `scipy.optimize.fmin_l_bfgs_b`, keeping the solver's verbosity options only where the installed SciPy still accepts them.
+
+    Parameters
+    ----------
+    display : bool
+        Whether the solver should report its own progress. Ignored on SciPy 1.18.0 and later.
+    **kwargs : dict
+        The remaining keyword arguments forwarded to the solver.
+
+    Returns
+    -------
+    dict
+        The keyword arguments to forward to `scipy.optimize.fmin_l_bfgs_b`.
+
+    Notes
+    -----
+    `disp` is only added when `display` is truthy, so that the default case does not trip the deprecation warning SciPy 1.15.0 to 1.17.x emits for these options.
+    """
+    ignored = [key for key in ("disp", "iprint") if key in kwargs]
+    if display:
+        ignored.append("disp")
+
+    if LBFGSB_VERBOSITY_SUPPORTED:
+        if display:
+            kwargs["disp"] = display
+        return kwargs
+
+    for key in ("disp", "iprint"):
+        kwargs.pop(key, None)
+    if ignored:
+        warnings.warn(
+            f"The installed SciPy no longer supports the {', '.join(sorted(set(ignored)))} "
+            "option(s) of the L-BFGS-B solver, removed in SciPy 1.18.0, so they are ignored. "
+            "`display` still reports the progress of the multi-start loop.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+    return kwargs
 
 
 class Fmin:
@@ -301,7 +349,7 @@ class FminBound:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.fmin_l_bfgs_b`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html) documentation for what is supported.
+        Additional keyword arguments. See the [`scipy.optimize.fmin_l_bfgs_b`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html) documentation for what is supported. The solver's own `disp` and `iprint` options, which `display` also sets, were removed in SciPy 1.18.0 and are ignored there.
 
     Attributes
     ----------
@@ -409,6 +457,7 @@ class FminBound:
         loss = self.loss
         model = self.model
         prior = self.prior
+        options = lbfgsb_options(display=self.display, **self.kwargs)
 
         def __task(participant, **args):
 
@@ -425,8 +474,7 @@ class FminBound:
                 x0=self.__current_guess__,
                 bounds=bounds,
                 args=(model, observed, loss, prior),
-                disp=self.display,
-                **self.kwargs,
+                **options,
             )
 
             def f(x):

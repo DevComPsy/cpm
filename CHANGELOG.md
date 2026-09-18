@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added test units for `cpm.hierarchical.VariationalBayes`
 - Added `number_of_starts` and `initial_guess_supplied` attributes to `cpm.optimisation.Fmin`, `cpm.optimisation.FminBound`, `cpm.optimisation.Minimize` and `cpm.optimisation.Bads`, so that the number of starts and the origin of the initial guesses are recoverable from a constructed or fitted optimiser. Previously `number_of_starts` was consumed in `__init__` and discarded, recoverable only as `initial_guess.shape[0]`, and there was no record of whether the guesses were supplied by the user or drawn from the parameter bounds - which meant a fit started from a fixed point was indistinguishable from one started from random restarts (#83)
 - Added test units for the new optimiser provenance attributes, covering all four optimisers
+- Added a `cpm.optimisation.Bads` smoke test that runs a real fit and asserts it reaches `scipy.optimize.minimize` through pybads and gpyreg. `Bads.optimise()` was previously never executed by the test suite, so breakage in that chain - such as a SciPy or NumPy release changing an API it depends on - went undetected
 
 ### Changed
 
@@ -20,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `cpm.optimisation.Bads` failing with `ValueError: setting an array element with a sequence` during GP hyperparameter training by adding a direct `gpyreg>=1.2.1` dependency. `pybads` only requires `gpyreg>=0.1.0`, so a valid install could pair the `numpy>=2.0.0` this package requires with a `gpyreg` that predates the NumPy 2 scalar-assignment fix, leaving `Bads` unusable
+- Fixed `cpm.optimisation.FminBound` raising `TypeError: fmin_l_bfgs_b() got an unexpected keyword argument 'disp'` on SciPy 1.18.0 and later, which removed the `disp` and `iprint` options of the L-BFGS-B solver. The options are now forwarded only where the installed SciPy still accepts them, and ignored with a `RuntimeWarning` otherwise. On SciPy 1.15.0 to 1.17.x, `display=False` no longer passes `disp` at all, so the default fit no longer emits SciPy's deprecation warning once per participant
 - Fixed `cpm.hierarchical.VariationalBayes.ttest` raising a `NameError` when `null` was passed as a `pandas.DataFrame`, due to referencing an undefined variable from the wrong branch
 - Fixed `cpm.hierarchical.VariationalBayes.lmes` recording the same, fully-grown list of log model evidence values for every iteration of a chain instead of a snapshot of that iteration's value, due to appending a reference to a still-mutating list
 - Removed a dead, always-zero `mean_errorbar` column from `cpm.hierarchical.VariationalBayes.hyperparameters` that was left behind by a column-naming mismatch (values were actually being written to a separate `mean_se` column)

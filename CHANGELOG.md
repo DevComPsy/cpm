@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `cpm.generators.Simulator` not raising its intended `TypeError` for an ungrouped `pandas.DataFrame`, due to type-checking a boolean flag instead of the data; the mistake previously surfaced later as a misleading group-count `ValueError`
 - Fixed `cpm.generators.Simulator` raising `AttributeError` when parameters were passed as a `pandas.DataFrame` with grouped data, due to looking up parameter rows by group key instead of position; `cpm.core.data.unpack_participants` also returned every remaining row instead of a single participant's row
 - Fixed `cpm.hierarchical.EmpiricalBayes.diagnostics()` and `cpm.hierarchical.VariationalBayes.diagnostics()` raising `IndexError` for models with three or more free parameters, due to hardcoded trace limits for two parameters; `convergence_diagnostics_plots` now takes the limits from the model's parameter bounds via a new `bounds` argument
+- Fixed a clean install of `cpm-toolbox` raising `ModuleNotFoundError` on `diagnostics()`, due to `matplotlib` being imported by `cpm.core.diagnostics` but missing from the declared dependencies
 
 ## [0.25.6] - 2026-04-15
 

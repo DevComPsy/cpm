@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `cpm.hierarchical.VariationalBayes.lmes` recording the same, fully-grown list of log model evidence values for every iteration of a chain instead of a snapshot of that iteration's value, due to appending a reference to a still-mutating list
 - Removed a dead, always-zero `mean_errorbar` column from `cpm.hierarchical.VariationalBayes.hyperparameters` that was left behind by a column-naming mismatch (values were actually being written to a separate `mean_se` column)
 - Fixed `cpm.generators.Value` with `prior="uniform"` spanning `[lower, lower + upper]` instead of `[lower, upper]`, due to passing `upper` rather than `upper - lower` as the scale, which biased every log prior and let `Parameters.sample()` draw values above the upper bound
+- Fixed `cpm.generators.Parameters.sample()` raising `AttributeError` when a parameter was `None`, due to a missing `None` guard that `free()`, `bounds()` and `PDF()` already had
 
 ## [0.25.6] - 2026-04-15
 

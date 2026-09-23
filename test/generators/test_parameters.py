@@ -225,5 +225,15 @@ def test_value_uniform_prior_support():
     assert np.all((samples >= 2) & (samples <= 5))
 
 
+def test_parameters_sample_skips_none():
+    params = Parameters(
+        a=Value(value=0.5, lower=0, upper=1, prior="norm", args={"mean": 0.5, "sd": 0.1}),
+        b=None,
+    )
+    samples = params.sample(2)
+    assert len(samples) == 2
+    assert all(list(s.keys()) == ["a"] for s in samples)
+
+
 if __name__ == "__main__":
     pytest.main()

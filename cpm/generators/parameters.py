@@ -192,7 +192,7 @@ class Parameters:
         for i in range(size):
             sample = {}
             for key, value in self.__dict__.items():
-                if value.prior is not None:
+                if value is not None and value.prior is not None:
                     if jump:
                         sample[key] = value.prior.rvs(loc=value.value)
                     else:

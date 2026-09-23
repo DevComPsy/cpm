@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import pandas as pd
 import warnings
-from ..generators.parameters import Parameters
+from ..generators.parameters import Parameters, Value
 
 __all__ = [
     "cast_parameters",
@@ -86,7 +86,8 @@ def cast_parameters(parameters, sample=None):
     parameters : dict, list, pd.Series, pd.DataFrame or cpm.generators.Parameters
         The parameters to cast.
     """
-    cast = len(parameters) != sample
+    # a dict, pd.Series or Parameters object is always a single parameter set
+    cast = isinstance(parameters, (dict, pd.Series, Parameters)) or len(parameters) != sample
     if cast:
         if isinstance(parameters, dict):
             output = [copy.deepcopy(parameters) for i in range(1, sample + 1)]
@@ -109,7 +110,12 @@ def cast_parameters(parameters, sample=None):
             if len(output) > sample:
                 output = output[0]
         if isinstance(parameters, Parameters):
-            output = parameters.sample(sample)
+            values = {
+                key: copy.deepcopy(value.value)
+                for key, value in parameters.__dict__.items()
+                if isinstance(value, Value)
+            }
+            output = [copy.deepcopy(values) for i in range(1, sample + 1)]
         warnings.warn(
             "The number of parameter sets and number of participants in data do not match.\nUsing the same parameters for all participants."
         )

@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `cpm.hierarchical.EmpiricalBayes.diagnostics()` and `cpm.hierarchical.VariationalBayes.diagnostics()` raising `IndexError` for models with three or more free parameters, due to hardcoded trace limits for two parameters; `convergence_diagnostics_plots` now takes the limits from the model's parameter bounds via a new `bounds` argument
 - Fixed a clean install of `cpm-toolbox` raising `ModuleNotFoundError` on `diagnostics()`, due to `matplotlib` being imported by `cpm.core.diagnostics` but missing from the declared dependencies
 - Fixed `cpm.utils.data` (and `cpm.utils.metad`) not being reachable after `import cpm`, due to `cpm/utils/__init__.py` not importing its submodules
+- Fixed `cpm.generators.Simulator` raising `ValueError` for a single parameter set given as a `Parameters` object, `dict` or `pandas.Series`, due to checking the length of the input rather than of the cast parameters; a `Parameters` object is now used as-is for every participant, as documented, instead of drawing a new prior sample for each
 
 ## [0.25.6] - 2026-04-15
 

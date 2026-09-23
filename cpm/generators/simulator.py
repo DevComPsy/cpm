@@ -43,7 +43,6 @@ class Simulator:
         self.groups = None
         self.__run__ = False
         self.__pandas__ = isinstance(data, pd.api.typing.DataFrameGroupBy)
-        self.__parameter__pandas__ = isinstance(parameters, pd.DataFrame)
         if isinstance(data, pd.DataFrame):
             raise TypeError(
                 "Data should be a pandas.DataFrameGroupBy object, not a pandas.DataFrame."
@@ -53,9 +52,10 @@ class Simulator:
         else:
             self.groups = np.arange(len(self.data))
         self.parameters = cast_parameters(parameters, len(self.groups))
+        self.__parameter__pandas__ = isinstance(self.parameters, pd.DataFrame)
         self.parameter_names = self.wrapper.parameter_names
 
-        if len(self.groups) != len(parameters):
+        if len(self.groups) != len(self.parameters):
             raise ValueError(
                 "The number of groups in the data and parameters should be equal."
             )

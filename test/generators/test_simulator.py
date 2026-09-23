@@ -63,6 +63,32 @@ def test_simulator_run_with_dataframe_parameters():
         ), f"Participant {ppt} did not receive its own parameter row"
 
 
+@pytest.mark.parametrize(
+    "single_set",
+    [
+        Parameters(alpha=Value(2.0, prior="norm")),
+        {"alpha": 2.0},
+        pd.Series({"alpha": 2.0}),
+    ],
+    ids=["Parameters", "dict", "Series"],
+)
+def test_simulator_run_with_single_parameter_set(single_set):
+    data = pd.DataFrame(
+        {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}
+    )
+    parameters = Parameters(alpha=Value(0.1, prior="norm"))
+    wrapper = Wrapper(model=dummy_model, data=data, parameters=parameters)
+    with pytest.warns(UserWarning, match="same parameters"):
+        simulator = Simulator(
+            wrapper=wrapper, data=data.groupby("ppt"), parameters=single_set
+        )
+    simulator.run()
+    output = simulator.export()
+    assert np.allclose(output.dependent, np.tile([2.0, 4.0, 6.0], 3)), (
+        "Every participant should be simulated with the same parameter set"
+    )
+
+
 def test_simulator_run():
     data = pd.DataFrame(
         {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}

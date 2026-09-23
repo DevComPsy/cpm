@@ -136,28 +136,52 @@ def gelman_rubin(hyperparameters):
     This function calculates the Gelman-Rubin statistic for the hyperparameters of the model.
     The hyperparameters should have the following columns: parameter, iteration, chain, lme, mean, and sd.
 
+    Returns
+    -------
+    pandas.DataFrame
+        A table with one row per parameter and hyperparameter (mean and sd), and the Gelman-Rubin statistic in the `rhat` column.
+
+    Notes
+    -----
+    Chains can stop at different iterations, so they are compared over the iterations they have in common.
+    At least two chains with at least two iterations each are required.
     """
-    parameters = hyperparameters.parameter.unique()
-    rhat = pd.DataFrame(columns=["parameter", "rhat"])
+    chains = hyperparameters.chain.unique()
+    if len(chains) < 2:
+        raise ValueError("The Gelman-Rubin statistic requires at least two chains.")
 
-    for names in parameters:
-        means = hyperparameters.loc[hyperparameters.parameter == names, "mean"]
-        means = means.values.reshape(-1, len(hyperparameters.chain.unique()))
+    records = []
+    for names in hyperparameters.parameter.unique():
+        subset = hyperparameters.loc[hyperparameters.parameter == names]
+        for variables in ["mean", "sd"]:
+            traces = [
+                subset.loc[subset.chain == chain]
+                .sort_values("iteration")[variables]
+                .to_numpy(dtype=float)
+                for chain in chains
+            ]
+            n = min(len(trace) for trace in traces)
+            if n < 2:
+                raise ValueError(
+                    "The Gelman-Rubin statistic requires at least two iterations per chain."
+                )
+            traces = np.stack([trace[:n] for trace in traces])
 
-        B = means.mean(axis=1).var()
-        W = means.var(axis=1).mean()
-        V = (1 - 1 / len(hyperparameters.chain.unique_)) * W + 1 / len(
-            hyperparameters.chain.unique_
-        ) * B
-        rhat = rhat.append(
-            {
-                "parameter": names,
-                "rhat": np.sqrt(V / W),
-            },
-            ignore_index=True,
-        )
+            ## within-chain (W) and between-chain (B) variances
+            W = traces.var(axis=1, ddof=1).mean()
+            B = n * traces.mean(axis=1).var(ddof=1)
+            V = (n - 1) / n * W + B / n
+            if W > 0:
+                rhat = np.sqrt(V / W)
+            else:
+                # constant chains agree only if they sit at the same value
+                rhat = 1.0 if B == 0 else np.inf
 
-    return rhat
+            records.append(
+                {"parameter": names, "hyperparameters": variables, "rhat": rhat}
+            )
+
+    return pd.DataFrame(records, columns=["parameter", "hyperparameters", "rhat"])
 
 
 def psrf(hyperparameters):
@@ -165,28 +189,15 @@ def psrf(hyperparameters):
     This function calculates the potential scale reduction factor for the hyperparameters of the model.
     The hyperparameters should have the following columns: parameter, iteration, chain, lme, mean, and sd.
 
+    Returns
+    -------
+    pandas.DataFrame
+        A table with one row per parameter and hyperparameter (mean and sd), and the potential scale reduction factor in the `psrf` column.
     """
     rhat = gelman_rubin(hyperparameters)
-    psrf = pd.DataFrame(columns=["parameter", "hyperparameters", "psrf"])
-
-    for names in rhat.parameter.unique():
-        for variables in ["mean", "sd"]:
-            rhat_values = rhat.loc[
-                (rhat.parameter == names) & (rhat.hyperparameters == variables), "rhat"
-            ]
-            psrf_value = np.sqrt(np.mean(rhat_values**2))
-            rr = (
-                pd.Series(
-                    {
-                        "parameter": names,
-                        "hyperparameters": variables,
-                        "psrf": psrf_value,
-                    },
-                )
-                .to_frame()
-                .T
-            )
-
-            psrf = pd.concat([psrf, rr], axis=0)
-
+    psrf = (
+        rhat.groupby(["parameter", "hyperparameters"], sort=False)["rhat"]
+        .apply(lambda values: np.sqrt(np.mean(values**2)))
+        .reset_index(name="psrf")
+    )
     return psrf

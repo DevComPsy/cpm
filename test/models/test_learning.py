@@ -51,6 +51,39 @@ def test_separable_rule():
     ), "The weights are not updated correctly with the separable delta rule."
 
 
+def test_separable_rule_error():
+    separable_rule = SeparableRule(
+        alpha=0.5, weights=np.array([0.2, 0.8]), input=np.array([1.0, 0.0]), feedback=[1.0]
+    )
+    separable_rule.compute()
+    assert separable_rule.error.shape == (1, 2)
+    assert np.allclose(separable_rule.error, np.array([[0.8, 0.2]]))
+
+
+def test_separable_rule_noisy_learning_rule():
+    np.random.seed(0)
+    separable_rule = SeparableRule(
+        alpha=0.5,
+        zeta=10.0,
+        weights=np.array([0.2, 0.8]),
+        input=np.array([1.0, 0.0]),
+        feedback=[1.0],
+    )
+    computed_weights = separable_rule.noisy_learning_rule()
+    assert computed_weights.shape == (1, 2)
+    assert not np.allclose(computed_weights, np.array([[0.4, 0.0]]))
+    assert computed_weights[0, 1] == 0.0, "Noise must not reach absent stimuli."
+
+
+def test_delta_rule_error_1d_weights():
+    delta_rule = DeltaRule(
+        alpha=0.5, weights=np.array([0.2, 0.8]), input=np.array([1.0, 0.0]), feedback=[1.0]
+    )
+    delta_rule.compute()
+    assert delta_rule.error.shape == (1,)
+    assert np.allclose(delta_rule.error, np.array([0.8]))
+
+
 def test_q_learning_rule():
     values = np.array([1, 0.5, 0.99])
     q_learning_rule = QLearningRule(

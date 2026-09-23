@@ -34,6 +34,16 @@ def test_simulator_initialization():
     assert simulator.__run__ == False, "Run flag not set correctly"
 
 
+def test_simulator_rejects_ungrouped_dataframe():
+    data = pd.DataFrame(
+        {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}
+    )
+    parameters = Parameters(alpha=Value(0.1, prior="norm"))
+    wrapper = Wrapper(model=dummy_model, data=data, parameters=parameters)
+    with pytest.raises(TypeError):
+        Simulator(wrapper=wrapper, data=data, parameters=parameters.sample(3))
+
+
 def test_simulator_run():
     data = pd.DataFrame(
         {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}

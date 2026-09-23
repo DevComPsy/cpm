@@ -44,7 +44,7 @@ class Simulator:
         self.__run__ = False
         self.__pandas__ = isinstance(data, pd.api.typing.DataFrameGroupBy)
         self.__parameter__pandas__ = isinstance(parameters, pd.DataFrame)
-        if isinstance(self.__pandas__, pd.DataFrame):
+        if isinstance(data, pd.DataFrame):
             raise TypeError(
                 "Data should be a pandas.DataFrameGroupBy object, not a pandas.DataFrame."
             )

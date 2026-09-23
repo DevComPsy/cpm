@@ -218,5 +218,12 @@ def test_log_parameters_bounds():
     assert np.isclose(upper[0], 23.0258, atol=1e-4)  # logit(1 - 1e-10)
 
 
+def test_value_uniform_prior_support():
+    v = Value(value=3, lower=2, upper=5, prior="uniform")
+    assert v.prior.support() == (2.0, 5.0)
+    samples = v.prior.rvs(size=1000)
+    assert np.all((samples >= 2) & (samples <= 5))
+
+
 if __name__ == "__main__":
     pytest.main()

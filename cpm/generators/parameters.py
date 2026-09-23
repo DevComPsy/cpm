@@ -305,7 +305,7 @@ class Value:
         if prior is None:
             self.prior = None
         if prior == "uniform":
-            self.prior = uniform(loc=lower, scale=upper)
+            self.prior = uniform(loc=lower, scale=upper - lower)
         elif prior == "truncated_normal":
             # calculate the bounds of the truncated normal distribution
             below, above = (lower - args.get("mean")) / args.get("sd"), (

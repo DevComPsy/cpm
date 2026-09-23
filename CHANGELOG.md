@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `cpm.generators.Parameters.sample()` raising `AttributeError` when a parameter was `None`, due to a missing `None` guard that `free()`, `bounds()` and `PDF()` already had
 - Fixed callable arguments to `cpm.generators.Parameters` leaking onto every other `Parameters` instance in the process, due to being set as static methods on the class rather than stored on the instance
 - Fixed `cpm.models.learning.SeparableRule.error` never being populated, which left it at zeros and made `noisy_learning_rule()` a no-op because the noise scales with the error; it now holds the prediction error for each outcome-stimulus pair. Also fixed `DeltaRule` and `SeparableRule` sizing `error` before promoting 1D weights to 2D
+- Fixed `cpm.generators.Wrapper.reset()` misassigning an array of parameter values whenever a non-free attribute (such as an initial state) was declared before a free parameter, due to mapping the array onto all keys instead of `Parameters.free()`
 
 ## [0.25.6] - 2026-04-15
 

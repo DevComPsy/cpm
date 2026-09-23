@@ -179,3 +179,238 @@ class RLRW(Wrapper):
             return output
 
         super().__init__(data=data, model=model, parameters=parameters)
+
+
+class HybridMBMF(Wrapper):
+    """
+    The class implements the hybrid model-based / model-free reinforcement learning model for the deterministic two-step task (Kool et al., 2016), in the 6-parameter variant used by Smid et al. (2022).
+    Model-free values are learned with a SARSA rule with an eligibility trace, model-based values are computed from the known transition structure, and the two are mixed before a Softmax decision rule.
+
+    Parameters
+    ----------
+    data: pandas.DataFrame
+        The data to be fit by the model. See Notes for the columns required.
+    parameters_settings: list-like
+        The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters and for the default settings.
+    q_init: float
+        The initial value of all model-free and second-stage values. It should be on the same scale as the rewards, for example, 0.5 for rewards scaled between 0 and 1, or 4.5 for rewards between 0 and 9. Default is 0.5.
+    generate: bool
+        If True, the model samples a first-stage action on each trial from its policy instead of using the observed one, and the reward is taken from the reward schedule of the reached second-stage state. Default is False.
+
+    Returns
+    -------
+    cpm.generators.Wrapper
+        A cpm.generators.Wrapper object.
+
+    Examples
+    --------
+    >>> import numpy
+    >>> import pandas
+    >>> from cpm.applications.reinforcement_learning import HybridMBMF
+
+    >>> data = pandas.DataFrame({
+    ...     "s1": [0, 1, 0],
+    ...     "action": [1, 0, 0],
+    ...     "s2": [0, 1, 1],
+    ...     "reward": [0.7, 0.2, 0.4],
+    ...     "stimuli_first": [0, 1, 0],
+    ...     "observed": [1, 0, 0],
+    ... })
+    >>> model = HybridMBMF(data=data, parameters_settings=[
+    ...     [2, 0, 5], [0.5, 0, 1], [0.5, 0, 1], [0.5, 0, 1], [0, -5, 5], [0, -5, 5]
+    ... ])
+    >>> model.run()
+    >>> model.dependent.shape
+    (3, 1)
+
+    Notes
+    -----
+
+    The task has two first-stage starting states, each offering two actions. Transitions are deterministic and shared across starting states: action 0 leads to second-stage state 1 and action 1 leads to second-stage state 0. The second-stage states pay out a drifting reward, and there is no second-stage choice.
+
+    The model implementation uses six parameters:
+
+    - inv_temperature: the Softmax inverse temperature, $\\beta$.
+    - learning_rate: the learning rate for the SARSA updates, $\\alpha$.
+    - eligibility_trace: the eligibility trace decay, $\\lambda$.
+    - mb_weight: the model-based mixing weight, $w$, where 0 is purely model-free and 1 is purely model-based.
+    - choice_stickiness: the bonus for repeating the last action taken in the same starting state, $\\pi$.
+    - response_stickiness: the bonus for repeating the last screen position (left or right), $\\rho$.
+
+    parameters_settings must be a 2D array, like [[2, 0, 5], [0.5, 0, 1], [0.5, 0, 1], [0.5, 0, 1], [0, -5, 5], [0, -5, 5]], where each list specifies one parameter in the order above. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are the ones in the example.
+
+    Data must contain the following columns:
+
+    - s1: the first-stage starting state, 0 or 1.
+    - stimuli_first: the action displayed on the left side of the screen, 0 or 1. Optional; if absent, action 0 is assumed to be on the left.
+    - action: the chosen first-stage action, 0 or 1. Not required if `generate` is True.
+    - s2: the second-stage state reached, 0 or 1. Not required if `generate` is True.
+    - reward: the reward received in the second-stage state. Not required if `generate` is True.
+    - position: the screen position of the chosen action, 0 for left and 1 for right. Optional; if absent, it is derived from `stimuli_first` and `action`.
+    - reward_0, reward_1: the reward each second-stage state would pay out on the trial. Only required if `generate` is True.
+    - observed: the chosen first-stage action, 0 or 1, used by the loss function. The dependent variable of the model is the probability of choosing action 1.
+
+    The model is defined as follows (Kool et al., 2016; Smid et al., 2022). The model-based value of each first-stage action is computed from the transition matrix, $T$, and the second-stage values, $Q_2$:
+
+    $$
+    Q_{MB}(a) = \\sum_{s_2} T(a, s_2) Q_2(s_2)
+    $$
+
+    The model-based and model-free values are combined with the stickiness terms into a single hybrid value:
+
+    $$
+    Q_{hybrid}(s_1, a) = w Q_{MB}(a) + (1 - w) Q_{MF}(s_1, a) + \\pi M(s_1, a) + \\rho R(a)
+    $$
+
+    where $M(s_1, a)$ is 1 if $a$ was chosen on the previous trial and the previous starting state was also $s_1$, and 0 otherwise, and $R(a)$ is 1 if $a$ is displayed at the same screen position as the response on the previous trial, and 0 otherwise. The hybrid values are converted into a policy with the Softmax choice rule (Bridle, 1990):
+
+    $$
+    P(a) = \\frac{e^{\\beta Q_{hybrid}(s_1, a)}}{\\sum_{a'} e^{\\beta Q_{hybrid}(s_1, a')}}
+    $$
+
+    After the choice, the model-free and second-stage values are updated with a SARSA rule with an eligibility trace, see [cpm.models.learning.SARSATrace][cpm.models.learning.SARSATrace].
+
+    References
+    ----------
+
+    Bridle, J. S. (1990). Probabilistic Interpretation of Feedforward Classification Network Outputs, with Relationships to Statistical Pattern Recognition. In F. F. Soulié & J. Hérault (Eds.), Neurocomputing (pp. 227–236). Springer. https://doi.org/10.1007/978-3-642-76153-9_28
+
+    Kool, W., Cushman, F. A., & Gershman, S. J. (2016). When does model-based control pay off? PLoS Computational Biology, 12(8), e1005090. https://doi.org/10.1371/journal.pcbi.1005090
+
+    Smid et al. (2022). Computational and behavioral correlates of developmental changes in model-based/model-free decision-making. Developmental Science, e13380.
+
+    """
+
+    def __init__(self, data=None, parameters_settings=None, q_init=0.5, generate=False):
+        if parameters_settings is None:
+            parameters_settings = [
+                [2, 0, 5],
+                [0.5, 0, 1],
+                [0.5, 0, 1],
+                [0.5, 0, 1],
+                [0, -5, 5],
+                [0, -5, 5],
+            ]
+            warnings.warn("No parameters specified, using default parameters.")
+        priors = [
+            {"mean": 1.5, "sd": 2.0},
+            {"mean": 0.5, "sd": 0.25},
+            {"mean": 0.5, "sd": 0.25},
+            {"mean": 0.5, "sd": 0.25},
+            {"mean": 0.0, "sd": 1.0},
+            {"mean": 0.0, "sd": 1.0},
+        ]
+        names = [
+            "inv_temperature",
+            "learning_rate",
+            "eligibility_trace",
+            "mb_weight",
+            "choice_stickiness",
+            "response_stickiness",
+        ]
+        parameters = Parameters(
+            # freely varying parameters are indicated by specifying priors
+            **{
+                name: Value(
+                    value=settings[0],
+                    lower=settings[1],
+                    upper=settings[2],
+                    prior="truncated_normal",
+                    args=prior,
+                )
+                for name, settings, prior in zip(names, parameters_settings, priors)
+            },
+            # internal states of the model
+            q_mf=numpy.full((2, 2), q_init, dtype=float),
+            q2=numpy.full(2, q_init, dtype=float),
+            m=numpy.zeros((2, 2)),
+            r=numpy.zeros(2),
+        )
+        ## deterministic transitions: action 0 -> state 1, action 1 -> state 0
+        transitions = numpy.array([[0.0, 1.0], [1.0, 0.0]])
+
+        @ipp.require("numpy")
+        def model(parameters, trial, generate=generate):
+            # pull out the parameters
+            inv_temperature = parameters.inv_temperature
+            learning_rate = parameters.learning_rate
+            eligibility_trace = parameters.eligibility_trace
+            mb_weight = parameters.mb_weight
+            choice_stickiness = parameters.choice_stickiness
+            response_stickiness = parameters.response_stickiness
+            q_mf = numpy.asarray(parameters.q_mf).copy()
+            q2 = numpy.asarray(parameters.q2).copy()
+            m = numpy.asarray(parameters.m).copy()
+            r = numpy.asarray(parameters.r).copy()
+
+            s1 = int(trial.s1)
+            stimuli_first = int(trial.get("stimuli_first", 0))
+            ## response stickiness is stored by screen position [left, right],
+            ## so flip it to action space when action 1 is displayed on the left
+            r_action = r[::-1] if stimuli_first == 1 else r
+
+            ## hybrid values
+            q_mb = transitions @ q2
+            q_hybrid = (
+                mb_weight * q_mb
+                + (1 - mb_weight) * q_mf[s1]
+                + choice_stickiness * m[s1]
+                + response_stickiness * r_action
+            )
+            response = cpm.models.decision.Softmax(
+                activations=q_hybrid, temperature=inv_temperature
+            )
+            response.compute()
+
+            if generate:
+                action = response.choice()
+                s2 = int(numpy.argmax(transitions[action]))
+                reward = float(trial[f"reward_{s2}"])
+                position = stimuli_first ^ action
+            else:
+                action = int(trial.action)
+                s2 = int(trial.s2)
+                reward = float(trial.reward)
+                position = int(trial.get("position", stimuli_first ^ action))
+
+            ## update stickiness for the next trial
+            m = numpy.zeros((2, 2))
+            m[s1, action] = 1
+            r = numpy.zeros(2)
+            r[position] = 1
+
+            ## update values
+            update = cpm.models.learning.SARSATrace(
+                learning_rate=learning_rate,
+                eligibility_trace=eligibility_trace,
+                model_free_values=q_mf,
+                second_stage_values=q2,
+                starting_state=s1,
+                action=action,
+                reached_second_stage=s2,
+                reward=reward,
+            )
+            model_free_delta, planet_value_delta = update.compute()
+            q_mf += model_free_delta
+            q2 += planet_value_delta
+
+            ## compile output
+            output = {
+                "policy": response.policies,  # policies
+                "action": action,  # chosen (or generated) first-stage action
+                "s2": s2,  # second-stage state reached
+                "reward": reward,  # reward received
+                "position": position,  # screen position of the response
+                "stage1_prediction_error": update.stage1_prediction_error,
+                "stage2_prediction_error": update.stage2_prediction_error,
+                "q_mf": q_mf.copy(),  # updated model-free values
+                "q2": q2.copy(),  # updated second-stage values
+                "m": m,  # choice stickiness for the next trial
+                "r": r,  # response stickiness for the next trial
+                "dependent": numpy.asarray(
+                    [response.policies[1]]
+                ),  # dependent variable P(choosing action 1)
+            }
+            return output
+
+        super().__init__(data=data, model=model, parameters=parameters)

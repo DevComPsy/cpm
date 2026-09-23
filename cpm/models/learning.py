@@ -1,6 +1,12 @@
 import numpy as np
 
-__all__ = ["DeltaRule", "SeparableRule", "QLearningRule", "HumbleTeacher"]
+__all__ = [
+    "DeltaRule",
+    "SeparableRule",
+    "QLearningRule",
+    "HumbleTeacher",
+    "SARSATrace",
+]
 
 
 class DeltaRule:
@@ -501,3 +507,159 @@ class HumbleTeacher:
                 self.delta[i, j] = self.alpha * (teacher - activations) * self.input[j]
                 self.weights[i, j] += self.delta[i, j]
         return self.weights
+
+
+class SARSATrace:
+    """
+    SARSA learning rule with an eligibility trace for a two-stage Markov decision task (Sutton & Barto, 2018; Kool et al., 2016).
+
+    Parameters
+    ----------
+    learning_rate : float
+        The learning rate, $\\alpha$.
+    eligibility_trace : float
+        The eligibility trace decay, $\\lambda$. It determines how much of the second-stage prediction error is carried back to the first-stage model-free value.
+    model_free_values : ndarray
+        The first-stage model-free Q-values, a 2D array of shape (n_states, n_actions). The array is not modified in-place.
+    second_stage_values : ndarray
+        The second-stage state values, a 1D array of shape (n_second_stage_states,). The array is not modified in-place.
+    starting_state : int
+        The first-stage starting state (0-indexed).
+    action : int
+        The chosen first-stage action (0-indexed).
+    reached_second_stage : int
+        The second-stage state reached after the transition (0-indexed).
+    reward : float
+        The reward received in the second-stage state.
+
+    Attributes
+    ----------
+    stage1_prediction_error : float
+        The first-stage prediction error, $\\delta_1$, set after calling `compute()`.
+    stage2_prediction_error : float
+        The second-stage prediction error, $\\delta_2$, set after calling `compute()`.
+    model_free_delta : ndarray
+        The change to add to `model_free_values`, set after calling `compute()`.
+    planet_value_delta : ndarray
+        The change to add to `second_stage_values`, set after calling `compute()`.
+
+    Notes
+    -----
+    The rule computes two coupled prediction errors. The first-stage prediction error compares the value of the reached second-stage state with the model-free value of the chosen first-stage action,
+
+    $$
+    \\delta_1 = Q_2(s_2) - Q_{MF}(s_1, a),
+    $$
+
+    and the second-stage prediction error compares the reward with the value of the reached second-stage state,
+
+    $$
+    \\delta_2 = r - Q_2(s_2).
+    $$
+
+    The values are then updated as
+
+    $$
+    \\Delta Q_{MF}(s_1, a) = \\alpha \\delta_1 + \\lambda \\alpha \\delta_2,
+    $$
+
+    $$
+    \\Delta Q_2(s_2) = \\alpha \\delta_2,
+    $$
+
+    where the eligibility trace $\\lambda$ carries the second-stage prediction error back to the first-stage choice. All other values remain unchanged.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from cpm.models.learning import SARSATrace
+    >>> model_free_values = np.zeros((2, 2))
+    >>> second_stage_values = np.array([4.5, 4.5])
+    >>> sarsa = SARSATrace(
+    ...     learning_rate=0.5, eligibility_trace=0.6,
+    ...     model_free_values=model_free_values, second_stage_values=second_stage_values,
+    ...     starting_state=0, action=1, reached_second_stage=0, reward=7.0,
+    ... )
+    >>> model_free_delta, planet_value_delta = sarsa.compute()
+    >>> model_free_delta
+    array([[0., 3.],
+           [0., 0.]])
+    >>> planet_value_delta
+    array([1.25, 0.  ])
+
+    References
+    ----------
+    Kool, W., Cushman, F. A., & Gershman, S. J. (2016). When does model-based control pay off? PLoS Computational Biology, 12(8), e1005090.
+
+    Sutton, R. S., & Barto, A. G. (2018). Reinforcement learning: An introduction (Second edition). The MIT Press.
+    """
+
+    def __init__(
+        self,
+        learning_rate=None,
+        eligibility_trace=None,
+        model_free_values=None,
+        second_stage_values=None,
+        starting_state=None,
+        action=None,
+        reached_second_stage=None,
+        reward=None,
+        **kwargs,
+    ):
+        self.learning_rate = learning_rate
+        self.eligibility_trace = eligibility_trace
+        self.model_free_values = np.asarray(model_free_values, dtype=float)
+        self.second_stage_values = np.asarray(second_stage_values, dtype=float)
+        self.starting_state = starting_state
+        self.action = action
+        self.reached_second_stage = reached_second_stage
+        self.reward = reward
+
+        self.stage1_prediction_error = None
+        self.stage2_prediction_error = None
+        self.model_free_delta = None
+        self.planet_value_delta = None
+
+    def compute(self):
+        """
+        Compute the changes in the model-free and second-stage values.
+
+        Returns
+        -------
+        model_free_delta : numpy.ndarray
+            The change to add to the model-free values. Non-zero only at `[starting_state, action]`.
+        planet_value_delta : numpy.ndarray
+            The change to add to the second-stage values. Non-zero only at `[reached_second_stage]`.
+        """
+        state = self.starting_state
+        action = self.action
+        planet = self.reached_second_stage
+
+        self.stage1_prediction_error = (
+            self.second_stage_values[planet] - self.model_free_values[state, action]
+        )
+        self.stage2_prediction_error = self.reward - self.second_stage_values[planet]
+
+        self.model_free_delta = np.zeros_like(self.model_free_values)
+        self.planet_value_delta = np.zeros_like(self.second_stage_values)
+
+        self.model_free_delta[state, action] = (
+            self.learning_rate * self.stage1_prediction_error
+            + self.eligibility_trace
+            * self.learning_rate
+            * self.stage2_prediction_error
+        )
+        self.planet_value_delta[planet] = (
+            self.learning_rate * self.stage2_prediction_error
+        )
+
+        return self.model_free_delta, self.planet_value_delta
+
+    def __repr__(self):
+        return f"SARSATrace(learning_rate={self.learning_rate},\n eligibility_trace={self.eligibility_trace},\n starting_state={self.starting_state},\n action={self.action},\n reached_second_stage={self.reached_second_stage},\n reward={self.reward})"
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __call__(self):
+        return self.compute()

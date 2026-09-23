@@ -2,6 +2,7 @@
 Tests for `cpm` module.
 """
 
+import re
 import pytest
 import cpm
 
@@ -26,7 +27,7 @@ class TestCompact(object):
     def test_version_format(self):
         version = cpm.__version__
         assert isinstance(version, str), "Version is not a string"
-        assert version.count(".") == 2, "Version format is incorrect"
+        assert re.fullmatch(r"\d+\.\d+\.\d+(\.dev\d+)?", version), "Version format is incorrect"
 
     def test_author_format(self):
         author = cpm.__author__

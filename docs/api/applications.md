@@ -8,6 +8,12 @@
         heading_level: 3
         show_source: false
 
+::: cpm.applications.reinforcement_learning.HybridMBMF
+    options:
+        show_root_heading: true
+        heading_level: 3
+        show_source: false
+
 ## Decision Making
 
 ::: cpm.applications.decision_making.PTSM

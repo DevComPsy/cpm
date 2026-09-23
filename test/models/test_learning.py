@@ -5,6 +5,7 @@ from cpm.models.learning import (
     SeparableRule,
     QLearningRule,
     HumbleTeacher,
+    SARSATrace,
 )
 
 
@@ -80,6 +81,31 @@ def test_humble_teacher():
     assert np.allclose(
         humble_teacher.weights, np.array([[-0.06, 0.04, 0.14], [0.4, 0.5, 0.6]])
     ), "The teacher should be zero after the HumbleTeacher update."
+
+
+def test_sarsa_trace():
+    model_free_values = np.zeros((2, 2))
+    second_stage_values = np.array([4.5, 4.5])
+    sarsa = SARSATrace(
+        learning_rate=0.5,
+        eligibility_trace=0.6,
+        model_free_values=model_free_values,
+        second_stage_values=second_stage_values,
+        starting_state=0,
+        action=1,
+        reached_second_stage=0,
+        reward=7.0,
+    )
+    model_free_delta, planet_value_delta = sarsa.compute()
+    assert sarsa.stage1_prediction_error == 4.5
+    assert sarsa.stage2_prediction_error == 2.5
+    assert np.allclose(
+        model_free_delta, np.array([[0.0, 3.0], [0.0, 0.0]])
+    ), "The model-free values are not updated correctly with the SARSA rule."
+    assert np.allclose(
+        planet_value_delta, np.array([1.25, 0.0])
+    ), "The second-stage values are not updated correctly with the SARSA rule."
+    assert np.all(model_free_values == 0), "The input values should not be modified."
 
 
 if __name__ == "__main__":

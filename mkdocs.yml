@@ -48,6 +48,7 @@ nav:
       - examples/cpm-toolbox-complete-walkthrough.ipynb
       - examples/associative-learning.ipynb
       - examples/bandit-task.ipynb
+      - examples/two-step-task.ipynb
       - examples/metacognition.ipynb
       - examples/model-parameter-recovery.ipynb
       - examples/model-recovery.ipynb

@@ -1,3 +1,4 @@
+import copy
 import pytest
 import pandas as pd
 import numpy as np
@@ -233,6 +234,19 @@ def test_parameters_sample_skips_none():
     samples = params.sample(2)
     assert len(samples) == 2
     assert all(list(s.keys()) == ["a"] for s in samples)
+
+
+def test_parameters_callable_is_instance_scoped():
+    p1 = Parameters(
+        f=lambda x: x * 2,
+        a=Value(value=0.5, lower=0, upper=1, prior="norm", args={"mean": 0.5, "sd": 0.1}),
+    )
+    p2 = Parameters(a=0.9)
+    assert p1.f(2) == 4
+    assert not hasattr(p2, "f"), "Callable leaked onto another Parameters instance"
+    assert p1.free() == ["a"]
+    assert np.isfinite(p1.PDF(log=True))
+    assert copy.deepcopy(p1).f(3) == 6
 
 
 if __name__ == "__main__":

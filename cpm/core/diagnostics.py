@@ -4,17 +4,48 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 
-def convergence_diagnostics_plots(hyperparameters, show=True, save=False, path=None):
+def parameter_bounds(parameters):
+    """
+    Collect the lower and upper bounds of the freely-varying parameters.
+
+    Parameters
+    ----------
+    parameters : cpm.generators.Parameters
+        The parameters of the model.
+
+    Returns
+    -------
+    dict
+        A dictionary mapping each freely-varying parameter with scalar bounds to a `(lower, upper)` tuple.
+    """
+    bounds = {}
+    for name in parameters.free():
+        lower, upper = parameters[name].lower, parameters[name].upper
+        if np.ndim(lower) == 0 and np.ndim(upper) == 0:
+            bounds[name] = (lower, upper)
+    return bounds
+
+
+def convergence_diagnostics_plots(
+    hyperparameters, show=True, save=False, path=None, bounds=None
+):
     # hyperparameters have columns: parameter, iteration, chain, lme, mean, and sd
     ## Plot the convergence diagnostics
     """
     This function plots the convergence diagnostics for the hyperparameters of the model.
     The hyperparameters should have the following columns: parameter, iteration, chain, lme, mean, and sd.
 
+    Parameters
+    ----------
+    hyperparameters : pandas.DataFrame
+        The hyperparameters of the model.
+    bounds : dict, optional
+        A dictionary mapping parameter names to `(lower, upper)` tuples, used as the y-axis limits of the trace plots.
+        Parameters without finite bounds are scaled to the range of the data.
     """
 
     parameters = hyperparameters.parameter.unique()
-    parameter_bounds = [(0, 0), (1, 10)]
+    bounds = bounds if bounds is not None else {}
 
     mosaic = [["lme", "lme", "lme"]]
 
@@ -36,7 +67,7 @@ def convergence_diagnostics_plots(hyperparameters, show=True, save=False, path=N
     axs["lme"].set_xlabel("Iteration")
     axs["lme"].set_ylabel("LME")
 
-    for number, names in enumerate(parameters):
+    for names in parameters:
         for chain in hyperparameters.chain.unique():
             ## extract values here for readability of code
             means = hyperparameters.loc[
@@ -71,14 +102,16 @@ def convergence_diagnostics_plots(hyperparameters, show=True, save=False, path=N
                 means + sd,
                 alpha=0.5,
             )
-            axs[names + " traces"].set_ylim(
-                parameter_bounds[0][number], parameter_bounds[1][number]
-            )
 
             ## set x-axis ticks to be integers for readability
             axs[names + " traces"].xaxis.set_major_locator(MaxNLocator(integer=True))
             axs[names + " traces"].set_xlabel("Iteration")
             axs[names + " traces"].set_title(rf"$traces_{{{names}}}$")
+
+        ## limit the traces to the parameter bounds, where they are finite
+        lower, upper = bounds.get(names, (-np.inf, np.inf))
+        if np.isfinite(lower) and np.isfinite(upper):
+            axs[names + " traces"].set_ylim(lower, upper)
 
     ## add legend to figure
     fig.legend(

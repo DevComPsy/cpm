@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
-from ..core.diagnostics import convergence_diagnostics_plots
+from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
 
 
 class EmpiricalBayes:
@@ -418,5 +418,9 @@ class EmpiricalBayes:
         It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.
         """
         convergence_diagnostics_plots(
-            self.hyperparameters, show=show, save=save, path=path
+            self.hyperparameters,
+            bounds=parameter_bounds(self.optimiser.model.parameters),
+            show=show,
+            save=save,
+            path=path,
         )

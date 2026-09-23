@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from cpm.applications.reinforcement_learning import RLRW
+from cpm.core.diagnostics import convergence_diagnostics_plots, parameter_bounds
 from cpm.datasets import load_bandit_data
 from cpm.hierarchical import EmpiricalBayes
 from cpm.optimisation import FminBound, minimise
@@ -127,6 +128,32 @@ class TestDiagnostics:
         warnings.simplefilter("ignore")
         eb.optimise()
         eb.diagnostics(show=False, save=False)
+
+    def test_convergence_plots_three_parameters(self):
+        rows = []
+        for chain in [1, 2]:
+            for iteration in range(4):
+                for name in ["alpha", "beta", "gamma"]:
+                    rows.append(
+                        {
+                            "parameter": name,
+                            "iteration": iteration,
+                            "chain": chain,
+                            "lme": -100.0 + iteration,
+                            "mean": 0.5,
+                            "sd": 0.1,
+                        }
+                    )
+        hyperparameters = pd.DataFrame(rows)
+        bounds = {"alpha": (0, 1), "beta": (0, 20), "gamma": (0, np.inf)}
+        fig = convergence_diagnostics_plots(hyperparameters, show=False, bounds=bounds)
+        axes = {ax.get_title(): ax for ax in fig.axes}
+        assert axes[r"$traces_{beta}$"].get_ylim() == (0, 20)
+        assert axes[r"$traces_{gamma}$"].get_ylim() != (0, np.inf)
+
+    def test_parameter_bounds(self, optimiser):
+        bounds = parameter_bounds(optimiser.model.parameters)
+        assert list(bounds.keys()) == optimiser.model.parameters.free()
 
 
 if __name__ == "__main__":

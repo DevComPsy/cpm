@@ -79,8 +79,9 @@ class Simulator:
             ppt_data = unpack_participants(
                 self.data, i, self.groups, pandas=self.__pandas__
             )
+            # parameters hold one row per participant, so index positionally, not by group key
             ppt_parameter = unpack_participants(
-                self.parameters, i, self.groups, pandas=self.__parameter__pandas__
+                self.parameters, i, keys=None, pandas=self.__parameter__pandas__
             )
             evaluate.reset(parameters=ppt_parameter, data=ppt_data)
             evaluate.run()

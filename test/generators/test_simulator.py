@@ -44,6 +44,25 @@ def test_simulator_rejects_ungrouped_dataframe():
         Simulator(wrapper=wrapper, data=data, parameters=parameters.sample(3))
 
 
+def test_simulator_run_with_dataframe_parameters():
+    data = pd.DataFrame(
+        {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}
+    )
+    parameters = Parameters(alpha=Value(0.1, prior="norm"))
+    wrapper = Wrapper(model=dummy_model, data=data, parameters=parameters)
+    simulator = Simulator(
+        wrapper=wrapper,
+        data=data.groupby("ppt"),
+        parameters=pd.DataFrame({"alpha": [1.0, 2.0, 3.0]}),
+    )
+    simulator.run()
+    output = simulator.export()
+    for ppt, alpha in zip([1, 2, 3], [1.0, 2.0, 3.0]):
+        assert np.allclose(
+            output.loc[output.ppt == ppt, "dependent"], np.array([1, 2, 3]) * alpha
+        ), f"Participant {ppt} did not receive its own parameter row"
+
+
 def test_simulator_run():
     data = pd.DataFrame(
         {"stimulus": [1, 2, 3, 1, 2, 3, 1, 2, 3], "ppt": [1, 1, 1, 2, 2, 2, 3, 3, 3]}

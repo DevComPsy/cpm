@@ -31,6 +31,20 @@ def test_wrapper_run():
     ), "Dependent not generated correctly"
 
 
+def test_wrapper_reset_array_ignores_declaration_order():
+    data = pd.DataFrame({"stimulus": [1, 2, 3], "observed": [0.1, 0.2, 0.3]})
+    parameters = Parameters(
+        values=np.array([0.5, 0.5]),
+        alpha=Value(value=0.1, lower=0, upper=1, prior="uniform"),
+        beta=Value(value=5.0, lower=0, upper=10, prior="uniform"),
+    )
+    wrapper = Wrapper(model=dummy_model, data=data, parameters=parameters)
+    wrapper.reset(parameters=np.array([0.42, 7.0]))
+    assert wrapper.parameters.alpha == 0.42
+    assert wrapper.parameters.beta == 7.0
+    assert np.allclose(wrapper.parameters.values.value, [0.5, 0.5])
+
+
 def test_wrapper_reset():
     data = pd.DataFrame({"stimulus": [1, 2, 3], "step": [1] * 3})
     parameters = Parameters(alpha=Value(0.1))

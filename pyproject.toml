@@ -40,7 +40,8 @@ dependencies = [
     "numdifftools>=0.9.41",
     "pybads>=1.0.4",
     "gpyreg>=1.2.1", # see 7ced733
-    "dill>=0.3.8"
+    "dill>=0.3.8",
+    "matplotlib>=3.8.0"
 ]
 
 [project.urls]

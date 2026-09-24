@@ -9,6 +9,12 @@ import pandas as pd
 import pytest
 
 from cpm.applications.reinforcement_learning import RLRW
+from cpm.core.diagnostics import (
+    convergence_diagnostics_plots,
+    gelman_rubin,
+    parameter_bounds,
+    psrf,
+)
 from cpm.datasets import load_bandit_data
 from cpm.hierarchical import EmpiricalBayes
 from cpm.optimisation import FminBound, minimise
@@ -127,6 +133,81 @@ class TestDiagnostics:
         warnings.simplefilter("ignore")
         eb.optimise()
         eb.diagnostics(show=False, save=False)
+
+    def test_convergence_plots_three_parameters(self):
+        rows = []
+        for chain in [1, 2]:
+            for iteration in range(4):
+                for name in ["alpha", "beta", "gamma"]:
+                    rows.append(
+                        {
+                            "parameter": name,
+                            "iteration": iteration,
+                            "chain": chain,
+                            "lme": -100.0 + iteration,
+                            "mean": 0.5,
+                            "sd": 0.1,
+                        }
+                    )
+        hyperparameters = pd.DataFrame(rows)
+        bounds = {"alpha": (0, 1), "beta": (0, 20), "gamma": (0, np.inf)}
+        fig = convergence_diagnostics_plots(hyperparameters, show=False, bounds=bounds)
+        axes = {ax.get_title(): ax for ax in fig.axes}
+        assert axes[r"$traces_{beta}$"].get_ylim() == (0, 20)
+        assert axes[r"$traces_{gamma}$"].get_ylim() != (0, np.inf)
+
+    @staticmethod
+    def _hyperparameters(traces):
+        rows = []
+        for chain, (means, sds) in traces.items():
+            for iteration, (mean, sd) in enumerate(zip(means, sds)):
+                rows.append(
+                    {
+                        "parameter": "alpha",
+                        "iteration": iteration + 1,
+                        "chain": chain,
+                        "lme": -100.0,
+                        "mean": mean,
+                        "sd": sd,
+                    }
+                )
+        return pd.DataFrame(rows)
+
+    def test_gelman_rubin_matches_hand_computation(self):
+        hyperparameters = self._hyperparameters(
+            {1: ([1.0, 2.0, 3.0], [0.5, 0.5, 0.5]), 2: ([2.0, 3.0, 4.0], [0.5, 0.5, 0.5])}
+        )
+        rhat = gelman_rubin(hyperparameters).set_index("hyperparameters").rhat
+        # W = 1, B = 3 * 0.5 = 1.5, V = 2/3 * W + B/3 = 7/6
+        assert np.isclose(rhat["mean"], np.sqrt(7 / 6))
+        assert rhat["sd"] == 1.0, "Identical constant chains have converged"
+        table = psrf(hyperparameters)
+        assert list(table.columns) == ["parameter", "hyperparameters", "psrf"]
+        assert np.allclose(table.psrf.to_numpy(), rhat.to_numpy())
+
+    def test_gelman_rubin_unequal_chain_lengths(self):
+        hyperparameters = self._hyperparameters(
+            {1: ([1.0, 2.0, 3.0, 9.0], [1.0, 2.0, 3.0, 9.0]), 2: ([2.0, 3.0, 4.0], [2.0, 3.0, 4.0])}
+        )
+        rhat = gelman_rubin(hyperparameters).set_index("hyperparameters").rhat
+        assert np.isclose(rhat["mean"], np.sqrt(7 / 6)), "Chains should be truncated to their common length"
+
+    def test_gelman_rubin_requires_two_chains(self):
+        hyperparameters = self._hyperparameters({1: ([1.0, 2.0], [0.5, 0.5])})
+        with pytest.raises(ValueError):
+            gelman_rubin(hyperparameters)
+
+    def test_gelman_rubin_on_fit(self, optimiser):
+        warnings.simplefilter("ignore")
+        multi = EmpiricalBayes(optimiser=optimiser, iteration=3, chain=2, quiet=True)
+        multi.optimise()
+        table = psrf(multi.hyperparameters)
+        assert len(table) == 2 * len(optimiser.model.parameters.free())
+        assert table.psrf.notna().all()
+
+    def test_parameter_bounds(self, optimiser):
+        bounds = parameter_bounds(optimiser.model.parameters)
+        assert list(bounds.keys()) == optimiser.model.parameters.free()
 
 
 if __name__ == "__main__":

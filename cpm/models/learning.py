@@ -103,13 +103,13 @@ class DeltaRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = np.asarray(weights.copy())
-        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.error = np.zeros(self.shape[0])
         self.__run__ = False
 
     def compute(self):
@@ -237,13 +237,13 @@ class SeparableRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = weights.copy()
-        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.error = np.zeros(self.shape)
         self.__run__ = False
 
     def compute(self):
@@ -255,12 +255,17 @@ class SeparableRule:
         ndarray
             The prediction error for each stimuli-outcome mapping.
             It has the same shape as the weights input argument.
+
+        Notes
+        -----
+        The prediction error for each stimuli-outcome mapping before the update is stored in `error`,
+        which has the same shape as the weights.
         """
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
-                self.weights[i, j] = (
-                    self.alpha * (self.teacher[i] - self.weights[i, j]) * self.input[j]
-                )
+                # separable prediction error for each outcome-stimulus pair
+                self.error[i, j] = self.teacher[i] - self.weights[i, j]
+                self.weights[i, j] = self.alpha * self.error[i, j] * self.input[j]
         self.__run__ = True
         return self.weights
 

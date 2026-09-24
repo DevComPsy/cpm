@@ -119,8 +119,9 @@ class Wrapper:
         Notes
         -----
         When resetting the model, and `parameters` is None, reset model to initial state.
-        If parameter is `array_like`, it resets the only the parameters in the order they are provided,
-        where the last parameter updated is the element in parameters corresponding to len(parameters).
+        If parameter is `array_like`, it resets only the freely-varying parameters (those with a prior),
+        matching elements to parameters in the order returned by `Parameters.free()`, so non-free
+        attributes such as initial states can be declared in any order.
 
         Examples
         --------
@@ -146,10 +147,9 @@ class Wrapper:
         # if dict, update using parameters update method
         if isinstance(parameters, dict) or isinstance(parameters, pd.Series):
             self.parameters.update(**parameters)
-        # if list, update the parameters in for keys in range of 0:len(parameters)
+        # if list, update the freely-varying parameters in the order returned by Parameters.free()
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
-            for keys in self.parameter_names[0 : len(parameters)]:
-                value = parameters[self.parameter_names.index(keys)]
+            for keys, value in zip(self.parameters.free(), parameters):
                 self.parameters.update(**{keys: value})
         if data is not None:
             self.data = data

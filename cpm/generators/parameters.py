@@ -59,8 +59,8 @@ class Parameters:
             if isinstance(value, Value):
                 setattr(self, key, value)
             elif callable(value):
-                # Create a static method on the class with the key as the method name
-                setattr(self.__class__, key, staticmethod(value))
+                # store callables on the instance, so they do not leak onto other Parameters
+                setattr(self, key, value)
             elif value is None:
                 setattr(self, key, None)
             else:
@@ -133,7 +133,7 @@ class Parameters:
         """
         lower, upper = [], []
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     lower.append(value.lower)
                     upper.append(value.upper)
@@ -153,7 +153,7 @@ class Parameters:
         """
         prior = 0
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 # Check if the value has a prior distribution
                 # and if so, add its PDF to the prior
                 if value.prior is not None:
@@ -192,7 +192,7 @@ class Parameters:
         for i in range(size):
             sample = {}
             for key, value in self.__dict__.items():
-                if value.prior is not None:
+                if isinstance(value, Value) and value.prior is not None:
                     if jump:
                         sample[key] = value.prior.rvs(loc=value.value)
                     else:
@@ -211,7 +211,7 @@ class Parameters:
         """
         free = []
         for key, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     free.append(key)
         return free
@@ -227,7 +227,7 @@ class Parameters:
         """
         table = pd.DataFrame()
         for key, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     output = pd.Series(
                         {
@@ -305,7 +305,7 @@ class Value:
         if prior is None:
             self.prior = None
         if prior == "uniform":
-            self.prior = uniform(loc=lower, scale=upper)
+            self.prior = uniform(loc=lower, scale=upper - lower)
         elif prior == "truncated_normal":
             # calculate the bounds of the truncated normal distribution
             below, above = (lower - args.get("mean")) / args.get("sd"), (
@@ -575,7 +575,7 @@ class LogParameters(Parameters):
 
         """
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None and isinstance(value, Value):
                     value.value = self.__logit(value.value, value.lower, value.upper)
 
@@ -657,7 +657,7 @@ class LogParameters(Parameters):
         """
         lower, upper = [], []
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     if value.lower == 0:
                         lower.append(

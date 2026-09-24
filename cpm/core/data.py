@@ -69,7 +69,7 @@ def unpack_participants(data, index, keys=None, pandas=True):
     if pandas and keys is not None:
         return data.get_group(keys[index])
     elif pandas and keys is None:
-        return data.iloc[index:, :].squeeze()
+        return data.iloc[index]
     else:
         return data[index]
 

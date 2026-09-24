@@ -1,0 +1,261 @@
+"""
+Session loops of the built-in applications.
+
+Each function computes all trials of one participant for one of the session
+applications (`RLRWSession`, `HybridMBMFSession`, `PTSMSession`,
+`PTSM1992Session` and `PTSM2025Session`), from plain floats and numpy arrays.
+They repeat the per-trial models of the applications step by step, using the
+kernels of `cpm.models.kernels`, and are compiled with numba as a whole when
+numba is available. `cpm.core._jit.kernels` loads this module either compiled
+or as plain Python.
+
+Random choices are made from uniform random numbers drawn with NumPy before
+the loop, one per trial, which `kernels.choose` turns into the choice that
+`numpy.random.choice` would have made. Simulations are therefore reproducible
+with `numpy.random.seed`, identical across backends, and identical to the
+per-trial applications.
+"""
+
+import numpy as np
+
+from ..core import _jit
+
+njit = _jit.decorator(globals())
+kernels = _jit.kernels("cpm.models.kernels", python=globals().get(_jit.PYTHON_FLAG, False))
+
+softmax = kernels.softmax
+choose = kernels.choose
+logistic = kernels.logistic
+sarsa_trace_update = kernels.sarsa_trace_update
+prospect_utility = kernels.prospect_utility
+prospect_weight = kernels.prospect_weight
+
+
+@njit
+def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, uniforms):
+    """
+    All trials of `RLRW`.
+
+    Parameters
+    ----------
+    alpha, temperature : float
+    initial_values : numpy.ndarray
+        The initial value of each stimulus, shape (stimuli,).
+    arms : numpy.ndarray
+        The stimulus on each arm (1-based, as in the data), shape (trials, arms).
+    rewards : numpy.ndarray
+        The reward of each arm, shape (trials, arms).
+    response : numpy.ndarray
+        The chosen arm on each trial (0-based); ignored if `generate`.
+    generate : bool
+        Whether to choose from the policy instead.
+    uniforms : numpy.ndarray
+        One uniform random number per trial if `generate`.
+
+    Returns
+    -------
+    policy, reward, values, change, dependent : numpy.ndarray
+    """
+    n, k = arms.shape
+    d = initial_values.shape[0]
+    values = initial_values.copy()
+    policy = np.empty((n, k))
+    reward = np.empty(n)
+    history = np.empty((n, d))
+    change = np.empty((n, d))
+    activations = np.empty(k)
+    for t in range(n):
+        for j in range(k):
+            activations[j] = values[arms[t, j] - 1]
+        policy[t] = softmax(activations, temperature)
+        choice = choose(policy[t], uniforms[t]) if generate else response[t]
+        stimulus = arms[t, choice] - 1
+        if stimulus < 0:
+            stimulus += d
+        teacher = rewards[t, choice]
+        reward[t] = teacher
+        for j in range(d):
+            mute = 1.0 if j == stimulus else 0.0
+            change[t, j] = alpha * (teacher - values[j]) * mute
+        for j in range(d):
+            values[j] += change[t, j]
+        history[t] = values
+    return policy, reward, history, change, policy[:, 1].copy()
+
+
+@njit
+def hybrid_mbmf(inv_temperature, learning_rate, eligibility_trace, mb_weight,
+                choice_stickiness, response_stickiness, q_mf_0, q2_0, m_0, r_0,
+                s1, stimuli_first, action, s2, reward, position, reward_0, reward_1,
+                generate, uniforms):
+    """
+    All trials of `HybridMBMF`.
+
+    The data arrays are one value per trial. `action`, `s2`, `reward` and
+    `position` are ignored if `generate`, and `reward_0` and `reward_1` are
+    used only then. Returns the outputs of `HybridMBMF`, one row per trial.
+    """
+    n = s1.shape[0]
+    q_mf = q_mf_0.copy()
+    q2 = q2_0.copy()
+    m = m_0.copy()
+    r = r_0.copy()
+    out_policy = np.empty((n, 2))
+    out_action = np.empty(n, dtype=np.int64)
+    out_s2 = np.empty(n, dtype=np.int64)
+    out_reward = np.empty(n)
+    out_position = np.empty(n, dtype=np.int64)
+    out_pe1 = np.empty(n)
+    out_pe2 = np.empty(n)
+    out_q_mf = np.empty((n, 2, 2))
+    out_q2 = np.empty((n, 2))
+    out_m = np.empty((n, 2, 2))
+    out_r = np.empty((n, 2))
+    q_hybrid = np.empty(2)
+    for t in range(n):
+        state = s1[t]
+        first = stimuli_first[t]
+        ## the model-based value of action 0 is that of state 1, and vice versa
+        for i in range(2):
+            r_action = r[1 - i] if first == 1 else r[i]
+            q_hybrid[i] = (
+                mb_weight * q2[1 - i]
+                + (1 - mb_weight) * q_mf[state, i]
+                + choice_stickiness * m[state, i]
+                + response_stickiness * r_action
+            )
+        policy = softmax(q_hybrid, inv_temperature)
+        if generate:
+            chosen = choose(policy, uniforms[t])
+            reached = 1 - chosen
+            payout = reward_1[t] if reached == 1 else reward_0[t]
+            side = first ^ chosen
+        else:
+            chosen = action[t]
+            reached = s2[t]
+            payout = reward[t]
+            side = position[t]
+        m[:, :] = 0.0
+        m[state, chosen] = 1.0
+        r[:] = 0.0
+        r[side] = 1.0
+        pe1, pe2 = sarsa_trace_update(q_mf, q2, state, chosen, reached, payout,
+                                      learning_rate, eligibility_trace)
+        out_policy[t] = policy
+        out_action[t] = chosen
+        out_s2[t] = reached
+        out_reward[t] = payout
+        out_position[t] = side
+        out_pe1[t] = pe1
+        out_pe2[t] = pe2
+        out_q_mf[t] = q_mf
+        out_q2[t] = q2
+        out_m[t] = m
+        out_r[t] = r
+    return (out_policy, out_action, out_s2, out_reward, out_position, out_pe1, out_pe2,
+            out_q_mf, out_q2, out_m, out_r)
+
+
+@njit
+def prospect_softmax(alpha, beta, lambda_loss, gamma, delta, temperature, safe, risky,
+                     probability, observed, weighting, utilities, custom_utilities,
+                     choose_always, generate, uniforms, dependent_chosen):
+    """
+    All trials of `PTSM` and `PTSM1992`: prospect-theory utilities and a softmax.
+
+    Parameters
+    ----------
+    alpha, beta, lambda_loss, gamma, delta, temperature : float
+    safe, risky, probability, observed : numpy.ndarray
+        One value per trial.
+    weighting : int
+        The weighting function, see `kernels.WEIGHTING`.
+    utilities : numpy.ndarray
+        The utilities of the safe and risky magnitude on each trial, shape
+        (trials, 2), if `custom_utilities` (computed by a user-supplied
+        utility curve); otherwise ignored.
+    choose_always : bool
+        Whether a choice is sampled on every trial (as `PTSM1992` does), or only
+        if `generate` (as `PTSM` does).
+    dependent_chosen : bool
+        Whether the dependent variable is the probability of the observed choice
+        (`PTSM`) rather than of the risky option (`PTSM1992`).
+
+    Returns
+    -------
+    policy, dependent, chosen, is_optimal, objective_best, ev_safe, ev_risk, u_safe, u_risk
+    """
+    n = safe.shape[0]
+    out_policy = np.empty((n, 2))
+    out_dependent = np.empty(n)
+    out_chosen = np.empty(n, dtype=np.int64)
+    out_optimal = np.empty(n, dtype=np.int64)
+    out_best = np.empty(n, dtype=np.int64)
+    out_ev_risk = np.empty(n)
+    out_u_safe = np.empty(n)
+    out_u_risk = np.empty(n)
+    expected = np.empty(2)
+    for t in range(n):
+        ev_risk = risky[t] * probability[t]
+        best = 1 if ev_risk >= safe[t] else 0
+        if custom_utilities:
+            u_safe, u_risk = utilities[t, 0], utilities[t, 1]
+        else:
+            u_safe = prospect_utility(safe[t], alpha, beta, lambda_loss)
+            u_risk = prospect_utility(risky[t], alpha, beta, lambda_loss)
+        expected[0] = prospect_weight(1.0, safe[t], gamma, delta, weighting) * u_safe
+        expected[1] = prospect_weight(probability[t], risky[t], gamma, delta, weighting) * u_risk
+        policy = softmax(expected, temperature)
+        if choose_always or generate:
+            chosen = choose(policy, uniforms[t])
+        else:
+            chosen = observed[t]
+        out_policy[t] = policy
+        out_dependent[t] = policy[observed[t]] if dependent_chosen else policy[1]
+        out_chosen[t] = chosen
+        out_optimal[t] = 1 if chosen == best else 0
+        out_best[t] = best
+        out_ev_risk[t] = ev_risk
+        out_u_safe[t] = expected[0]
+        out_u_risk[t] = expected[1]
+    return (out_policy, out_dependent, out_chosen, out_optimal, out_best, out_ev_risk,
+            out_u_safe, out_u_risk)
+
+
+@njit
+def _power_utility(x, alpha):
+    if x >= 0:
+        return x**alpha
+    return -(abs(x) ** alpha)
+
+
+@njit
+def ptsm2025(eta, phi_gain, phi_loss, temperature, alpha, safe, risky, probability,
+             ambiguity, uniforms):
+    """
+    All trials of `PTSM2025`.
+
+    Returns
+    -------
+    policy, model_choice, u_safe, u_risk : numpy.ndarray
+    """
+    n = safe.shape[0]
+    out_policy = np.empty(n)
+    out_choice = np.empty(n, dtype=np.int64)
+    out_u_safe = np.empty(n)
+    out_u_risk = np.empty(n)
+    pair = np.empty(2)
+    for t in range(n):
+        subjective = probability[t] - eta * ambiguity[t]
+        subjective = min(max(subjective, 0.0), 1.0)
+        u_safe = _power_utility(safe[t], alpha)
+        u_risk = subjective * _power_utility(risky[t], alpha)
+        phi = phi_gain if risky[t] >= 0 else phi_loss
+        p = logistic((temperature * u_risk + phi) - temperature * u_safe)
+        pair[0] = 1 - p
+        pair[1] = p
+        out_policy[t] = p
+        out_choice[t] = choose(pair, uniforms[t])
+        out_u_safe[t] = u_safe
+        out_u_risk[t] = u_risk
+    return out_policy, out_choice, out_u_safe, out_u_risk

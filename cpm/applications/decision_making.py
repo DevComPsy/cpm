@@ -1,9 +1,211 @@
 import copy
 import numpy as np
 import warnings
-from cpm.generators import Wrapper, Parameters, Value
+from cpm.generators import Wrapper, SessionWrapper, Parameters, Value
+from cpm.core._jit import resolve_backend
+from cpm.applications._backend import SessionModel, prepared, require, uniforms
 from cpm.models.decision import Softmax
 from cpm.models.activation import ProspectUtility
+
+
+def _ptsm_parameters(parameters_settings, utility_curve, weighting):
+    """The parameters of `PTSM` and `PTSMSession`."""
+    # Use default parameter settings if none provided.
+    if parameters_settings is None:
+        parameters_settings = {
+            "alpha":        [1.0, 1e-2, 5.0],    # alpha: starting value 1.0
+            "lambda_loss":  [1.0, 1e-2, 5.0],    # lambda_loss: starting value 1.0
+            "gamma":        [0.5, 1e-2, 5.0],    # gamma: starting value 0.5
+            "temperature":  [5.0, 1e-2, 15.0]    # temperature: starting value 5.0
+        }
+        warnings.warn("No parameters specified, using default settings.", stacklevel=3)
+
+    if callable(utility_curve):
+        warnings.warn("Utility curve provided, using it instead of power function.", stacklevel=3)
+    if utility_curve is not None and not callable(utility_curve):
+        raise ValueError("Utility curve must be a callable function.")
+
+    # Create the unified Parameters object with priors.
+    params = Parameters(
+        alpha=Value(
+            value=parameters_settings["alpha"][0],
+            lower=parameters_settings["alpha"][1],
+            upper=parameters_settings["alpha"][2],
+            prior="truncated_normal",
+            args={
+                "mean": 1.0, "sd": 1.0
+            }
+        ),
+        lambda_loss=Value(
+            value=parameters_settings["lambda_loss"][0],
+            lower=parameters_settings["lambda_loss"][1],
+            upper=parameters_settings["lambda_loss"][2],
+            prior="truncated_normal",
+            args={"mean": 2.5, "sd": 1.0},
+        ),
+        gamma=Value(
+            value=parameters_settings["gamma"][0],
+            lower=parameters_settings["gamma"][1],
+            upper=parameters_settings["gamma"][2],
+            prior="truncated_normal",
+            args={"mean": 2.5, "sd": 1.0},
+        ),
+        temperature=Value(
+            value=parameters_settings["temperature"][0],
+            lower=parameters_settings["temperature"][1],
+            upper=parameters_settings["temperature"][2],
+            prior="truncated_normal",
+            args={
+                "mean": 10.0, "sd": 5
+            }
+        ),
+        utility_curve=utility_curve,  # Use the piecewise utility transform
+        weighting = weighting  # Store the chosen weighting function type
+    )
+    return params
+
+
+def _ptsm1992_parameters(parameters_settings, utility_curve, weighting):
+    """The parameters of `PTSM1992` and `PTSM1992Session`."""
+    # Use default parameter settings if none provided.
+    if parameters_settings is None:
+        parameters_settings = {
+            "alpha":         [1.0, 0.0, 5.0],   # alpha: starting value 1.0
+            "lambda_loss":   [1.0, 0.0, 5.0],   # lambda_loss: starting value 1.0
+            "beta":          [1.0, 0.0, 5.0],   # beta: starting value 1.0
+            "gamma":         [0.5, 1e-2, 5.0],   # gamma: starting value 0.5
+            "delta":         [0.5, 1e-2, 5.0],   # delta: starting value 0.0
+            "temperature":   [5.0, 1e-2, 15.0]   # temperature: starting value 5.0
+        }
+        warnings.warn("No parameters specified, using default settings.", stacklevel=3)
+
+    if callable(utility_curve):
+        warnings.warn("Utility curve provided, using it instead of power function.", stacklevel=3)
+    if utility_curve is not None and not callable(utility_curve):
+        raise ValueError("Utility curve must be a callable function.")
+
+
+    # Create the unified Parameters object with priors.
+    params = Parameters(
+        alpha = Value(
+            value=parameters_settings["alpha"][0],
+            lower=parameters_settings["alpha"][1],
+            upper=parameters_settings["alpha"][2],
+            prior="truncated_normal",
+            args={
+                "mean": 2.5, "sd": 1.0
+            }
+        ),
+        lambda_loss=Value(
+            value=parameters_settings["lambda_loss"][0],
+            lower=parameters_settings["lambda_loss"][1],
+            upper=parameters_settings["lambda_loss"][2],
+            prior="truncated_normal",
+            args={"mean": 2.5, "sd": 1.0},
+        ),
+        beta=Value(
+            value=parameters_settings["beta"][0],
+            lower=parameters_settings["beta"][1],
+            upper=parameters_settings["beta"][2],
+            prior="truncated_normal",
+            args={"mean": 2.5, "sd": 1.0},
+        ),
+        gamma=Value(
+            value=parameters_settings["gamma"][0],
+            lower=parameters_settings["gamma"][1],
+            upper=parameters_settings["gamma"][2],
+            prior="truncated_normal",
+            args={"mean": 2.5, "sd": 1.0},
+        ),
+        delta=Value(
+            value=parameters_settings["delta"][0],
+            lower=parameters_settings["delta"][1],
+            upper=parameters_settings["delta"][2],
+            prior="truncated_normal",
+            args={"mean": 2.5, "sd": 1.0},
+        ),
+        temperature=Value(
+            value=parameters_settings["temperature"][0],
+            lower=parameters_settings["temperature"][1],
+            upper=parameters_settings["temperature"][2],
+            prior="truncated_normal",
+            args={"mean": 10, "sd": 2.5},
+        ),
+        utility_curve=utility_curve,  # Use the piecewise utility transform
+        weighting = weighting  # Store the chosen weighting function type
+    )
+    return params
+
+
+def _ptsm2025_transform(x, alpha):
+    ## Piecewise utility transform
+    return x ** alpha if x >= 0 else -np.abs(x) ** alpha
+
+
+def _ptsm2025_parameters(parameters_settings, utility_curve, variant):
+    """The parameters of `PTSM2025` and `PTSM2025Session`."""
+    if parameters_settings is None:
+        warnings.warn("No parameters specified, using JAGS-inspired defaults.", stacklevel=3)
+        parameters_settings = {
+            "eta":         [0.0,   -0.49,  0.49],
+            "phi_gain":    [0.0,   -10.0,  10.0],
+            "phi_loss":    [0.0,   -10.0,  10.0],
+            "temperature": [5.0,    0.001, 20.0],
+            "alpha":       [1.0,    0.001,  5.0],
+        }
+
+    if callable(utility_curve):
+        warnings.warn("Utility curve provided, using it instead of power function.", stacklevel=3)
+    if utility_curve is not None and not callable(utility_curve):
+        raise ValueError("Utility curve must be a callable function.")
+
+    parameters = Parameters(
+        eta=Value(
+            value=parameters_settings["eta"][0],
+            lower=parameters_settings["eta"][1],
+            upper=parameters_settings["eta"][2],
+            prior="truncated_normal",
+            args={"mean": 0.0, "sd": 0.25}
+        ),
+        phi_gain=Value(
+            value=parameters_settings["phi_gain"][0],
+            lower=parameters_settings["phi_gain"][1],
+            upper=parameters_settings["phi_gain"][2],
+            prior="truncated_normal",
+            args={"mean": 0.0, "sd": 2.5}
+        ),
+        phi_loss=Value(
+            value=parameters_settings["phi_loss"][0],
+            lower=parameters_settings["phi_loss"][1],
+            upper=parameters_settings["phi_loss"][2],
+            prior="truncated_normal",
+            args={"mean": 0.0, "sd": 2.5}
+        ),
+        temperature=Value(
+            value=parameters_settings["temperature"][0],
+            lower=parameters_settings["temperature"][1],
+            upper=parameters_settings["temperature"][2],
+            prior="truncated_normal",
+            args={
+                "mean": 10.0, "sd": 5
+            }
+        ),
+        utility_curvature=_ptsm2025_transform,
+    )
+
+    if variant == "alpha":
+        parameters["alpha"] = Value(
+            value=parameters_settings["alpha"][0],
+            lower=parameters_settings["alpha"][1],
+            upper=parameters_settings["alpha"][2],
+            prior="truncated_normal",
+            args={
+                "mean": 1.0, "sd": 1.0
+            }
+        )
+    else:
+        parameters["alpha"] = 1.0
+    return parameters
 
 
 class PTSM(Wrapper):
@@ -127,58 +329,7 @@ class PTSM(Wrapper):
         utility_curve=None,  # Callable function for utility transformation
         weighting="tk"  # Options: "tk" or "power"
     ):
-        # Use default parameter settings if none provided.
-        if parameters_settings is None:
-            parameters_settings = {
-                "alpha":        [1.0, 1e-2, 5.0],    # alpha: starting value 1.0
-                "lambda_loss":  [1.0, 1e-2, 5.0],    # lambda_loss: starting value 1.0
-                "gamma":        [0.5, 1e-2, 5.0],    # gamma: starting value 0.5
-                "temperature":  [5.0, 1e-2, 15.0]    # temperature: starting value 5.0
-            }
-            warnings.warn("No parameters specified, using default settings.")
-
-        if callable(utility_curve):
-            warnings.warn("Utility curve provided, using it instead of power function.")
-        if utility_curve is not None and not callable(utility_curve):
-            raise ValueError("Utility curve must be a callable function.")
-
-        # Create the unified Parameters object with priors.
-        params = Parameters(
-            alpha=Value(
-                value=parameters_settings["alpha"][0],
-                lower=parameters_settings["alpha"][1],
-                upper=parameters_settings["alpha"][2],
-                prior="truncated_normal",
-                args={
-                    "mean": 1.0, "sd": 1.0
-                }
-            ),
-            lambda_loss=Value(
-                value=parameters_settings["lambda_loss"][0],
-                lower=parameters_settings["lambda_loss"][1],
-                upper=parameters_settings["lambda_loss"][2],
-                prior="truncated_normal",
-                args={"mean": 2.5, "sd": 1.0},
-            ),
-            gamma=Value(
-                value=parameters_settings["gamma"][0],
-                lower=parameters_settings["gamma"][1],
-                upper=parameters_settings["gamma"][2],
-                prior="truncated_normal",
-                args={"mean": 2.5, "sd": 1.0},
-            ),
-            temperature=Value(
-                value=parameters_settings["temperature"][0],
-                lower=parameters_settings["temperature"][1],
-                upper=parameters_settings["temperature"][2],
-                prior="truncated_normal",
-                args={
-                    "mean": 10.0, "sd": 5
-                }
-            ),
-            utility_curve=utility_curve,  # Use the piecewise utility transform
-            weighting = weighting  # Store the chosen weighting function type
-        )
+        params = _ptsm_parameters(parameters_settings, utility_curve, weighting)
 
         def model_fn(parameters, trial):
             """
@@ -378,73 +529,7 @@ class PTSM1992(Wrapper):
         utility_curve=None,
         weighting="tk"  # Options: "tk" or "power"
     ):
-        # Use default parameter settings if none provided.
-        if parameters_settings is None:
-            parameters_settings = {
-                "alpha":         [1.0, 0.0, 5.0],   # alpha: starting value 1.0
-                "lambda_loss":   [1.0, 0.0, 5.0],   # lambda_loss: starting value 1.0
-                "beta":          [1.0, 0.0, 5.0],   # beta: starting value 1.0
-                "gamma":         [0.5, 1e-2, 5.0],   # gamma: starting value 0.5
-                "delta":         [0.5, 1e-2, 5.0],   # delta: starting value 0.0
-                "temperature":   [5.0, 1e-2, 15.0]   # temperature: starting value 5.0
-            }
-            warnings.warn("No parameters specified, using default settings.")
-
-        if callable(utility_curve):
-            warnings.warn("Utility curve provided, using it instead of power function.")
-        if utility_curve is not None and not callable(utility_curve):
-            raise ValueError("Utility curve must be a callable function.")
-
-
-        # Create the unified Parameters object with priors.
-        params = Parameters(
-            alpha = Value(
-                value=parameters_settings["alpha"][0],
-                lower=parameters_settings["alpha"][1],
-                upper=parameters_settings["alpha"][2],
-                prior="truncated_normal",
-                args={
-                    "mean": 2.5, "sd": 1.0
-                }
-            ),
-            lambda_loss=Value(
-                value=parameters_settings["lambda_loss"][0],
-                lower=parameters_settings["lambda_loss"][1],
-                upper=parameters_settings["lambda_loss"][2],
-                prior="truncated_normal",
-                args={"mean": 2.5, "sd": 1.0},
-            ),
-            beta=Value(
-                value=parameters_settings["beta"][0],
-                lower=parameters_settings["beta"][1],
-                upper=parameters_settings["beta"][2],
-                prior="truncated_normal",
-                args={"mean": 2.5, "sd": 1.0},
-            ),
-            gamma=Value(
-                value=parameters_settings["gamma"][0],
-                lower=parameters_settings["gamma"][1],
-                upper=parameters_settings["gamma"][2],
-                prior="truncated_normal",
-                args={"mean": 2.5, "sd": 1.0},
-            ),
-            delta=Value(
-                value=parameters_settings["delta"][0],
-                lower=parameters_settings["delta"][1],
-                upper=parameters_settings["delta"][2],
-                prior="truncated_normal",
-                args={"mean": 2.5, "sd": 1.0},
-            ),
-            temperature=Value(
-                value=parameters_settings["temperature"][0],
-                lower=parameters_settings["temperature"][1],
-                upper=parameters_settings["temperature"][2],
-                prior="truncated_normal",
-                args={"mean": 10, "sd": 2.5},
-            ),
-            utility_curve=utility_curve,  # Use the piecewise utility transform
-            weighting = weighting  # Store the chosen weighting function type
-        )
+        params = _ptsm1992_parameters(parameters_settings, utility_curve, weighting)
 
         def model_fn(parameters, trial):
             """
@@ -609,73 +694,8 @@ class PTSM2025(Wrapper):
         utility_curve=None,
         variant="alpha"
     ):
-        if parameters_settings is None:
-            warnings.warn("No parameters specified, using JAGS-inspired defaults.")
-            parameters_settings = {
-                "eta":         [0.0,   -0.49,  0.49],
-                "phi_gain":    [0.0,   -10.0,  10.0],
-                "phi_loss":    [0.0,   -10.0,  10.0],
-                "temperature": [5.0,    0.001, 20.0],
-                "alpha":       [1.0,    0.001,  5.0],
-            }
-
         self.variant = variant
-
-        if callable(utility_curve):
-            warnings.warn("Utility curve provided, using it instead of power function.")
-        if utility_curve is not None and not callable(utility_curve):
-            raise ValueError("Utility curve must be a callable function.")
-
-        def transform(x, alpha):
-            ## Piecewise utility transform
-            return x ** alpha if x >= 0 else -np.abs(x) ** alpha
-
-        parameters = Parameters(
-            eta=Value(
-                value=parameters_settings["eta"][0],
-                lower=parameters_settings["eta"][1],
-                upper=parameters_settings["eta"][2],
-                prior="truncated_normal",
-                args={"mean": 0.0, "sd": 0.25}
-            ),
-            phi_gain=Value(
-                value=parameters_settings["phi_gain"][0],
-                lower=parameters_settings["phi_gain"][1],
-                upper=parameters_settings["phi_gain"][2],
-                prior="truncated_normal",
-                args={"mean": 0.0, "sd": 2.5}
-            ),
-            phi_loss=Value(
-                value=parameters_settings["phi_loss"][0],
-                lower=parameters_settings["phi_loss"][1],
-                upper=parameters_settings["phi_loss"][2],
-                prior="truncated_normal",
-                args={"mean": 0.0, "sd": 2.5}
-            ),
-            temperature=Value(
-                value=parameters_settings["temperature"][0],
-                lower=parameters_settings["temperature"][1],
-                upper=parameters_settings["temperature"][2],
-                prior="truncated_normal",
-                args={
-                    "mean": 10.0, "sd": 5
-                }
-            ),
-            utility_curvature=transform,
-        )
-
-        if variant == "alpha":
-            parameters["alpha"] = Value(
-                value=parameters_settings["alpha"][0],
-                lower=parameters_settings["alpha"][1],
-                upper=parameters_settings["alpha"][2],
-                prior="truncated_normal",
-                args={
-                    "mean": 1.0, "sd": 1.0
-                }
-            )
-        else:
-            parameters["alpha"] = 1.0
+        parameters = _ptsm2025_parameters(parameters_settings, utility_curve, variant)
 
         # CORRECTED: Renamed back to model_fn
         def model_fn(parameters, trial):
@@ -723,3 +743,274 @@ class PTSM2025(Wrapper):
             return output
 
         super().__init__(data=data, model=model_fn, parameters=parameters)
+
+
+def _weighting_code(weighting):
+    """The number of a weighting function in `cpm.models.kernels.WEIGHTING`."""
+    from cpm.models.kernels import WEIGHTING
+
+    if weighting not in WEIGHTING:
+        raise ValueError(
+            "Invalid weighting type. Must be one of: 'tk', 'power', 'prelec', 'gw'."
+        )
+    return WEIGHTING[weighting]
+
+
+class _PrepareRisky:
+    """The data preparation of the prospect-theory session models."""
+
+    def __init__(self, columns, model):
+        self.columns = columns
+        self.model = model
+
+    def __call__(self, data):
+        out = prepared(data)
+        require(out, self.columns + ["observed"], self.model)
+        for key in self.columns:
+            out[key] = np.ascontiguousarray(out[key], dtype=np.float64)
+        out["observed"] = np.ascontiguousarray(out["observed"], dtype=np.int64)
+        return out
+
+
+RISKY_COLUMNS = ["safe_magnitudes", "risky_magnitudes", "risky_probability"]
+
+
+class _ProspectModel(SessionModel):
+    """The session model function of `PTSMSession` and `PTSM1992Session`."""
+
+    def __init__(self, backend, weighting, generate, choose_always, dependent_chosen, separate):
+        super().__init__(backend)
+        self.weighting = _weighting_code(weighting)
+        self.generate = generate
+        self.choose_always = choose_always
+        self.dependent_chosen = dependent_chosen
+        ## whether losses have their own curvatures (beta, delta), as in PTSM1992
+        self.separate = separate
+
+    def utilities(self, parameters, data, alpha, lambda_loss):
+        """The utilities of a user-supplied utility curve, called as `ProspectUtility` calls it."""
+        curve = parameters.utility_curve if self.separate else None
+        trials = data["observed"].shape[0]
+        if curve is None:
+            return False, np.empty((0, 2))
+        out = np.empty((trials, 2))
+        for t in range(trials):
+            for j, key in enumerate(("safe_magnitudes", "risky_magnitudes")):
+                x = np.array([data[key][t]], dtype=float)
+                out[t, j] = np.sum(curve(x=x, alpha=alpha, lambda_loss=lambda_loss))
+        return True, out
+
+    def __call__(self, parameters, data):
+        alpha = float(parameters.alpha)
+        lambda_loss = float(parameters.lambda_loss)
+        gamma = float(parameters.gamma)
+        if self.separate:
+            beta, delta = float(parameters.beta), float(parameters.delta)
+        else:
+            beta, delta = alpha, 1.0
+        custom, utilities = self.utilities(parameters, data, alpha, lambda_loss)
+        observed = data["observed"]
+        trials = observed.shape[0]
+        out = self.sessions.prospect_softmax(
+            alpha, beta, lambda_loss, gamma, delta, float(parameters.temperature),
+            data["safe_magnitudes"], data["risky_magnitudes"], data["risky_probability"],
+            observed, self.weighting, utilities, custom, self.choose_always, self.generate,
+            uniforms(trials, self.choose_always or self.generate), self.dependent_chosen,
+        )
+        policy, dependent, chosen, optimal, best, ev_risk, u_safe, u_risk = out
+        return {
+            "policy": policy,
+            "dependent": dependent,
+            "observed": observed,
+            "chosen": chosen,
+            "is_optimal": optimal,
+            "objective_best": best,
+            "ev_safe": data["safe_magnitudes"],
+            "ev_risk": ev_risk,
+            "u_safe": u_safe,
+            "u_risk": u_risk,
+        }
+
+
+class PTSMSession(SessionWrapper):
+    r"""
+    The session version of :class:`PTSM`: the same model, computed for all trials of a participant at once.
+
+    It takes the same arguments as :class:`PTSM`, has the same parameters and
+    priors, gives the same results, and has the same output in `export()`, but
+    runs the whole session in one call, compiled with numba if it is available
+    (see :class:`cpm.generators.SessionWrapper`).
+
+    Parameters
+    ----------
+    data : pandas.DataFrame or dict
+        The data, with the columns 'safe_magnitudes', 'risky_magnitudes',
+        'risky_probability' and 'observed'.
+    parameters_settings : dict, optional
+        The initial values and bounds of the parameters, as for :class:`PTSM`.
+    generate : bool
+        If True, choices are sampled from the policy.
+    utility_curve : callable, optional
+        As for :class:`PTSM`, which stores it but does not use it; neither does
+        this class.
+    weighting : str
+        The probability weighting function: "tk" (default), "power", "prelec" or "gw".
+    backend : str
+        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
+
+    Notes
+    -----
+    The softmax is computed so that it cannot overflow, which is where it can
+    differ from :class:`PTSM`; everywhere else the two agree to within rounding
+    error. With `generate`, choices are sampled from `numpy.random` as in
+    :class:`PTSM`, so a simulation with a given `numpy.random.seed` makes the same
+    choices with both classes and both backends.
+
+    See Also
+    --------
+    cpm.applications.decision_making.PTSM : the per-trial version, with the model specification.
+    """
+
+    def __init__(self, data=None, parameters_settings=None, generate=False,
+                 utility_curve=None, weighting="tk", backend="auto"):
+        parameters = _ptsm_parameters(parameters_settings, utility_curve, weighting)
+        self.backend = resolve_backend(backend)
+        self.generate = generate
+        super().__init__(
+            model=_ProspectModel(self.backend, weighting, generate, choose_always=False,
+                                 dependent_chosen=True, separate=False),
+            data=data,
+            parameters=parameters,
+            prepare=_PrepareRisky(RISKY_COLUMNS, "PTSMSession"),
+        )
+
+
+class PTSM1992Session(SessionWrapper):
+    r"""
+    The session version of :class:`PTSM1992`: the same model, computed for all trials of a participant at once.
+
+    It takes the same arguments as :class:`PTSM1992`, has the same parameters and
+    priors, gives the same results, and has the same output in `export()`, but
+    runs the whole session in one call, compiled with numba if it is available
+    (see :class:`cpm.generators.SessionWrapper`).
+
+    Parameters
+    ----------
+    data : pandas.DataFrame or dict
+        The data, with the columns 'safe_magnitudes', 'risky_magnitudes',
+        'risky_probability' and 'observed'.
+    parameters_settings : dict, optional
+        The initial values and bounds of the parameters, as for :class:`PTSM1992`.
+    utility_curve : callable, optional
+        A utility curve that replaces the power utility, called as
+        :class:`PTSM1992` calls it. It runs as plain Python on every trial, so a
+        model with a utility curve is slower than one without.
+    weighting : str
+        The probability weighting function: "tk" (default), "power", "prelec" or "gw".
+    backend : str
+        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
+
+    Notes
+    -----
+    Like :class:`PTSM1992`, the model samples a choice from its policy on every
+    trial (the `chosen` and `is_optimal` outputs), also when it is fitted, and
+    it does so from `numpy.random` in the same way, so both classes and both
+    backends make the same choices for a given `numpy.random.seed`. The softmax
+    is computed so that it cannot overflow, which is where it can differ from
+    :class:`PTSM1992`; everywhere else the two agree to within rounding error.
+
+    See Also
+    --------
+    cpm.applications.decision_making.PTSM1992 : the per-trial version, with the model specification.
+    """
+
+    def __init__(self, data=None, parameters_settings=None, utility_curve=None,
+                 weighting="tk", backend="auto"):
+        parameters = _ptsm1992_parameters(parameters_settings, utility_curve, weighting)
+        self.backend = resolve_backend(backend)
+        super().__init__(
+            model=_ProspectModel(self.backend, weighting, generate=False, choose_always=True,
+                                 dependent_chosen=False, separate=True),
+            data=data,
+            parameters=parameters,
+            prepare=_PrepareRisky(RISKY_COLUMNS, "PTSM1992Session"),
+        )
+
+
+class _PTSM2025Model(SessionModel):
+    """The session model function of `PTSM2025Session`."""
+
+    def __call__(self, parameters, data):
+        observed = data["observed"]
+        policy, choice, u_safe, u_risk = self.sessions.ptsm2025(
+            float(parameters.eta),
+            float(parameters.phi_gain),
+            float(parameters.phi_loss),
+            float(parameters.temperature),
+            float(parameters.alpha),
+            data["safe_magnitudes"],
+            data["risky_magnitudes"],
+            data["risky_probability"],
+            data["ambiguity"],
+            uniforms(observed.shape[0], True),
+        )
+        return {
+            "policy": policy,
+            "model_choice": choice,
+            "real_choice": observed,
+            "u_safe": u_safe,
+            "u_risk": u_risk,
+            "dependent": policy,
+        }
+
+
+class PTSM2025Session(SessionWrapper):
+    r"""
+    The session version of :class:`PTSM2025`: the same model, computed for all trials of a participant at once.
+
+    It takes the same arguments as :class:`PTSM2025`, has the same parameters and
+    priors, gives the same results, and has the same output in `export()`, but
+    runs the whole session in one call, compiled with numba if it is available
+    (see :class:`cpm.generators.SessionWrapper`).
+
+    Parameters
+    ----------
+    data : pandas.DataFrame or dict
+        The data, with the columns 'safe_magnitudes', 'risky_magnitudes',
+        'risky_probability', 'ambiguity' and 'observed'.
+    parameters_settings : dict, optional
+        The initial values and bounds of the parameters, as for :class:`PTSM2025`.
+    utility_curve : callable, optional
+        As for :class:`PTSM2025`, which checks it but uses the power utility
+        regardless; so does this class.
+    variant : str
+        "alpha" (default) to fit the utility curvature, or "standard" to fix it at 1.
+    backend : str
+        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
+
+    Notes
+    -----
+    Like :class:`PTSM2025`, the model samples a choice on every trial
+    (`model_choice`), from `numpy.random` in the same way, so both classes and
+    both backends make the same choices for a given `numpy.random.seed`. The
+    policy is computed as a logistic function, which cannot overflow; where the
+    exponentials of :class:`PTSM2025` overflow, it returns NaN and fails to sample
+    a choice, whereas this class returns the limiting probability. Everywhere
+    else the two agree to within rounding error.
+
+    See Also
+    --------
+    cpm.applications.decision_making.PTSM2025 : the per-trial version, with the model specification.
+    """
+
+    def __init__(self, data=None, parameters_settings=None, utility_curve=None,
+                 variant="alpha", backend="auto"):
+        self.variant = variant
+        parameters = _ptsm2025_parameters(parameters_settings, utility_curve, variant)
+        self.backend = resolve_backend(backend)
+        super().__init__(
+            model=_PTSM2025Model(self.backend),
+            data=data,
+            parameters=parameters,
+            prepare=_PrepareRisky(RISKY_COLUMNS + ["ambiguity"], "PTSM2025Session"),
+        )

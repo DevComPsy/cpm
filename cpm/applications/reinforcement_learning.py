@@ -1,10 +1,90 @@
-from cpm.generators import Wrapper, Parameters, Value
+from cpm.generators import Wrapper, SessionWrapper, Parameters, Value
+from cpm.core._jit import resolve_backend
+from cpm.applications._backend import (
+    SessionModel, ordered_columns, prepared, require, uniforms,
+)
 
 import cpm
 import numpy
 import pandas
 import warnings
 import ipyparallel as ipp  ## for parallel computing with ipython (specific for Jupyter Notebook)
+
+
+def _rlrw_parameters(parameters_settings, dimensions):
+    """The parameters of `RLRW` and `RLRWSession`."""
+    if parameters_settings is None:
+        parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
+        warnings.warn("No parameters specified, using default parameters.", stacklevel=3)
+    return Parameters(
+        # freely varying parameters are indicated by specifying priors
+        alpha=Value(
+            value=parameters_settings[0][0],
+            lower=parameters_settings[0][1],
+            upper=parameters_settings[0][2],
+            prior="truncated_normal",
+            args={"mean": 0.5, "sd": 0.25},
+        ),
+        temperature=Value(
+            value=parameters_settings[1][0],
+            lower=parameters_settings[1][1],
+            upper=parameters_settings[1][2],
+            prior="truncated_normal",
+            args={"mean": 5, "sd": 2.5},
+        ),
+        values=numpy.ones(dimensions) / dimensions,
+    )
+
+
+def _hybrid_parameters(parameters_settings, q_init):
+    """The parameters of `HybridMBMF` and `HybridMBMFSession`."""
+    if parameters_settings is None:
+        parameters_settings = [
+            [2, 0, 5],
+            [0.5, 0, 1],
+            [0.5, 0, 1],
+            [0.5, 0, 1],
+            [0, -5, 5],
+            [0, -5, 5],
+        ]
+        warnings.warn("No parameters specified, using default parameters.", stacklevel=3)
+    priors = [
+        {"mean": 1.5, "sd": 2.0},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.0, "sd": 1.0},
+        {"mean": 0.0, "sd": 1.0},
+    ]
+    return Parameters(
+        # freely varying parameters are indicated by specifying priors
+        **{
+            name: Value(
+                value=settings[0],
+                lower=settings[1],
+                upper=settings[2],
+                prior="truncated_normal",
+                args=prior,
+            )
+            for name, settings, prior in zip(HYBRID_PARAMETERS, parameters_settings, priors)
+        },
+        # internal states of the model
+        q_mf=numpy.full((2, 2), q_init, dtype=float),
+        q2=numpy.full(2, q_init, dtype=float),
+        m=numpy.zeros((2, 2)),
+        r=numpy.zeros(2),
+    )
+
+
+HYBRID_PARAMETERS = [
+    "inv_temperature",
+    "learning_rate",
+    "eligibility_trace",
+    "mb_weight",
+    "choice_stickiness",
+    "response_stickiness",
+]
+
 
 
 class RLRW(Wrapper):
@@ -88,27 +168,7 @@ class RLRW(Wrapper):
     def __init__(
         self, data=None, dimensions=2, parameters_settings=None, generate=False
     ):
-        if parameters_settings is None:
-            parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
-            warnings.warn("No parameters specified, using default parameters.")
-        parameters = Parameters(
-            # freely varying parameters are indicated by specifying priors
-            alpha=Value(
-                value=parameters_settings[0][0],
-                lower=parameters_settings[0][1],
-                upper=parameters_settings[0][2],
-                prior="truncated_normal",
-                args={"mean": 0.5, "sd": 0.25},
-            ),
-            temperature=Value(
-                value=parameters_settings[1][0],
-                lower=parameters_settings[1][1],
-                upper=parameters_settings[1][2],
-                prior="truncated_normal",
-                args={"mean": 5, "sd": 2.5},
-            ),
-            values=numpy.ones(dimensions) / dimensions,
-        )
+        parameters = _rlrw_parameters(parameters_settings, dimensions)
 
         @ipp.require("numpy")
         def model(parameters, trial, generate=generate):
@@ -281,50 +341,7 @@ class HybridMBMF(Wrapper):
     """
 
     def __init__(self, data=None, parameters_settings=None, q_init=0.5, generate=False):
-        if parameters_settings is None:
-            parameters_settings = [
-                [2, 0, 5],
-                [0.5, 0, 1],
-                [0.5, 0, 1],
-                [0.5, 0, 1],
-                [0, -5, 5],
-                [0, -5, 5],
-            ]
-            warnings.warn("No parameters specified, using default parameters.")
-        priors = [
-            {"mean": 1.5, "sd": 2.0},
-            {"mean": 0.5, "sd": 0.25},
-            {"mean": 0.5, "sd": 0.25},
-            {"mean": 0.5, "sd": 0.25},
-            {"mean": 0.0, "sd": 1.0},
-            {"mean": 0.0, "sd": 1.0},
-        ]
-        names = [
-            "inv_temperature",
-            "learning_rate",
-            "eligibility_trace",
-            "mb_weight",
-            "choice_stickiness",
-            "response_stickiness",
-        ]
-        parameters = Parameters(
-            # freely varying parameters are indicated by specifying priors
-            **{
-                name: Value(
-                    value=settings[0],
-                    lower=settings[1],
-                    upper=settings[2],
-                    prior="truncated_normal",
-                    args=prior,
-                )
-                for name, settings, prior in zip(names, parameters_settings, priors)
-            },
-            # internal states of the model
-            q_mf=numpy.full((2, 2), q_init, dtype=float),
-            q2=numpy.full(2, q_init, dtype=float),
-            m=numpy.zeros((2, 2)),
-            r=numpy.zeros(2),
-        )
+        parameters = _hybrid_parameters(parameters_settings, q_init)
         ## deterministic transitions: action 0 -> state 1, action 1 -> state 0
         transitions = numpy.array([[0.0, 1.0], [1.0, 0.0]])
 
@@ -413,3 +430,228 @@ class HybridMBMF(Wrapper):
             return output
 
         super().__init__(data=data, model=model, parameters=parameters)
+
+
+class _RLRWModel(SessionModel):
+    """The session model function of `RLRWSession`."""
+
+    def __init__(self, backend, generate):
+        super().__init__(backend)
+        self.generate = generate
+
+    def __call__(self, parameters, data):
+        policy, reward, values, change, dependent = self.sessions.rlrw(
+            float(parameters.alpha),
+            float(parameters.temperature),
+            numpy.asarray(parameters.values, dtype=float),
+            data["arms"],
+            data["rewards"],
+            data["response"],
+            self.generate,
+            uniforms(data["arms"].shape[0], self.generate),
+        )
+        return {
+            "policy": policy,
+            "reward": reward,
+            "values": values,
+            "change": change,
+            "dependent": dependent,
+        }
+
+
+def _prepare_rlrw(data):
+    """Collect the arm and reward columns of the data into arrays, once."""
+    out = prepared(data)
+    arms = ordered_columns(data, "arm")
+    rewards = ordered_columns(data, "reward")
+    if not arms or not rewards:
+        raise KeyError(
+            "RLRWSession needs columns with 'arm' and 'reward' in their names, "
+            f"such as arm_left and reward_left, but the data have {sorted(out)}."
+        )
+    trials = len(out[arms[0]])
+    out["arms"] = numpy.ascontiguousarray(
+        numpy.column_stack([out[c] for c in arms]), dtype=numpy.int64
+    )
+    out["rewards"] = numpy.ascontiguousarray(
+        numpy.column_stack([out[c] for c in rewards]), dtype=numpy.float64
+    )
+    response = out.get("response", numpy.zeros(trials))
+    out["response"] = numpy.ascontiguousarray(response, dtype=numpy.int64)
+    return out
+
+
+class RLRWSession(SessionWrapper):
+    r"""
+    The session version of :class:`RLRW`: the same model, computed for all trials of a participant at once.
+
+    It takes the same arguments as :class:`RLRW`, has the same parameters and
+    priors, gives the same results, and has the same output in `export()`, but
+    runs the whole session in one call, compiled with numba if it is available
+    (see :class:`cpm.generators.SessionWrapper`).
+
+    Parameters
+    ----------
+    data : pandas.DataFrame or dict
+        The data, as for :class:`RLRW`.
+    dimensions : int
+        The number of distinct stimuli present in the data.
+    parameters_settings : list-like
+        The initial values and bounds of the parameters, as for :class:`RLRW`.
+    generate : bool
+        If True, choices are sampled from the policy instead of taken from the data.
+    backend : str
+        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
+
+    Notes
+    -----
+    The softmax is computed so that it cannot overflow. Where :class:`RLRW`
+    replaces an overflowed policy (with a warning), the two differ; everywhere
+    else they agree to within rounding error. With `generate`, the choices are
+    sampled from `numpy.random` as in :class:`RLRW`, so a simulation with a given
+    `numpy.random.seed` makes the same choices with both classes and both backends.
+
+    See Also
+    --------
+    cpm.applications.reinforcement_learning.RLRW : the per-trial version, with the model specification.
+
+    Examples
+    --------
+    >>> from cpm.applications.reinforcement_learning import RLRWSession
+    >>> from cpm.datasets import load_bandit_data
+    >>> data = load_bandit_data()
+    >>> model = RLRWSession(data=data[data.ppt == 1], dimensions=4)
+    >>> model.run()
+    >>> model.export().head()
+    """
+
+    def __init__(
+        self, data=None, dimensions=2, parameters_settings=None, generate=False, backend="auto"
+    ):
+        parameters = _rlrw_parameters(parameters_settings, dimensions)
+        self.backend = resolve_backend(backend)
+        self.generate = generate
+        super().__init__(
+            model=_RLRWModel(self.backend, generate),
+            data=data,
+            parameters=parameters,
+            prepare=_prepare_rlrw,
+        )
+
+
+class _HybridModel(SessionModel):
+    """The session model function of `HybridMBMFSession`."""
+
+    def __init__(self, backend, generate):
+        super().__init__(backend)
+        self.generate = generate
+
+    def __call__(self, parameters, data):
+        trials = data["s1"].shape[0]
+        out = self.sessions.hybrid_mbmf(
+            *(float(parameters[name]) for name in HYBRID_PARAMETERS),
+            numpy.asarray(parameters.q_mf, dtype=float),
+            numpy.asarray(parameters.q2, dtype=float),
+            numpy.asarray(parameters.m, dtype=float),
+            numpy.asarray(parameters.r, dtype=float),
+            data["s1"],
+            data["stimuli_first"],
+            data["action"],
+            data["s2"],
+            data["reward"],
+            data["position"],
+            data["reward_0"],
+            data["reward_1"],
+            self.generate,
+            uniforms(trials, self.generate),
+        )
+        policy, action, s2, reward, position, pe1, pe2, q_mf, q2, m, r = out
+        return {
+            "policy": policy,
+            "action": action,
+            "s2": s2,
+            "reward": reward,
+            "position": position,
+            "stage1_prediction_error": pe1,
+            "stage2_prediction_error": pe2,
+            "q_mf": q_mf,
+            "q2": q2,
+            "m": m,
+            "r": r,
+            "dependent": policy[:, 1].copy(),
+        }
+
+
+class _PrepareHybrid:
+    """The data preparation of `HybridMBMFSession`, filling in the optional columns once."""
+
+    def __init__(self, generate):
+        self.generate = generate
+
+    def __call__(self, data):
+        out = prepared(data)
+        require(out, ["s1"], "HybridMBMFSession")
+        needed = ["reward_0", "reward_1"] if self.generate else ["action", "s2", "reward"]
+        require(out, needed, "HybridMBMFSession")
+        trials = out["s1"].shape[0]
+        for key in ("s1", "stimuli_first", "action", "s2"):
+            out[key] = numpy.ascontiguousarray(
+                out.get(key, numpy.zeros(trials)), dtype=numpy.int64
+            )
+        for key in ("reward", "reward_0", "reward_1"):
+            out[key] = numpy.ascontiguousarray(
+                out.get(key, numpy.zeros(trials)), dtype=numpy.float64
+            )
+        out["position"] = numpy.ascontiguousarray(
+            out.get("position", out["stimuli_first"] ^ out["action"]), dtype=numpy.int64
+        )
+        return out
+
+
+class HybridMBMFSession(SessionWrapper):
+    r"""
+    The session version of :class:`HybridMBMF`: the same model, computed for all trials of a participant at once.
+
+    It takes the same arguments as :class:`HybridMBMF`, has the same parameters,
+    priors and initial states, gives the same results, and has the same output in
+    `export()`, but runs the whole session in one call, compiled with numba if it
+    is available (see :class:`cpm.generators.SessionWrapper`).
+
+    Parameters
+    ----------
+    data : pandas.DataFrame or dict
+        The data, with the columns described for :class:`HybridMBMF`.
+    parameters_settings : list-like
+        The initial values and bounds of the parameters, as for :class:`HybridMBMF`.
+    q_init : float
+        The initial value of all model-free and second-stage values. Default is 0.5.
+    generate : bool
+        If True, first-stage actions are sampled from the policy, and rewards are
+        taken from `reward_0` and `reward_1`.
+    backend : str
+        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
+
+    Notes
+    -----
+    The softmax is computed so that it cannot overflow, which is where it can
+    differ from :class:`HybridMBMF`; everywhere else the two agree to within
+    rounding error. With `generate`, actions are sampled from `numpy.random` as
+    in :class:`HybridMBMF`, so a simulation with a given `numpy.random.seed` makes
+    the same choices with both classes and both backends.
+
+    See Also
+    --------
+    cpm.applications.reinforcement_learning.HybridMBMF : the per-trial version, with the model specification.
+    """
+
+    def __init__(self, data=None, parameters_settings=None, q_init=0.5, generate=False,
+                 backend="auto"):
+        parameters = _hybrid_parameters(parameters_settings, q_init)
+        self.backend = resolve_backend(backend)
+        self.generate = generate
+        super().__init__(
+            model=_HybridModel(self.backend, generate),
+            data=data,
+            parameters=parameters,
+            prepare=_PrepareHybrid(generate),
+        )

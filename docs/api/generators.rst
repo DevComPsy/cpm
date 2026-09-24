@@ -4,7 +4,8 @@ cpm.generators
 .. currentmodule:: cpm.generators
 
 The building blocks of every model: parameters and their priors, the
-:class:`Wrapper` that runs a model over the trials of one participant, and the
+:class:`Wrapper` that runs a model over the trials of one participant (or the
+:class:`SessionWrapper` for models that compute all trials at once), and the
 :class:`Simulator` that runs it over many.
 
 Parameters
@@ -26,4 +27,5 @@ Wrappers and simulators
    :nosignatures:
 
    Wrapper
+   SessionWrapper
    Simulator

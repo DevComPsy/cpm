@@ -44,6 +44,32 @@ dependencies = [
     "matplotlib>=3.8.0"
 ]
 
+[project.optional-dependencies]
+docs = [
+    "sphinx>=8.2",
+    "pydata-sphinx-theme>=0.16",
+    "myst-nb>=1.2",
+    "sphinx-design>=0.6",
+    "sphinx-copybutton>=0.5",
+    "numpydoc>=1.8",
+    "sphinx-codeautolink>=0.17",
+    "sphinx-reredirects>=0.1.5",
+    "sphinx-sitemap>=2.6",
+    "sphinx-notfound-page>=1.0",
+    "sphinx-autobuild>=2024.10",
+    "ipykernel",
+    "matplotlib>=3.8",
+]
+notebooks = [
+    "ipykernel",
+    "nbconvert>=7",
+    "nbmake>=1.5",
+    "pytest-xdist",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "statsmodels>=0.14",
+]
+
 [project.urls]
 Homepage = "https://cpm-toolbox.net"
 Documentation = "https://devcompsy.github.io/cpm/"
@@ -56,6 +82,7 @@ version = { attr = "cpm.__version__.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["cpm", "cpm.*"]
 
 [tool.setuptools.package-data]
 cpm = ["**/*.csv"]

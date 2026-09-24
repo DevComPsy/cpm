@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
+from ._fast_priors import fast_logpdf
 from scipy.stats import (
     truncnorm,
     truncexpon,
@@ -444,7 +445,16 @@ class Value:
         return Value(**self.__dict__)
 
     def __deepcopy__(self, memo):
-        return Value(**copy.deepcopy(self.__dict__, memo))
+        # copies share the prior distribution instead of deep-copying it: a frozen
+        # scipy distribution takes about 0.1 ms to copy, and the model's
+        # parameters are copied on every evaluation of the objective function.
+        # `update_prior` replaces the prior rather than changing it in place, so
+        # copies do not see each other's updates.
+        new = type(self).__new__(type(self))
+        memo[id(self)] = new
+        for key, item in self.__dict__.items():
+            new.__dict__[key] = item if key == "prior" else copy.deepcopy(item, memo)
+        return new
 
     def copy(self):
         """
@@ -482,7 +492,10 @@ class Value:
             The probability of the parameter value under the prior distribution. If `log` is True, the log probability is returned.
         """
         if log:
-            return self.prior.logpdf(self.value)
+            density = fast_logpdf(self.prior, self.value)
+            if density is None:
+                density = self.prior.logpdf(self.value)
+            return density
         else:
             return self.prior.pdf(self.value)
 
@@ -522,8 +535,11 @@ class Value:
             updates["a"] = (self.lower - kwargs.get("mean")) / kwargs.get("sd")
             updates["b"] = (self.upper - kwargs.get("mean")) / kwargs.get("sd")
 
-        # now, update the prior object
-        self.prior.kwds.update(**updates)
+        # now, replace the prior object with an updated copy: copies of a Value
+        # share their prior, so changing it in place would change theirs too
+        prior = copy.deepcopy(self.prior)
+        prior.kwds.update(**updates)
+        self.prior = prior
 
 
 class LogParameters(Parameters):

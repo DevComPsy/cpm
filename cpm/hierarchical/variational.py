@@ -671,8 +671,8 @@ class VariationalBayes:
                 population_updates = {}
                 for i, name in enumerate(parameter_names):
                     population_updates[name] = {
-                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
-                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
+                        "mean": rng.beta(a=2, b=2) * self.__bounds__[1][i],
+                        "sd": rng.beta(a=2, b=2) * (self.__bounds__[1][i] / 2),
                     }
                 self.optimiser.model.parameters.update_prior(**population_updates)
 

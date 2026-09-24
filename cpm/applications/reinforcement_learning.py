@@ -186,7 +186,7 @@ class RLRW(Wrapper):
             )  ## stimulus identifier for each arm of the bandit
             k_arms = arms.shape[0]  ## number of arms
             dims = values.shape[0]  ## number of stimuli
-            choice = trial.response.astype(int)
+            choice = trial["response"].astype(int)
             reward_names = [
                 col for col in trial.index if "reward" in col
             ]  ## get column names beginning with stimulus
@@ -359,7 +359,7 @@ class HybridMBMF(Wrapper):
             m = numpy.asarray(parameters.m).copy()
             r = numpy.asarray(parameters.r).copy()
 
-            s1 = int(trial.s1)
+            s1 = int(trial["s1"])
             stimuli_first = int(trial.get("stimuli_first", 0))
             ## response stickiness is stored by screen position [left, right],
             ## so flip it to action space when action 1 is displayed on the left
@@ -384,9 +384,9 @@ class HybridMBMF(Wrapper):
                 reward = float(trial[f"reward_{s2}"])
                 position = stimuli_first ^ action
             else:
-                action = int(trial.action)
-                s2 = int(trial.s2)
-                reward = float(trial.reward)
+                action = int(trial["action"])
+                s2 = int(trial["s2"])
+                reward = float(trial["reward"])
                 position = int(trial.get("position", stimuli_first ^ action))
 
             ## update stickiness for the next trial

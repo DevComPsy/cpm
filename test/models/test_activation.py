@@ -69,5 +69,25 @@ class TestCompetitiveGating:
         )
 
 
+@pytest.mark.parametrize("weighting", ["tk", "power", "prelec", "gw"])
+def test_prospect_utility_on_several_outcomes_per_option(weighting):
+    """Options with several outcomes, as 2D arrays; `prelec` used to fail on them."""
+    from cpm.models import kernels
+
+    rng = np.random.default_rng(1)
+    magnitudes = rng.normal(0, 1, (3, 4))
+    probabilities = rng.uniform(0.01, 1, (3, 4))
+    model = ProspectUtility(magnitudes=magnitudes, probabilities=probabilities, alpha=0.8, beta=0.9,
+                            lambda_loss=1.7, gamma=0.6, delta=0.8, weighting=weighting)
+    got = model.compute()
+    code = kernels.WEIGHTING[weighting]
+    expected = [
+        sum(kernels.prospect_weight(p, m, 0.6, 0.8, code) * kernels.prospect_utility(m, 0.8, 0.9, 1.7)
+            for m, p in zip(magnitudes[j], probabilities[j]))
+        for j in range(3)
+    ]
+    np.testing.assert_allclose(got, expected, rtol=1e-12)
+
+
 if __name__ == "__main__":
     pytest.main()

@@ -73,11 +73,11 @@ class Softmax:
         else:
             self.activations = np.zeros(1)
         ## Throw error if activations contain missing values of infities
-        if np.isnan(self.activations).any():
-            raise ValueError(
-                "Activations contain NaN values. Please remove or impute missing values."
-            )
-        if np.isinf(self.activations).any():
+        if not np.isfinite(self.activations).all():
+            if np.isnan(self.activations).any():
+                raise ValueError(
+                    "Activations contain NaN values. Please remove or impute missing values."
+                )
             raise ValueError(
                 "Activations contain infinite values. Please remove or impute infinite values."
             )
@@ -94,16 +94,30 @@ class Softmax:
         self.__run__ = False
 
     def compute(self):
-        """
+        r"""
         Compute the policies based on the activations and temperature.
 
         Returns
         -------
         numpy.ndarray: Array of computed policies.
+
+        Notes
+        -----
+        Where the exponentials would overflow (or all underflow), that is where the
+        largest scaled activation is beyond ±700, the policies are computed as
+        :math:`e^{\beta x_i - m} / \sum_j e^{\beta x_j - m}` with :math:`m` the
+        largest scaled activation, which is the same function without overflow.
         """
-        output = np.exp(self.activations * self.temperature) / np.sum(
-            np.exp(self.activations * self.temperature)
-        )
+        scaled = self.activations * self.temperature
+        top = scaled.max() if scaled.size else 0.0
+        if -700.0 < top < 700.0:
+            output = np.exp(scaled)
+            output = output / output.sum()
+        elif np.isnan(top):
+            output = np.exp(scaled)
+        else:
+            output = np.exp(scaled - top)
+            output = output / output.sum()
         self.policies = output
 
         if np.isnan(self.policies).any():

@@ -117,9 +117,7 @@ class CompetitiveGating:
         self.gain = self.input * self.salience
         self.gain = self.gain**self.P
         self.gain = self.gain / np.sum(self.gain) ** (1 / self.P)
-        for i in range(self.values.shape[0]):
-            for k in range(self.values.shape[1]):
-                self.values[i, k] = self.values[i, k] * self.gain[k]
+        self.values[:] = self.values * self.gain[: self.values.shape[1]]
         return self.values
 
     def __call__(self):
@@ -260,22 +258,31 @@ class ProspectUtility:
         weighting="tk",
         **kwargs,
     ):
-        self.magnitudes = np.asarray(magnitudes.copy())
-        self.magnitudes = np.array(
-            [
-                np.array(self.magnitudes[i], dtype=float)
-                for i in range(self.magnitudes.shape[0])
-            ],
-            dtype=object,
-        )
-        self.probabilities = np.asarray(probabilities.copy())
-        self.probabilities = np.array(
-            [
-                np.array(self.probabilities[i], dtype=float)
-                for i in range(self.probabilities.shape[0])
-            ],
-            dtype=object,
-        )
+        ## outcomes with the same number of outcomes per option are kept as float
+        ## arrays and computed at once; anything else as an array of arrays
+        try:
+            self.magnitudes = np.array(magnitudes, dtype=float)
+            self.probabilities = np.array(probabilities, dtype=float)
+            self.__regular = self.magnitudes.ndim > 0
+        except (TypeError, ValueError):
+            self.__regular = False
+        if not self.__regular:
+            self.magnitudes = np.asarray(magnitudes.copy())
+            self.magnitudes = np.array(
+                [
+                    np.array(self.magnitudes[i], dtype=float)
+                    for i in range(self.magnitudes.shape[0])
+                ],
+                dtype=object,
+            )
+            self.probabilities = np.asarray(probabilities.copy())
+            self.probabilities = np.array(
+                [
+                    np.array(self.probabilities[i], dtype=float)
+                    for i in range(self.probabilities.shape[0])
+                ],
+                dtype=object,
+            )
         self.alpha = alpha
         if beta is not None:
             self.beta = beta
@@ -362,6 +369,8 @@ class ProspectUtility:
         numpy.ndarray
             The computed expected utility of each choice option.
         """
+        if self.__regular:
+            return self.__compute_regular()
         # Determine the utilities of the potential outcomes, for each choice option and each trial.
         self.utilities = np.array(
             [
@@ -385,6 +394,27 @@ class ProspectUtility:
         # Determine the expected utility of each choice option for each trial.
         self.expected_utility = np.array(
             [np.sum(self.weights[j] * self.utilities[j]) for j in range(self.shape[0])],
+        )
+        return self.expected_utility
+
+    def __compute_regular(self):
+        """`compute` for float arrays: all options at once."""
+        options = self.shape[0]
+        self.weights = self.__weighting_fun(x=self.probabilities, magnitudes=self.magnitudes)
+        if self.__utility_curve == self.__utility_power:
+            self.utilities = self.__utility_power(x=self.magnitudes)
+            weighted = np.asarray(self.weights * self.utilities)
+            self.expected_utility = weighted.reshape(options, -1).sum(axis=1)
+            return self.expected_utility
+        ## a user-supplied utility curve is called for each option, as before
+        self.utilities = [
+            self.__utility_curve(
+                x=self.magnitudes[j], alpha=self.alpha, lambda_loss=self.lambda_loss
+            )
+            for j in range(options)
+        ]
+        self.expected_utility = np.array(
+            [np.sum(self.weights[j] * self.utilities[j]) for j in range(options)],
         )
         return self.expected_utility
 

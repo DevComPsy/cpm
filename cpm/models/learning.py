@@ -9,6 +9,21 @@ __all__ = [
 ]
 
 
+def _leading(values, n):
+    """The first `n` elements of `values` as a float array (the loops this replaces read only those)."""
+    values = np.asarray(values, dtype=float)
+    return values if values.shape[0] == n else values[:n]
+
+
+def _assign(rule, name, values):
+    """Set an array attribute, keeping its dtype as element-wise assignment into it did."""
+    current = getattr(rule, name)
+    if current.dtype == values.dtype:
+        setattr(rule, name, values)
+    else:
+        current[...] = values
+
+
 class DeltaRule:
     r"""
     DeltaRule class computes the prediction error for a given input and target value.
@@ -125,13 +140,13 @@ class DeltaRule:
             It has the same shape as the weights input argument.
         """
 
-        for i in range(self.shape[0]):
-            # calculate summed error for a given output unit
-            activations = np.sum(self.weights[i] * self.input)
-            self.error[i] = self.teacher[i] - activations
-            for j in range(self.shape[1]):
-                # calcualte the change on weights
-                self.weights[i, j] = self.alpha * self.error[i] * self.input[j]
+        rows, columns = self.shape
+        stimulus = _leading(self.input, columns)
+        # calculate summed error for each output unit
+        activations = np.sum(self.weights * stimulus, axis=1)
+        self.error = _leading(self.teacher, rows) - activations
+        # calculate the change on weights
+        _assign(self, "weights", self.alpha * self.error[:, np.newaxis] * stimulus)
         self.__run__ = True
         return self.weights
 
@@ -261,11 +276,11 @@ class SeparableRule:
         The prediction error for each stimuli-outcome mapping before the update is stored in `error`,
         which has the same shape as the weights.
         """
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                # separable prediction error for each outcome-stimulus pair
-                self.error[i, j] = self.teacher[i] - self.weights[i, j]
-                self.weights[i, j] = self.alpha * self.error[i, j] * self.input[j]
+        rows, columns = self.shape
+        # separable prediction error for each outcome-stimulus pair
+        teacher = _leading(self.teacher, rows)
+        self.error = teacher[:, np.newaxis] - self.weights
+        _assign(self, "weights", self.alpha * self.error * _leading(self.input, columns))
         self.__run__ = True
         return self.weights
 
@@ -384,17 +399,10 @@ class QLearningRule:
         active = self.values.copy()
         active[active > 0] = 1
         output = np.zeros(self.values.shape[0])
-
-        for i in range(self.values.shape[0]):
-            output[i] += (
-                self.values[i]
-                + (
-                    self.alpha
-                    * (self.reward + self.gamma * self.maximum - self.values[i])
-                )
-                * active[i]
-            )
-
+        output += (
+            self.values
+            + (self.alpha * (self.reward + self.gamma * self.maximum - self.values)) * active
+        )
         return output
 
     def __repr__(self):
@@ -487,10 +495,10 @@ class HumbleTeacher:
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
-        self.delta = np.zeros(self.weights.shape)
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.delta = np.zeros(self.shape)
 
     def compute(self):
         """
@@ -502,15 +510,15 @@ class HumbleTeacher:
             The updated weights matrix.
         """
 
-        for i in range(self.shape[0]):
-            activations = np.sum(self.weights[i] * self.input)
-            for j in range(self.shape[1]):
-                if self.teacher[i] == 0:
-                    teacher = np.min([-1, activations])
-                else:
-                    teacher = np.max([1, activations])
-                self.delta[i, j] = self.alpha * (teacher - activations) * self.input[j]
-                self.weights[i, j] += self.delta[i, j]
+        rows, columns = self.shape
+        stimulus = _leading(self.input, columns)
+        activations = np.sum(self.weights * stimulus, axis=1)
+        feedback = _leading(self.teacher, rows)
+        teacher = np.where(
+            feedback == 0, np.minimum(-1, activations), np.maximum(1, activations)
+        )
+        self.delta[:] = self.alpha * (teacher - activations)[:, np.newaxis] * stimulus
+        np.add(self.weights, self.delta, out=self.weights, casting="unsafe")
         return self.weights
 
 

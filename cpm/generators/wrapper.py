@@ -6,7 +6,7 @@ import warnings
 
 ## import local modules
 from .parameters import Parameters, Value
-from ..core.data import unpack_trials, determine_data_length
+from ..core.data import unpack_trials, trial_reader, determine_data_length
 from ..core.exports import simulation_export
 from ..core.optimisers import objective
 
@@ -121,9 +121,10 @@ class Wrapper:
         None
 
         """
+        read = trial_reader(self.data, self.__pandas__)
         for i in range(self.__len__):
             ## create input for the model
-            trial = unpack_trials(self.data, i, self.__pandas__)
+            trial = read(i)
             ## run the model
             output = self.model(parameters=self.parameters, trial=trial)
             self.simulation.append(output.copy())

@@ -80,3 +80,40 @@ def test_estimatormetad_init_optimise_export(synthetic_data):
     df = est.export()
     assert isinstance(df, pd.DataFrame)
     assert np.all(np.isclose(expected_output, df, atol=1e-5))
+
+
+def _metad_nll_with_scipy(guess, nR_S1, nR_S2, nRatings, d1, t1c1, s):
+    """The meta-d' log likelihood written out with scipy.stats.norm.cdf, as metad_nll used to compute it."""
+    from scipy.stats import norm
+
+    meta_d1, t2c1 = guess[0], guess[1:]
+    S1mu, S2mu, S1sd, S2sd = -meta_d1 / 2, meta_d1 / 2, 1, 1 / s
+    S1mu, S2mu = S1mu - meta_d1 * (t1c1 / d1), S2mu - meta_d1 * (t1c1 / d1)
+    x = [-np.inf, *t2c1[: nRatings - 1], 0, *t2c1[nRatings - 1 :], np.inf]
+    areas = (norm.cdf(0, S1mu, S1sd), norm.cdf(0, S2mu, S2sd),
+             1 - norm.cdf(0, S2mu, S2sd), 1 - norm.cdf(0, S1mu, S1sd))
+    logL = 0.0
+    for i in range(nRatings):
+        logL = (logL
+                + nR_S1[i] * np.log((norm.cdf(x[i + 1], S1mu, S1sd) - norm.cdf(x[i], S1mu, S1sd)) / areas[0])
+                + nR_S2[i] * np.log((norm.cdf(x[i + 1], S2mu, S2sd) - norm.cdf(x[i], S2mu, S2sd)) / areas[1])
+                + nR_S2[i + nRatings] * np.log(((1 - norm.cdf(x[nRatings + i], S2mu, S2sd))
+                                                - (1 - norm.cdf(x[nRatings + i + 1], S2mu, S2sd))) / areas[2])
+                + nR_S1[i + nRatings] * np.log(((1 - norm.cdf(x[nRatings + i], S1mu, S1sd))
+                                                - (1 - norm.cdf(x[nRatings + i + 1], S1mu, S1sd))) / areas[3]))
+    if np.isinf(logL) or np.isnan(logL):  # as metad_nll does
+        logL = -1e300
+    return -logL
+
+
+def test_metad_nll_equals_the_scipy_computation():
+    rng = np.random.default_rng(11)
+    for n_ratings in (2, 3, 4, 6):
+        for _ in range(50):
+            nR_S1 = rng.integers(0, 40, 2 * n_ratings) + 0.25
+            nR_S2 = rng.integers(0, 40, 2 * n_ratings) + 0.25
+            t2 = np.sort(np.concatenate([-rng.uniform(0, 3, n_ratings - 1), rng.uniform(0, 3, n_ratings - 1)]))
+            guess = np.concatenate([[rng.normal(1, 1)], t2])
+            args = (nR_S1, nR_S2, n_ratings, rng.uniform(0.2, 2), rng.normal(0, 0.5), 1)
+            assert signal_detection.metad_nll(guess, *args) == pytest.approx(
+                _metad_nll_with_scipy(guess, *args), rel=1e-14)

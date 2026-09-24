@@ -1,6 +1,6 @@
 # Speed up fitting with session models
 
-Fitting a model evaluates it thousands of times per participant. A {py:class}`~cpm.generators.Wrapper` calls the model function once per trial, and that call, not the model itself, is what most of the time goes into. A {py:class}`~cpm.generators.SessionWrapper` calls the model function once for all trials of a participant instead, and with [numba](https://numba.pydata.org/) the loop over trials can be compiled as a whole. For the built-in applications, this makes one evaluation of the objective function 50 to 200 times faster, and a fit correspondingly faster.
+Fitting a model evaluates it thousands of times per participant. A {py:class}`~cpm.generators.Wrapper` calls the model function once per trial, and that call, not the model itself, is what most of the time goes into. A {py:class}`~cpm.generators.SessionWrapper` calls the model function once for all trials of a participant instead, and with [numba](https://numba.pydata.org/) the loop over trials can be compiled as a whole. For the built-in applications, this makes one evaluation of the objective function 35 to 120 times faster, and a fit correspondingly faster.
 
 ## Use the session version of a built-in application
 
@@ -39,7 +39,7 @@ fit.optimise()
 
 ## Install numba
 
-The session versions run without numba, as plain Python, which is already 15 to 25 times faster than the per-trial applications. Compiled with numba, they are about 5 times faster again. numba is an optional dependency:
+The session versions run without numba, as plain Python, which is already 8 to 15 times faster than the per-trial applications. Compiled with numba, they are 3 to 16 times faster again. numba is an optional dependency:
 
 ```bash
 pip install cpm-toolbox[numba]
@@ -61,13 +61,13 @@ One evaluation of the objective function, with the parameters' priors, for one p
 
 | Application | Trials | Per-trial | Session, Python | Session, numba |
 |---|---:|---:|---:|---:|
-| `RLRW` | 71 | 7.6 ms | 0.43 ms | 0.09 ms |
-| `HybridMBMF` | 200 | 24 ms | 1.4 ms | 0.13 ms |
-| `PTSM` | 40 | 5.4 ms | 0.25 ms | 0.09 ms |
-| `PTSM1992` | 40 | 6.2 ms | 0.29 ms | 0.10 ms |
-| `PTSM2025` | 40 | 4.6 ms | 0.18 ms | 0.09 ms |
+| `RLRW` | 71 | 3.5 ms | 0.42 ms | 0.05 ms |
+| `HybridMBMF` | 200 | 10 ms | 1.4 ms | 0.09 ms |
+| `PTSM` | 40 | 2.0 ms | 0.22 ms | 0.06 ms |
+| `PTSM1992` | 40 | 2.6 ms | 0.26 ms | 0.07 ms |
+| `PTSM2025` | 40 | 2.2 ms | 0.15 ms | 0.06 ms |
 
-With numba, the model itself takes 0.01 to 0.03 ms of this; most of the rest is the loss function.
+With numba, the model itself takes 0.01 to 0.03 ms of this, and the loss function about 0.02 ms.
 
 The first time a session model runs, numba compiles it, which takes 0.5 to 2.5 seconds. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead.
 
@@ -111,7 +111,7 @@ wrapper = SessionWrapper(model=model, data=data_of_one_participant, parameters=p
 
 `data` arrives as a dictionary of numpy arrays, one per column, converted once when the data are set (pass `prepare` to convert them differently). Outputs with one value per trial become one column of `export()`, and outputs with several values per trial become several columns, as with a `Wrapper`.
 
-This alone, in plain Python, is typically 10 to 20 times faster than the same model in a per-trial `Wrapper`. To compile it, move the loop into a function of numbers and arrays only, decorate it with `numba.njit`, and call it from the model function:
+This alone, in plain Python, is typically 5 to 15 times faster than the same model in a per-trial `Wrapper`. To compile it, move the loop into a function of numbers and arrays only, decorate it with `numba.njit`, and call it from the model function:
 
 ```python
 from numba import njit

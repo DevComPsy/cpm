@@ -117,12 +117,14 @@ def test_model_warnings(setup_data):
             parameters_settings=[[0.5, 0, 1], [1000, 1, 10]],
         )
         model.run()
-        assert len(w) > 0, "Warnings not raised"
-        assert issubclass(w[-1].category, UserWarning), "Warning is not a UserWarning"
-        assert (
-            "NaN values found in policies. Replacing NaN values with 1 and normalising the policies to sum to 1."
-            in str(w[-1].message)
-        ), "Warning message mismatch"
+        ## an inverse temperature this large used to overflow the softmax, which
+        ## then replaced the NaN policies with a warning; the softmax now computes
+        ## these policies without overflow, so there is nothing to warn about
+        assert not any("NaN" in str(warning.message) for warning in w)
+        assert not any(issubclass(warning.category, RuntimeWarning) for warning in w)
+        policies = model.export().filter(like="policy").to_numpy()
+        assert np.all(np.isfinite(policies))
+        np.testing.assert_allclose(policies.sum(axis=1), 1.0)
 
     print("test_model_warnings passed")
 

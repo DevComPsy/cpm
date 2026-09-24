@@ -142,5 +142,24 @@ def test_choice_kernel_choice():
     ], "The ChoiceKernel.choice output is not in the expected range."
 
 
+def test_softmax_does_not_overflow():
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # no overflow warning, and no NaN replacement
+        big = Softmax(temperature=2.0, activations=np.array([1000.0, 999.0])).compute()
+        tiny = Softmax(temperature=5.0, activations=np.array([-1000.0, -1001.0, -1000.0])).compute()
+    np.testing.assert_allclose(big, [1 / (1 + np.exp(-2.0)), 1 / (1 + np.exp(2.0))])
+    np.testing.assert_allclose(tiny, np.exp([0.0, -5.0, 0.0]) / np.exp([0.0, -5.0, 0.0]).sum())
+
+
+def test_softmax_is_unchanged_where_it_does_not_overflow():
+    rng = np.random.default_rng(0)
+    for _ in range(100):
+        activations, beta = rng.normal(0, 3, 4), rng.uniform(0, 10)
+        expected = np.exp(activations * beta) / np.sum(np.exp(activations * beta))
+        np.testing.assert_array_equal(Softmax(temperature=beta, activations=activations).compute(), expected)
+
+
 if __name__ == "__main__":
     pytest.main()

@@ -95,7 +95,7 @@ class Bads:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
+        Additional keyword arguments. See the `pybads.bads <https://acerbilab.github.io/pybads/api/classes/bads.html>`__ documentation for what is supported.
 
     Attributes
     ----------
@@ -119,7 +119,7 @@ class Bads:
 
     The BADS algorithm has been designed to handle both deterministic and noisy (stochastic) target functions. A deterministic target function is a target function that returns the same exact probability value for a given dataset and proposed set of parameter values. By contrast, a stochastic target function returns varying probability values for the same input (data and parameters).
     The vast majority of models use a deterministic target function. We recommend that users make this explicit to BADS, by providing an `options` dictionary that includes the key `uncertainty_handling` set to `False`.
-    Please see that [BADS options](https://acerbilab.github.io/pybads/api/options/bads_options.html) documentation for more details.
+    Please see that `BADS options <https://acerbilab.github.io/pybads/api/options/bads_options.html>`__ documentation for more details.
     """
 
     def __init__(
@@ -188,8 +188,9 @@ class Bads:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):

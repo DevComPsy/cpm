@@ -1,0 +1,33 @@
+name: notebooks
+
+# Runs every tutorial and example from top to bottom, to catch notebooks that
+# no longer work with the current version of cpm. The documentation itself is
+# built from the stored outputs, so this does not block pull requests.
+on:
+  schedule:
+    - cron: "0 5 * * 1"  # Mondays, 05:00 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "docs/**/*.ipynb"
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install cpm and the notebook dependencies
+        run: pip install -e ".[notebooks]" -c docs/constraints.txt
+
+      - name: Run the notebooks
+        run: pytest --nbmake --nbmake-timeout=3600 -n 2 docs/get-started docs/tutorials docs/examples

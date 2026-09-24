@@ -12,7 +12,7 @@ def simulation_export(simulation):
     Return a pandas dataframe from the cpm-conventional array of dictionaries.
 
     Returns
-    ------
+    -------
     policies : pandas.DataFrame
         A dataframe containing the the model output for each participant and trial.
         If the output variable is organised as an array with more than one dimension, the output will be flattened.

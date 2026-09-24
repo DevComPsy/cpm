@@ -1,0 +1,8 @@
+{# Download link for pages built from a Jupyter notebook. #}
+{%- if sourcename is defined and sourcename.endswith(".ipynb") %}
+<div class="tocsection notebook-links">
+  <a href="{{ pathto('_sources/' + sourcename, true) }}" download>
+    <i class="fa-solid fa-download"></i> Download notebook
+  </a>
+</div>
+{%- endif %}

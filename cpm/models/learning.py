@@ -10,7 +10,7 @@ __all__ = [
 
 
 class DeltaRule:
-    """
+    r"""
     DeltaRule class computes the prediction error for a given input and target value.
 
     Parameters
@@ -30,7 +30,7 @@ class DeltaRule:
 
     See Also
     --------
-    [cpm.models.learning.SeparableRule][cpm.models.learning.SeparableRule] : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
+    cpm.models.learning.SeparableRule : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
 
     Notes
     -----
@@ -44,14 +44,14 @@ class DeltaRule:
     extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning. Such that
 
 
-    $$
-    \\Delta w_{ij} = \\alpha \\cdot (\\lambda_i - \\sum_j w_{ij}) \\cdot x_j
-    $$
+    .. math::
 
-    where $\\Delta w_{ij}$ is the change in weight for the $j$-th stimulus for the $i$-th outcome,
-    $\\lambda_i$ is the target (feedback) value for the i-th outcome, $w_ij$ is the weights of stimulus $j$
-    for the $i$-th outcome,
-    $x_j$ is the j-th stimulus input, and $\\alpha$ is the learning rate. This is consistent with the
+        \Delta w_{ij} = \alpha \cdot (\lambda_i - \sum_j w_{ij}) \cdot x_j
+
+    where :math:`\Delta w_{ij}` is the change in weight for the :math:`j`-th stimulus for the :math:`i`-th outcome,
+    :math:`\lambda_i` is the target (feedback) value for the i-th outcome, :math:`w_{ij}` is the weights of stimulus :math:`j`
+    for the :math:`i`-th outcome,
+    :math:`x_j` is the j-th stimulus input, and :math:`\alpha` is the learning rate. This is consistent with the
     Rescorla and Wagner (1972)'s learning rule incorporating the summed error term.
 
     Examples
@@ -80,7 +80,7 @@ class DeltaRule:
     array([[0.03, 0.03, 0.  , 0.  ]])
 
     References
-    ---------
+    ----------
     Gluck, M. A., & Bower, G. H. (1988). From conditioning to category learning: An adaptive network model. Journal of Experimental Psychology: General, 117(3), 227–247.
 
     Rescorla, R. A., & Wagner, A. R. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and nonreinforcement. In A. H. Black & W. F. Prokasy (Eds.), Classical conditioning II: Current research and theory (pp. 64-99). New York:Appleton-Century-Crofts.
@@ -182,12 +182,12 @@ class DeltaRule:
 
 
 class SeparableRule:
-    """
+    r"""
     A class representing a learning rule based on the separable error-term of
     Bush and Mosteller (1951).
 
     Parameters
-    -----------
+    ----------
     alpha : float
         The learning rate.
     zeta : float, optional
@@ -203,16 +203,16 @@ class SeparableRule:
 
     See Also
     --------
-    [cpm.models.learning.DeltaRule][cpm.models.learning.DeltaRule] : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
+    cpm.models.learning.DeltaRule : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
 
     Notes
     -----
     This type of learning rule was among the earliest formal models of associative learning (Le Pelley, 2004), which were based on standard linear operators (Bush & Mosteller, 1951; Estes, 1950; Kendler, 1971). It is used in a variety of reinforcement learning models. This learning rule is defined in `cpm` as
 
 
-    $$
-    \\Delta w_{ij} = \\alpha \\cdot (\\lambda_i - w_{ij}) \\cdot x_j
-    $$
+    .. math::
+
+        \Delta w_{ij} = \alpha \cdot (\lambda_i - w_{ij}) \cdot x_j
 
     which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms.
 
@@ -250,8 +250,8 @@ class SeparableRule:
         """
         Computes the prediction error using the learning rule.
 
-        Returns:
-        --------
+        Returns
+        -------
         ndarray
             The prediction error for each stimuli-outcome mapping.
             It has the same shape as the weights input argument.
@@ -312,7 +312,7 @@ class SeparableRule:
 
 
 class QLearningRule:
-    """
+    r"""
     Q-learning rule (Watkins, 1989) for a one-dimensional array of Q-values.
 
     Parameters
@@ -333,11 +333,11 @@ class QLearningRule:
     The Q-learning rule is a model-free reinforcement learning algorithm that is used to learn the value of an action in a given state.
     It is defined as
 
-    $$
-    \\Delta \\mathcal{Q}(s, a) =  \\alpha \\cdot (r + \\gamma \\cdot \\max_{a'} \\mathcal{Q}(s', a') - \\mathcal{Q}(s, a))
-    $$
+    .. math::
 
-    where $\\Delta \\mathcal{Q}(s, a)$ is the change in value of action $a$ in state $s$, $r$ is the reward received on the current state, $\\gamma$ is the discount factor, and $\\max_{a'} \\mathcal{Q}(s', a')$ is the maximum estimated reward for the next state.
+        \Delta \mathcal{Q}(s, a) =  \alpha \cdot (r + \gamma \cdot \max_{a'} \mathcal{Q}(s', a') - \mathcal{Q}(s, a))
+
+    where :math:`\Delta \mathcal{Q}(s, a)` is the change in value of action :math:`a` in state :math:`s`, :math:`r` is the reward received on the current state, :math:`\gamma` is the discount factor, and :math:`\max_{a'} \mathcal{Q}(s', a')` is the maximum estimated reward for the next state.
 
     Examples
     --------
@@ -408,7 +408,7 @@ class QLearningRule:
 
 
 class HumbleTeacher:
-    """
+    r"""
     A humble teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
 
     Attributes
@@ -441,20 +441,20 @@ class HumbleTeacher:
     -----
     The humble teacher is a learning rule that is based on the idea that if output node activations are larger than the teaching signal, they should not be counted as error, but should be rewarded. It is defined as:
 
-    $$
-    t_k = \\begin{cases}
-    \\min(-1, a_k) & \\text{if } t_k = 0 \\text{ if stimulus is not followed by outcome/category-label} \\\\
-    \\max(1, a_k) & \\text{if } t_k = 1 \\text{ if stimulus is followed by outcome/category-label}
-    \\end{cases}
-    $$
+    .. math::
 
-    where $t_k$ is the teaching signal. Then the change in weights is computed according to the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton & Williams, 1986; Gluck & Bower, 1988):
+        t_k = \begin{cases}
+        \min(-1, a_k) & \text{if } t_k = 0 \text{ if stimulus is not followed by outcome/category-label} \\
+        \max(1, a_k) & \text{if } t_k = 1 \text{ if stimulus is followed by outcome/category-label}
+        \end{cases}
 
-    $$
-    \\Delta w_{ij} = \\alpha \\cdot (t_k - a_k) \\cdot x_j
-    $$
+    where :math:`t_k` is the teaching signal. Then the change in weights is computed according to the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton & Williams, 1986; Gluck & Bower, 1988):
 
-    where $\\Delta w_{ij}$ is the change in weight for the $j$-th stimulus for the $i$-th outcome, $t_k$ is the teaching signal for the $k$-th outcome, $a_k$ is the summed activation of all nodes connected to the $k$-th outcome, $x_j$ is the j-th stimulus input, and $\\alpha$ is the learning rate.
+    .. math::
+
+        \Delta w_{ij} = \alpha \cdot (t_k - a_k) \cdot x_j
+
+    where :math:`\Delta w_{ij}` is the change in weight for the :math:`j`-th stimulus for the :math:`i`-th outcome, :math:`t_k` is the teaching signal for the :math:`k`-th outcome, :math:`a_k` is the summed activation of all nodes connected to the :math:`k`-th outcome, :math:`x_j` is the j-th stimulus input, and :math:`\alpha` is the learning rate.
 
     References
     ----------
@@ -515,15 +515,15 @@ class HumbleTeacher:
 
 
 class SARSATrace:
-    """
+    r"""
     SARSA learning rule with an eligibility trace for a two-stage Markov decision task (Sutton & Barto, 2018; Kool et al., 2016).
 
     Parameters
     ----------
     learning_rate : float
-        The learning rate, $\\alpha$.
+        The learning rate, :math:`\alpha`.
     eligibility_trace : float
-        The eligibility trace decay, $\\lambda$. It determines how much of the second-stage prediction error is carried back to the first-stage model-free value.
+        The eligibility trace decay, :math:`\lambda`. It determines how much of the second-stage prediction error is carried back to the first-stage model-free value.
     model_free_values : ndarray
         The first-stage model-free Q-values, a 2D array of shape (n_states, n_actions). The array is not modified in-place.
     second_stage_values : ndarray
@@ -540,9 +540,9 @@ class SARSATrace:
     Attributes
     ----------
     stage1_prediction_error : float
-        The first-stage prediction error, $\\delta_1$, set after calling `compute()`.
+        The first-stage prediction error, :math:`\delta_1`, set after calling `compute()`.
     stage2_prediction_error : float
-        The second-stage prediction error, $\\delta_2$, set after calling `compute()`.
+        The second-stage prediction error, :math:`\delta_2`, set after calling `compute()`.
     model_free_delta : ndarray
         The change to add to `model_free_values`, set after calling `compute()`.
     planet_value_delta : ndarray
@@ -552,27 +552,27 @@ class SARSATrace:
     -----
     The rule computes two coupled prediction errors. The first-stage prediction error compares the value of the reached second-stage state with the model-free value of the chosen first-stage action,
 
-    $$
-    \\delta_1 = Q_2(s_2) - Q_{MF}(s_1, a),
-    $$
+    .. math::
+
+        \delta_1 = Q_2(s_2) - Q_{MF}(s_1, a),
 
     and the second-stage prediction error compares the reward with the value of the reached second-stage state,
 
-    $$
-    \\delta_2 = r - Q_2(s_2).
-    $$
+    .. math::
+
+        \delta_2 = r - Q_2(s_2).
 
     The values are then updated as
 
-    $$
-    \\Delta Q_{MF}(s_1, a) = \\alpha \\delta_1 + \\lambda \\alpha \\delta_2,
-    $$
+    .. math::
 
-    $$
-    \\Delta Q_2(s_2) = \\alpha \\delta_2,
-    $$
+        \Delta Q_{MF}(s_1, a) = \alpha \delta_1 + \lambda \alpha \delta_2,
 
-    where the eligibility trace $\\lambda$ carries the second-stage prediction error back to the first-stage choice. All other values remain unchanged.
+    .. math::
+
+        \Delta Q_2(s_2) = \alpha \delta_2,
+
+    where the eligibility trace :math:`\lambda` carries the second-stage prediction error back to the first-stage choice. All other values remain unchanged.
 
     Examples
     --------

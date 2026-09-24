@@ -22,7 +22,9 @@ def numerical_hessian(func=None, params=None, hessian=None):
         params: Parameters that ``func`` implicitly depends on and with respect to which the
             derivatives will be taken.
 
-    Returns:
+    Returns
+    -------
+    numpy.ndarray
         Hessian matrix
     """
 

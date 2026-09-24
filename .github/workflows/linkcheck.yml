@@ -1,0 +1,25 @@
+name: linkcheck
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linkcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -e ".[docs]" -c docs/constraints.txt
+
+      - name: Check external links
+        run: python -m sphinx -b linkcheck docs docs/_build/linkcheck

@@ -19,6 +19,7 @@ def ipyparallel_pandas_to_list(dataframe):
     -------
     list
         A list of tuples, where each element has the:
+
         - key: the group key
         - value: the group data as pandas DataFrame
     """

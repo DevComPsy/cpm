@@ -258,7 +258,7 @@ class Value:
         The upper bound of the parameter.
     prior : string or object, optional
         If a string, it should be one of continuous distributions from `scipy.stats`.
-        See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details.
+        See the `scipy documentation <https://docs.scipy.org/doc/scipy/reference/stats.html>`__ for more details.
         The default is None.
         If an object, it should be or contain a callable function representing the prior distribution of the parameter with methods similar to `scipy.stats` distributions.
         See Notes for more details.
@@ -276,7 +276,7 @@ class Value:
     - 'truncated_exponential'
     - 'norm'
 
-    Because these distributions are inherited from `scipy.stats`, see the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on how to update variables of the distribution.
+    Because these distributions are inherited from `scipy.stats`, see the `scipy documentation <https://docs.scipy.org/doc/scipy/reference/stats.html>`__ for more details on how to update variables of the distribution.
 
     Returns
     -------

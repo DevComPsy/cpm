@@ -48,7 +48,7 @@ class Minimize:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html) documentation for what is supported.
+        Additional keyword arguments. See the :func:`scipy.optimize.minimize` documentation for what is supported.
 
     Attributes
     ----------
@@ -139,8 +139,9 @@ class Minimize:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):

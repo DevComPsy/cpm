@@ -19,10 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `cpm.applications.reinforcement_learning.HybridMBMF`, the 6-parameter hybrid model-based / model-free model for the two-step task (Kool et al., 2016; Smid et al., 2022)
 - Added `cpm.models.learning.SARSATrace`, a SARSA learning rule with an eligibility trace for two-stage tasks
 - Added test units for `HybridMBMF` and `SARSATrace`
-- Added a two-step task example notebook replicating Smid et al. (2022), with the adult data in `docs/examples/data/adltgroupdata.csv`
+- Added a two-step task example notebook replicating Smid et al. (2022)
+- Added `cpm.datasets.load_two_step_data`, which loads the adult two-step task data of Smid et al. (2022) that ship with the package
 
 ### Changed
 
+- Rebuilt the documentation with Sphinx and the PyData theme, replacing MkDocs. The site now separates the API reference from the tutorials (a numbered learning path from fitting a first model to hierarchical estimation), a gallery of research examples, and how-to guides; adds a quickstart and core concept pages; documents every public object; and links API pages to the tutorials that use them. All tutorials and examples were rewritten or revised and re-run on the current version. Pages of the old site redirect to their new locations
+- Converted all docstrings from Markdown to reStructuredText (NumPy style), fixed incorrect examples in the docstrings of `RLRW`, `EmpiricalBayes`, `ProspectUtility`, `bin_ratings`, `count_trials` and `convert_to_RLRW`, added an example to `VariationalBayes`, and corrected the column list of `load_bandit_data`. Docstrings with LaTeX are now raw strings, which fixes a `SyntaxWarning` and a corrupted equation in the docstring of `RLRW`
+- Restricted package discovery to `cpm`, so that files under `docs/` are no longer packaged, and added `docs` and `notebooks` optional dependencies
 - Significantly improved the performance of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` for long or multi-chain EM runs, by buffering results instead of concatenating on every iteration and vectorising the Hessian inversions
 
 ### Fixed

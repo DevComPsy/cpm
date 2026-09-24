@@ -4,7 +4,7 @@ __all__ = ["RapidAttentionShift"]
 
 
 class RapidAttentionShift:
-    """
+    r"""
         RapidAttentionShift implements the rapid attention shift from models such as EXIT (Kruschke, 2001) and its simplified version (Paskewitz & Jones, 2020). The rapid attention shift mechanism allows the model to quickly adjust attention to stimuli based on prediction errors, enabling faster learning, and is an essential component in models of associative learning that incorporate attention mechanisms in the tradition of Mackintosh (1975).
         
         Parameters
@@ -30,35 +30,35 @@ class RapidAttentionShift:
 
         See Also
         --------
-        [cpm.models.activation.CompetitiveGating][cpm.models.activation.CompetitiveGating] : A class representing competitive attention gating, which can be used in conjunction with RapidAttentionShift to model attention mechanisms.
+        cpm.models.activation.CompetitiveGating : A class representing competitive attention gating, which can be used in conjunction with RapidAttentionShift to model attention mechanisms.
 
         Notes
         -----
-        The rapid attention shift is defined as the change in attention gain for stimulus $j$ on a given iteration, computed as:
+        The rapid attention shift is defined as the change in attention gain for stimulus :math:`j` on a given iteration, computed as:
 
-        $$
-            \\Delta g_j' = \\rho ||g'||_p^{-1} \\circ \\sum_{k} \\delta_k (W_{ki}s_{i} - {a'_{i}}^{p-1}{z'_{k}}^{T})
-        $$
+        .. math::
 
-        where $a_i$ is the normalised attention gain for stimulus $i$ and $g$ is the attention gain vector calculated from saliences, $\\eta$, by $g_i = s_i*\\eta_i$. The $\\circ$ denotes element-wise multiplication. The normalised attention gain is computed as:
+            \Delta g_j' = \rho ||g'||_p^{-1} \circ \sum_{k} \delta_k (W_{ki}s_{i} - {a'_{i}}^{p-1}{z'_{k}}^{T})
 
-        $$
-        a_i = \\frac{g_i}{||g||_p} \\
-        $$
+        where :math:`a_i` is the normalised attention gain for stimulus :math:`i` and :math:`g` is the attention gain vector calculated from saliences, :math:`\eta`, by :math:`g_i = s_i*\eta_i`. The :math:`\circ` denotes element-wise multiplication. The normalised attention gain is computed as:
 
-        The model prediction $z_k$ is computed as:
+        .. math::
+
+            a_i = \frac{g_i}{||g||_p}
+
+        The model prediction :math:`z_k` is computed as:
         
-        $$
-        z_k = \\sum_{i} W_{ki} s_i a_i
-        $$
-        
+        .. math::
+
+            z_k = \sum_{i} W_{ki} s_i a_i
+
         Error is computed as:
         
-        $$
-        \\delta_k = t_k - z_k
-        $$
-        
-        where $t_k$ is the target outcome for outcome $k$ and $z_k$ is the model prediction for outcome $k$. The attention shift is a non-linear function of attention gain. This means that the attention shift has to be computed iteratively, with the attention gain, prediction error, and model predictions being updated after each iteration until convergence. The attention shift rate, $\\rho$, controls the speed of convergence. Previous research (Kruschke, 2001) set the number of iterations to 10, but this can be adjusted based on the specific use case and convergence criteria. Here we only implement a single iteration of the attention shift, and the user can call the function multiple times to compute the attention shift iteratively until convergence.
+        .. math::
+
+            \delta_k = t_k - z_k
+
+        where :math:`t_k` is the target outcome for outcome :math:`k` and :math:`z_k` is the model prediction for outcome :math:`k`. The attention shift is a non-linear function of attention gain. This means that the attention shift has to be computed iteratively, with the attention gain, prediction error, and model predictions being updated after each iteration until convergence. The attention shift rate, :math:`\rho`, controls the speed of convergence. Previous research (Kruschke, 2001) set the number of iterations to 10, but this can be adjusted based on the specific use case and convergence criteria. Here we only implement a single iteration of the attention shift, and the user can call the function multiple times to compute the attention shift iteratively until convergence.
         
         References
         ----------

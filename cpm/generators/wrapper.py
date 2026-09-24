@@ -33,7 +33,7 @@ class Wrapper:
 
     Notes
     -----
-    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary or `pd.Series` containing all input to the model on a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:
+    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a :class:`Parameter <cpm.generators.Parameters>` object specifying the model parameters. The `trial` argument should be a dictionary or `pd.Series` containing all input to the model on a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:
 
     - 'dependent': Any dependent variables calculated by the model that will be used for the loss function.
 
@@ -213,6 +213,7 @@ class Wrapper:
         Notes
         -----
         The `loss` function should take the following named arguments:
+
             - `predicted`: The predicted values from the model.
             - `observed`: The observed values from the data.
 

@@ -179,6 +179,7 @@ def fit_metad(
         each response category, conditional on presentation of S1 and S2. If
         nR_S1 = [100, 50, 20, 10, 5, 1], then when stimulus S1 was presented, the
         subject had the following response counts:
+
         * responded `'S1'`, rating=`3` : 100 times
         * responded `'S1'`, rating=`2` : 50 times
         * responded `'S1'`, rating=`1` : 20 times
@@ -189,16 +190,18 @@ def fit_metad(
         The ordering of response / rating counts for S2 should be the same as
         it is for S1. e.g. if nR_S2 = [3, 7, 8, 12, 27, 89], then when stimulus S2
         was presented, the subject had the following response counts:
+
         * responded `'S1'`, rating=`3` : 3 times
         * responded `'S1'`, rating=`2` : 7 times
         * responded `'S1'`, rating=`1` : 8 times
         * responded `'S2'`, rating=`1` : 12 times
         * responded `'S2'`, rating=`2` : 27 times
         * responded `'S2'`, rating=`3` : 89 times
+
     nRatings :
         Number of discrete ratings. If a continuous rating scale was used, and
         the number of unique ratings does not match `nRatings`, will convert to
-        discrete ratings using :py:func:`metadpy.utils.bin_ratings`.
+        discrete ratings using :func:`cpm.utils.metad.bin_ratings`.
         Default is set to 4.
     nCriteria :
         (Optional) Number criteria to be fitted. If `None`, the number of criteria is
@@ -210,22 +213,25 @@ def fit_metad(
         http://www.columbia.edu/~bsm2105/type2sdt for further discussion.
     verbose :
         Level of algorithm's verbosity:
+
             * 0 (default) : work silently.
             * 1 : display a termination report.
             * 2 : display progress during iterations.
             * 3 : display progress during iterations (more complete report).
+
     fninv :
         A function handle for the inverse CDF of the type 1 distribution. If
-        not specified, fninv defaults to :py:func:`scipy.stats.norm.ppf()`.
+        not specified, fninv defaults to :obj:`scipy.stats.norm.ppf <scipy.stats.norm>`.
     fncdf :
         A function handle for the CDF of the type 1 distribution. If not
-        specified, fncdf defaults to :py:func:`scipy.stats.norm.cdf()`.
+        specified, fncdf defaults to :obj:`scipy.stats.norm.cdf <scipy.stats.norm>`.
 
     Returns
     -------
     results :
         In the following, S1 and S2 represent the distributions of evidence generated
         by stimulus classes S1 and S2:
+
         * `'d'` : d-prime, the distance between the means of the S1 and S2 distributions, in RMS units.
         * `'s'` : ratio of the standard deviations of the S1 and S2
         * `'meta_d'` : meta-d' in RMS units
@@ -430,10 +436,12 @@ class EstimatorMetaD:
         If True, the log likelihoods will incorporate prior density of parameters.
     display : int, default 0
         Level of algorithm's verbosity:
+
             * 0 (default) : work silently.
             * 1 : display a termination report.
             * 2 : display progress during iterations.
             * 3 : display progress during iterations (more complete report).
+
     ppt_identifier : str, optional
         Identifier for participants in the data. If None, the default identifier will be used.
     ignore_invalid : bool, default False
@@ -445,8 +453,8 @@ class EstimatorMetaD:
     -------
     An EstimatorMetaD object.
 
-    Note
-    ----
+    Notes
+    -----
     The data DataFrame should contain the following columns:
 
     - 'participant': Identifier for each participant.
@@ -537,7 +545,7 @@ class EstimatorMetaD:
 
         Notes
         -----
-        If you want to tune the behaviour of the optimization, you can do so by passing additional keyword arguments to the class constructor. See the [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html) documentation for more details on the available options. By default, the optimization will use the `trust-constr` method with the default options specified in the `scipy.optimize.minimize` documentation.
+        If you want to tune the behaviour of the optimization, you can do so by passing additional keyword arguments to the class constructor. See the :func:`scipy.optimize.minimize` documentation for more details on the available options. By default, the optimization will use the `trust-constr` method with the default options specified in the `scipy.optimize.minimize` documentation.
 
 
         References

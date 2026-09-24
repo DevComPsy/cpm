@@ -4,7 +4,7 @@ __all__ = ["SigmoidActivation", "CompetitiveGating", "ProspectUtility", "Offset"
 
 
 class SigmoidActivation:
-    """
+    r"""
     Represents a sigmoid activation function.
 
     Notes
@@ -12,11 +12,11 @@ class SigmoidActivation:
 
     The sigmoid activation function is defined as follows:
 
-    $$
-    a = \\frac{1}{1 + e^{-x \\cdot w}}
-    $$
+    .. math::
 
-    where $x$ is the stimulus representation (vector), and $w$ is a 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
+        a = \frac{1}{1 + e^{-x \cdot w}}
+
+    where :math:`x` is the stimulus representation (vector), and :math:`w` is a 2D array of weights, where each row represents an outcome and each column represents a single stimulus.
 
     """
 
@@ -49,7 +49,7 @@ class SigmoidActivation:
 
 
 class CompetitiveGating:
-    """
+    r"""
     A competitive attentional gating function, an attentional activation function, that incorporates stimulus salience in addition to the stimulus vector to modulate the weights.
     It formalises the hypothesis that each stimulus has an underlying salience that competes to captures attentional focus (Paskewitz and Jones, 2020; Kruschke, 2001).
 
@@ -78,17 +78,17 @@ class CompetitiveGating:
     -----
     The competitive gating function is defined as follows:
 
-    $$
-    a = \\frac{g}{||g||_p}
-    $$
+    .. math::
 
-    where $g$ is the attentional gain, defined as the element-wise product of the stimulus vector and the salience vector, and $||g||_p$ is the p-norm of the attentional gain:
+        a = \frac{g}{||g||_p}
 
-    $$
-    ||g||_p = \\left(\\sum_{i=1}^{n} g_i^p \\right)^{1/p}
-    $$
+    where :math:`g` is the attentional gain, defined as the element-wise product of the stimulus vector and the salience vector, and :math:`||g||_p` is the p-norm of the attentional gain:
 
-    The parameter $p$ controls the brutality of the competition between the stimuli. When $p$ is close to 0, the competition is very brutal. When $p$ is close to infinity, the competition is very mild, and all stimuli will receive attention proportional to their gain.
+    .. math::
+
+        ||g||_p = \left(\sum_{i=1}^{n} g_i^p \right)^{1/p}
+
+    The parameter :math:`p` controls the brutality of the competition between the stimuli. When :math:`p` is close to 0, the competition is very brutal. When :math:`p` is close to infinity, the competition is very mild, and all stimuli will receive attention proportional to their gain.
 
     References
     ----------
@@ -133,7 +133,7 @@ class CompetitiveGating:
 
 
 class ProspectUtility:
-    """
+    r"""
     A class for computing choice utilities based on prospect theory.
 
     Parameters
@@ -174,33 +174,33 @@ class ProspectUtility:
 
     Following Tversky & Kahneman (1992), the expected utility U of a choice option is defined as:
 
-    $$
-    \\mathcal{U} = \\sum_{i=1}^{n} w(p_i) \\cdot u(x_i)
-    $$
+    .. math::
 
-    where $w$ is a weighting function of the probability p of a potential outcome,
-    and $u$ is the utility function of the magnitude x of a potential outcome.
-    The utility function $u$ is defined as a power function for both gains and losses. It is implemented
+        \mathcal{U} = \sum_{i=1}^{n} w(p_i) \cdot u(x_i)
+
+    where :math:`w` is a weighting function of the probability p of a potential outcome,
+    and :math:`u` is the utility function of the magnitude x of a potential outcome.
+    The utility function :math:`u` is defined as a power function for both gains and losses. It is implemented
     after Equation 5 in Tversky & Kahneman (1992):
 
-    $$
-    u(x) =
-    \\begin{cases}
-        x^\\alpha & \\text{if } x \\geq 0 \\\\
-        -\\lambda \\cdot (-x)^\\alpha & \\text{if } x < 0
-    \\end{cases}
-    $$
+    .. math::
 
-    where $\\alpha$ is the utility curvature parameter, and $\\lambda$ is the loss aversion parameter.
+        u(x) =
+        \begin{cases}
+        x^\alpha & \text{if } x \geq 0 \\
+        -\lambda \cdot (-x)^\alpha & \text{if } x < 0
+        \end{cases}
+
+    where :math:`\alpha` is the utility curvature parameter, and :math:`\lambda` is the loss aversion parameter.
     The weighting function is implemented after Equation 6 in Tversky & Kahneman (1992):
 
-    $$
-    w(p) = \\frac{p^\\gamma}{(p^\\gamma + (1 - p)^\\gamma)^{1/\\gamma}}
-    $$
+    .. math::
 
-    where `gamma`, denoted via $\\gamma$, is the discriminability parameter of the weighting function.
+        w(p) = \frac{p^\gamma}{(p^\gamma + (1 - p)^\gamma)^{1/\gamma}}
+
+    where `gamma`, denoted via :math:`\gamma`, is the discriminability parameter of the weighting function.
     In the original formulation of Tversky & Kahneman (1992), losses are weighted with a different parameter,
-    `delta`, denoted via $\\delta$, that replaces $\\gamma$ in the weighting function for losses.
+    `delta`, denoted via :math:`\delta`, that replaces :math:`\gamma` in the weighting function for losses.
     In the current implementation, whether it is a gain or less is determined by the sign of the corresponding
     magnitude.
 
@@ -208,31 +208,31 @@ class ProspectUtility:
     most notably in Prelec (1998) and Gonzalez & Wu (1999).
     Prelec (equation 3.2, 1998, pp. 503) proposed the following definition:
 
-    $$
-    w(p) = \\exp(-\\delta \\cdot (-\\log(p))^\\gamma)
-    $$
+    .. math::
 
-    where `delta`, $\\delta$, and `gamma`, $\\gamma$, are the attractiveness and discriminability parameters of the weighting function.
+        w(p) = \exp(-\delta \cdot (-\log(p))^\gamma)
+
+    where `delta`, :math:`\delta`, and `gamma`, :math:`\gamma`, are the attractiveness and discriminability parameters of the weighting function.
     Gonzalez & Wu (equation 3, 1999, pp. 139) proposed the following definition:
 
-    $$
-    w(p) = \\frac{\\delta \\cdot p^\\gamma}{\\delta \\cdot p^\\gamma + (1 - p)^\\gamma}
-    $$
+    .. math::
+
+        w(p) = \frac{\delta \cdot p^\gamma}{\delta \cdot p^\gamma + (1 - p)^\gamma}
 
     Examples
     --------
-    >>> from cpm.models.activations import ProspectUtility
+    >>> from cpm.models.activation import ProspectUtility
     >>> magnitudes = [[5, 0], [10, -10]]
     >>> probabilities = [[0.8, 0.2], [0.5, 0.5]]
     >>> model = ProspectUtility(
-            magnitudes=magnitudes,
-            probabilities=probabilities,
-            alpha=0.88,
-            lambda_loss=2.25,
-            gamma=0.61,
-            delta=1.0,
-            weighting="tk"
-        )
+    ...     magnitudes=magnitudes,
+    ...     probabilities=probabilities,
+    ...     alpha=0.88,
+    ...     lambda_loss=2.25,
+    ...     gamma=0.61,
+    ...     delta=1.0,
+    ...     weighting="tk",
+    ... )
     >>> expected_utilities = model.compute()
     >>> print(expected_utilities)
 

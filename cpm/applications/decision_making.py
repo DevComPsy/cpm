@@ -7,8 +7,8 @@ from cpm.models.activation import ProspectUtility
 
 
 class PTSM(Wrapper):
-    """
-    A simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992), similar to the initial publication of the theory in Kahneman & Tversky (1979). It differs from [cpm.applications.decision_making.PTSM2025][cpm.applications.decision_making.PTSM2025] and [cpm.applications.decision_making.PTSM1992][cpm.applications.decision_making.PTSM1992] in that it does not use use different utility and weight curvature parameters for gains and losses.
+    r"""
+    A simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992), similar to the initial publication of the theory in Kahneman & Tversky (1979). It differs from :class:`cpm.applications.decision_making.PTSM2025` and :class:`cpm.applications.decision_making.PTSM1992` in that it does not use use different utility and weight curvature parameters for gains and losses.
     
     Parameters
     ----------
@@ -24,7 +24,7 @@ class PTSM(Wrapper):
             - "power": use a simple power function (p^gamma)
             - "tk": use the Tversky–Kahneman (1992) weighting function.
 
-        See [cpm.models.activation.ProspectUtility][cpm.models.activation.ProspectUtility] for explanation and alternatives.
+        See :class:`cpm.models.activation.ProspectUtility` for explanation and alternatives.
 
     Returns
     -------
@@ -32,7 +32,7 @@ class PTSM(Wrapper):
         An instance of the PTSM model, which can be used to fit data and generate predictions.
 
     Notes
-    ------
+    -----
 
     The model parameters are initialized with the following default values if not specified (values are in the form [initial, lower_bound, upper_bound]):
 
@@ -48,42 +48,42 @@ class PTSM(Wrapper):
         - `gamma`: truncated normal with mean 2.5 and standard deviation 1.0.
         - `temperature`: truncated normal with mean 10.0 and standard deviation 5.0.
 
-    ### Model Specification
+    .. rubric:: Model Specification
 
-    The model computes the subjective utility of the safe and risky options using a utility function, which can be either a power function or a user-defined utility curve. If a utility curve is not provided, the model uses the following power function with curvature parameter $\\alpha$ after Tversky & Kahneman (1992):
+    The model computes the subjective utility of the safe and risky options using a utility function, which can be either a power function or a user-defined utility curve. If a utility curve is not provided, the model uses the following power function with curvature parameter :math:`\alpha` after Tversky & Kahneman (1992):
     
-    $$
-    \\mathcal{U}(o) = \\sum_{i=1}^{n} w(p_i) \\cdot u(x_i)
-    $$
+    .. math::
 
-    where $w$ is a weighting function of the probability p of a potential outcome,
-    and $u$ is the utility function of the magnitude x of a potential outcome. The choice options is denoted with $o$.
-    The utility function $u$ is defined as a power function for both gains and losses. It is implemented
+        \mathcal{U}(o) = \sum_{i=1}^{n} w(p_i) \cdot u(x_i)
+
+    where :math:`w` is a weighting function of the probability p of a potential outcome,
+    and :math:`u` is the utility function of the magnitude x of a potential outcome. The choice options is denoted with :math:`o`.
+    The utility function :math:`u` is defined as a power function for both gains and losses. It is implemented
     after Equation 5 in Tversky & Kahneman (1992):
 
-    $$
-    u(x) =
-    \\begin{cases}
-        x^\\alpha & \\text{if } x \\geq 0 \\\\
-        -\\lambda \\cdot (-x)^\\alpha & \\text{if } x < 0
-    \\end{cases}
-    $$
+    .. math::
 
-    where $\\alpha$ is the utility curvature parameter for both gains and losses, and $\\lambda$ is the loss aversion parameter.
+        u(x) =
+        \begin{cases}
+        x^\alpha & \text{if } x \geq 0 \\
+        -\lambda \cdot (-x)^\alpha & \text{if } x < 0
+        \end{cases}
+
+    where :math:`\alpha` is the utility curvature parameter for both gains and losses, and :math:`\lambda` is the loss aversion parameter.
     The weighting function is implemented after Equation 6 in Tversky & Kahneman (1992):
 
-    $$
-    w(p) = \\frac{p^\\gamma}{(p^\\gamma + (1 - p)^\\gamma)^{1/\\gamma}}
-    $$
+    .. math::
 
-    where `gamma`, denoted via $\\gamma$, is the discriminability parameter of the weighting function for both gains and losses.
+        w(p) = \frac{p^\gamma}{(p^\gamma + (1 - p)^\gamma)^{1/\gamma}}
+
+    where `gamma`, denoted via :math:`\gamma`, is the discriminability parameter of the weighting function for both gains and losses.
     The model then applies the softmax function to compute the choice probabilities:
 
-    $$
-    p(o_i) = \\frac{e^{\\beta \\cdot \\mathcal{U}(o_i)}}{\\sum_{j=1}^{n} e^{\\beta \\cdot \\mathcal{U}(o_j)}}
-    $$
-    
-    ### Model output
+    .. math::
+
+        p(o_i) = \frac{e^{\beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{\beta \cdot \mathcal{U}(o_j)}}
+
+    .. rubric:: Model output
 
     The model outputs the following trial-level information:
 
@@ -98,17 +98,17 @@ class PTSM(Wrapper):
         - `u_safe`: the utility of the safe option.
         - `u_risk`: the utility of the risky option.
     
-    ## Details for fitting the model to data
+    .. rubric:: Details for fitting the model to data
 
     The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
 
     If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
 
     See Also
-    ---------
-    [cpm.models.decision.Softmax][cpm.models.decision.Softmax] : for mapping utilities to choice probabilities.
+    --------
+    cpm.models.decision.Softmax : for mapping utilities to choice probabilities.
 
-    [cpm.models.activation.ProspectUtility][cpm.models.activation.ProspectUtility] : for the Prospect Utility class that computes subjective utilities and weighted probabilities.
+    cpm.models.activation.ProspectUtility : for the Prospect Utility class that computes subjective utilities and weighted probabilities.
 
     References
     ----------
@@ -244,7 +244,7 @@ class PTSM(Wrapper):
 
 
 class PTSM1992(Wrapper):
-    """
+    r"""
     A Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992), similar to the initial publication of the theory in Kahneman & Tversky (1979). It computes expected utility by combining transformed magnitudes and weighted probabilities, suitable for safe–risky decision paradigms.
 
     The model computes objective EV internally (ev_safe vs. ev_risk)
@@ -268,7 +268,7 @@ class PTSM1992(Wrapper):
             - "power": use a simple power function (p^gamma)
             - "tk": use the Tversky–Kahneman (1992) weighting function.
 
-        See [cpm.models.activation.ProspectUtility][cpm.models.activation.ProspectUtility] for explanation and alternatives.
+        See :class:`cpm.models.activation.ProspectUtility` for explanation and alternatives.
 
     Returns
     -------
@@ -298,43 +298,43 @@ class PTSM1992(Wrapper):
         - `temperature`: truncated normal with mean 10 and standard deviation 2.5.
 
 
-    ### Model Specification
+    .. rubric:: Model Specification
 
-    The model computes the subjective utility of the safe and risky options using a utility function, which can be either a power function or a user-defined utility curve. If a utility curve is not provided, the model uses the following power function with curvature parameter $\\alpha$ after Tversky & Kahneman (1992):
+    The model computes the subjective utility of the safe and risky options using a utility function, which can be either a power function or a user-defined utility curve. If a utility curve is not provided, the model uses the following power function with curvature parameter :math:`\alpha` after Tversky & Kahneman (1992):
     
-    $$
-    \\mathcal{U}(o) = \\sum_{i=1}^{n} w(p_i) \\cdot u(x_i)
-    $$
+    .. math::
 
-    where $w$ is a weighting function of the probability p of a potential outcome,
-    and $u$ is the utility function of the magnitude x of a potential outcome. The choice options is denoted with $o$.
-    The utility function $u$ is defined as a power function for both gains and losses. It is implemented
+        \mathcal{U}(o) = \sum_{i=1}^{n} w(p_i) \cdot u(x_i)
+
+    where :math:`w` is a weighting function of the probability p of a potential outcome,
+    and :math:`u` is the utility function of the magnitude x of a potential outcome. The choice options is denoted with :math:`o`.
+    The utility function :math:`u` is defined as a power function for both gains and losses. It is implemented
     after Equation 5 in Tversky & Kahneman (1992):
 
-    $$
-    u(x) =
-    \\begin{cases}
-        x^\\alpha & \\text{if } x \\geq 0 \\\\
-        -\\lambda \\cdot (-x)^\\beta & \\text{if } x < 0
-    \\end{cases}
-    $$
+    .. math::
 
-    where $\\alpha$ is the utility curvature parameter for gains, and $\\beta$, is the curvature parameter for losses, $\\lambda$ is the loss aversion parameter.
+        u(x) =
+        \begin{cases}
+        x^\alpha & \text{if } x \geq 0 \\
+        -\lambda \cdot (-x)^\beta & \text{if } x < 0
+        \end{cases}
+
+    where :math:`\alpha` is the utility curvature parameter for gains, and :math:`\beta`, is the curvature parameter for losses, :math:`\lambda` is the loss aversion parameter.
     The weighting function is implemented after Equation 6 in Tversky & Kahneman (1992):
 
-    $$
-    w^{+}(p) = \\frac{p^\\gamma}{(p^\\gamma + (1 - p)^\\gamma)^{1/\\gamma}}, w^{-}(p) = \\frac{p^\\delta}{(p^\\delta + (1 - p)^\\delta)^{1/\\delta}}
-    $$
+    .. math::
 
-    where `gamma`, denoted via $\\gamma$, is the discriminability parameter of the weighting function for gains, and with `delta`, denoted via $\\delta$, is the discriminability parameter of the weighting function for losses.
+        w^{+}(p) = \frac{p^\gamma}{(p^\gamma + (1 - p)^\gamma)^{1/\gamma}}, w^{-}(p) = \frac{p^\delta}{(p^\delta + (1 - p)^\delta)^{1/\delta}}
+
+    where `gamma`, denoted via :math:`\gamma`, is the discriminability parameter of the weighting function for gains, and with `delta`, denoted via :math:`\delta`, is the discriminability parameter of the weighting function for losses.
 
     The model then applies the softmax function to compute the choice probabilities:
 
-    $$
-    p(o_i) = \\frac{e^{beta \\cdot \\mathcal{U}(o_i)}}{\\sum_{j=1}^{n} e^{beta \\cdot \\mathcal{U}(o_j)}}
-    $$
+    .. math::
 
-    ### Model output
+        p(o_i) = \frac{e^{beta \cdot \mathcal{U}(o_i)}}{\sum_{j=1}^{n} e^{beta \cdot \mathcal{U}(o_j)}}
+
+    .. rubric:: Model output
 
     The model outputs the following trial-level information:
 
@@ -349,7 +349,7 @@ class PTSM1992(Wrapper):
         - `u_safe`: the utility of the safe option.
         - `u_risk`: the utility of the risky option.
 
-    ## Details for fitting the model to data
+    .. rubric:: Details for fitting the model to data
 
     The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
 
@@ -357,10 +357,10 @@ class PTSM1992(Wrapper):
         
 
     See Also
-    ---------
-    [cpm.models.decision.Softmax][cpm.models.decision.Softmax] : for mapping utilities to choice probabilities.
+    --------
+    cpm.models.decision.Softmax : for mapping utilities to choice probabilities.
 
-    [cpm.models.activation.ProspectUtility][cpm.models.activation.ProspectUtility] : for the Prospect Utility class that computes subjective utilities and weighted probabilities.
+    cpm.models.activation.ProspectUtility : for the Prospect Utility class that computes subjective utilities and weighted probabilities.
 
     References
     ----------
@@ -513,7 +513,7 @@ class PTSM1992(Wrapper):
         super().__init__(data=data, model=model_fn, parameters=params)
 
 class PTSM2025(Wrapper):
-    """
+    r"""
     An Prospect Theory Softmax Model loosely based on Chew et al. (2019), incorporating a bias term (phi_gain / phi_loss) in the softmax function for risks and gains, a utility curvature parameter (alpha) for non-linear utility transformations, and an ambiguity aversion parameter (eta).
 
     Parameters
@@ -550,37 +550,37 @@ class PTSM2025(Wrapper):
         - `temperature`: truncated normal with mean 10.0 and standard deviation 5.
         - `alpha`: truncated normal with mean 1.0 and standard deviation 1.
 
-    ### Model Description
+    .. rubric:: Model Description
 
-    In what follows, we briefly describe the model's operations. First, the model calculates the subjective probability of the risky option, adjusting for ambiguity aversion using the parameter `eta`, denoted with $\\eta$. The subjective probability is computed as:
+    In what follows, we briefly describe the model's operations. First, the model calculates the subjective probability of the risky option, adjusting for ambiguity aversion using the parameter `eta`, denoted with :math:`\eta`. The subjective probability is computed as:
 
-    $$
-    p_{subjective} = p_{risky} - \\eta \\cdot ambiguity
-    $$
+    .. math::
 
-    where $p_{risky}$ is the original probability of the risky choice and $ambiguity$ is the ambiguity associated with the risky option, either 0 for non-ambiguous or 1 for ambiguous cases.
+        p_{subjective} = p_{risky} - \eta \cdot ambiguity
+
+    where :math:`p_{risky}` is the original probability of the risky choice and :math:`ambiguity` is the ambiguity associated with the risky option, either 0 for non-ambiguous or 1 for ambiguous cases.
     The utility of the safe and risky options is then computed using a utility function, which can be either a power function or a user-defined utility curve.
-    If a utility curve is not provided, the model uses the following power function with curvature parameter `alpha`, denoted with $\\alpha$:
+    If a utility curve is not provided, the model uses the following power function with curvature parameter `alpha`, denoted with :math:`\alpha`:
 
-    $$
-    u(x) =
-    \\begin{cases}
-        x^\\alpha & \\text{if } x \\geq 0 \\\\
-        -|x|^\\alpha & \\text{if } x < 0
-    \\end{cases}
-    $$
+    .. math::
 
-    The model then applies loss aversion and gain sensitivity adjustments based on the sign of the risky choice magnitude. Here, the gain sensitivity `phi_gain`, denoted as $\\phi_{gain}$, is applied when the risky choice is positive, and the loss sensitivity `phi_loss`, denoted as $\\phi_{loss}$, is applied when the risky choice is negative. The adjusted probability of choosing the risky option, $p(A_{risky})$, is computed using a softmax function:
+        u(x) =
+        \begin{cases}
+        x^\alpha & \text{if } x \geq 0 \\
+        -|x|^\alpha & \text{if } x < 0
+        \end{cases}
 
-    $$
-    p(A_{risky}) = \\frac{e^{\\beta (u_{risky} + \\phi_{t})}}{e^{\\beta (u_{risky} + \\phi_{t})} + e^{\\beta u_{safe}}}
-    $$
+    The model then applies loss aversion and gain sensitivity adjustments based on the sign of the risky choice magnitude. Here, the gain sensitivity `phi_gain`, denoted as :math:`\phi_{gain}`, is applied when the risky choice is positive, and the loss sensitivity `phi_loss`, denoted as :math:`\phi_{loss}`, is applied when the risky choice is negative. The adjusted probability of choosing the risky option, :math:`p(A_{risky})`, is computed using a softmax function:
 
-    where denoted with $\\beta$ is the `temperature` parameter, $u_{risky}$ is the utility of the risky option, $u_{safe}$ is the utility of the safe option, and $\\phi_{t}$ is either $\\phi_{gain}$ or $\\phi_{loss}$ depending on the sign of the risky choice magnitude. Note that in Chew et al. (2019), the model only has a gambling bias term for the gain loss, that is then added to the difference between the safe and risky utilities, and only then transformed to a probability via a sigmoid function.
+    .. math::
+
+        p(A_{risky}) = \frac{e^{\beta (u_{risky} + \phi_{t})}}{e^{\beta (u_{risky} + \phi_{t})} + e^{\beta u_{safe}}}
+
+    where denoted with :math:`\beta` is the `temperature` parameter, :math:`u_{risky}` is the utility of the risky option, :math:`u_{safe}` is the utility of the safe option, and :math:`\phi_{t}` is either :math:`\phi_{gain}` or :math:`\phi_{loss}` depending on the sign of the risky choice magnitude. Note that in Chew et al. (2019), the model only has a gambling bias term for the gain loss, that is then added to the difference between the safe and risky utilities, and only then transformed to a probability via a sigmoid function.
 
     Furthermore, the model generates a response based on the computed probabilities, where the choice is sampled from a Bernoulli distribution with the computed policy as the probability of choosing the risky option.
 
-    ### Model Output
+    .. rubric:: Model Output
 
     For each trial, the model outputs the following variables:
 
@@ -592,7 +592,7 @@ class PTSM2025(Wrapper):
         - `dependent`: The computed probability of a risky choice according to the model, which can be used for further analysis or fitting
     
 
-    ## Details for fitting the model to data
+    .. rubric:: Details for fitting the model to data
 
     The model uses a softmax function to map the computed utilities to choice probabilities, with a temperature parameter that controls the stochasticity of the choices. Exponential functions, depending on the temperature parameter, can get out of hand quickly, so it is advisable to keep the temperature parameter within reasonable bounds (e.g., between 0.001 and 20.0).
 

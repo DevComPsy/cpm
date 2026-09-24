@@ -67,8 +67,8 @@ class Simulator:
         """
         Runs the simulation.
 
-        Note
-        ----
+        Notes
+        -----
         Data is sorted according to the group IDs as ordered by pandas.
 
         """
@@ -107,7 +107,7 @@ class Simulator:
             The path to save the output to.
 
         Returns
-        ------
+        -------
         pandas.DataFrame
             A dataframe containing the the model output for each participant and trial.
             If the output variable is organised as an array with more than one dimension, the output will be flattened.

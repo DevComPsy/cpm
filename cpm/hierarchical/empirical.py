@@ -13,7 +13,7 @@ class EmpiricalBayes:
     optimiser : object
         The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.
     objective : str
-        The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level _a posteriori_ parameter estimates.
+        The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level *a posteriori* parameter estimates.
     iteration : int, optional
         The maximum number of iterations. Default is 1000.
     tolerance : float, optional
@@ -28,19 +28,19 @@ class EmpiricalBayes:
     The EmpiricalBayes class implements an Expectation-Maximisation algorithm for the optimisation of the group-level distributions of the parameters of a model from subject-level parameter estimations. For the complete description of the method, please see Gershman (2016).
 
 
-    The fitting function must return the [Hessian matrix](https://en.wikipedia.org/wiki/Hessian_matrix) of the optimisation.
+    The fitting function must return the `Hessian matrix <https://en.wikipedia.org/wiki/Hessian_matrix>`__ of the optimisation.
     The Hessian matrix is then used in establishing the within-subject variance of the parameters.
     It is also important to note that we will require the Hessian matrix of second derivatives of the **negative log posterior** (Gershman, 2016, p. 3).
     This requires us to minimise or maximise the log posterior density as opposed to a simple log likelihood, when estimating participant-level parameters.
 
     In the current implementation, we try to calculate the second derivative of the negative log posterior density function according to the following algorithm:
 
-    1. Attempt to use [Cholesky decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition).
-    2. If fails, attempt to use [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition).
-    3. If fails, attempt to use [QR decomposition](https://en.wikipedia.org/wiki/QR_decomposition).
+    1. Attempt to use `Cholesky decomposition <https://en.wikipedia.org/wiki/Cholesky_decomposition>`__.
+    2. If fails, attempt to use `LU decomposition <https://en.wikipedia.org/wiki/LU_decomposition>`__.
+    3. If fails, attempt to use `QR decomposition <https://en.wikipedia.org/wiki/QR_decomposition>`__.
     4. If the result is a complex number with zero imaginary part, keep the real part.
 
-    In addition, because the the Hessian matrix should correspond to the precision matrix, hence its inverse is the variance-covariance matrix, we will use its inverse to calculate the within-subject variance of the parameters. If the algorithm fails to calculate the inverse of the Hessian matrix, it will use the [Moore-Penrose pseudoinverse](https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse) instead.
+    In addition, because the the Hessian matrix should correspond to the precision matrix, hence its inverse is the variance-covariance matrix, we will use its inverse to calculate the within-subject variance of the parameters. If the algorithm fails to calculate the inverse of the Hessian matrix, it will use the `Moore-Penrose pseudoinverse <https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse>`__ instead.
 
     The current implementation also controls for some **edge-cases** that are not covered by the algorithm above:
 
@@ -55,24 +55,26 @@ class EmpiricalBayes:
 
     Examples
     --------
-    >>> from cpm.optimisation import EmpiricalBayes
-    >>> from cpm.models import DeltaRule
+    >>> from cpm.applications.reinforcement_learning import RLRW
+    >>> from cpm.datasets import load_bandit_data
+    >>> from cpm.hierarchical import EmpiricalBayes
     >>> from cpm.optimisation import FminBound, minimise
-    >>>
-    >>> model = DeltaRule()
+    >>> data = load_bandit_data()
+    >>> data["observed"] = data["response"]
+    >>> model = RLRW(data=data[data.ppt == 1], dimensions=4)
     >>> optimiser = FminBound(
-        model=model,
-        data=data,
-        initial_guess=None,
-        number_of_starts=2,
-        minimisation=minimise.LogLikelihood.bernoulli,
-        parallel=False,
-        prior=True,
-        ppt_identifier="ppt",
-        display=False,
-        maxiter=200,
-        approx_grad=True
-        )
+    ...     model=model,
+    ...     data=data.groupby("ppt"),
+    ...     initial_guess=None,
+    ...     number_of_starts=2,
+    ...     minimisation=minimise.LogLikelihood.bernoulli,
+    ...     parallel=False,
+    ...     prior=True,
+    ...     ppt_identifier="ppt",
+    ...     display=False,
+    ...     maxiter=200,
+    ...     approx_grad=True,
+    ... )
     >>> eb = EmpiricalBayes(optimiser=optimiser, iteration=1000, tolerance=1e-6, chain=4)
     >>> eb.optimise()
 

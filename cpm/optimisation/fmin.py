@@ -98,7 +98,7 @@ class Fmin:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.fmin`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin.html) documentation for what is supported.
+        Additional keyword arguments. See the :func:`scipy.optimize.fmin` documentation for what is supported.
 
     Attributes
     ----------
@@ -187,8 +187,9 @@ class Fmin:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):
@@ -369,7 +370,7 @@ class FminBound:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.fmin_l_bfgs_b`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html) documentation for what is supported. The solver's own `disp` and `iprint` options, which `display` also sets, were removed in SciPy 1.18.0 and are ignored there.
+        Additional keyword arguments. See the :func:`scipy.optimize.fmin_l_bfgs_b` documentation for what is supported. The solver's own `disp` and `iprint` options, which `display` also sets, were removed in SciPy 1.18.0 and are ignored there.
 
     Attributes
     ----------
@@ -458,8 +459,9 @@ class FminBound:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):

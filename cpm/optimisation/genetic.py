@@ -38,7 +38,7 @@ class DifferentialEvolution:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.differential_evolution`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.differential_evolution.html) documentation for what is supported.
+        Additional keyword arguments. See the :func:`scipy.optimize.differential_evolution` documentation for what is supported.
 
     Notes
     -----
@@ -171,8 +171,9 @@ class DifferentialEvolution:
         """
         Resets the optimization results and fitted parameters.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
         self.fit = []
         self.parameters = []

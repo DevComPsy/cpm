@@ -19,7 +19,7 @@ class VariationalBayes:
     optimiser : object
         The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.
     objective : str
-        The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level _a posteriori_ parameter estimates.
+        The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level *a posteriori* parameter estimates.
     iteration : int, optional
         The maximum number of iterations. Default is 1000.
     tolerance_lme : float, optional
@@ -64,7 +64,26 @@ class VariationalBayes:
 
     Examples
     --------
+    >>> from cpm.applications.reinforcement_learning import RLRW
+    >>> from cpm.datasets import load_bandit_data
+    >>> from cpm.hierarchical import VariationalBayes
+    >>> from cpm.optimisation import FminBound, minimise
+    >>> data = load_bandit_data()
+    >>> data["observed"] = data["response"]
+    >>> model = RLRW(data=data[data.ppt == 1], dimensions=4)
+    >>> optimiser = FminBound(
+    ...     model=model,
+    ...     data=data.groupby("ppt"),
+    ...     minimisation=minimise.LogLikelihood.bernoulli,
+    ...     prior=True,
+    ...     number_of_starts=2,
+    ...     ppt_identifier="ppt",
+    ...     display=False,
+    ... )
+    >>> vb = VariationalBayes(optimiser=optimiser, iteration=50, chain=4)
+    >>> vb.optimise()
 
+    See the hierarchical estimation tutorials in the documentation for a full walkthrough.
     """
 
     def __init__(

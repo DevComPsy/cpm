@@ -8,9 +8,9 @@ import ipyparallel as ipp  ## for parallel computing with ipython (specific for 
 
 
 class RLRW(Wrapper):
-    """
+    r"""
     The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
-    The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019), which largely corresponds to the model presented by Suttong & Barto (2021) in Chapter 14.
+    The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019), which largely corresponds to the model presented by Sutton & Barto (2020) in Chapter 14.
 
     Parameters
     ----------
@@ -28,20 +28,19 @@ class RLRW(Wrapper):
 
     Examples
     --------
-    >>> import numpy
-    >>> import pandas
-    >>> from cpm.applications import RLRW
+    >>> from cpm.applications.reinforcement_learning import RLRW
     >>> from cpm.datasets import load_bandit_data
-
-    >>> twoarm = load_bandit_data()
-    >>> model = RLRW(data=data, dimensions=4)
+    >>> data = load_bandit_data()
+    >>> model = RLRW(data=data[data.ppt == 1], dimensions=4)
     >>> model.run()
+    >>> model.export().head()
 
 
     Notes
     -----
 
     The model implementation uses two parameters:
+
     - alpha: the learning rate, which determines how much the model updates its values based on the prediction error.
     - temperature: the inverse temperature, which determines the choice stochasticity -- how sensitive is the model to value differences.
 
@@ -51,23 +50,23 @@ class RLRW(Wrapper):
     - arm_n: the stimulus identifier for each option (arms in the bandit task), where n is the option available on a given trial. If there are more than one options, the stimulus identifier should be specified as separate columns of arm_1, arm_2, arm_3, etc. or arm_left, arm_middle, arm_right, etc.
     - reward_n: the reward given after each options, where n is the corresponding arm of the bandit available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
 
-    parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 1 and an upper bound of 10.
+    parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 0, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 0 and an upper bound of 10.
 
     The model is defined as follows:
 
-    Let each stimulus have an associated value, which is the expected reward that can be obtained from selecting that stimulus. Let also $Q(a)$ be the estimated value of action $a$. In each trial, $t$, there are two stimuli present, so $Q(a)$ could be $Q(\text{left})$ or $Q(\\text{right})$, where the corresponding $Q$ values are derived from the associated value of the stimulus present on the left or right. In each trial $t$ , the Softmax choice rule (Bridle, 1990) will convert the estimated value of each action into a probability according to the following policy:
+    Let each stimulus have an associated value, which is the expected reward that can be obtained from selecting that stimulus. Let also :math:`Q(a)` be the estimated value of action :math:`a`. In each trial, :math:`t`, there are two stimuli present, so :math:`Q(a)` could be :math:`Q(\text{left})` or :math:`Q(\text{right})`, where the corresponding :math:`Q` values are derived from the associated value of the stimulus present on the left or right. In each trial :math:`t` , the Softmax choice rule (Bridle, 1990) will convert the estimated value of each action into a probability according to the following policy:
 
-    $$
-    P(a) = \\frac{e^{Q(a)/\\tau}}{\sum_{a'} e^{Q(a')/\\tau}}
-    $$
+    .. math::
 
-    where $\\tau$ is the temperature parameter. After the choice is made and feedback is received, the value of the chosen stimulus is updated. The current implementation uses the variant of the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton, & Williams, 1986) adapted for multi-armed bandit problems where each option has a single stimulus dimension (Sutton & Barto, 2020), reducing Rescorla-Wagner's summed error-term to the following equation, similar to (Bush & Mosteller, 1951):
+        P(a) = \frac{e^{Q(a)/\tau}}{\sum_{a'} e^{Q(a')/\tau}}
 
-    $$
-    \\Delta Q(a_t) = \\alpha \\times [R - Q(a_t)]
-    $$
+    where :math:`\tau` is the temperature parameter. After the choice is made and feedback is received, the value of the chosen stimulus is updated. The current implementation uses the variant of the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton, & Williams, 1986) adapted for multi-armed bandit problems where each option has a single stimulus dimension (Sutton & Barto, 2020), reducing Rescorla-Wagner's summed error-term to the following equation, similar to (Bush & Mosteller, 1951):
 
-    where $\\alpha$ is the learning rate, $R$ is the reward received for the chosen action, and $Q(a_t)$ is the estimated value of the chosen action before updating. The values of unchosen stimuli remain unchanged.
+    .. math::
+
+        \Delta Q(a_t) = \alpha \times [R - Q(a_t)]
+
+    where :math:`\alpha` is the learning rate, :math:`R` is the reward received for the chosen action, and :math:`Q(a_t)` is the estimated value of the chosen action before updating. The values of unchosen stimuli remain unchanged.
 
     References
     ----------
@@ -182,7 +181,7 @@ class RLRW(Wrapper):
 
 
 class HybridMBMF(Wrapper):
-    """
+    r"""
     The class implements the hybrid model-based / model-free reinforcement learning model for the deterministic two-step task (Kool et al., 2016), in the 6-parameter variant used by Smid et al. (2022).
     Model-free values are learned with a SARSA rule with an eligibility trace, model-based values are computed from the known transition structure, and the two are mixed before a Softmax decision rule.
 
@@ -230,12 +229,12 @@ class HybridMBMF(Wrapper):
 
     The model implementation uses six parameters:
 
-    - inv_temperature: the Softmax inverse temperature, $\\beta$.
-    - learning_rate: the learning rate for the SARSA updates, $\\alpha$.
-    - eligibility_trace: the eligibility trace decay, $\\lambda$.
-    - mb_weight: the model-based mixing weight, $w$, where 0 is purely model-free and 1 is purely model-based.
-    - choice_stickiness: the bonus for repeating the last action taken in the same starting state, $\\pi$.
-    - response_stickiness: the bonus for repeating the last screen position (left or right), $\\rho$.
+    - inv_temperature: the Softmax inverse temperature, :math:`\beta`.
+    - learning_rate: the learning rate for the SARSA updates, :math:`\alpha`.
+    - eligibility_trace: the eligibility trace decay, :math:`\lambda`.
+    - mb_weight: the model-based mixing weight, :math:`w`, where 0 is purely model-free and 1 is purely model-based.
+    - choice_stickiness: the bonus for repeating the last action taken in the same starting state, :math:`\pi`.
+    - response_stickiness: the bonus for repeating the last screen position (left or right), :math:`\rho`.
 
     parameters_settings must be a 2D array, like [[2, 0, 5], [0.5, 0, 1], [0.5, 0, 1], [0.5, 0, 1], [0, -5, 5], [0, -5, 5]], where each list specifies one parameter in the order above. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are the ones in the example.
 
@@ -250,25 +249,25 @@ class HybridMBMF(Wrapper):
     - reward_0, reward_1: the reward each second-stage state would pay out on the trial. Only required if `generate` is True.
     - observed: the chosen first-stage action, 0 or 1, used by the loss function. The dependent variable of the model is the probability of choosing action 1.
 
-    The model is defined as follows (Kool et al., 2016; Smid et al., 2022). The model-based value of each first-stage action is computed from the transition matrix, $T$, and the second-stage values, $Q_2$:
+    The model is defined as follows (Kool et al., 2016; Smid et al., 2022). The model-based value of each first-stage action is computed from the transition matrix, :math:`T`, and the second-stage values, :math:`Q_2`:
 
-    $$
-    Q_{MB}(a) = \\sum_{s_2} T(a, s_2) Q_2(s_2)
-    $$
+    .. math::
+
+        Q_{MB}(a) = \sum_{s_2} T(a, s_2) Q_2(s_2)
 
     The model-based and model-free values are combined with the stickiness terms into a single hybrid value:
 
-    $$
-    Q_{hybrid}(s_1, a) = w Q_{MB}(a) + (1 - w) Q_{MF}(s_1, a) + \\pi M(s_1, a) + \\rho R(a)
-    $$
+    .. math::
 
-    where $M(s_1, a)$ is 1 if $a$ was chosen on the previous trial and the previous starting state was also $s_1$, and 0 otherwise, and $R(a)$ is 1 if $a$ is displayed at the same screen position as the response on the previous trial, and 0 otherwise. The hybrid values are converted into a policy with the Softmax choice rule (Bridle, 1990):
+        Q_{hybrid}(s_1, a) = w Q_{MB}(a) + (1 - w) Q_{MF}(s_1, a) + \pi M(s_1, a) + \rho R(a)
 
-    $$
-    P(a) = \\frac{e^{\\beta Q_{hybrid}(s_1, a)}}{\\sum_{a'} e^{\\beta Q_{hybrid}(s_1, a')}}
-    $$
+    where :math:`M(s_1, a)` is 1 if :math:`a` was chosen on the previous trial and the previous starting state was also :math:`s_1`, and 0 otherwise, and :math:`R(a)` is 1 if :math:`a` is displayed at the same screen position as the response on the previous trial, and 0 otherwise. The hybrid values are converted into a policy with the Softmax choice rule (Bridle, 1990):
 
-    After the choice, the model-free and second-stage values are updated with a SARSA rule with an eligibility trace, see [cpm.models.learning.SARSATrace][cpm.models.learning.SARSATrace].
+    .. math::
+
+        P(a) = \frac{e^{\beta Q_{hybrid}(s_1, a)}}{\sum_{a'} e^{\beta Q_{hybrid}(s_1, a')}}
+
+    After the choice, the model-free and second-stage values are updated with a SARSA rule with an eligibility trace, see :class:`cpm.models.learning.SARSATrace`.
 
     References
     ----------

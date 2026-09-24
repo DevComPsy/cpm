@@ -67,7 +67,8 @@ def count_trials(
     provided, the responses vector will be automatically infered.
 
     If nR_S1 = [100 50 20 10 5 1], then when stimulus S1 was presented, the subject had
-    the following accuracy counts:
+    the following accuracy counts::
+
         responded S1, confidence=3 : 100 times
         responded S1, confidence=2 : 50 times
         responded S1, confidence=1 : 20 times
@@ -77,7 +78,8 @@ def count_trials(
 
     The ordering of accuracy / confidence counts for S2 should be the same as it is for
     S1. e.g. if nR_S2 = [3 7 8 12 27 89], then when stimulus S2 was presented, the
-    subject had the following accuracy counts:
+    subject had the following accuracy counts::
+
         responded S1, confidence=3 : 3 times
         responded S1, confidence=2 : 7 times
         responded S1, confidence=1 : 8 times
@@ -92,11 +94,11 @@ def count_trials(
     >>> confidence = [1, 2, 3, 4, 4, 3, 2, 1]
     >>> nRatings = 4
 
-    >>> nR_S1, nR_S2 = trials2counts(stimID, accuracy, confidence, nRatings)
+    >>> nR_S1, nR_S2 = count_trials(data, nRatings=4)
     >>> print(nR_S1, nR_S2)
 
-    Reference
-    ---------
+    References
+    ----------
     This function is adapted from the Python version of trials2counts.m by
     Maniscalco & Lau [1] retrieved at:
     http://www.columbia.edu/~bsm2105/type2sdt/trials2counts.py
@@ -192,6 +194,7 @@ def bin_ratings(
         New rating array only containing integers between 1 and `nbins`.
     out : dict
         Dictionary containing logs of the discretisation process:
+
             * `'confbins'`: list or 1d array-like - If the ratings were
                 reampled, a list containing the new ratings and the new low or
                 hg threshold, appened before or after the rating, respectively.
@@ -213,15 +216,16 @@ def bin_ratings(
 
     Examples
     --------
-    >>> from metadpy.utils import discreteRatings
+    >>> import numpy as np
+    >>> from cpm.utils.metad import bin_ratings
     >>> ratings = np.array([
-    >>>     96, 98, 95, 90, 32, 58, 77,  6, 78, 78, 62, 60, 38, 12,
-    >>>     63, 18, 15, 13, 49, 26,  2, 38, 60, 23, 25, 39, 22, 33,
-    >>>     32, 27, 40, 13, 35, 16, 35, 73, 50,  3, 40, 0, 34, 47,
-    >>>     52,  0,  0,  0, 25,  1, 16, 37, 59, 20, 25, 23, 45, 22,
-    >>>     28, 62, 61, 69, 20, 75, 10, 18, 61, 27, 63, 22, 54, 30,
-    >>>     36, 66, 14,  2, 53, 58, 88, 23, 77, 54])
-    >>> discreteRatings, out = discreteRatings(ratings)
+    ...     96, 98, 95, 90, 32, 58, 77,  6, 78, 78, 62, 60, 38, 12,
+    ...     63, 18, 15, 13, 49, 26,  2, 38, 60, 23, 25, 39, 22, 33,
+    ...     32, 27, 40, 13, 35, 16, 35, 73, 50,  3, 40, 0, 34, 47,
+    ...     52,  0,  0,  0, 25,  1, 16, 37, 59, 20, 25, 23, 45, 22,
+    ...     28, 62, 61, 69, 20, 75, 10, 18, 61, 27, 63, 22, 54, 30,
+    ...     36, 66, 14,  2, 53, 58, 88, 23, 77, 54])
+    >>> bin_ratings(ratings)
     (array([4, 4, 4, 4, 2, 3, 4, 1, 4, 4, 4, 4, 3, 1, 4, 1, 1, 1, 3, 2, 1, 3,
         4, 2, 2, 3, 2, 2, 2, 2, 3, 1, 3, 1, 3, 4, 3, 1, 3, 1, 2, 3, 3, 1,
         1, 1, 2, 1, 1, 3, 3, 2, 2, 2, 3, 2, 2, 4, 4, 4, 2, 4, 1, 1, 4, 2,

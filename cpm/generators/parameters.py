@@ -420,8 +420,10 @@ class Value:
     def __copy__(self):
         return Value(**self.__dict__)
 
-    def __array__(self) -> np.ndarray:
-        return np.asarray(self.value)
+    def __array__(self, dtype=None, copy=None) -> np.ndarray:
+        if copy:
+            return np.array(self.value, dtype=dtype, copy=True)
+        return np.asarray(self.value, dtype=dtype)
 
     def __float__(self) -> float:
         return float(self.value)

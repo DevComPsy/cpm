@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added test units for `HybridMBMF` and `SARSATrace`
 - Added a two-step task example notebook replicating Smid et al. (2022)
 - Added `cpm.datasets.load_two_step_data`, which loads the adult two-step task data of Smid et al. (2022) that ship with the package
+- Added `cpm.generators.SessionWrapper`, a `Wrapper` whose model function computes all trials of a participant in one call instead of being called once per trial. It works with the optimisers, `Simulator` and `cpm.hierarchical` unchanged, and its `export()` has the same layout as that of a `Wrapper`
 
 ### Changed
 
@@ -47,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed callable arguments to `cpm.generators.Parameters` leaking onto every other `Parameters` instance in the process, due to being set as static methods on the class rather than stored on the instance
 - Fixed `cpm.models.learning.SeparableRule.error` never being populated, which left it at zeros and made `noisy_learning_rule()` a no-op because the noise scales with the error; it now holds the prediction error for each outcome-stimulus pair. Also fixed `DeltaRule` and `SeparableRule` sizing `error` before promoting 1D weights to 2D
 - Fixed `cpm.generators.Wrapper.reset()` misassigning an array of parameter values whenever a non-free attribute (such as an initial state) was declared before a free parameter, due to mapping the array onto all keys instead of `Parameters.free()`
+- Fixed `numpy.asarray(value, dtype=...)` raising `TypeError` for a `cpm.generators.Value`, because `Value.__array__` did not take the `dtype` and `copy` arguments of the NumPy array protocol
 - Fixed `cpm.generators.Simulator` not raising its intended `TypeError` for an ungrouped `pandas.DataFrame`, due to type-checking a boolean flag instead of the data; the mistake previously surfaced later as a misleading group-count `ValueError`
 - Fixed `cpm.generators.Simulator` raising `AttributeError` when parameters were passed as a `pandas.DataFrame` with grouped data, due to looking up parameter rows by group key instead of position; `cpm.core.data.unpack_participants` also returned every remaining row instead of a single participant's row
 - Fixed `cpm.hierarchical.EmpiricalBayes.diagnostics()` and `cpm.hierarchical.VariationalBayes.diagnostics()` raising `IndexError` for models with three or more free parameters, due to hardcoded trace limits for two parameters; `convergence_diagnostics_plots` now takes the limits from the model's parameter bounds via a new `bounds` argument

@@ -1,0 +1,69 @@
+name: docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install cpm and the documentation dependencies
+        run: pip install -e ".[docs]" -c docs/constraints.txt
+
+      - name: Check docstrings, API coverage and notebooks
+        run: |
+          python -W error::SyntaxWarning -m compileall -f -q cpm
+          python docs/scripts/md2rst_docstrings.py --check cpm
+          python docs/scripts/check_api_coverage.py
+          python docs/scripts/check_notebooks.py
+
+      - name: Build the documentation
+        run: python -m sphinx -W --keep-going -b html docs docs/_build/html
+
+      - name: Check the redirects from the old site
+        run: python docs/scripts/check_redirects.py docs/_build/html
+
+      - name: Upload the site for review
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-html
+          path: docs/_build/html
+          retention-days: 7
+
+      - name: Upload the site for GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs/_build/html
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

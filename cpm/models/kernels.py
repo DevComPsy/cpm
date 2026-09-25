@@ -104,7 +104,10 @@ def softmax(values, beta):
     The softmax policy, :math:`e^{\beta x_i} / \sum_j e^{\beta x_j}`.
 
     As :class:`cpm.models.decision.Softmax` (``Softmax(temperature=beta,
-    activations=values).compute()``), without overflow.
+    activations=values).compute()``), with the same formula: the exponentials of
+    the scaled activations divided by their sum, or, where the largest scaled
+    activation is beyond ±700 and the exponentials would overflow (or all
+    underflow), the same function with the largest one subtracted first.
 
     Parameters
     ----------
@@ -124,9 +127,10 @@ def softmax(values, beta):
         scaled[i] = values[i] * beta
         if scaled[i] > top:
             top = scaled[i]
+    shift = 0.0 if -700.0 < top < 700.0 else top
     total = 0.0
     for i in range(n):
-        scaled[i] = math.exp(scaled[i] - top)
+        scaled[i] = math.exp(scaled[i] - shift)
         total += scaled[i]
     for i in range(n):
         scaled[i] /= total

@@ -7,12 +7,11 @@ compiled kernels decorate them with `njit` from here, which is numba's `njit`
 if numba can be imported and an identity decorator otherwise, so the same
 kernels run as plain Python without numba and give the same results.
 
-`kernels` returns such a module either compiled or as plain Python, whatever
-is installed. The plain-Python version is a second copy of the module, loaded
-from the same source file with compilation turned off, so that kernels calling
-other kernels stay uncompiled throughout. That is what `backend="python"` of
-the session models uses, for example to debug a model or to check the compiled
-version against it.
+`kernels` returns such a module either compiled or as plain Python. With numba
+installed, the plain-Python version is a second copy of the module, loaded from
+the same source file with compilation turned off, so that kernels calling other
+kernels stay uncompiled throughout; the tests use it to check the compiled
+models against the plain-Python ones.
 
 Compilation can be turned off for a whole process with the environment variable
 ``CPM_DISABLE_JIT=1`` (or numba's own ``NUMBA_DISABLE_JIT=1``).
@@ -104,7 +103,8 @@ def resolve_backend(backend):
     ----------
     backend : str
         ``"auto"`` (numba if it is installed and not disabled, plain Python
-        otherwise), ``"numba"`` or ``"python"``.
+        otherwise), ``"numba"`` or ``"python"``. The built-in applications use
+        ``"auto"``, so that installing numba is all it takes to compile them.
 
     Returns
     -------
@@ -116,9 +116,9 @@ def resolve_backend(backend):
     if backend == "numba":
         if not HAVE_NUMBA:
             raise ImportError(
-                "backend='numba' needs numba, which could not be imported. Install it "
-                "with `pip install cpm-toolbox[numba]` (numba supports a NumPy release "
-                "some time after it comes out), or use backend='python' or 'auto'."
+                "Compiling with numba needs numba, which could not be imported. Install "
+                "it with `pip install cpm-toolbox[numba]` (numba supports a NumPy release "
+                "some time after it comes out)."
             )
         return "numba"
     if backend == "python":

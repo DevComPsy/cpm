@@ -5,8 +5,9 @@ application of cpm and every backend?
     python benchmarks/run.py [--repeats 200] [--label NAME]
 
 Prints a table and writes benchmarks/results/<label>.csv. Times are medians of
-wall-clock time per call. `backend` is "trial" for the original per-trial
-applications and "python" or "numba" for their session versions.
+wall-clock time per call. `backend` is "python" or "numba" for the applications,
+and "trial" for their per-trial `model` function in a per-trial `Wrapper` (see
+cases.py).
 """
 
 import argparse
@@ -83,14 +84,14 @@ def main():
             rows.append(
                 {
                     "case": case,
-                    "backend": backend or "trial",
+                    "backend": backend,
                     "trials": len(observed),
                     "parameters": len(x),
                     **{f"{k}_ms": v * 1e3 for k, v in times.items()},
                     "log_posterior": log_posterior,
                 }
             )
-            print(f"{case:>10} {backend or 'trial':>6}: {times['objective'] * 1e3:8.3f} ms", flush=True)
+            print(f"{case:>10} {backend:>6}: {times['objective'] * 1e3:8.3f} ms", flush=True)
 
     table = pd.DataFrame(rows)
     trial = table[table.backend == "trial"].set_index("case")["objective_ms"]

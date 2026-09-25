@@ -5,11 +5,11 @@ Short, task-focused recipes for problems you will meet once you have learned the
 ::::{grid} 1 2 2 2
 :gutter: 3
 
-:::{grid-item-card} {fas}`bolt` Speed up fitting with session models
+:::{grid-item-card} {fas}`bolt` Speed up fitting with numba
 :link: fast-session-models
 :link-type: doc
 
-Fit the built-in models 50 to 200 times faster, and compile your own models with numba.
+Install numba to fit the built-in models many times faster, and compile your own models too.
 :::
 
 :::{grid-item-card} {fas}`gauge-high` Parallelise model fitting

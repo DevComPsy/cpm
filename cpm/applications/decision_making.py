@@ -1,15 +1,11 @@
-import copy
 import numpy as np
 import warnings
-from cpm.generators import Wrapper, SessionWrapper, Parameters, Value
-from cpm.core._jit import resolve_backend
-from cpm.applications._backend import SessionModel, prepared, require, uniforms
-from cpm.models.decision import Softmax
-from cpm.models.activation import ProspectUtility
+from cpm.generators import Wrapper, Parameters, Value
+from cpm.applications._backend import Application, SessionModel, prepared, require, uniforms
 
 
 def _ptsm_parameters(parameters_settings, utility_curve, weighting):
-    """The parameters of `PTSM` and `PTSMSession`."""
+    """The parameters of `PTSM`."""
     # Use default parameter settings if none provided.
     if parameters_settings is None:
         parameters_settings = {
@@ -66,7 +62,7 @@ def _ptsm_parameters(parameters_settings, utility_curve, weighting):
 
 
 def _ptsm1992_parameters(parameters_settings, utility_curve, weighting):
-    """The parameters of `PTSM1992` and `PTSM1992Session`."""
+    """The parameters of `PTSM1992`."""
     # Use default parameter settings if none provided.
     if parameters_settings is None:
         parameters_settings = {
@@ -143,7 +139,7 @@ def _ptsm2025_transform(x, alpha):
 
 
 def _ptsm2025_parameters(parameters_settings, utility_curve, variant):
-    """The parameters of `PTSM2025` and `PTSM2025Session`."""
+    """The parameters of `PTSM2025`."""
     if parameters_settings is None:
         warnings.warn("No parameters specified, using JAGS-inspired defaults.", stacklevel=3)
         parameters_settings = {
@@ -208,7 +204,122 @@ def _ptsm2025_parameters(parameters_settings, utility_curve, variant):
     return parameters
 
 
-class PTSM(Wrapper):
+
+def _weighting_code(weighting):
+    """The number of a weighting function in `cpm.models.kernels.WEIGHTING`."""
+    from cpm.models.kernels import WEIGHTING
+
+    if weighting not in WEIGHTING:
+        raise ValueError(
+            "Invalid weighting type. Must be one of: 'tk', 'power', 'prelec', 'gw'."
+        )
+    return WEIGHTING[weighting]
+
+
+class _PrepareRisky:
+    """The data preparation of the prospect-theory session models."""
+
+    def __init__(self, columns, model):
+        self.columns = columns
+        self.model = model
+
+    def __call__(self, data):
+        out = prepared(data)
+        require(out, self.columns + ["observed"], self.model)
+        for key in self.columns:
+            out[key] = np.ascontiguousarray(out[key], dtype=np.float64)
+        out["observed"] = np.ascontiguousarray(out["observed"], dtype=np.int64)
+        return out
+
+
+RISKY_COLUMNS = ["safe_magnitudes", "risky_magnitudes", "risky_probability"]
+
+
+
+class _ProspectModel(SessionModel):
+    """The model function of `PTSM` and `PTSM1992`, for all trials at once."""
+
+    def __init__(self, weighting, generate, choose_always, dependent_chosen, separate):
+        super().__init__(generate)
+        self.weighting = _weighting_code(weighting)
+        self.choose_always = choose_always
+        self.dependent_chosen = dependent_chosen
+        ## whether losses have their own curvatures (beta, delta), as in PTSM1992
+        self.separate = separate
+
+    def utilities(self, parameters, data, alpha, lambda_loss):
+        """The utilities of a user-supplied utility curve, called as `ProspectUtility` calls it."""
+        curve = parameters.utility_curve if self.separate else None
+        trials = data["observed"].shape[0]
+        if curve is None:
+            return False, np.empty((0, 2))
+        out = np.empty((trials, 2))
+        for t in range(trials):
+            for j, key in enumerate(("safe_magnitudes", "risky_magnitudes")):
+                x = np.array([data[key][t]], dtype=float)
+                out[t, j] = np.sum(curve(x=x, alpha=alpha, lambda_loss=lambda_loss))
+        return True, out
+
+    def __call__(self, parameters, data):
+        alpha = float(parameters.alpha)
+        lambda_loss = float(parameters.lambda_loss)
+        gamma = float(parameters.gamma)
+        if self.separate:
+            beta, delta = float(parameters.beta), float(parameters.delta)
+        else:
+            beta, delta = alpha, 1.0
+        custom, utilities = self.utilities(parameters, data, alpha, lambda_loss)
+        observed = data["observed"]
+        trials = observed.shape[0]
+        out = self.sessions.prospect_softmax(
+            alpha, beta, lambda_loss, gamma, delta, float(parameters.temperature),
+            data["safe_magnitudes"], data["risky_magnitudes"], data["risky_probability"],
+            observed, self.weighting, utilities, custom, self.choose_always, self.generate,
+            uniforms(trials, self.choose_always or self.generate), self.dependent_chosen,
+        )
+        policy, dependent, chosen, optimal, best, ev_risk, u_safe, u_risk = out
+        return {
+            "policy": policy,
+            "dependent": dependent,
+            "observed": observed,
+            "chosen": chosen,
+            "is_optimal": optimal,
+            "objective_best": best,
+            "ev_safe": data["safe_magnitudes"],
+            "ev_risk": ev_risk,
+            "u_safe": u_safe,
+            "u_risk": u_risk,
+        }
+
+
+class _PTSM2025Model(SessionModel):
+    """The model function of `PTSM2025`, for all trials at once."""
+
+    def __call__(self, parameters, data):
+        observed = data["observed"]
+        policy, choice, u_safe, u_risk = self.sessions.ptsm2025(
+            float(parameters.eta),
+            float(parameters.phi_gain),
+            float(parameters.phi_loss),
+            float(parameters.temperature),
+            float(parameters.alpha),
+            data["safe_magnitudes"],
+            data["risky_magnitudes"],
+            data["risky_probability"],
+            data["ambiguity"],
+            uniforms(observed.shape[0], True),
+        )
+        return {
+            "policy": policy,
+            "model_choice": choice,
+            "real_choice": observed,
+            "u_safe": u_safe,
+            "u_risk": u_risk,
+            "dependent": policy,
+        }
+
+
+class PTSM(Application):
     r"""
     A simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992), similar to the initial publication of the theory in Kahneman & Tversky (1979). It differs from :class:`cpm.applications.decision_making.PTSM2025` and :class:`cpm.applications.decision_making.PTSM1992` in that it does not use use different utility and weight curvature parameters for gains and losses.
     
@@ -306,6 +417,10 @@ class PTSM(Wrapper):
 
     If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
 
+    .. rubric:: Computation
+
+    The model computes all trials of a participant in one call, compiled with numba if numba is installed (``pip install cpm-toolbox[numba]``) and as plain Python otherwise, with the same results. `model` is the model function for a single trial, ``model(parameters, trial)``, which returns the outputs of that trial.
+
     See Also
     --------
     cpm.models.decision.Softmax : for mapping utilities to choice probabilities.
@@ -330,71 +445,16 @@ class PTSM(Wrapper):
         weighting="tk"  # Options: "tk" or "power"
     ):
         params = _ptsm_parameters(parameters_settings, utility_curve, weighting)
-
-        def model_fn(parameters, trial):
-            """
-            Called per trial. Computes the subjective utility for two options based on prospect theory,
-            using an external weighting function from the ProspectUtility class.
-            """
-            # Extract parameter values
-            alpha = copy.deepcopy(parameters.alpha.value)
-            lambd = copy.deepcopy(parameters.lambda_loss.value)
-            gamma = copy.deepcopy(parameters.gamma.value)  
-            temp  = copy.deepcopy(parameters.temperature.value)
-
-            # Read trial data 
-            safe_magn  = trial["safe_magnitudes"]
-            risky_magn = trial["risky_magnitudes"]
-            risky_prob = trial["risky_probability"]
-            observed = trial["observed"].astype(int)
-
-            # Compute objective expected values (EV)
-            ev_safe = safe_magn
-            ev_risk = risky_magn * risky_prob
-
-            # Determine which option is objectively better
-            objective_best = 1 if ev_risk >= ev_safe else 0
-
-            pt_util = ProspectUtility(
-                magnitudes=np.array([safe_magn, risky_magn]),
-                probabilities=np.array([1.0, risky_prob]),
-                alpha=alpha,
-                lambda_loss=lambd,
-                gamma=gamma,
-                weighting=parameters.weighting
-            )
-            subjective_utilities = pt_util.compute()
+        self._setup(
+            data=data,
+            parameters=params,
+            session_model=_ProspectModel(weighting, generate, choose_always=False,
+                                         dependent_chosen=True, separate=False),
+            prepare=_PrepareRisky(RISKY_COLUMNS, "PTSM"),
+        )
 
 
-            # Compute softmax probabilities using the specified temperature
-            sm = Softmax(temperature=temp, activations=subjective_utilities)
-            policies = sm.compute()
-            prob_chosen = policies[observed]
-
-            # Determine choice: generate a response if required, else use the observed one
-            chosen = sm.choice() if generate else observed
-            # Determine if the chosen option is optimal
-            is_optimal = 1 if chosen == objective_best else 0
-
-
-            return {
-                "policy": policies,
-                "dependent": np.array([prob_chosen]),
-                "observed": observed,  # Ensure the optimizer sees the 'observed' column
-                "chosen": chosen,
-                "is_optimal": is_optimal,
-                "objective_best": objective_best,
-                "ev_safe": ev_safe,
-                "ev_risk": ev_risk,
-                "u_safe": subjective_utilities[0],
-                "u_risk": subjective_utilities[1],
-            }
-
-        # Pass the model function and parameters to the parent Wrapper
-        super().__init__(data=data, model=model_fn, parameters=params)
-
-
-class PTSM1992(Wrapper):
+class PTSM1992(Application):
     r"""
     A Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992), similar to the initial publication of the theory in Kahneman & Tversky (1979). It computes expected utility by combining transformed magnitudes and weighted probabilities, suitable for safe–risky decision paradigms.
 
@@ -507,6 +567,10 @@ class PTSM1992(Wrapper):
     If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
         
 
+    .. rubric:: Computation
+
+    The model computes all trials of a participant in one call, compiled with numba if numba is installed (``pip install cpm-toolbox[numba]``) and as plain Python otherwise, with the same results. `model` is the model function for a single trial, ``model(parameters, trial)``, which returns the outputs of that trial.
+
     See Also
     --------
     cpm.models.decision.Softmax : for mapping utilities to choice probabilities.
@@ -530,74 +594,16 @@ class PTSM1992(Wrapper):
         weighting="tk"  # Options: "tk" or "power"
     ):
         params = _ptsm1992_parameters(parameters_settings, utility_curve, weighting)
+        self._setup(
+            data=data,
+            parameters=params,
+            session_model=_ProspectModel(weighting, generate=False, choose_always=True,
+                                         dependent_chosen=False, separate=True),
+            prepare=_PrepareRisky(RISKY_COLUMNS, "PTSM1992"),
+        )
 
-        def model_fn(parameters, trial):
-            """
-            Called per trial. Computes the subjective utility for two options based on prospect theory,
-            using an external weighting function from the ProspectUtility class.
-            """
-            # Extract parameter values
-            alpha = copy.deepcopy(parameters.alpha.value)
-            lambd = copy.deepcopy(parameters.lambda_loss.value)
-            beta = copy.deepcopy(parameters.beta.value)  # This is used for the utility curvature
-            gamma = copy.deepcopy(parameters.gamma.value)  # This is used as the weighting curvature for gains
-            delta = copy.deepcopy(parameters.delta.value)  # This is used for the weighting curvature for losses
-            temperature  = copy.deepcopy(parameters.temperature.value)
-            safe_magnitude = trial["safe_magnitudes"]
-            risky_magnitude = trial["risky_magnitudes"]
-            risky_prob = trial["risky_probability"]
-            observed = trial["observed"].astype(int)
-            # Compute objective expected values (EV)
-            ev_safe = safe_magnitude
-            ev_risk = risky_magnitude * risky_prob
 
-            # Determine which option is objectively better
-            objective_best = 1 if ev_risk >= ev_safe else 0
-
-            # Create a temporary instance; dummy magnitudes are provided (they're not used in weighting)
-            # Now use our unified parameter names: alpha for utility curvature, lambda_loss, and gamma
-            pt_util = ProspectUtility(
-                magnitudes=np.array([[safe_magnitude], [risky_magnitude]]),
-                probabilities=np.array([[1.0], [risky_prob]]),
-                alpha=alpha,
-                beta=beta,
-                lambda_loss=lambd,
-                gamma=gamma,
-                delta=delta,
-                weighting=parameters.weighting,
-                utility_curve=parameters.utility_curve,
-            )
-
-            utilities = pt_util.compute()
-
-            # Compute softmax probabilities using the specified temperature
-            sm = Softmax(temperature=temperature, activations=utilities)
-            policies = sm.compute()
-
-            # Determine choice: generate a response if required, else use the observed one
-            chosen = sm.choice()
-
-            # Determine if the chosen option is optimal
-            is_optimal = 1 if chosen == objective_best else 0
-            prob_chosen = policies[1]
-
-            return {
-                "policy": policies,
-                "dependent": np.array([prob_chosen]),
-                "observed": observed,  # Ensure the optimizer sees the 'observed' column
-                "chosen": chosen,
-                "is_optimal": is_optimal,
-                "objective_best": objective_best,
-                "ev_safe": ev_safe,
-                "ev_risk": ev_risk,
-                "u_safe": utilities[0],
-                "u_risk": utilities[1],
-            }
-
-        # Pass the model function and parameters to the parent Wrapper
-        super().__init__(data=data, model=model_fn, parameters=params)
-
-class PTSM2025(Wrapper):
+class PTSM2025(Application):
     r"""
     An Prospect Theory Softmax Model loosely based on Chew et al. (2019), incorporating a bias term (phi_gain / phi_loss) in the softmax function for risks and gains, a utility curvature parameter (alpha) for non-linear utility transformations, and an ambiguity aversion parameter (eta).
 
@@ -683,10 +689,15 @@ class PTSM2025(Wrapper):
 
     If you get **overflow warnings** during fitting, consider lowering the upper bound of the temperature parameter. Another possible reason for these **overflow warnings** is that the computed utilities are very large in magnitude. Ensure that the magnitudes in your dataset are within a reasonable range (e.g., between 0 and 1, or -1 and 1). Another option is to z-score the utilities before passing them to the softmax function, which can help stabilize the exponentials. 
 
+    .. rubric:: Computation
+
+    The model computes all trials of a participant in one call, compiled with numba if numba is installed (``pip install cpm-toolbox[numba]``) and as plain Python otherwise, with the same results. `model` is the model function for a single trial, ``model(parameters, trial)``, which returns the outputs of that trial.
+
     References
     ----------
     Chew, B., Hauser, T. U., Papoutsi, M., Magerkurth, J., Dolan, R. J., & Rutledge, R. B. (2019). Endogenous fluctuations in the dopaminergic midbrain drive behavioral choice variability. Proceedings of the National Academy of Sciences, 116(37), 18732–18737. https://doi.org/10.1073/pnas.1900872116
     """
+
     def __init__(
         self,
         data=None,
@@ -696,321 +707,9 @@ class PTSM2025(Wrapper):
     ):
         self.variant = variant
         parameters = _ptsm2025_parameters(parameters_settings, utility_curve, variant)
-
-        # CORRECTED: Renamed back to model_fn
-        def model_fn(parameters, trial):
-            eta = copy.deepcopy(parameters.eta)
-            phi_gain = copy.deepcopy(parameters.phi_gain)
-            phi_loss = copy.deepcopy(parameters.phi_loss)
-            temperature = copy.deepcopy(parameters.temperature)
-            alpha = copy.deepcopy(parameters.alpha)
-
-            safe = trial["safe_magnitudes"]
-            risky = trial["risky_magnitudes"]
-            risky_probability= trial["risky_probability"]
-            ambiguity  = trial["ambiguity"]
-            observed = trial["observed"].astype(int)
-
-            # Compute subjective probability with ambiguity aversion
-            subjective_risky_probability = np.clip(risky_probability- eta * ambiguity, 0, 1)
-
-
-            utility_safe_option  = parameters.utility_curvature(safe, alpha)
-            utility_risky_option  = subjective_risky_probability * parameters.utility_curvature(risky, alpha)
-
-            ## Adjust phi_t based on the sign of the magnitude of risky choice
-            if risky >= 0:
-                phi_t = phi_gain
-            else:
-                phi_t = phi_loss
-            
-            ## compute the policies adjusted via loss aversion and gain sensitivity
-            policies = np.exp(temperature * utility_risky_option  + phi_t) / (
-                np.exp(temperature * utility_risky_option  + phi_t) + np.exp(temperature * utility_safe_option)
-            )
-            ## generate a random response between 0 and 1
-            model_choice = np.random.choice([0,1], p=[1-policies, policies])
-            
-            output = {
-                "policy": policies,
-                "model_choice": model_choice,
-                "real_choice": observed,
-                "u_safe": utility_safe_option,
-                "u_risk": utility_risky_option,
-                "dependent": np.array([policies])
-            }
-            
-            return output
-
-        super().__init__(data=data, model=model_fn, parameters=parameters)
-
-
-def _weighting_code(weighting):
-    """The number of a weighting function in `cpm.models.kernels.WEIGHTING`."""
-    from cpm.models.kernels import WEIGHTING
-
-    if weighting not in WEIGHTING:
-        raise ValueError(
-            "Invalid weighting type. Must be one of: 'tk', 'power', 'prelec', 'gw'."
-        )
-    return WEIGHTING[weighting]
-
-
-class _PrepareRisky:
-    """The data preparation of the prospect-theory session models."""
-
-    def __init__(self, columns, model):
-        self.columns = columns
-        self.model = model
-
-    def __call__(self, data):
-        out = prepared(data)
-        require(out, self.columns + ["observed"], self.model)
-        for key in self.columns:
-            out[key] = np.ascontiguousarray(out[key], dtype=np.float64)
-        out["observed"] = np.ascontiguousarray(out["observed"], dtype=np.int64)
-        return out
-
-
-RISKY_COLUMNS = ["safe_magnitudes", "risky_magnitudes", "risky_probability"]
-
-
-class _ProspectModel(SessionModel):
-    """The session model function of `PTSMSession` and `PTSM1992Session`."""
-
-    def __init__(self, backend, weighting, generate, choose_always, dependent_chosen, separate):
-        super().__init__(backend)
-        self.weighting = _weighting_code(weighting)
-        self.generate = generate
-        self.choose_always = choose_always
-        self.dependent_chosen = dependent_chosen
-        ## whether losses have their own curvatures (beta, delta), as in PTSM1992
-        self.separate = separate
-
-    def utilities(self, parameters, data, alpha, lambda_loss):
-        """The utilities of a user-supplied utility curve, called as `ProspectUtility` calls it."""
-        curve = parameters.utility_curve if self.separate else None
-        trials = data["observed"].shape[0]
-        if curve is None:
-            return False, np.empty((0, 2))
-        out = np.empty((trials, 2))
-        for t in range(trials):
-            for j, key in enumerate(("safe_magnitudes", "risky_magnitudes")):
-                x = np.array([data[key][t]], dtype=float)
-                out[t, j] = np.sum(curve(x=x, alpha=alpha, lambda_loss=lambda_loss))
-        return True, out
-
-    def __call__(self, parameters, data):
-        alpha = float(parameters.alpha)
-        lambda_loss = float(parameters.lambda_loss)
-        gamma = float(parameters.gamma)
-        if self.separate:
-            beta, delta = float(parameters.beta), float(parameters.delta)
-        else:
-            beta, delta = alpha, 1.0
-        custom, utilities = self.utilities(parameters, data, alpha, lambda_loss)
-        observed = data["observed"]
-        trials = observed.shape[0]
-        out = self.sessions.prospect_softmax(
-            alpha, beta, lambda_loss, gamma, delta, float(parameters.temperature),
-            data["safe_magnitudes"], data["risky_magnitudes"], data["risky_probability"],
-            observed, self.weighting, utilities, custom, self.choose_always, self.generate,
-            uniforms(trials, self.choose_always or self.generate), self.dependent_chosen,
-        )
-        policy, dependent, chosen, optimal, best, ev_risk, u_safe, u_risk = out
-        return {
-            "policy": policy,
-            "dependent": dependent,
-            "observed": observed,
-            "chosen": chosen,
-            "is_optimal": optimal,
-            "objective_best": best,
-            "ev_safe": data["safe_magnitudes"],
-            "ev_risk": ev_risk,
-            "u_safe": u_safe,
-            "u_risk": u_risk,
-        }
-
-
-class PTSMSession(SessionWrapper):
-    r"""
-    The session version of :class:`PTSM`: the same model, computed for all trials of a participant at once.
-
-    It takes the same arguments as :class:`PTSM`, has the same parameters and
-    priors, gives the same results, and has the same output in `export()`, but
-    runs the whole session in one call, compiled with numba if it is available
-    (see :class:`cpm.generators.SessionWrapper`).
-
-    Parameters
-    ----------
-    data : pandas.DataFrame or dict
-        The data, with the columns 'safe_magnitudes', 'risky_magnitudes',
-        'risky_probability' and 'observed'.
-    parameters_settings : dict, optional
-        The initial values and bounds of the parameters, as for :class:`PTSM`.
-    generate : bool
-        If True, choices are sampled from the policy.
-    utility_curve : callable, optional
-        As for :class:`PTSM`, which stores it but does not use it; neither does
-        this class.
-    weighting : str
-        The probability weighting function: "tk" (default), "power", "prelec" or "gw".
-    backend : str
-        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
-
-    Notes
-    -----
-    The softmax is computed so that it cannot overflow, which is where it can
-    differ from :class:`PTSM`; everywhere else the two agree to within rounding
-    error. With `generate`, choices are sampled from `numpy.random` as in
-    :class:`PTSM`, so a simulation with a given `numpy.random.seed` makes the same
-    choices with both classes and both backends.
-
-    See Also
-    --------
-    cpm.applications.decision_making.PTSM : the per-trial version, with the model specification.
-    """
-
-    def __init__(self, data=None, parameters_settings=None, generate=False,
-                 utility_curve=None, weighting="tk", backend="auto"):
-        parameters = _ptsm_parameters(parameters_settings, utility_curve, weighting)
-        self.backend = resolve_backend(backend)
-        self.generate = generate
-        super().__init__(
-            model=_ProspectModel(self.backend, weighting, generate, choose_always=False,
-                                 dependent_chosen=True, separate=False),
+        self._setup(
             data=data,
             parameters=parameters,
-            prepare=_PrepareRisky(RISKY_COLUMNS, "PTSMSession"),
-        )
-
-
-class PTSM1992Session(SessionWrapper):
-    r"""
-    The session version of :class:`PTSM1992`: the same model, computed for all trials of a participant at once.
-
-    It takes the same arguments as :class:`PTSM1992`, has the same parameters and
-    priors, gives the same results, and has the same output in `export()`, but
-    runs the whole session in one call, compiled with numba if it is available
-    (see :class:`cpm.generators.SessionWrapper`).
-
-    Parameters
-    ----------
-    data : pandas.DataFrame or dict
-        The data, with the columns 'safe_magnitudes', 'risky_magnitudes',
-        'risky_probability' and 'observed'.
-    parameters_settings : dict, optional
-        The initial values and bounds of the parameters, as for :class:`PTSM1992`.
-    utility_curve : callable, optional
-        A utility curve that replaces the power utility, called as
-        :class:`PTSM1992` calls it. It runs as plain Python on every trial, so a
-        model with a utility curve is slower than one without.
-    weighting : str
-        The probability weighting function: "tk" (default), "power", "prelec" or "gw".
-    backend : str
-        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
-
-    Notes
-    -----
-    Like :class:`PTSM1992`, the model samples a choice from its policy on every
-    trial (the `chosen` and `is_optimal` outputs), also when it is fitted, and
-    it does so from `numpy.random` in the same way, so both classes and both
-    backends make the same choices for a given `numpy.random.seed`. The softmax
-    is computed so that it cannot overflow, which is where it can differ from
-    :class:`PTSM1992`; everywhere else the two agree to within rounding error.
-
-    See Also
-    --------
-    cpm.applications.decision_making.PTSM1992 : the per-trial version, with the model specification.
-    """
-
-    def __init__(self, data=None, parameters_settings=None, utility_curve=None,
-                 weighting="tk", backend="auto"):
-        parameters = _ptsm1992_parameters(parameters_settings, utility_curve, weighting)
-        self.backend = resolve_backend(backend)
-        super().__init__(
-            model=_ProspectModel(self.backend, weighting, generate=False, choose_always=True,
-                                 dependent_chosen=False, separate=True),
-            data=data,
-            parameters=parameters,
-            prepare=_PrepareRisky(RISKY_COLUMNS, "PTSM1992Session"),
-        )
-
-
-class _PTSM2025Model(SessionModel):
-    """The session model function of `PTSM2025Session`."""
-
-    def __call__(self, parameters, data):
-        observed = data["observed"]
-        policy, choice, u_safe, u_risk = self.sessions.ptsm2025(
-            float(parameters.eta),
-            float(parameters.phi_gain),
-            float(parameters.phi_loss),
-            float(parameters.temperature),
-            float(parameters.alpha),
-            data["safe_magnitudes"],
-            data["risky_magnitudes"],
-            data["risky_probability"],
-            data["ambiguity"],
-            uniforms(observed.shape[0], True),
-        )
-        return {
-            "policy": policy,
-            "model_choice": choice,
-            "real_choice": observed,
-            "u_safe": u_safe,
-            "u_risk": u_risk,
-            "dependent": policy,
-        }
-
-
-class PTSM2025Session(SessionWrapper):
-    r"""
-    The session version of :class:`PTSM2025`: the same model, computed for all trials of a participant at once.
-
-    It takes the same arguments as :class:`PTSM2025`, has the same parameters and
-    priors, gives the same results, and has the same output in `export()`, but
-    runs the whole session in one call, compiled with numba if it is available
-    (see :class:`cpm.generators.SessionWrapper`).
-
-    Parameters
-    ----------
-    data : pandas.DataFrame or dict
-        The data, with the columns 'safe_magnitudes', 'risky_magnitudes',
-        'risky_probability', 'ambiguity' and 'observed'.
-    parameters_settings : dict, optional
-        The initial values and bounds of the parameters, as for :class:`PTSM2025`.
-    utility_curve : callable, optional
-        As for :class:`PTSM2025`, which checks it but uses the power utility
-        regardless; so does this class.
-    variant : str
-        "alpha" (default) to fit the utility curvature, or "standard" to fix it at 1.
-    backend : str
-        "auto" (numba if it is installed, plain Python otherwise), "numba" or "python".
-
-    Notes
-    -----
-    Like :class:`PTSM2025`, the model samples a choice on every trial
-    (`model_choice`), from `numpy.random` in the same way, so both classes and
-    both backends make the same choices for a given `numpy.random.seed`. The
-    policy is computed as a logistic function, which cannot overflow; where the
-    exponentials of :class:`PTSM2025` overflow, it returns NaN and fails to sample
-    a choice, whereas this class returns the limiting probability. Everywhere
-    else the two agree to within rounding error.
-
-    See Also
-    --------
-    cpm.applications.decision_making.PTSM2025 : the per-trial version, with the model specification.
-    """
-
-    def __init__(self, data=None, parameters_settings=None, utility_curve=None,
-                 variant="alpha", backend="auto"):
-        self.variant = variant
-        parameters = _ptsm2025_parameters(parameters_settings, utility_curve, variant)
-        self.backend = resolve_backend(backend)
-        super().__init__(
-            model=_PTSM2025Model(self.backend),
-            data=data,
-            parameters=parameters,
-            prepare=_PrepareRisky(RISKY_COLUMNS + ["ambiguity"], "PTSM2025Session"),
+            session_model=_PTSM2025Model(),
+            prepare=_PrepareRisky(RISKY_COLUMNS + ["ambiguity"], "PTSM2025"),
         )

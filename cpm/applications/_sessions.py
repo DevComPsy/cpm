@@ -1,20 +1,22 @@
 """
-Session loops of the built-in applications.
+The models of the built-in applications.
 
-Each function computes all trials of one participant for one of the session
-applications (`RLRWSession`, `HybridMBMFSession`, `PTSMSession`,
-`PTSM1992Session` and `PTSM2025Session`), from plain floats and numpy arrays.
-They repeat the per-trial models of the applications step by step, using the
-kernels of `cpm.models.kernels`, and are compiled with numba as a whole when
-numba is available. `cpm.core._jit.kernels` loads this module either compiled
-or as plain Python.
+Each function computes all trials of one participant for one of the
+applications (`RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992` and `PTSM2025`), from
+plain floats and numpy arrays, using the kernels of `cpm.models.kernels`. They
+are the only implementation of these models: the per-trial `model` function of
+an application runs the same loop on a single trial. With numba installed, they
+are compiled as a whole; `cpm.core._jit.kernels` loads this module either
+compiled or as plain Python.
 
 Random choices are made from uniform random numbers drawn with NumPy before
 the loop, one per trial, which `kernels.choose` turns into the choice that
 `numpy.random.choice` would have made. Simulations are therefore reproducible
 with `numpy.random.seed`, identical across backends, and identical to the
-per-trial applications.
+former per-trial implementations of the applications.
 """
+
+import math
 
 import numpy as np
 
@@ -251,7 +253,13 @@ def ptsm2025(eta, phi_gain, phi_loss, temperature, alpha, safe, risky, probabili
         u_safe = _power_utility(safe[t], alpha)
         u_risk = subjective * _power_utility(risky[t], alpha)
         phi = phi_gain if risky[t] >= 0 else phi_loss
-        p = logistic((temperature * u_risk + phi) - temperature * u_safe)
+        risky_term = temperature * u_risk + phi
+        safe_term = temperature * u_safe
+        if -700.0 < risky_term < 700.0 and -700.0 < safe_term < 700.0:
+            ## the formula of PTSM2025
+            p = math.exp(risky_term) / (math.exp(risky_term) + math.exp(safe_term))
+        else:
+            p = logistic(risky_term - safe_term)
         pair[0] = 1 - p
         pair[1] = p
         out_policy[t] = p

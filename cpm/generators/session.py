@@ -109,9 +109,9 @@ class SessionWrapper(Wrapper):
         The parameters of the model, including its initial states.
     prepare : function, optional
         A function that turns the data into the form the model function takes. It
-        is called once, when the data are set, and not on every run. The default is
-        :func:`session_data`, which returns a dictionary of contiguous numpy arrays,
-        one per column.
+        is called once, when the data are first needed (and again after new data are
+        set with `reset`), not on every run. The default is :func:`session_data`,
+        which returns a dictionary of contiguous numpy arrays, one per column.
 
     Notes
     -----
@@ -130,7 +130,8 @@ class SessionWrapper(Wrapper):
     Otherwise the model function should not change `parameters`.
 
     `export()` returns one row per trial, laid out as the export of a per-trial
-    `Wrapper`, see :func:`session_export`.
+    `Wrapper`, see :func:`session_export`. The outputs of the last run are in
+    `session_output`, one array per output.
 
     Examples
     --------
@@ -162,7 +163,21 @@ class SessionWrapper(Wrapper):
         self.prepare = session_data if prepare is None else prepare
         super().__init__(model=model, data=data, parameters=parameters)
         self.simulation = {}
-        self.session = self.prepare(data)
+        self.session_output = {}
+        self._prepared = None
+        self._prepared_from = None
+
+    @property
+    def session(self):
+        """The data as the model function takes them: the output of `prepare`, computed once."""
+        if self._prepared is None or self._prepared_from is not self.data:
+            self._prepared = self.prepare(self.data)
+            self._prepared_from = self.data
+        return self._prepared
+
+    def _run_session(self):
+        """Call the model function on all trials; subclasses can compute the run differently."""
+        return self.model(parameters=self.parameters, data=self.session)
 
     def run(self):
         """
@@ -172,7 +187,7 @@ class SessionWrapper(Wrapper):
         -------
         None
         """
-        output = self.model(parameters=self.parameters, data=self.session)
+        output = self._run_session()
         dependent = output.get("dependent")
         if dependent is not None:
             dependent = np.asarray(dependent, dtype=float)
@@ -184,6 +199,7 @@ class SessionWrapper(Wrapper):
                     f"{dependent.shape[0]} rows, but the data have {self.__len__} trials."
                 )
             self.dependent = dependent
+        self.session_output = output
         self.simulation = output
 
         ## end the run in the state of the last trial, as a per-trial Wrapper does
@@ -208,7 +224,8 @@ class SessionWrapper(Wrapper):
         parameters : dict, array_like, pd.Series or Parameters, optional
             The parameters to reset the model with.
         data : pandas.DataFrame or dict, optional
-            New data for the model, which are passed through `prepare` once.
+            New data for the model, which are passed through `prepare` once, when
+            they are first needed.
 
         Notes
         -----
@@ -222,8 +239,9 @@ class SessionWrapper(Wrapper):
         super().reset(parameters=parameters, data=data)
         if was_run:
             self.simulation = {}
+            self.session_output = {}
         if data is not None:
-            self.session = self.prepare(data)
+            self._prepared = None
         return None
 
     def export(self):
@@ -236,4 +254,4 @@ class SessionWrapper(Wrapper):
             One row per trial. An output with more than one value per trial is split
             into columns `<key>_0`, `<key>_1`, and so on.
         """
-        return session_export(self.simulation, self.__len__)
+        return session_export(self.session_output, self.__len__)

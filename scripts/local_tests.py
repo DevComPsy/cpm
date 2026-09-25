@@ -8,8 +8,8 @@ suite runs three times:
 
 - with numba, if it is installed in that environment;
 - with ``CPM_DISABLE_JIT=1``, as if numba were not installed, which runs the
-  session models as plain Python;
-- with ``NUMBA_DISABLE_JIT=1``, numba's own switch, for the kernel and session
+  built-in applications as plain Python;
+- with ``NUMBA_DISABLE_JIT=1``, numba's own switch, for the kernel and application
   tests only.
 
 To test several environments, create one virtual environment per Python
@@ -28,7 +28,7 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-FAST = ["test/models/test_kernels.py", "test/applications/test_sessions.py"]
+FAST = ["test/models/test_kernels.py", "test/applications/test_backends.py"]
 
 
 def run(python, environment, tests, label):

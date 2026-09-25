@@ -37,10 +37,7 @@ def test_logpdf_equals_scipy_inside_and_outside_the_support(prior, args, lower, 
         value.fill(x)
         expected = value.prior.logpdf(x)
         got = value.PDF(log=True)
-        if np.isfinite(expected):
-            assert got == pytest.approx(expected, rel=1e-12, abs=1e-12)
-        else:
-            assert got == expected
+        assert got == expected  # identical, not only close
         assert isinstance(got, np.float64)
 
 
@@ -59,7 +56,7 @@ def test_logpdf_of_user_supplied_frozen_distributions(frozen):
         expected = frozen.logpdf(x)
         got = fast_logpdf(frozen, x)
         got = frozen.logpdf(x) if got is None else got
-        assert got == pytest.approx(expected, rel=1e-12, abs=1e-12) or got == expected
+        assert got == expected
 
 
 def test_other_priors_and_values_fall_back_to_scipy():

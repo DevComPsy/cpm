@@ -3,10 +3,14 @@ The benchmark cases: every built-in application of cpm, on one participant.
 
 Each case builds a model for a given backend and returns it together with the
 observed data and the parameter values at which the objective is evaluated.
-`backend=None` is the per-trial application (the original classes); the other
-backends are the session versions. Cases whose session version does not exist
-in the installed cpm are skipped, so the same file also benchmarks older
-versions of cpm.
+
+- "python" and "numba": the application, which computes all trials at once, as
+  plain Python or compiled with numba. Installing numba makes "numba" the default.
+- "trial": the application's per-trial `model` function in a plain per-trial
+  `Wrapper`, which is how users extend an application trial by trial.
+
+With cpm versions before the applications computed all trials at once, only
+"trial" is available, and it is the application itself.
 """
 
 import warnings
@@ -15,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 import cpm
+from cpm.generators import Wrapper
 from cpm.datasets import load_bandit_data, load_risky_choices
 
 
@@ -63,18 +68,24 @@ PT_SETTINGS = {
 }
 
 
-def _application(module, name, backend):
-    """The per-trial class for backend None, else its session version (or None)."""
-    module = getattr(cpm.applications, module)
-    if backend is None:
-        return getattr(module, name)
-    session = getattr(module, name + "Session", None)
+def _application(module, name):
+    return getattr(getattr(cpm.applications, module), name)
+
+
+def _on_backend(model, backend):
+    """The model on `backend`, or None if this version of cpm cannot run it there."""
+    session = getattr(model, "_session_model", None)
+    if backend == "trial":
+        if session is None:
+            return model  # an older cpm: the application is a per-trial Wrapper
+        return Wrapper(model=model.model, data=model.data, parameters=model.parameters)
     if session is None:
         return None
-    return lambda **kwargs: session(backend=backend, **kwargs)
+    session.backend = backend
+    return model
 
 
-def build(case, backend=None):
+def build(case, backend="trial"):
     """
     The model, observed data and parameter values of a benchmark case.
 
@@ -82,11 +93,11 @@ def build(case, backend=None):
     """
     warnings.simplefilter("ignore")
     if case == "RLRW":
-        cls = _application("reinforcement_learning", "RLRW", backend)
+        cls = _application("reinforcement_learning", "RLRW")
         data = bandit()
         kwargs = dict(dimensions=4, parameters_settings=[[0.3, 0, 1], [4, 0, 10]])
     elif case == "HybridMBMF":
-        cls = _application("reinforcement_learning", "HybridMBMF", backend)
+        cls = _application("reinforcement_learning", "HybridMBMF")
         data = two_step()
         kwargs = dict(
             parameters_settings=[
@@ -94,18 +105,28 @@ def build(case, backend=None):
             ]
         )
     elif case in ("PTSM", "PTSM1992", "PTSM2025"):
-        cls = _application("decision_making", case, backend)
+        cls = _application("decision_making", case)
         data = risky()
         kwargs = dict(parameters_settings=PT_SETTINGS)
     else:
         raise ValueError(case)
-    if cls is None:
+    if backend == "numba" and not _jit_enabled():
         return None
-    model = cls(data=data, **kwargs)
+    model = _on_backend(cls(data=data, **kwargs), backend)
+    if model is None:
+        return None
     observed = data["observed"].to_numpy()
     x = np.array([model.parameters[k].value for k in model.parameters.free()], dtype=float)
     return model, observed, x
 
 
+def _jit_enabled():
+    try:
+        from cpm.core import _jit
+    except ImportError:
+        return False
+    return _jit.JIT_ENABLED
+
+
 CASES = ["RLRW", "HybridMBMF", "PTSM", "PTSM1992", "PTSM2025"]
-BACKENDS = [None, "python", "numba"]
+BACKENDS = ["trial", "python", "numba"]

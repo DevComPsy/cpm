@@ -54,6 +54,16 @@ import cpm
 print(cpm.__version__)
 ```
 
+## Faster fitting with numba
+
+The built-in models run many times faster when [numba](https://numba.pydata.org/) is installed, which compiles them. It is optional; install it with cpm:
+
+```bash
+pip install "cpm-toolbox[numba]"
+```
+
+Nothing else changes: cpm uses numba if it can import it, and otherwise runs the same models as plain Python, with the same results. See {doc}`/how-to/fast-session-models`.
+
 ## Extras for the tutorials
 
 The tutorials and examples also use [matplotlib](https://matplotlib.org/) for figures, which is installed with cpm.

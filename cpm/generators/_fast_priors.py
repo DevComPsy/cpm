@@ -1,12 +1,14 @@
 """
-Closed-form log densities for the prior distributions cpm builds.
+Fast log densities for the prior distributions cpm builds.
 
 `Parameters.PDF` is evaluated on every call of the objective function, and a
 scipy `logpdf` call on a frozen distribution costs about 30 microseconds, most
-of it argument checking. For the distribution families that `Value` builds
-from a string (and the same families when they are passed in as frozen scipy
-distributions), the log density at a point inside the support is a short
-closed-form kernel plus a constant. This module evaluates that instead.
+of it argument handling for arrays. For a single point, and for the
+distribution families that `Value` builds from a string (and the same families
+when they are passed in as frozen scipy distributions), this module evaluates
+the same expression as scipy, in the same order of floating-point operations,
+with the constants that depend only on the distribution's arguments computed
+once. The results are identical to scipy's, not only close.
 
 The scipy object stays the prior: this module only caches an evaluator on it.
 The evaluator is rebuilt whenever the distribution's arguments change, so
@@ -19,22 +21,45 @@ scipy unchanged.
 import math
 
 import numpy as np
+from scipy import special
 
 __all__ = ["fast_logpdf"]
 
 ## attribute under which the evaluator is cached on the frozen distribution
 _CACHE = "_cpm_fast_logpdf"
 
-## kernels of the log density in the standardised variable y = (x - loc) / scale,
-## up to a constant, keyed by scipy distribution name
-_KERNELS = {
-    "norm": lambda y, shapes: -0.5 * y * y,
-    "truncnorm": lambda y, shapes: -0.5 * y * y,
-    "uniform": lambda y, shapes: 0.0,
-    "gamma": lambda y, shapes: (shapes[0] - 1.0) * math.log(y) - y,
-    "beta": lambda y, shapes: (shapes[0] - 1.0) * math.log(y)
-    + (shapes[1] - 1.0) * math.log1p(-y),
-    "truncexpon": lambda y, shapes: -y,
+try:  # scipy's normalising constants, as its distributions compute them
+    from scipy.stats._continuous_distns import _log_gauss_mass, _norm_pdf_logC
+except ImportError:  # pragma: no cover - a scipy without them uses scipy throughout
+    _log_gauss_mass = _norm_pdf_logC = None
+
+
+def _constants(name, shapes):
+    """The terms of scipy's `_logpdf` that depend only on the shape parameters."""
+    if name in ("norm", "truncnorm"):
+        if _norm_pdf_logC is None:
+            raise ValueError("scipy internals not available")
+        if name == "norm":
+            return (_norm_pdf_logC,)
+        return (_norm_pdf_logC, np.real(_log_gauss_mass(*shapes))[()])
+    if name == "gamma":
+        return (shapes[0] - 1.0, special.gammaln(shapes[0]))
+    if name == "beta":
+        return (shapes[0] - 1.0, shapes[1] - 1.0, special.betaln(shapes[0], shapes[1]))
+    if name == "truncexpon":
+        return (np.log(-special.expm1(-shapes[0])),)
+    return ()  # uniform
+
+
+## scipy's `_logpdf` of each family at the standardised point y, with the
+## constants above; the order of operations is scipy's
+_LOGPDF = {
+    "norm": lambda y, c: -(y * y) / 2.0 - c[0],
+    "truncnorm": lambda y, c: (-(y * y) / 2.0 - c[0]) - c[1],
+    "uniform": lambda y, c: 0.0,
+    "gamma": lambda y, c: special.xlogy(c[0], y) - y - c[1],
+    "beta": lambda y, c: (special.xlog1py(c[1], -y) + special.xlogy(c[0], y)) - c[2],
+    "truncexpon": lambda y, c: -y - c[0],
 }
 
 
@@ -52,26 +77,20 @@ def _support(name, shapes):
 
 
 class _Evaluator:
-    """The closed-form log density of one frozen distribution with fixed arguments."""
+    """The log density of one frozen distribution with fixed arguments."""
 
-    __slots__ = ("args", "kwds", "loc", "scale", "shapes", "kernel", "low", "high", "const")
+    __slots__ = ("args", "kwds", "loc", "scale", "log_scale", "constants", "logpdf", "low", "high")
 
     def __init__(self, prior, name):
         self.args = tuple(prior.args)
         self.kwds = dict(prior.kwds)
         shapes, loc, scale = prior.dist._parse_args(*prior.args, **prior.kwds)
-        self.loc, self.scale = float(loc), float(scale)
-        self.shapes = tuple(float(s) for s in shapes)
-        self.kernel = _KERNELS[name]
-        self.low, self.high = _support(name, self.shapes)
-        ## the normalising constant, taken from scipy at the median, which lies
-        ## inside the support for all of the families above
-        median = float(prior.median())
-        reference = float(prior.logpdf(median))
-        y = (median - self.loc) / self.scale
-        if not (self.low < y < self.high) or not math.isfinite(reference):
-            raise ValueError("no interior reference point")
-        self.const = reference - self.kernel(y, self.shapes)
+        self.loc, self.scale = np.float64(loc), np.float64(scale)
+        shapes = tuple(np.float64(s) for s in shapes)
+        self.log_scale = np.log(self.scale)
+        self.constants = _constants(name, shapes)
+        self.logpdf = _LOGPDF[name]
+        self.low, self.high = _support(name, shapes)
 
     def valid(self, prior):
         try:
@@ -82,7 +101,7 @@ class _Evaluator:
     def __call__(self, x):
         y = (x - self.loc) / self.scale
         if self.low < y < self.high:
-            return self.kernel(y, self.shapes) + self.const
+            return self.logpdf(y, self.constants) - self.log_scale
         return None
 
 
@@ -101,7 +120,7 @@ def _evaluator(prior):
         return cached
     dist = getattr(prior, "dist", None)
     name = getattr(dist, "name", None)
-    if name not in _KERNELS or not hasattr(prior, "kwds") or not hasattr(prior, "args"):
+    if name not in _LOGPDF or not hasattr(prior, "kwds") or not hasattr(prior, "args"):
         try:
             setattr(prior, _CACHE, False)
         except AttributeError:
@@ -135,13 +154,13 @@ def fast_logpdf(prior, x):
     Returns
     -------
     numpy.float64 or None
-        The log density, equal to `prior.logpdf(x)` to within rounding error, or
-        None if the caller has to ask `prior.logpdf` itself.
+        The log density, equal to `prior.logpdf(x)`, or None if the caller has to
+        ask `prior.logpdf` itself.
     """
     if not isinstance(x, (float, int, np.floating, np.integer)) or isinstance(x, bool):
         return None
     evaluator = _evaluator(prior)
     if evaluator is False:
         return None
-    value = evaluator(float(x))
+    value = evaluator(np.float64(x))
     return None if value is None else np.float64(value)

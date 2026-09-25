@@ -1,85 +1,59 @@
-# Speed up fitting with session models
+# Speed up fitting with numba
 
-Fitting a model evaluates it thousands of times per participant. A {py:class}`~cpm.generators.Wrapper` calls the model function once per trial, and that call, not the model itself, is what most of the time goes into. A {py:class}`~cpm.generators.SessionWrapper` calls the model function once for all trials of a participant instead, and with [numba](https://numba.pydata.org/) the loop over trials can be compiled as a whole. For the built-in applications, this makes one evaluation of the objective function 35 to 120 times faster, and a fit correspondingly faster.
-
-## Use the session version of a built-in application
-
-Every application in {py:mod}`cpm.applications` that is a `Wrapper` has a session version, named after it with `Session` appended:
-
-| Per-trial | Session version |
-|---|---|
-| {py:class}`~cpm.applications.reinforcement_learning.RLRW` | {py:class}`~cpm.applications.reinforcement_learning.RLRWSession` |
-| {py:class}`~cpm.applications.reinforcement_learning.HybridMBMF` | {py:class}`~cpm.applications.reinforcement_learning.HybridMBMFSession` |
-| {py:class}`~cpm.applications.decision_making.PTSM` | {py:class}`~cpm.applications.decision_making.PTSMSession` |
-| {py:class}`~cpm.applications.decision_making.PTSM1992` | {py:class}`~cpm.applications.decision_making.PTSM1992Session` |
-| {py:class}`~cpm.applications.decision_making.PTSM2025` | {py:class}`~cpm.applications.decision_making.PTSM2025Session` |
-
-A session version takes the same arguments, has the same parameters and priors, gives the same results and the same `export()`, and works with the optimisers, {py:class}`~cpm.generators.Simulator` and {py:mod}`cpm.hierarchical` in the same way. Swap the class and nothing else changes:
-
-```python
-from cpm.applications.reinforcement_learning import RLRWSession
-from cpm.datasets import load_bandit_data
-from cpm.optimisation import FminBound, minimise
-
-data = load_bandit_data()
-data["observed"] = data["response"]
-
-model = RLRWSession(data=data[data.ppt == 1], dimensions=4)  # was: RLRW(...)
-fit = FminBound(
-    model=model,
-    data=data.groupby("ppt"),
-    minimisation=minimise.LogLikelihood.bernoulli,
-    prior=True,
-    number_of_starts=5,
-    ppt_identifier="ppt",
-    approx_grad=True,
-)
-fit.optimise()
-```
+Fitting a model evaluates it thousands of times per participant. A {py:class}`~cpm.generators.Wrapper` calls the model function once per trial, and that call, not the model itself, is what most of the time goes into. The built-in applications in {py:mod}`cpm.applications` therefore compute all trials of a participant at once, and with [numba](https://numba.pydata.org/) installed, that loop over trials is compiled as a whole. You can do the same for your own models with {py:class}`~cpm.generators.SessionWrapper`.
 
 ## Install numba
 
-The session versions run without numba, as plain Python, which is already 8 to 15 times faster than the per-trial applications. Compiled with numba, they are 3 to 16 times faster again. numba is an optional dependency:
+numba is an optional dependency. Install it with cpm:
 
 ```bash
 pip install cpm-toolbox[numba]
 ```
 
-numba supports a new NumPy release some time after it comes out, and does not support PyPy. If numba cannot be imported, for either reason, cpm uses the plain-Python version without further notice.
-
-Choose between the two with `backend`:
-
-- `backend="auto"` (the default) uses numba if it is available and plain Python otherwise.
-- `backend="numba"` requires numba and raises an error without it.
-- `backend="python"` never compiles. Use it to debug a model, or to check a result against the compiled version.
-
-Both backends give the same results, to within rounding error.
+That is all: the applications use numba whenever it can be imported, and your code stays the same. Without numba, they run the same computation as plain Python, with the same results. numba supports a new NumPy release some time after it comes out, and does not support PyPy; if numba cannot be imported, for either reason, cpm uses plain Python without further notice.
 
 ## What to expect
 
 One evaluation of the objective function, with the parameters' priors, for one participant (from `python benchmarks/run.py` in the cpm repository):
 
-| Application | Trials | Per-trial | Session, Python | Session, numba |
+| Application | Trials | Without numba | With numba | Per trial, in a `Wrapper` |
 |---|---:|---:|---:|---:|
-| `RLRW` | 71 | 3.5 ms | 0.42 ms | 0.05 ms |
-| `HybridMBMF` | 200 | 10 ms | 1.4 ms | 0.09 ms |
-| `PTSM` | 40 | 2.0 ms | 0.22 ms | 0.06 ms |
-| `PTSM1992` | 40 | 2.6 ms | 0.26 ms | 0.07 ms |
-| `PTSM2025` | 40 | 2.2 ms | 0.15 ms | 0.06 ms |
+| `RLRW` | 71 | 0.40 ms | 0.06 ms | 3.6 ms |
+| `HybridMBMF` | 200 | 1.4 ms | 0.09 ms | 11 ms |
+| `PTSM` | 40 | 0.28 ms | 0.06 ms | 2.0 ms |
+| `PTSM1992` | 40 | 0.27 ms | 0.07 ms | 2.1 ms |
+| `PTSM2025` | 40 | 0.16 ms | 0.06 ms | 1.8 ms |
 
-With numba, the model itself takes 0.01 to 0.03 ms of this, and the loss function about 0.02 ms.
+With numba, the model itself takes 0.01 to 0.03 ms of this, and the loss function about 0.02 ms. The last column is the same model computed one trial at a time, see [below](#extend-an-application-trial-by-trial).
 
-The first time a session model runs, numba compiles it, which takes 0.5 to 2.5 seconds. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead.
+The first time an application runs with numba, numba compiles it, which takes 0.5 to 2.5 seconds. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead.
+
+To run without numba although it is installed, for example to compare, set the environment variable `CPM_DISABLE_JIT=1` before starting Python.
 
 ## Simulations and random numbers
 
-Where a model samples choices, as with `generate=True`, the session versions draw one uniform random number per trial from `numpy.random` before the loop and turn it into a choice exactly as `numpy.random.choice` does. A simulation after `numpy.random.seed(...)` therefore makes the same choices with the per-trial application, the session version and both backends.
+Where a model samples choices, as with `generate=True`, the applications draw one uniform random number per trial from `numpy.random` and turn it into a choice exactly as `numpy.random.choice` does. A simulation after `numpy.random.seed(...)` therefore makes the same choices with and without numba.
 
-## Where results can differ
+## Extend an application trial by trial
 
-The session versions compute softmax and logistic probabilities in a way that cannot overflow. Where the per-trial applications overflow (an inverse temperature times a value above about 709), they return NaN or replace it, and the two differ; everywhere else they agree to within rounding error.
+The `model` attribute of an application is still its model function for a single trial, `model(parameters, trial)`, which computes one trial from the states in `parameters` and returns that trial's outputs, including the updated states. You can call it from your own per-trial model, for example to give the parameters of an application different values on different kinds of trials, and wrap that in a {py:class}`~cpm.generators.Wrapper`:
 
-Where a predicted probability comes within about $10^{-6}$ of 0 or 1, rounding errors of order $10^{-16}$ in the probability become relative errors of order $10^{-16}/(1 - p)$ in its log likelihood, in both versions. Their log likelihoods can then differ in the 8th or 10th significant digit instead of the 12th.
+```python
+from cpm.applications.reinforcement_learning import HybridMBMF
+from cpm.generators import Wrapper
+
+application = HybridMBMF(data=two_step_data_of_one_participant)
+hybrid = application.model
+
+def model(parameters, trial):
+    ## ... for example, change the parameters for this trial ...
+    return hybrid(parameters=parameters, trial=trial)
+
+wrapper = Wrapper(model=model, data=two_step_data_of_one_participant, parameters=application.parameters)
+wrapper.run()
+```
+
+This gives the same results as the application, one trial at a time, and runs at the speed of a per-trial `Wrapper` (the last column above). To get the speed of the application back, write the extended model for all trials at once, as below.
 
 ## Write your own session model
 

@@ -23,6 +23,8 @@ Build models from reusable components, fit them to data, check whether they can 
 pip install cpm-toolbox
 ```
 
+To fit the built-in models many times faster, install it with the optional [numba](https://numba.pydata.org/) dependency: `pip install "cpm-toolbox[numba]"` (see {doc}`get-started/installation`).
+
 ::::{grid} 1 2 2 4
 :gutter: 3
 :class-container: landing-cards

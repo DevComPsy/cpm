@@ -22,11 +22,24 @@ A {py:class}`~cpm.generators.Simulator` runs a model for many participants, so i
 The code that runs the fit must be under an `if __name__ == "__main__":` guard.
 See {doc}`/how-to/parallelise-fitting`.
 
-### Warnings about overflow in the Softmax
+### Warnings about overflow
 
-While the optimiser explores the parameter space, it can try very large inverse temperatures, where the exponentials in the Softmax overflow.
+While the optimiser explores the parameter space, it can try very large parameter values, such as inverse temperatures, where exponentials overflow.
+{py:class}`~cpm.models.decision.Softmax` and the built-in models compute their probabilities in a way that cannot overflow, but other functions, such as {py:class}`~cpm.models.decision.Sigmoid` or the exponentials in your own model, can still warn about it.
 These warnings are usually harmless, because the optimiser moves away from those values.
-If they persist, lower the upper bound of the inverse temperature, or rescale the values that go into the Softmax.
+If they persist, lower the upper bound of the parameter, or rescale the values that go into the exponential.
+
+### numba does not install, or does not work with my version of NumPy
+
+numba is optional (see [Faster fitting with numba](installation.md#faster-fitting-with-numba)), and cpm works without it.
+numba supports a new NumPy release some time after it comes out, so the newest NumPy may not have a numba release yet; `pip` then either installs an older NumPy for numba, or cannot install numba.
+If numba is installed but cannot be imported, cpm runs the models as plain Python, with the same results, only more slowly.
+To use numba, install a NumPy version that numba supports (see the [numba installation notes](https://numba.readthedocs.io/en/stable/user/installing.html)), for example in a separate virtual environment.
+
+### The first fit of a built-in model takes a second or two longer
+
+With numba installed, the first run of each built-in model compiles it.
+The compiled code is cached on disk, so this happens once per model and cpm version, not on every run.
 
 ### A parameter estimate sits exactly at its bound
 

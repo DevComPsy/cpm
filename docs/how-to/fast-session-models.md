@@ -4,10 +4,10 @@ Fitting a model evaluates it thousands of times per participant. A {py:class}`~c
 
 ## Install numba
 
-numba is an optional dependency. Install it with cpm:
+numba is an optional dependency. Install it with cpm (see {doc}`/get-started/installation` for the other ways to install it):
 
 ```bash
-pip install cpm-toolbox[numba]
+pip install "cpm-toolbox[numba]"
 ```
 
 That is all: the applications use numba whenever it can be imported, and your code stays the same. Without numba, they run the same computation as plain Python, with the same results. numba supports a new NumPy release some time after it comes out, and does not support PyPy; if numba cannot be imported, for either reason, cpm uses plain Python without further notice.

@@ -5,7 +5,7 @@ We would like to invite anyone interested in contributing to the development of 
 ## Ongoing Improvements
 
 - **Performance**
-    - Integrate `numba` for JIT compilation (e.g., with [@jitclass](https://numba.pydata.org/numba-doc/dev/user/jitclass.html))
+    - Compile more of the fitting pipeline with `numba`: the loss functions and the objective function, now that the built-in models are compiled (see {doc}`/how-to/fast-session-models`)
     - Reduce code duplication and improve organization
     - Optimize `cpm.generators` for faster simulations and data compilation/export
     - Improve shared memory usage and minimize data copies

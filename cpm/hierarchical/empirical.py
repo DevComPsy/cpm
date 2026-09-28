@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
+from ._chains import starting_priors
 
 
 class EmpiricalBayes:
@@ -19,7 +20,7 @@ class EmpiricalBayes:
     tolerance : float, optional
         The tolerance for convergence. Default is 1e-6.
     chain : int, optional
-        The number of random parameter initialisations. Default is 4.
+        The number of random parameter initialisations. Default is 4. The first chain starts from the priors of the model, and every later chain from priors drawn at random within the bounds of the parameters; `numpy.random.seed` makes them reproducible.
     quiet : bool, optional
         Whether to suppress the output. Default is False.
 
@@ -370,17 +371,13 @@ class EmpiricalBayes:
 
         output = []
         parameter_names = self.optimiser.model.parameters.free()
-        rng = np.random.default_rng()
+        # the priors the estimation starts from, before any chain updates them
+        priors = {name: getattr(self.optimiser.model.parameters, name).prior for name in parameter_names}
 
         for chain in range(self.chain):
             ## select a random starting point for each chain
             if chain > 0:
-                population_updates = {}
-                for i, name in enumerate(parameter_names):
-                    population_updates[name] = {
-                        "mean": rng.beta(a=2, b=2) * self.__bounds__[1][i],
-                        "sd": rng.beta(a=2, b=2) * (self.__bounds__[1][i] / 2),
-                    }
+                population_updates = starting_priors(parameter_names, self.__bounds__, priors)
                 self.optimiser.model.parameters.update_prior(**population_updates)
 
             if self.quiet is False:

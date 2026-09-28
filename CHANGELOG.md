@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` discarding the estimated population priors after the first evaluation of each fit; hierarchical results change
 - Fixed the random starting priors of later chains of `EmpiricalBayes` and `VariationalBayes` being length-one arrays
+- Fixed `numpy.random.seed` not reproducing the later chains of `EmpiricalBayes` and `VariationalBayes`, whose starting priors now also respect the lower bound and work with infinite bounds
 - Fixed `cpm.optimisation.Bads` emitting a `DeprecationWarning` on every GP fit ([#88](https://github.com/DevComPsy/cpm/issues/88))
 - Fixed `cpm.optimisation.Bads` failing under NumPy 2, by requiring `gpyreg>=1.2.1`
 - Fixed `cpm.optimisation.FminBound` raising `TypeError` on SciPy 1.18.0 and later

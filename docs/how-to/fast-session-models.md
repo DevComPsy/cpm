@@ -108,11 +108,11 @@ def model(parameters, data):
     return {"p_right": p_right, "dependent": p_right}
 ```
 
-In a script or module, `@njit(cache=True)` keeps the compiled code on disk between Python sessions (not in an interactive session, where there is no file to cache it for).
+`@njit(cache=True)` keeps the compiled code on disk between Python sessions. This works in scripts, modules and Jupyter notebooks; at the plain Python prompt, numba cannot cache and raises an error, so leave out `cache=True` there.
 {py:mod}`cpm.models.kernels` holds the formulas of the learning rules, decision rules, activation functions and attention mechanisms in {py:mod}`cpm.models` as functions: the classes compute with them, and compiled loops like this one can call them directly.
 
 Inside a compiled function, use numbers, numpy arrays, and functions from `math`, `numpy` and {py:mod}`cpm.models.kernels`. pandas objects, dictionaries of mixed types, cpm's `Parameters` and `Value` objects, and most other Python objects are not available there, which is why the model function unpacks them first. See numba's [list of supported Python and NumPy features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
 
 ## Debug a compiled model
 
-Set the environment variable `NUMBA_DISABLE_JIT=1` (or cpm's own `CPM_DISABLE_JIT=1`) before starting Python to run all compiled functions as plain Python, where you can use a debugger and `print` and get ordinary tracebacks. numba's error messages for code it cannot compile name the line and the types involved; the most common cause is passing a pandas object, a list or a `Value` into a compiled function.
+Set the environment variable `NUMBA_DISABLE_JIT=1` before starting Python to run all compiled functions, cpm's and your own, as plain Python, where you can use a debugger and `print` and get ordinary tracebacks. cpm's own `CPM_DISABLE_JIT=1` does not do this: it turns off only cpm's compilation, so the functions in {py:mod}`cpm.models.kernels` become plain Python functions, and a compiled function of yours that calls them can no longer be compiled. numba's error messages for code it cannot compile name the line and the types involved; the most common cause is passing a pandas object, a list or a `Value` into a compiled function.

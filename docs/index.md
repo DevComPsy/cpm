@@ -107,4 +107,5 @@ examples/index
 how-to/index
 api/index
 about/index
+news/index
 ```

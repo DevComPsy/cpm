@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added numba as an optional dependency (`pip install "cpm-toolbox[numba]"`) that compiles the built-in applications; without it, they give the same results as plain Python
 - Added the numba install option to the installation guide, a how-to guide on numba, and troubleshooting entries
 - Added test units for `SessionWrapper`, `cpm.models.kernels`, the fast priors, and the built-in applications with and without numba
-- Added a benchmark suite (`benchmarks/run.py`) and `scripts/local_tests.py`, which runs the tests with and without numba
+- Added a benchmark suite (`benchmarks/run.py` for one evaluation, `benchmarks/hierarchical.py` for the hierarchical tutorials) and `scripts/local_tests.py`, which runs the tests with and without numba
 
 ### Changed
 

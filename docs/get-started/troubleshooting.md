@@ -36,7 +36,7 @@ numba supports a new NumPy release some time after it comes out, so the newest N
 If numba is installed but cannot be imported, cpm runs the models as plain Python, with the same results, only more slowly.
 To use numba, install a NumPy version that numba supports (see the [numba installation notes](https://numba.readthedocs.io/en/stable/user/installing.html)), for example in a separate virtual environment.
 
-### The first fit of a built-in model takes a second or two longer
+### The first fit of a built-in model takes a few seconds longer
 
 With numba installed, the first run of each built-in model compiles it.
 The compiled code is cached on disk, so this happens once per model and cpm version, not on every run.

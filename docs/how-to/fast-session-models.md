@@ -26,7 +26,7 @@ One evaluation of the objective function, with the parameters' priors, for one p
 
 With numba, the model itself takes 0.02 to 0.05 ms of this, and the loss function about 0.02 ms. The last column is the same model computed one trial at a time, see [below](#extend-an-application-trial-by-trial).
 
-The first time an application runs with numba, numba compiles it, which takes 0.5 to 2.5 seconds. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead.
+The first time an application runs with numba, numba compiles it, which takes a few seconds: about 3 to 5 s for the reinforcement-learning models, and up to about 15 s for the prospect-theory models. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead.
 
 To run without numba although it is installed, for example to compare, set the environment variable `CPM_DISABLE_JIT=1` before starting Python.
 

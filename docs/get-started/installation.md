@@ -82,7 +82,7 @@ or add it to an existing installation with the same command, or with `pip instal
 Nothing else changes: your code stays the same, and cpm uses numba whenever it can import it. Without numba, cpm runs the same models as plain Python, with the same results, only more slowly. numba matters most when a model is run many times, as in fitting many participants, hierarchical estimation or parameter recovery; for a single run, it makes little difference.
 
 - **Check whether numba is used.** cpm uses numba if `python -c "import numba"` runs without an error in the environment you run cpm in.
-- **Compilation.** The first time a built-in model runs, numba compiles it, which takes a second or two. The result is cached on disk, so later runs, new Python sessions and parallel fits start at full speed.
+- **Compilation.** The first time a built-in model runs, numba compiles it, which takes a few seconds (up to about 15 s). The result is cached on disk, so later runs, new Python sessions and parallel fits start at full speed.
 - **Limitations.** numba supports a new NumPy release some time after it comes out, and does not support PyPy. If numba cannot be installed or imported in your environment, cpm works as usual, without it.
 - **Turning it off.** To run without numba although it is installed, for example to compare, set the environment variable `CPM_DISABLE_JIT=1` before starting Python.
 

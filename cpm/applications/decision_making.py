@@ -1,6 +1,7 @@
 import numpy as np
 import warnings
 from cpm.generators import Wrapper, Parameters, Value
+from cpm.core import _jit
 from cpm.applications._backend import Application, SessionModel, prepared, require, uniforms
 
 
@@ -134,8 +135,8 @@ def _ptsm1992_parameters(parameters_settings, utility_curve, weighting):
 
 
 def _ptsm2025_transform(x, alpha):
-    ## Piecewise utility transform
-    return x ** alpha if x >= 0 else -np.abs(x) ** alpha
+    ## Piecewise utility transform, as the model computes it
+    return _jit.kernels("cpm.applications._sessions", python=True).power_utility(x, alpha)
 
 
 def _ptsm2025_parameters(parameters_settings, utility_curve, variant):

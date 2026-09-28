@@ -18,13 +18,13 @@ One evaluation of the objective function, with the parameters' priors, for one p
 
 | Application | Trials | Without numba | With numba | Per trial, in a `Wrapper` |
 |---|---:|---:|---:|---:|
-| `RLRW` | 71 | 0.40 ms | 0.06 ms | 3.6 ms |
-| `HybridMBMF` | 200 | 1.4 ms | 0.09 ms | 11 ms |
-| `PTSM` | 40 | 0.28 ms | 0.06 ms | 2.0 ms |
-| `PTSM1992` | 40 | 0.27 ms | 0.07 ms | 2.1 ms |
-| `PTSM2025` | 40 | 0.16 ms | 0.06 ms | 1.8 ms |
+| `RLRW` | 71 | 0.66 ms | 0.08 ms | 3.7 ms |
+| `HybridMBMF` | 200 | 1.8 ms | 0.11 ms | 11 ms |
+| `PTSM` | 40 | 0.26 ms | 0.07 ms | 2.1 ms |
+| `PTSM1992` | 40 | 0.31 ms | 0.08 ms | 2.1 ms |
+| `PTSM2025` | 40 | 0.31 ms | 0.07 ms | 1.8 ms |
 
-With numba, the model itself takes 0.01 to 0.03 ms of this, and the loss function about 0.02 ms. The last column is the same model computed one trial at a time, see [below](#extend-an-application-trial-by-trial).
+With numba, the model itself takes 0.02 to 0.05 ms of this, and the loss function about 0.02 ms. The last column is the same model computed one trial at a time, see [below](#extend-an-application-trial-by-trial).
 
 The first time an application runs with numba, numba compiles it, which takes 0.5 to 2.5 seconds. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead.
 
@@ -109,7 +109,7 @@ def model(parameters, data):
 ```
 
 In a script or module, `@njit(cache=True)` keeps the compiled code on disk between Python sessions (not in an interactive session, where there is no file to cache it for).
-{py:mod}`cpm.models.kernels` has function versions of the learning rules, decision rules, activation functions and attention mechanisms in {py:mod}`cpm.models`, written to be called from compiled loops like this one.
+{py:mod}`cpm.models.kernels` holds the formulas of the learning rules, decision rules, activation functions and attention mechanisms in {py:mod}`cpm.models` as functions: the classes compute with them, and compiled loops like this one can call them directly.
 
 Inside a compiled function, use numbers, numpy arrays, and functions from `math`, `numpy` and {py:mod}`cpm.models.kernels`. pandas objects, dictionaries of mixed types, cpm's `Parameters` and `Value` objects, and most other Python objects are not available there, which is why the model function unpacks them first. See numba's [list of supported Python and NumPy features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
 

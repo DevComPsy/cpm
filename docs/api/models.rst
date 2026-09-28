@@ -4,9 +4,9 @@ cpm.models
 .. currentmodule:: cpm.models
 
 The components that models are built from. Combine them inside a model
-function and pass that to :class:`~cpm.generators.Wrapper`. For models that
-compute all trials at once, :mod:`cpm.models.kernels` has the same components
-as functions that can be compiled with numba.
+function and pass that to :class:`~cpm.generators.Wrapper`. Their formulas are
+in :mod:`cpm.models.kernels`, as functions that the classes compute with and
+that loops compiled with numba can call.
 
 Learning rules
 --------------
@@ -79,6 +79,7 @@ Kernels for compiled models
    log_softmax
    p_second
    logistic
+   irreducible_noise
    softmax_noise
    sigmoid
    greedy
@@ -87,9 +88,13 @@ Kernels for compiled models
    delta_rule
    separable_rule
    q_learning
+   humble_teacher_change
    humble_teacher
+   sarsa_trace
    sarsa_trace_update
    sigmoid_activation
+   gating_gain
+   gate
    competitive_gating
    prospect_utility
    prospect_weight
@@ -97,5 +102,7 @@ Kernels for compiled models
    weight_power
    weight_prelec
    weight_gw
+   expected_utility
+   add_offset
    offset
    rapid_attention_shift

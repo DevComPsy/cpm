@@ -1,4 +1,8 @@
 import numpy as np
+from ..core._jit import kernels as _kernel_module
+
+## the formulas, as plain Python (numba is never needed for the classes)
+_kernels = _kernel_module("cpm.models.kernels", python=True)
 
 __all__ = ["RapidAttentionShift"]
 
@@ -102,12 +106,10 @@ class RapidAttentionShift:
         ndarray
             Gain update, a 1D array of length n_stimuli.
         """
-        activations = self.weights * self.input
-        a_power = self.gain ** (self.P - 1)
-        attention = np.outer(self.predictions, a_power)
-        out = (activations - attention) * self.error[:, np.newaxis]
-        out_sum = out.sum(axis=0)
-        self.delta_gain = self.rho * (self.pnorm**-1) * out_sum
+        self.delta_gain = _kernels.rapid_attention_shift(
+            self.weights, self.predictions, self.input, self.error, self.gain,
+            self.pnorm, self.P, self.rho,
+        )
         return self.delta_gain
 
     def reset(self):

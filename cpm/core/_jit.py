@@ -7,14 +7,18 @@ compiled kernels decorate them with `njit` from here, which is numba's `njit`
 if numba can be imported and an identity decorator otherwise, so the same
 kernels run as plain Python without numba and give the same results.
 
-`kernels` returns such a module either compiled or as plain Python. With numba
-installed, the plain-Python version is a second copy of the module, loaded from
-the same source file with compilation turned off, so that kernels calling other
-kernels stay uncompiled throughout; the tests use it to check the compiled
-models against the plain-Python ones.
+`kernels` returns such a module either compiled or as plain Python. The
+plain-Python version is a second copy of the module, loaded from the same source
+file with compilation turned off, so that kernels calling other kernels stay
+uncompiled throughout. The classes in `cpm.models` compute with it, and the
+tests use it to check the compiled models against the plain-Python ones.
 
 Compilation can be turned off for a whole process with the environment variable
 ``CPM_DISABLE_JIT=1`` (or numba's own ``NUMBA_DISABLE_JIT=1``).
+
+numba is imported when it is first needed, that is, when a compiled kernel is
+first created, and not when cpm is imported. `HAVE_NUMBA` and `JIT_ENABLED` are
+determined then.
 """
 
 import importlib
@@ -24,21 +28,38 @@ import sys
 
 __all__ = ["HAVE_NUMBA", "JIT_ENABLED", "njit", "kernels", "resolve_backend"]
 
-try:
-    if os.environ.get("CPM_DISABLE_JIT", "0") not in ("", "0"):
-        raise ImportError("compilation disabled with CPM_DISABLE_JIT")
-    import numba as _numba
-
-    HAVE_NUMBA = True
-except ImportError:  # includes numba installs that reject the installed NumPy
-    _numba = None
-    HAVE_NUMBA = False
-
-## numba's own switch turns njit into an identity decorator as well
-JIT_ENABLED = HAVE_NUMBA and os.environ.get("NUMBA_DISABLE_JIT", "0") in ("", "0")
-
 ## set in the namespace of a module copy that is loaded without compilation
 PYTHON_FLAG = "__cpm_python__"
+
+_STATE = {}
+
+
+def _probe():
+    """Import numba, once, and record whether compiled kernels are available."""
+    if not _STATE:
+        try:
+            if os.environ.get("CPM_DISABLE_JIT", "0") not in ("", "0"):
+                raise ImportError("compilation disabled with CPM_DISABLE_JIT")
+            import numba
+
+            _STATE["numba"], have = numba, True
+        except ImportError:  # includes numba installs that reject the installed NumPy
+            _STATE["numba"], have = None, False
+        _STATE["HAVE_NUMBA"] = have
+        ## numba's own switch turns njit into an identity decorator as well
+        _STATE["JIT_ENABLED"] = have and os.environ.get("NUMBA_DISABLE_JIT", "0") in ("", "0")
+    return _STATE
+
+
+def __getattr__(name):
+    if name in ("HAVE_NUMBA", "JIT_ENABLED"):
+        return _probe()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _flag(name):
+    """`HAVE_NUMBA` or `JIT_ENABLED`; a value set on the module (for example by a test) takes precedence."""
+    return globals()[name] if name in globals() else _probe()[name]
 
 
 def _identity(*args, **kwargs):
@@ -49,10 +70,10 @@ def _identity(*args, **kwargs):
 
 def njit(*args, **kwargs):
     """numba's `njit` (with ``cache=True`` by default), or an identity decorator without numba."""
-    if not HAVE_NUMBA:
+    if not _flag("HAVE_NUMBA"):
         return _identity(*args, **kwargs)
     kwargs.setdefault("cache", True)
-    return _numba.njit(*args, **kwargs)
+    return _probe()["numba"].njit(*args, **kwargs)
 
 
 def decorator(namespace):
@@ -73,14 +94,14 @@ def kernels(name, python=False):
         The name of the module, for example ``"cpm.models.kernels"``.
     python : bool
         If True, return a copy of the module that is loaded without compiling its
-        kernels. Without numba, the module itself is plain Python already and is
-        returned either way.
+        kernels (and without importing numba). This is what the classes in
+        `cpm.models` compute with.
 
     Returns
     -------
     module
     """
-    if not python or not JIT_ENABLED:
+    if not python:
         return importlib.import_module(name)
     if name not in _PYTHON_MODULES:
         spec = importlib.util.find_spec(name)
@@ -112,9 +133,9 @@ def resolve_backend(backend):
         ``"numba"`` or ``"python"``.
     """
     if backend == "auto":
-        return "numba" if JIT_ENABLED else "python"
+        return "numba" if _flag("JIT_ENABLED") else "python"
     if backend == "numba":
-        if not HAVE_NUMBA:
+        if not _flag("HAVE_NUMBA"):
             raise ImportError(
                 "Compiling with numba needs numba, which could not be imported. Install "
                 "it with `pip install cpm-toolbox[numba]` (numba supports a NumPy release "

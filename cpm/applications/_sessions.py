@@ -16,8 +16,6 @@ with `numpy.random.seed`, identical across backends, and identical to the
 former per-trial implementations of the applications.
 """
 
-import math
-
 import numpy as np
 
 from ..core import _jit
@@ -27,10 +25,11 @@ kernels = _jit.kernels("cpm.models.kernels", python=globals().get(_jit.PYTHON_FL
 
 softmax = kernels.softmax
 choose = kernels.choose
-logistic = kernels.logistic
 sarsa_trace_update = kernels.sarsa_trace_update
+separable_rule = kernels.separable_rule
 prospect_utility = kernels.prospect_utility
 prospect_weight = kernels.prospect_weight
+expected_utility = kernels.expected_utility
 
 
 @njit
@@ -66,6 +65,8 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
     history = np.empty((n, d))
     change = np.empty((n, d))
     activations = np.empty(k)
+    mute = np.zeros(d)
+    feedback = np.empty(1)
     for t in range(n):
         for j in range(k):
             activations[j] = values[arms[t, j] - 1]
@@ -76,11 +77,13 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
             stimulus += d
         teacher = rewards[t, choice]
         reward[t] = teacher
-        for j in range(d):
-            mute = 1.0 if j == stimulus else 0.0
-            change[t, j] = alpha * (teacher - values[j]) * mute
-        for j in range(d):
-            values[j] += change[t, j]
+        ## the update of SeparableRule, for the chosen stimulus only
+        mute[:] = 0.0
+        mute[stimulus] = 1.0
+        feedback[0] = teacher
+        update, _ = separable_rule(values.reshape(1, d), feedback, mute, alpha)
+        change[t] = update[0]
+        values += update[0]
         history[t] = values
     return policy, reward, history, change, policy[:, 1].copy()
 
@@ -196,17 +199,26 @@ def prospect_softmax(alpha, beta, lambda_loss, gamma, delta, temperature, safe, 
     out_ev_risk = np.empty(n)
     out_u_safe = np.empty(n)
     out_u_risk = np.empty(n)
-    expected = np.empty(2)
+    ## the expected utilities of the two options (safe, risky) on all trials at
+    ## once, as ProspectUtility computes them for options with one outcome each;
+    ## they do not depend on earlier trials. The safe option pays with probability 1.
+    magnitudes = np.empty((n, 2))
+    magnitudes[:, 0] = safe
+    magnitudes[:, 1] = risky
+    probabilities = np.ones((n, 2))
+    probabilities[:, 1] = probability
+    weights = prospect_weight(probabilities, magnitudes, gamma, delta, weighting)
+    if custom_utilities:
+        outcome_utilities = utilities
+    else:
+        outcome_utilities = prospect_utility(magnitudes, alpha, beta, lambda_loss)
+    expected_all = expected_utility(
+        weights.reshape(2 * n, 1), outcome_utilities.reshape(2 * n, 1)
+    ).reshape(n, 2)
     for t in range(n):
         ev_risk = risky[t] * probability[t]
         best = 1 if ev_risk >= safe[t] else 0
-        if custom_utilities:
-            u_safe, u_risk = utilities[t, 0], utilities[t, 1]
-        else:
-            u_safe = prospect_utility(safe[t], alpha, beta, lambda_loss)
-            u_risk = prospect_utility(risky[t], alpha, beta, lambda_loss)
-        expected[0] = prospect_weight(1.0, safe[t], gamma, delta, weighting) * u_safe
-        expected[1] = prospect_weight(probability[t], risky[t], gamma, delta, weighting) * u_risk
+        expected = expected_all[t]
         policy = softmax(expected, temperature)
         if choose_always or generate:
             chosen = choose(policy, uniforms[t])
@@ -225,10 +237,9 @@ def prospect_softmax(alpha, beta, lambda_loss, gamma, delta, temperature, safe, 
 
 
 @njit
-def _power_utility(x, alpha):
-    if x >= 0:
-        return x**alpha
-    return -(abs(x) ** alpha)
+def power_utility(x, alpha):
+    """The piecewise power utility of `PTSM2025`, which its parameters also hold as `utility_curvature`."""
+    return x ** alpha if x >= 0 else -np.abs(x) ** alpha
 
 
 @njit
@@ -247,19 +258,18 @@ def ptsm2025(eta, phi_gain, phi_loss, temperature, alpha, safe, risky, probabili
     out_u_safe = np.empty(n)
     out_u_risk = np.empty(n)
     pair = np.empty(2)
+    terms = np.empty(2)
     for t in range(n):
         subjective = probability[t] - eta * ambiguity[t]
         subjective = min(max(subjective, 0.0), 1.0)
-        u_safe = _power_utility(safe[t], alpha)
-        u_risk = subjective * _power_utility(risky[t], alpha)
+        u_safe = power_utility(safe[t], alpha)
+        u_risk = subjective * power_utility(risky[t], alpha)
         phi = phi_gain if risky[t] >= 0 else phi_loss
-        risky_term = temperature * u_risk + phi
-        safe_term = temperature * u_safe
-        if -700.0 < risky_term < 700.0 and -700.0 < safe_term < 700.0:
-            ## the formula of PTSM2025
-            p = math.exp(risky_term) / (math.exp(risky_term) + math.exp(safe_term))
-        else:
-            p = logistic(risky_term - safe_term)
+        ## the policy of PTSM2025: a softmax of the scaled utilities, with the
+        ## gambling bias added to the risky one
+        terms[0] = temperature * u_safe
+        terms[1] = temperature * u_risk + phi
+        p = softmax(terms, 1.0)[1]
         pair[0] = 1 - p
         pair[1] = p
         out_policy[t] = p

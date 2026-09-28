@@ -9,66 +9,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added test units for `cpm.hierarchical.EmpiricalBayes`
-- Added test units for `cpm.hierarchical.VariationalBayes`
-- Added `number_of_starts` and `initial_guess_supplied` attributes to `cpm.optimisation.Fmin`, `cpm.optimisation.FminBound`, `cpm.optimisation.Minimize` and `cpm.optimisation.Bads`, so that the number of starts and the origin of the initial guesses are recoverable from a constructed or fitted optimiser. Previously `number_of_starts` was consumed in `__init__` and discarded, recoverable only as `initial_guess.shape[0]`, and there was no record of whether the guesses were supplied by the user or drawn from the parameter bounds - which meant a fit started from a fixed point was indistinguishable from one started from random restarts (#83)
-- Added test units for the new optimiser provenance attributes, covering all four optimisers
-- Added a `cpm.optimisation.Bads` smoke test that runs a real fit and asserts it reaches `scipy.optimize.minimize` through pybads and gpyreg. `Bads.optimise()` was previously never executed by the test suite, so breakage in that chain - such as a SciPy or NumPy release changing an API it depends on - went undetected
-- Added `log_likelihood` and `log_prior` to the fitted output of all optimisers when run with `prior=True`, so that `fun` (the negative log posterior) can be split into its two terms ([#28](https://github.com/DevComPsy/cpm/issues/28))
-- Added a `metrics` argument to all optimisers, which evaluates user-supplied goodness-of-fit metrics (such as `PenalisedLikelihoods.BIC`) at the optimum and adds them to `export()` ([#28](https://github.com/DevComPsy/cpm/issues/28))
-- Added `cpm.applications.reinforcement_learning.HybridMBMF`, the 6-parameter hybrid model-based / model-free model for the two-step task (Kool et al., 2016; Smid et al., 2022)
-- Added `cpm.models.learning.SARSATrace`, a SARSA learning rule with an eligibility trace for two-stage tasks
+- Added test units for `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`
+- Added `number_of_starts` and `initial_guess_supplied` attributes to all optimisers, recording how many starts a fit used and whether the initial guesses were supplied ([#83](https://github.com/DevComPsy/cpm/issues/83))
+- Added test units for the new optimiser attributes, and a smoke test that runs a real `cpm.optimisation.Bads` fit
+- Added `log_likelihood` and `log_prior` to the output of all optimisers fitted with `prior=True` ([#28](https://github.com/DevComPsy/cpm/issues/28))
+- Added a `metrics` argument to all optimisers, for goodness-of-fit metrics such as `PenalisedLikelihoods.BIC` evaluated at the optimum ([#28](https://github.com/DevComPsy/cpm/issues/28))
+- Added `cpm.applications.reinforcement_learning.HybridMBMF`, the hybrid model-based / model-free model of the two-step task (Kool et al., 2016; Smid et al., 2022)
+- Added `cpm.models.learning.SARSATrace`, a SARSA learning rule with an eligibility trace
 - Added test units for `HybridMBMF` and `SARSATrace`
-- Added a two-step task example notebook replicating Smid et al. (2022)
-- Added `cpm.datasets.load_two_step_data`, which loads the adult two-step task data of Smid et al. (2022) that ship with the package
-- Added `cpm.generators.SessionWrapper`, a `Wrapper` whose model function computes all trials of a participant in one call instead of being called once per trial. It works with the optimisers, `Simulator` and `cpm.hierarchical` unchanged, and its `export()` has the same layout as that of a `Wrapper`
-- Added `cpm.models.kernels`, which holds the formulas of the learning rules, decision rules, activation functions and attention mechanism in `cpm.models` as functions of numpy arrays and numbers that numba can compile. Each formula exists once: the classes in `cpm.models` compute with a plain-Python copy of these functions (so they never need numba, and their results are unchanged), and the built-in applications call the compiled functions in their loops over trials. `choose` samples from a policy as `numpy.random.choice` does, given a uniform random number drawn beforehand
-- Added numba as an optional dependency (`pip install "cpm-toolbox[numba]"`), which compiles the built-in applications. Without it, or with `CPM_DISABLE_JIT=1`, they run as plain Python and give the same results. numba is imported when an application is first created, not when cpm is imported
-- Added the numba install option to the documentation: the landing page, the installation guide (for installs from PyPI, from GitHub and from source, with how to check that numba is used and how to turn it off), a how-to guide on numba and session models, troubleshooting entries on numba that does not install or import and on its first-run compilation, and the development setup and testing in the contributing guide
-- Added test units for `cpm.generators.SessionWrapper`, the fast priors, `cpm.models.kernels`, and the built-in applications with and without numba. The latter compare the applications with the outputs of their former per-trial implementations, frozen in `test/applications/data/per_trial_reference.pkl.gz`
-- Added a benchmark suite under `benchmarks/`, which times each part of the objective function for every built-in application (`python benchmarks/run.py`), and `scripts/local_tests.py`, which runs the test suite with numba, without it and with `NUMBA_DISABLE_JIT=1`, and then the benchmark suite
+- Added a two-step task example replicating Smid et al. (2022), with its data in `cpm.datasets.load_two_step_data`
+- Added `cpm.generators.SessionWrapper`, a `Wrapper` for models that compute all trials of a participant at once
+- Added `cpm.models.kernels`, the formulas of the `cpm.models` classes as functions that numba can compile, used by the classes and the built-in applications
+- Added numba as an optional dependency (`pip install "cpm-toolbox[numba]"`) that compiles the built-in applications; without it, they give the same results as plain Python
+- Added the numba install option to the installation guide, a how-to guide on numba, and troubleshooting entries
+- Added test units for `SessionWrapper`, `cpm.models.kernels`, the fast priors, and the built-in applications with and without numba
+- Added a benchmark suite (`benchmarks/run.py`) and `scripts/local_tests.py`, which runs the tests with and without numba
 
 ### Changed
 
-- Rebuilt the documentation with Sphinx and the PyData theme, replacing MkDocs. The site now separates the API reference from the tutorials (a numbered learning path from fitting a first model to hierarchical estimation), a gallery of research examples, and how-to guides; adds a quickstart and core concept pages; documents every public object; and links API pages to the tutorials that use them. All tutorials and examples were rewritten or revised and re-run on the current version. Pages of the old site redirect to their new locations
-- Converted all docstrings from Markdown to reStructuredText (NumPy style), fixed incorrect examples in the docstrings of `RLRW`, `EmpiricalBayes`, `ProspectUtility`, `bin_ratings`, `count_trials` and `convert_to_RLRW`, added an example to `VariationalBayes`, and corrected the column list of `load_bandit_data`. Docstrings with LaTeX are now raw strings, which fixes a `SyntaxWarning` and a corrupted equation in the docstring of `RLRW`
-- Restricted package discovery to `cpm`, so that files under `docs/` are no longer packaged, and added `docs` and `notebooks` optional dependencies
-- Significantly improved the performance of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` for long or multi-chain EM runs, by buffering results instead of concatenating on every iteration and vectorising the Hessian inversions
-- Made each evaluation of the objective function cheaper for every model, by 0.5-1 ms for 2-6 free parameters (about 0.1 ms per free parameter): `cpm.generators.Value` copies now share their prior distribution instead of deep-copying it, `cpm.generators.Wrapper.reset()` restores parameter values and initial states without copying the priors, and `Value.PDF(log=True)` evaluates the uniform, truncated normal, beta, gamma, truncated exponential and normal priors (including frozen scipy distributions of these families passed in by the user) in closed form instead of through scipy. The priors remain frozen scipy distributions, and the log densities are identical to scipy's (the same floating-point operations, with the constant terms computed once). Models that copy their parameters on every trial gain most: `PTSM2025` runs 17 times faster
-- `cpm.generators.Value.update_prior()` now replaces the prior with an updated copy instead of changing it in place, since copies of a `Value` share their prior. Code that changes `value.prior.kwds` directly now changes the prior of every copy of that `Value`
-- Made the built-in applications `RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992` and `PTSM2025` compute all trials of a participant in one call instead of one call per trial, compiled with numba if it is installed. Together with the changes below, one evaluation of the objective function is 90 to 230 times faster than before with numba, and 13 to 25 times faster without it (`PTSM2025`: 1,100 and 250 times). Their interface is unchanged: the same arguments, parameters, priors and outputs, `export()`, `simulation` (the outputs of each trial), and `model`, which is still the model function for a single trial, `model(parameters, trial)`, and can be used in a per-trial `Wrapper` as before. Their results are the same as before (bit for bit where exponentials do not overflow, tested against the outputs of the previous implementation), including simulations with `generate=True`, which sample from `numpy.random` in the same way. Each model has a single implementation in `cpm.applications._sessions`, which `model` runs on one trial, and which uses the formulas of `cpm.models.kernels`. The applications are now subclasses of `SessionWrapper` (which is a subclass of `Wrapper`), and have its `prepare`, `session` and `session_output` attributes in addition to their own
-- Made per-trial models about twice as fast. `cpm.generators.Wrapper.run()` builds each trial from a copy of the data made once per run instead of reading it with `DataFrame.iloc` (about 50 microseconds per trial), for data with numeric and boolean columns (see `cpm.core.data.trial_reader`); the trials are the same `pandas.Series` as before
-- Made the classes in `cpm.models` faster, with results identical to before: `Softmax` computes the exponentials once, the learning rules `DeltaRule`, `SeparableRule`, `HumbleTeacher` and `QLearningRule` and `CompetitiveGating` compute all weights at once instead of looping over them (3 to 17 times faster for 32 stimuli, and about as fast as before for a few stimuli), and `ProspectUtility` computes options with the same number of outcomes as float arrays instead of arrays of arrays (2.5 to 3.5 times faster). The classes now compute with the formulas in `cpm.models.kernels`
-- Made `LogLikelihood.bernoulli` and `LogLikelihood.continuous` 2.5 and 3 times faster, with identical results, by evaluating the expressions scipy evaluates without scipy's per-call argument handling, and by checking the inputs for non-finite values in one pass
-- Made `cpm.applications.signal_detection.EstimatorMetaD` about 10 times faster, with identical results, by computing all normal CDFs of `metad_nll` in one vectorised call instead of one scipy call each
-- `cpm.models.decision.Softmax` no longer overflows: where the scaled activations exceed ±700, it computes the same function with the largest activation subtracted. It previously returned NaN there, replaced it with 1 and warned; the policies are now the correct ones, without a warning. Elsewhere its results are unchanged
+- Rebuilt the documentation with Sphinx and the PyData theme, with a separate API reference, tutorials, examples and how-to guides; pages of the old site redirect
+- Converted all docstrings to reStructuredText (NumPy style), and fixed incorrect examples and a `SyntaxWarning` from LaTeX in docstrings
+- Restricted package discovery to `cpm`, and added `docs` and `notebooks` optional dependencies
+- Sped up long and multi-chain runs of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`
+- Made every model cheaper to evaluate: copies of a `cpm.generators.Value` share their prior, and the built-in priors are evaluated without scipy overhead, with identical results
+- `cpm.generators.Value.update_prior()` now replaces the prior instead of changing it in place; changing `value.prior.kwds` directly now affects every copy of the `Value`
+- Made the built-in applications (`RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992`, `PTSM2025`) compute all trials at once: 90-230 times faster with numba, 13-25 times without, with the same interface and results
+- Made per-trial `cpm.generators.Wrapper` models about twice as fast, by reading trials without `DataFrame.iloc`
+- Made the classes in `cpm.models` faster, up to 17 times for large inputs, with identical results
+- Made `LogLikelihood.bernoulli` and `LogLikelihood.continuous` 2.5-3 times faster, with identical results
+- Made `cpm.applications.signal_detection.EstimatorMetaD` about 10 times faster, with identical results
+- `cpm.models.decision.Softmax` no longer overflows: it returns the correct policy where it returned NaN and warned
 
 ### Fixed
 
-- Fixed `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` fitting every participant with the model's original priors instead of the estimated population-level priors, apart from the first evaluation of the objective function. `Wrapper.reset()` restored the parameters, including their priors, from a copy made when the model was created, so every prior update was discarded after the first run of the model. Hierarchical fits now use the updated priors throughout, which changes their results
-- Fixed the random starting priors of the second and later chains of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` being arrays of length one instead of numbers, which made the log prior an array. It went unnoticed because of the previous issue
-- Fixed `cpm.optimisation.Bads` emitting a `DeprecationWarning` on every GP fit, which would become an error on Python 3.16, by passing `gp_fixed_mean` to pybads as a NumPy boolean ([#88](https://github.com/DevComPsy/cpm/issues/88))
-- Fixed `cpm.optimisation.Bads` failing with `ValueError: setting an array element with a sequence` under NumPy 2 by requiring `gpyreg>=1.2.1`
-- Fixed `cpm.optimisation.FminBound` raising `TypeError` on SciPy 1.18.0 and later, which removed the `disp` and `iprint` options of L-BFGS-B; they are now passed only where SciPy still accepts them
-- Fixed `cpm.hierarchical.VariationalBayes.ttest` raising a `NameError` when `null` was passed as a `pandas.DataFrame`, due to referencing an undefined variable from the wrong branch
-- Fixed `cpm.hierarchical.VariationalBayes.lmes` recording the same, fully-grown list of log model evidence values for every iteration of a chain instead of a snapshot of that iteration's value, due to appending a reference to a still-mutating list
-- Removed a dead, always-zero `mean_errorbar` column from `cpm.hierarchical.VariationalBayes.hyperparameters` that was left behind by a column-naming mismatch (values were actually being written to a separate `mean_se` column)
-- Fixed `cpm.generators.Value` with `prior="uniform"` spanning `[lower, lower + upper]` instead of `[lower, upper]`, due to passing `upper` rather than `upper - lower` as the scale, which biased every log prior and let `Parameters.sample()` draw values above the upper bound
-- Fixed `cpm.generators.Parameters.sample()` raising `AttributeError` when a parameter was `None`, due to a missing `None` guard that `free()`, `bounds()` and `PDF()` already had
-- Fixed callable arguments to `cpm.generators.Parameters` leaking onto every other `Parameters` instance in the process, due to being set as static methods on the class rather than stored on the instance
-- Fixed `cpm.models.learning.SeparableRule.error` never being populated, which left it at zeros and made `noisy_learning_rule()` a no-op because the noise scales with the error; it now holds the prediction error for each outcome-stimulus pair. Also fixed `DeltaRule` and `SeparableRule` sizing `error` before promoting 1D weights to 2D
-- Fixed `cpm.generators.Wrapper.reset()` misassigning an array of parameter values whenever a non-free attribute (such as an initial state) was declared before a free parameter, due to mapping the array onto all keys instead of `Parameters.free()`
-- Fixed `numpy.asarray(value, dtype=...)` raising `TypeError` for a `cpm.generators.Value`, because `Value.__array__` did not take the `dtype` and `copy` arguments of the NumPy array protocol
-- Fixed `cpm.models.activation.ProspectUtility` with `weighting="prelec"` raising `TypeError` for options with more than one outcome, because the probabilities were stored as an object array, which `numpy.log` does not accept
-- Fixed `cpm.applications.decision_making.PTSM2025` raising `ValueError: probabilities contain NaN` when its exponentials overflowed (for large temperatures or utilities), which stopped a fit; its policy is now computed as a softmax that cannot overflow
-- Fixed `cpm.models.learning.HumbleTeacher` raising `IndexError` for 1D weights, which it promotes to one row like the other learning rules but sized its `delta` before doing so
-- Fixed `cpm.generators.Simulator` not raising its intended `TypeError` for an ungrouped `pandas.DataFrame`, due to type-checking a boolean flag instead of the data; the mistake previously surfaced later as a misleading group-count `ValueError`
-- Fixed `cpm.generators.Simulator` raising `AttributeError` when parameters were passed as a `pandas.DataFrame` with grouped data, due to looking up parameter rows by group key instead of position; `cpm.core.data.unpack_participants` also returned every remaining row instead of a single participant's row
-- Fixed `cpm.hierarchical.EmpiricalBayes.diagnostics()` and `cpm.hierarchical.VariationalBayes.diagnostics()` raising `IndexError` for models with three or more free parameters, due to hardcoded trace limits for two parameters; `convergence_diagnostics_plots` now takes the limits from the model's parameter bounds via a new `bounds` argument
-- Fixed a clean install of `cpm-toolbox` raising `ModuleNotFoundError` on `diagnostics()`, due to `matplotlib` being imported by `cpm.core.diagnostics` but missing from the declared dependencies
-- Fixed `cpm.utils.data` (and `cpm.utils.metad`) not being reachable after `import cpm`, due to `cpm/utils/__init__.py` not importing its submodules
-- Fixed `cpm.generators.Simulator` raising `ValueError` for a single parameter set given as a `Parameters` object, `dict` or `pandas.Series`, due to checking the length of the input rather than of the cast parameters; a `Parameters` object is now used as-is for every participant, as documented, instead of drawing a new prior sample for each
-- Fixed `cpm.core.diagnostics.gelman_rubin` and `cpm.core.diagnostics.psrf` failing on every call, due to the removed `pandas.DataFrame.append` and a nonexistent `unique_` attribute; `gelman_rubin` also computed the statistic incorrectly (misaligned chains, swapped within- and between-chain variances) and now reports it for both the mean and sd of each parameter, comparing chains over their common iterations
+- Fixed `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` discarding the estimated population priors after the first evaluation of each fit; hierarchical results change
+- Fixed the random starting priors of later chains of `EmpiricalBayes` and `VariationalBayes` being length-one arrays
+- Fixed `cpm.optimisation.Bads` emitting a `DeprecationWarning` on every GP fit ([#88](https://github.com/DevComPsy/cpm/issues/88))
+- Fixed `cpm.optimisation.Bads` failing under NumPy 2, by requiring `gpyreg>=1.2.1`
+- Fixed `cpm.optimisation.FminBound` raising `TypeError` on SciPy 1.18.0 and later
+- Fixed `cpm.hierarchical.VariationalBayes.ttest` raising `NameError` when `null` is a `pandas.DataFrame`
+- Fixed `cpm.hierarchical.VariationalBayes.lmes` repeating the final list of model evidences for every iteration
+- Removed a dead, always-zero `mean_errorbar` column from `cpm.hierarchical.VariationalBayes.hyperparameters`
+- Fixed `cpm.generators.Value` with `prior="uniform"` spanning `[lower, lower + upper]` instead of `[lower, upper]`
+- Fixed `cpm.generators.Parameters.sample()` raising `AttributeError` for a parameter that is `None`
+- Fixed callables passed to `cpm.generators.Parameters` leaking onto every other `Parameters` instance
+- Fixed `cpm.models.learning.SeparableRule.error` never being filled, which made `noisy_learning_rule()` a no-op, and the `error` of `DeltaRule` and `SeparableRule` having the wrong shape for 1D weights
+- Fixed `cpm.generators.Wrapper.reset()` misassigning an array of parameter values when a state is declared before a free parameter
+- Fixed `numpy.asarray(value, dtype=...)` raising `TypeError` for a `cpm.generators.Value`
+- Fixed `cpm.models.activation.ProspectUtility` with `weighting="prelec"` failing for options with several outcomes
+- Fixed `cpm.applications.decision_making.PTSM2025` stopping a fit with `ValueError` when its exponentials overflowed
+- Fixed `cpm.models.learning.HumbleTeacher` raising `IndexError` for 1D weights
+- Fixed `cpm.generators.Simulator` not raising its intended `TypeError` for an ungrouped `pandas.DataFrame`
+- Fixed `cpm.generators.Simulator` raising `AttributeError` for parameters in a `pandas.DataFrame` with grouped data
+- Fixed `cpm.generators.Simulator` raising `ValueError` for a single parameter set given as `Parameters`, `dict` or `pandas.Series`
+- Fixed `diagnostics()` of `EmpiricalBayes` and `VariationalBayes` failing for three or more free parameters; `convergence_diagnostics_plots` has a new `bounds` argument
+- Fixed a clean install raising `ModuleNotFoundError` in `diagnostics()`, by adding `matplotlib` to the dependencies
+- Fixed `cpm.utils.data` and `cpm.utils.metad` not being reachable after `import cpm`
+- Fixed `cpm.core.diagnostics.gelman_rubin` and `cpm.core.diagnostics.psrf` failing on every call, and `gelman_rubin` computing the statistic incorrectly
 
 ## [0.25.6] - 2026-04-15
 

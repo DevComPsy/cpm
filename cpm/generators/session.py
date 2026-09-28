@@ -95,6 +95,10 @@ class SessionWrapper(Wrapper):
     of calling a Python function and copying the parameters on every trial is
     gone. This is typically 10 to 100 times faster than a per-trial `Wrapper`.
 
+    Use it instead of a `Wrapper` when fitting your own model is too slow; the
+    built-in models in `cpm.applications` already compute all trials at once. See
+    :doc:`/how-to/speed-up-your-model` for how to rewrite a per-trial model.
+
     Parameters
     ----------
     model : function

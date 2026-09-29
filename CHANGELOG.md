@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `numpy.random.seed` not reproducing the later chains of `EmpiricalBayes` and `VariationalBayes`, whose starting priors now also respect the lower bound and work with infinite bounds
 - Fixed `cpm.optimisation.Bads` emitting a `DeprecationWarning` on every GP fit ([#88](https://github.com/DevComPsy/cpm/issues/88))
 - Fixed `cpm.optimisation.Bads` failing under NumPy 2, by requiring `gpyreg>=1.2.1`
+- Fixed installs with pandas or matplotlib releases that do not work with NumPy 2, by requiring `pandas>=2.2.2` and `matplotlib>=3.8.4`
 - Fixed `cpm.optimisation.FminBound` raising `TypeError` on SciPy 1.18.0 and later
 - Fixed `cpm.hierarchical.VariationalBayes.ttest` raising `NameError` when `null` is a `pandas.DataFrame`
 - Fixed `cpm.hierarchical.VariationalBayes.lmes` repeating the final list of model evidences for every iteration

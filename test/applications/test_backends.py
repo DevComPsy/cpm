@@ -237,6 +237,40 @@ def test_missing_columns_are_reported_when_the_model_runs():
         model.run()
 
 
+def _recoded(data, **columns):
+    data = data.copy()
+    for key, value in columns.items():
+        data[key] = value(data[key])
+    return data
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+@pytest.mark.parametrize("make, match", [
+    (lambda: RLRW(data=_recoded(bandit(), response=lambda x: x + 1), dimensions=4), "response"),
+    (lambda: RLRW(data=_recoded(bandit(), response=lambda x: x.where(x.index != 3)), dimensions=4),
+     "response"),
+    (lambda: RLRW(data=bandit(), dimensions=2), "stimuli"),
+    (lambda: HybridMBMF(data=_recoded(two_step(), s1=lambda x: x + 1)), "s1"),
+    (lambda: HybridMBMF(data=_recoded(two_step(), action=lambda x: x + 1)), "action"),
+    (lambda: PTSM(data=_recoded(risky(), observed=lambda x: x + 1), parameters_settings=PT),
+     "observed"),
+], ids=["RLRW-1-based", "RLRW-NaN", "RLRW-dimensions", "Hybrid-s1", "Hybrid-action", "PTSM"])
+def test_data_out_of_range_raise_instead_of_reading_past_the_arrays(make, match, backend):
+    """numba does not check indices; the models check the data they index with."""
+    model = on_backend(make(), backend)
+    with pytest.raises(IndexError, match=match):
+        model.run()
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_nan_rewards_raise_as_softmax_does(backend):
+    data = bandit()
+    data["reward_left"] = data.reward_left.where(data.index != 3)
+    model = on_backend(RLRW(data=data, dimensions=4), backend)
+    with pytest.raises(ValueError, match="NaN"):
+        model.run()
+
+
 def test_models_survive_deepcopy_and_pickling():
     model = HybridMBMF(data=two_step(), parameters_settings=HYBRID)
     model.run()

@@ -33,6 +33,17 @@ expected_utility = kernels.expected_utility
 
 
 @njit
+def check_activations(activations):
+    """Raise ValueError for NaN or infinite activations, as `cpm.models.decision.Softmax` does."""
+    if np.isnan(activations).any():
+        raise ValueError("Activations contain NaN values. Please remove or impute missing values.")
+    if np.isinf(activations).any():
+        raise ValueError(
+            "Activations contain infinite values. Please remove or impute infinite values."
+        )
+
+
+@njit
 def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, uniforms):
     """
     All trials of `RLRW`.
@@ -59,6 +70,10 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
     """
     n, k = arms.shape
     d = initial_values.shape[0]
+    ## numba does not check indices, so the data are checked here, as the
+    ## per-trial models did by raising IndexError
+    if k < 2:
+        raise ValueError("RLRW needs at least two arms.")
     values = initial_values.copy()
     policy = np.empty((n, k))
     reward = np.empty(n)
@@ -69,9 +84,14 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
     feedback = np.empty(1)
     for t in range(n):
         for j in range(k):
+            if not -d <= arms[t, j] - 1 < d:
+                raise IndexError("RLRW: the arm columns must hold stimuli from 1 to dimensions.")
             activations[j] = values[arms[t, j] - 1]
+        check_activations(activations)
         policy[t] = softmax(activations, temperature)
         choice = choose(policy[t], uniforms[t]) if generate else response[t]
+        if not -k <= choice < k:
+            raise IndexError("RLRW: response must be an arm, from 0 to the number of arms - 1.")
         stimulus = arms[t, choice] - 1
         if stimulus < 0:
             stimulus += d
@@ -119,6 +139,9 @@ def hybrid_mbmf(inv_temperature, learning_rate, eligibility_trace, mb_weight,
     q_hybrid = np.empty(2)
     for t in range(n):
         state = s1[t]
+        ## numba does not check indices, see rlrw
+        if not -2 <= state < 2:
+            raise IndexError("HybridMBMF: s1, stimuli_first, action, s2 and position must be 0 or 1.")
         first = stimuli_first[t]
         ## the model-based value of action 0 is that of state 1, and vice versa
         for i in range(2):
@@ -129,6 +152,7 @@ def hybrid_mbmf(inv_temperature, learning_rate, eligibility_trace, mb_weight,
                 + choice_stickiness * m[state, i]
                 + response_stickiness * r_action
             )
+        check_activations(q_hybrid)
         policy = softmax(q_hybrid, inv_temperature)
         if generate:
             chosen = choose(policy, uniforms[t])
@@ -140,6 +164,8 @@ def hybrid_mbmf(inv_temperature, learning_rate, eligibility_trace, mb_weight,
             reached = s2[t]
             payout = reward[t]
             side = position[t]
+        if not (-2 <= chosen < 2 and -2 <= reached < 2 and -2 <= side < 2):
+            raise IndexError("HybridMBMF: s1, stimuli_first, action, s2 and position must be 0 or 1.")
         m[:, :] = 0.0
         m[state, chosen] = 1.0
         r[:] = 0.0
@@ -219,7 +245,11 @@ def prospect_softmax(alpha, beta, lambda_loss, gamma, delta, temperature, safe, 
         ev_risk = risky[t] * probability[t]
         best = 1 if ev_risk >= safe[t] else 0
         expected = expected_all[t]
+        check_activations(expected)
         policy = softmax(expected, temperature)
+        ## numba does not check indices, see rlrw
+        if (dependent_chosen or not (choose_always or generate)) and not -2 <= observed[t] < 2:
+            raise IndexError("observed must be 0 (safe) or 1 (risky).")
         if choose_always or generate:
             chosen = choose(policy, uniforms[t])
         else:

@@ -8,7 +8,11 @@ models built from the classes in `cpm.models`. The outputs of those per-trial
 implementations, for the cases below, are frozen in
 `data/per_trial_reference.pkl.gz`: exports, dependent variables, final states,
 objective values, the per-trial `simulation` records, a call of the per-trial
-`model` function, and a seeded simulation with `Simulator`.
+`model` function, and a seeded simulation with `Simulator`. Tables are stored as
+dictionaries of numpy arrays, so that any version of pandas can read them.
+
+numba and NumPy may compute exponentials differently in the last digit, depending
+on the platform and CPU, so results are compared to a relative tolerance of 1e-12.
 """
 
 import builtins
@@ -147,7 +151,7 @@ def test_runs_equal_the_per_trial_implementation(case, backend):
         model.run()
         np.testing.assert_allclose(model.dependent, reference["dependent"][scale], **TOLERANCE)
         if scale in reference["exports"]:
-            expected, got = reference["exports"][scale], model.export()
+            expected, got = pd.DataFrame(reference["exports"][scale]), model.export()
             assert list(got.columns) == list(expected.columns)
             assert dict(got.dtypes) == dict(expected.dtypes)
             np.testing.assert_allclose(got.to_numpy(float), expected.to_numpy(float), **TOLERANCE)
@@ -208,20 +212,20 @@ def test_simulations_equal_the_per_trial_implementation(backend):
     simulator = Simulator(wrapper=wrapper, data=data.groupby("ppt"), parameters=draws)
     np.random.seed(2024)
     simulator.run()
-    pd.testing.assert_frame_equal(simulator.export(), REFERENCE["simulator"], check_exact=False,
+    pd.testing.assert_frame_equal(simulator.export(), pd.DataFrame(REFERENCE["simulator"]), check_exact=False,
                                   rtol=1e-12, atol=1e-12)
 
 
 @pytest.mark.skipif(not _jit.JIT_ENABLED, reason="numba is not installed or disabled")
 @pytest.mark.parametrize("case", CASES, ids=IDS)
-def test_backends_agree_exactly(case):
+def test_backends_agree(case):
     exports = []
     for backend in ("python", "numba"):
         model, _ = build(case, backend)
         np.random.seed(7)
         model.run()
         exports.append(model.export())
-    pd.testing.assert_frame_equal(exports[0], exports[1], check_exact=True)
+    pd.testing.assert_frame_equal(exports[0], exports[1], check_exact=False, **TOLERANCE)
 
 
 def test_numba_is_used_when_installed(monkeypatch):

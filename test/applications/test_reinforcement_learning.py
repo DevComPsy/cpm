@@ -88,8 +88,9 @@ def test_model_accuracy(setup_data):
     model.run()
     import numpy as np
 
-    assert np.array_equal(
-        model.dependent, expected_output
+    ## to the last digits, in which NumPy's exponentials differ between CPUs
+    assert np.allclose(
+        model.dependent, expected_output, rtol=1e-12, atol=1e-12
     ), "Model accuracy test failed"
     print("test_model_accuracy passed")
 

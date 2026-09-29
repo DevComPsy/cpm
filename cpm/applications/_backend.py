@@ -21,7 +21,7 @@ import pandas as pd
 from ..core import _jit
 from ..generators.session import SessionWrapper, session_data, trial_view
 
-__all__ = ["Application", "SessionModel", "TrialModel", "require", "uniforms"]
+__all__ = ["Application", "SessionModel", "TrialModel", "indices", "require", "uniforms"]
 
 
 class SessionModel:
@@ -116,6 +116,20 @@ def uniforms(trials, needed):
     if needed:
         return np.random.random_sample(trials)
     return np.empty(0)
+
+
+def indices(values):
+    """
+    `values` as int64 indices.
+
+    Casting NaN or infinity to an integer gives a different number on different
+    platforms (0 on ARM), so they become an index out of any range instead, which
+    the loops of `cpm.applications._sessions` reject where they use it.
+    """
+    values = np.asarray(values)
+    if values.dtype.kind == "f":
+        values = np.where(np.isfinite(values), values, np.iinfo(np.int32).min)
+    return np.ascontiguousarray(values, dtype=np.int64)
 
 
 def prepared(data):

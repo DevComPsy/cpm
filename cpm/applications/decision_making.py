@@ -2,7 +2,7 @@ import numpy as np
 import warnings
 from cpm.generators import Parameters, Value
 from cpm.core import _jit
-from cpm.applications._backend import Application, SessionModel, prepared, require, uniforms
+from cpm.applications._backend import Application, SessionModel, indices, prepared, require, uniforms
 
 
 def _ptsm_parameters(parameters_settings, utility_curve, weighting):
@@ -229,7 +229,7 @@ class _PrepareRisky:
         require(out, self.columns + ["observed"], self.model)
         for key in self.columns:
             out[key] = np.ascontiguousarray(out[key], dtype=np.float64)
-        out["observed"] = np.ascontiguousarray(out["observed"], dtype=np.int64)
+        out["observed"] = indices(out["observed"])
         return out
 
 

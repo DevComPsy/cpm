@@ -3,7 +3,7 @@ import warnings
 
 from cpm.generators import Parameters, Value
 from cpm.applications._backend import (
-    Application, SessionModel, ordered_columns, prepared, require, uniforms,
+    Application, SessionModel, indices, ordered_columns, prepared, require, uniforms,
 )
 
 
@@ -117,14 +117,12 @@ def _prepare_rlrw(data):
             f"such as arm_left and reward_left, but the data have {sorted(out)}."
         )
     trials = len(out[arms[0]])
-    out["arms"] = numpy.ascontiguousarray(
-        numpy.column_stack([out[c] for c in arms]), dtype=numpy.int64
-    )
+    out["arms"] = indices(numpy.column_stack([out[c] for c in arms]))
     out["rewards"] = numpy.ascontiguousarray(
         numpy.column_stack([out[c] for c in rewards]), dtype=numpy.float64
     )
     response = out.get("response", numpy.zeros(trials))
-    out["response"] = numpy.ascontiguousarray(response, dtype=numpy.int64)
+    out["response"] = indices(response)
     return out
 
 
@@ -277,16 +275,12 @@ class _PrepareHybrid:
         require(out, needed, "HybridMBMF")
         trials = out["s1"].shape[0]
         for key in ("s1", "stimuli_first", "action", "s2"):
-            out[key] = numpy.ascontiguousarray(
-                out.get(key, numpy.zeros(trials)), dtype=numpy.int64
-            )
+            out[key] = indices(out.get(key, numpy.zeros(trials)))
         for key in ("reward", "reward_0", "reward_1"):
             out[key] = numpy.ascontiguousarray(
                 out.get(key, numpy.zeros(trials)), dtype=numpy.float64
             )
-        out["position"] = numpy.ascontiguousarray(
-            out.get("position", out["stimuli_first"] ^ out["action"]), dtype=numpy.int64
-        )
+        out["position"] = indices(out.get("position", out["stimuli_first"] ^ out["action"]))
         return out
 
 

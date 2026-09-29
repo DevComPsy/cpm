@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sped up long and multi-chain runs of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`
 - Made every model cheaper to evaluate: copies of a `cpm.generators.Value` share their prior, and the built-in priors are evaluated without scipy overhead, with identical results
 - `cpm.generators.Value.update_prior()` now replaces the prior instead of changing it in place; changing `value.prior.kwds` directly now affects every copy of the `Value`
+- `cpm.generators.Wrapper.reset()` now keeps the current priors and bounds of the parameters, instead of restoring the ones the model was created with
 - Made the built-in applications (`RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992`, `PTSM2025`) compute all trials at once: 90-230 times faster with numba, 13-25 times without, with the same interface and results
 - Made per-trial `cpm.generators.Wrapper` models about twice as fast, by reading trials without `DataFrame.iloc`
 - Made the classes in `cpm.models` faster, up to 17 times for large inputs, with identical results

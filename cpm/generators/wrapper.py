@@ -51,7 +51,10 @@ def restore_parameters(initial, current):
             restored[key] = new
         else:
             restored[key] = copy.deepcopy(value)
-    return type(current)(**restored) if type(current) is Parameters else copy.deepcopy(initial)
+    ## not constructed with **restored, since LogParameters transforms the values it is given
+    new = type(current).__new__(type(current))
+    new.__dict__.update(restored)
+    return new
 
 
 class Wrapper:
@@ -189,7 +192,8 @@ class Wrapper:
 
         """
         if self.__run__:
-            self.dependent.fill(0)
+            if isinstance(self.dependent, np.ndarray):  # a SessionWrapper model may return none
+                self.dependent.fill(0)
             self.simulation = []
             self.parameters = restore_parameters(
                 self.__init_parameters__, self.parameters

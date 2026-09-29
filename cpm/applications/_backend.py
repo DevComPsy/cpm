@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from ..core import _jit
-from ..generators.session import SessionWrapper, session_data
+from ..generators.session import SessionWrapper, session_data, trial_view
 
 __all__ = ["Application", "SessionModel", "TrialModel", "require", "uniforms"]
 
@@ -50,33 +50,6 @@ class SessionModel:
     @property
     def sessions(self):
         return _jit.kernels("cpm.applications._sessions", python=self.backend == "python")
-
-
-def trial_view(output, t, shapes):
-    """
-    The outputs of trial `t` of a run, as the per-trial model returns them.
-
-    Parameters
-    ----------
-    output : dict
-        The outputs of a session model, one array per output, trials first.
-    t : int
-        The trial.
-    shapes : dict
-        Outputs whose per-trial value has a shape of its own, such as (1, -1).
-        `dependent` is always at least one-dimensional.
-    """
-    row = {}
-    for key, value in output.items():
-        item = value[t]
-        if key == "dependent":
-            item = np.atleast_1d(item).copy()
-        elif key in shapes:
-            item = np.reshape(item, shapes[key]).copy()
-        elif isinstance(item, np.ndarray):
-            item = item.copy()
-        row[key] = item
-    return row
 
 
 def one_trial(trial):
@@ -119,8 +92,6 @@ class Application(SessionWrapper):
     outputs whose per-trial value is not simply a row of the session output.
     """
 
-    _trial_shapes = {}
-
     def _setup(self, data, parameters, session_model, prepare):
         super().__init__(model=session_model, data=data, parameters=parameters, prepare=prepare)
         self._session_model = session_model
@@ -128,20 +99,6 @@ class Application(SessionWrapper):
 
     def _run_session(self):
         return self._session_model(parameters=self.parameters, data=self.session)
-
-    @property
-    def simulation(self):
-        """The outputs of each trial of the last run, as a list of dictionaries."""
-        stored = self.__dict__.get("_simulation", [])
-        if isinstance(stored, dict):
-            trials = len(next(iter(stored.values()))) if stored else 0
-            stored = [trial_view(stored, t, self._trial_shapes) for t in range(trials)]
-            self.__dict__["_simulation"] = stored
-        return stored
-
-    @simulation.setter
-    def simulation(self, value):
-        self.__dict__["_simulation"] = value
 
 
 def require(data, columns, model):

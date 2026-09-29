@@ -133,6 +133,8 @@ def test_trial_reader_gives_the_rows_iloc_gives(frame):
         expected, got = unpack_trials(frame, i, True), read(i)
         if isinstance(expected, pd.Series):
             pd.testing.assert_series_equal(got, expected, check_exact=True)
+            ## object Series compare equal whether they hold Python or numpy scalars
+            assert [type(v) for v in got] == [type(v) for v in expected]
         else:
             assert type(got) is type(expected) and got == expected
 

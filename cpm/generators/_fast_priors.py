@@ -13,7 +13,7 @@ once. The results are identical to scipy's, not only close.
 The scipy object stays the prior: this module only caches an evaluator on it.
 The evaluator is rebuilt whenever the distribution's arguments change, so
 priors that are updated in place still give the right density. Anything the
-fast path does not cover (other distributions, array-valued parameters, points
+fast path does not cover (other distributions, array-valued or invalid parameters, points
 on or outside the boundary of the support, non-finite values) is passed on to
 scipy unchanged.
 """
@@ -98,6 +98,10 @@ class _Evaluator:
         except (TypeError, ValueError):  # array-valued arguments
             return False
 
+    def __reduce__(self):
+        ## the cache is not pickled (`logpdf` is a lambda); an unpickled prior rebuilds it
+        return type(None), ()
+
     def __call__(self, x):
         y = (x - self.loc) / self.scale
         if self.low < y < self.high:
@@ -129,6 +133,8 @@ def _evaluator(prior):
     try:
         shapes, loc, scale = dist._parse_args(*prior.args, **prior.kwds)
         if not all(np.ndim(v) == 0 for v in (*shapes, loc, scale)) or not scale > 0:
+            return False
+        if not np.all(dist._argcheck(*shapes)):  # scipy returns NaN for these
             return False
         evaluator = _Evaluator(prior, name)
     except Exception:

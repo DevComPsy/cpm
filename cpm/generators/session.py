@@ -22,23 +22,50 @@ def session_data(data):
     Returns
     -------
     dict
-        One C-contiguous numpy array per column or entry, with the trials along
-        the first axis.
+        One C-contiguous numpy array per column or entry, a copy of the data, with
+        the trials along the first axis.
     """
     if isinstance(data, pd.DataFrame):
         return {
-            column: np.ascontiguousarray(data[column].to_numpy())
+            column: np.array(data[column].to_numpy(), order="C")
             for column in data.columns
         }
     if isinstance(data, dict):
         return {
-            key: np.ascontiguousarray(np.asarray(value))
+            key: np.array(value, order="C")
             for key, value in data.items()
             if key != "ppt"
         }
     raise TypeError(
         f"The data must be a pandas.DataFrame or a dict, not {type(data).__name__}."
     )
+
+
+def trial_view(output, t, shapes):
+    """
+    The outputs of trial `t` of a run, as the per-trial model returns them.
+
+    Parameters
+    ----------
+    output : dict
+        The outputs of a session model, one array per output, trials first.
+    t : int
+        The trial.
+    shapes : dict
+        Outputs whose per-trial value has a shape of its own, such as (1, -1).
+        `dependent` is always at least one-dimensional.
+    """
+    row = {}
+    for key, value in output.items():
+        item = value[t]
+        if key == "dependent":
+            item = np.atleast_1d(item).copy()
+        elif key in shapes:
+            item = np.reshape(item, shapes[key]).copy()
+        elif isinstance(item, np.ndarray):
+            item = item.copy()
+        row[key] = item
+    return row
 
 
 def session_export(output, trials):
@@ -113,8 +140,8 @@ class SessionWrapper(Wrapper):
         The parameters of the model, including its initial states.
     prepare : function, optional
         A function that turns the data into the form the model function takes. It
-        is called once, when the data are first needed (and again after new data are
-        set with `reset`), not on every run. The default is :func:`session_data`,
+        is called once, when the data are first needed (and again after `reset` with
+        new data or without parameters), not on every run. The default is :func:`session_data`,
         which returns a dictionary of contiguous numpy arrays, one per column.
 
     Notes
@@ -135,7 +162,9 @@ class SessionWrapper(Wrapper):
 
     `export()` returns one row per trial, laid out as the export of a per-trial
     `Wrapper`, see :func:`session_export`. The outputs of the last run are in
-    `session_output`, one array per output.
+    `session_output`, one array per output, and in `simulation`, one dictionary
+    per trial, as for a `Wrapper`. The model function should not change `data`,
+    which is reused on every run.
 
     Examples
     --------
@@ -163,6 +192,9 @@ class SessionWrapper(Wrapper):
     array([0.   , 0.3  , 0.51 , 0.357])
     """
 
+    ## outputs whose per-trial value in `simulation` has a shape of its own, see `trial_view`
+    _trial_shapes = {}
+
     def __init__(self, model=None, data=None, parameters=None, prepare=None):
         self.prepare = session_data if prepare is None else prepare
         super().__init__(model=model, data=data, parameters=parameters)
@@ -179,8 +211,22 @@ class SessionWrapper(Wrapper):
             self._prepared_from = self.data
         return self._prepared
 
+    @property
+    def simulation(self):
+        """The outputs of each trial of the last run, as a list of dictionaries, as for a `Wrapper`."""
+        stored = self.__dict__.get("_simulation", [])
+        if isinstance(stored, dict):
+            trials = len(next(iter(stored.values()))) if stored else 0
+            stored = [trial_view(stored, t, self._trial_shapes) for t in range(trials)]
+            self.__dict__["_simulation"] = stored
+        return stored
+
+    @simulation.setter
+    def simulation(self, value):
+        self.__dict__["_simulation"] = value
+
     def _run_session(self):
-        """Call the model function on all trials; subclasses can compute the run differently."""
+        """Call the model function on all trials."""
         return self.model(parameters=self.parameters, data=self.session)
 
     def run(self):
@@ -244,7 +290,8 @@ class SessionWrapper(Wrapper):
         if was_run:
             self.simulation = {}
             self.session_output = {}
-        if data is not None:
+        if data is not None or parameters is None:
+            ## a reset without parameters also reads data that were changed in place
             self._prepared = None
         return None
 

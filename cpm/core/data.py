@@ -46,8 +46,8 @@ def trial_reader(data, pandas=True):
     A function that returns trial `i` of `data`, as `unpack_trials(data, i, pandas)` does.
 
     Reading a row of a `pandas.DataFrame` with `iloc` takes about 50 microseconds,
-    which a model run pays on every trial. For data with only numeric and boolean
-    columns, the reader converts the data to a numpy array once and builds each row
+    which a model run pays on every trial. For data with only numeric columns, or
+    only boolean ones, the reader converts the data to a numpy array once and builds each row
     from it, which gives the same `pandas.Series` (values, dtype, index and name)
     about seven times faster. The array is a copy made when the reader is created,
     so the data are read afresh on every run, and changing a trial inside a model
@@ -70,8 +70,10 @@ def trial_reader(data, pandas=True):
         plain = all(
             isinstance(dtype, np.dtype) and dtype.kind in "biuf" for dtype in dtypes
         )
-        if plain and data.shape[1] > 0:
-            values = data.to_numpy(copy=True)
+        values = data.to_numpy(copy=True) if plain and data.shape[1] > 0 else None
+        ## mixed bool and numeric columns give an object array of Python scalars,
+        ## where iloc gives numpy scalars, so those are read with iloc
+        if values is not None and values.dtype != object:
             columns = data.columns
             index = data.index
             single = data.shape[1] == 1

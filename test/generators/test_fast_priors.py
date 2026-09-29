@@ -1,4 +1,5 @@
 import copy
+import pickle
 import warnings
 
 import numpy as np
@@ -6,7 +7,7 @@ import pandas as pd
 import pytest
 from scipy import stats
 
-from cpm.generators import Parameters, Value, Wrapper
+from cpm.generators import LogParameters, Parameters, Value, Wrapper
 from cpm.generators._fast_priors import fast_logpdf
 
 ## the priors Value builds from a string, as (prior, args, lower, upper)
@@ -80,6 +81,24 @@ def test_other_priors_and_values_fall_back_to_scipy():
     )
 
 
+@pytest.mark.parametrize("prior", ["beta", "gamma"])
+def test_invalid_shape_parameters_give_nan_as_in_scipy(prior):
+    ## the default arguments of these priors have a = 0, which scipy rejects
+    value = Value(value=0.5, lower=0, upper=1, prior=prior)
+    assert np.isnan(value.prior.logpdf(0.5))
+    assert np.isnan(value.PDF(log=True))
+
+
+def test_priors_pickle_after_they_were_evaluated():
+    parameters = Parameters(
+        a=Value(value=0.5, lower=0, upper=1, prior="truncated_normal",
+                args={"mean": 0.5, "sd": 0.25})
+    )
+    expected = parameters.PDF(log=True)
+    restored = pickle.loads(pickle.dumps(parameters))
+    assert restored.PDF(log=True) == expected
+
+
 def test_priors_changed_in_place_are_picked_up():
     value = Value(value=0.4, lower=0, upper=1, prior="truncated_normal",
                   args={"mean": 0.5, "sd": 0.25})
@@ -151,6 +170,22 @@ def test_reset_keeps_updated_priors():
         wrapper.run()
     wrapper.reset(parameters=[0.5])
     assert wrapper.parameters.PDF(log=True) == updated
+
+
+def test_reset_keeps_updated_priors_of_log_parameters():
+    parameters = LogParameters(
+        a=Value(value=0.5, lower=0, upper=1, prior="truncated_normal",
+                args={"mean": 0.5, "sd": 0.25})
+    )
+    data = pd.DataFrame({"x": np.zeros(3), "observed": np.zeros(3)})
+    wrapper = Wrapper(model=lambda parameters, trial: {"dependent": np.array([0.5])},
+                      data=data, parameters=parameters)
+    wrapper.parameters.update_prior(a={"mean": 0.9, "sd": 0.05})
+    updated = wrapper.parameters.a.prior
+    wrapper.run()
+    wrapper.reset()
+    assert type(wrapper.parameters) is LogParameters
+    assert wrapper.parameters.a.prior is updated
 
 
 def test_hierarchical_prior_updates_reach_the_objective():

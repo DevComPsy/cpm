@@ -168,6 +168,56 @@ def test_wrong_number_of_rows_is_an_error(one):
         session.run()
 
 
+def test_simulation_holds_the_trials_as_for_a_wrapper(one):
+    trial, session = both(one)
+    trial.run()
+    session.run()
+    assert isinstance(session.simulation, list) and len(session.simulation) == len(one)
+    for got, expected in zip(session.simulation, trial.simulation):
+        assert got.keys() == expected.keys()
+        for key in expected:
+            np.testing.assert_allclose(got[key], expected[key], rtol=0, atol=1e-12)
+
+
+def test_reset_without_parameters_reads_data_changed_in_place(one):
+    flipped = one.assign(reward=1.0 - one.reward)
+    expected, _ = both(flipped)
+    expected.run()
+    _, session = both(one)
+    session.run()
+    session.data["reward"] = flipped.reward
+    session.reset()
+    session.run()
+    np.testing.assert_allclose(session.dependent, expected.dependent, rtol=0, atol=1e-12)
+
+
+def test_a_model_without_a_dependent_variable_can_be_reset():
+    warnings.simplefilter("ignore")
+    session = SessionWrapper(
+        model=lambda parameters, data: {"x": data["x"] * 2},
+        data={"x": np.arange(3.0)},
+        parameters=Parameters(a=Value(value=2.0, lower=0, upper=5, prior="uniform")),
+    )
+    session.run()
+    session.reset()
+    session.run()
+    np.testing.assert_array_equal(session.export().x, [0, 2, 4])
+
+
+def test_the_model_cannot_change_the_data_it_was_given():
+    warnings.simplefilter("ignore")
+
+    def meddling(parameters, data):
+        data["x"][0] = 99.0
+        return {"dependent": data["x"]}
+
+    x = np.arange(3.0)
+    session = SessionWrapper(model=meddling, data={"x": x, "observed": np.zeros(3)},
+                             parameters=Parameters(a=Value(value=2.0)))
+    session.run()
+    np.testing.assert_array_equal(x, [0, 1, 2])
+
+
 @pytest.mark.parametrize("optimiser", [FminBound, Minimize])
 def test_fits_reach_the_same_optima(data, optimiser):
     warnings.simplefilter("ignore")

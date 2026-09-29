@@ -21,15 +21,14 @@ maintainers = [
     { name = "Lenard Dome", email = "lenarddome@gmail.com" }
 ]
 license = { text = "AGPLv3" }
-requires-python = ">3.11.0"
+requires-python = ">=3.11"
 keywords = ["cpm-toolbox", "cpm", "computational-psychiatry", "computational-psychology", "psychometrics", "psychology"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: Implementation :: PyPy"
+    "Programming Language :: Python :: 3"
 ]
 dependencies = [
     "numpy>=2.0.0",

@@ -1,7 +1,7 @@
 import numpy
 import warnings
 
-from cpm.generators import Wrapper, Parameters, Value
+from cpm.generators import Parameters, Value
 from cpm.applications._backend import (
     Application, SessionModel, ordered_columns, prepared, require, uniforms,
 )

@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from cpm.generators import Wrapper, Parameters, Value
+from cpm.generators import Parameters, Value
 from cpm.core import _jit
 from cpm.applications._backend import Application, SessionModel, prepared, require, uniforms
 

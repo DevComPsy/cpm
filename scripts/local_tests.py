@@ -18,6 +18,10 @@ with ``pip install -e . pytest`` for an install without numba), and pass their
 interpreters with ``--python``. The benchmark runs with the first interpreter
 and writes benchmarks/results/local.csv.
 
+numba's cache of compiled code is deleted first: numba only checks whether a
+function's own file changed, so the compiled loops of cpm.applications would
+otherwise keep using kernels of cpm.models.kernels that have since changed.
+
 The script exits with a non-zero status if any run fails.
 """
 
@@ -43,6 +47,9 @@ def main():
     parser.add_argument("--python", nargs="*", default=[sys.executable])
     parser.add_argument("--no-benchmark", action="store_true")
     args = parser.parse_args()
+
+    for path in ROOT.glob("cpm/**/__pycache__/*.nb[ci]"):
+        path.unlink()
 
     failures = []
     for python in args.python:

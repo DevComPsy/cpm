@@ -25,6 +25,7 @@ import importlib
 import importlib.util
 import os
 import sys
+import warnings
 
 __all__ = ["HAVE_NUMBA", "JIT_ENABLED", "njit", "kernels", "resolve_backend"]
 
@@ -37,14 +38,19 @@ _STATE = {}
 def _probe():
     """Import numba, once, and record whether compiled kernels are available."""
     if not _STATE:
-        try:
-            if os.environ.get("CPM_DISABLE_JIT", "0") not in ("", "0"):
-                raise ImportError("compilation disabled with CPM_DISABLE_JIT")
-            import numba
-
-            _STATE["numba"], have = numba, True
-        except ImportError:  # includes numba installs that reject the installed NumPy
-            _STATE["numba"], have = None, False
+        numba = None
+        if os.environ.get("CPM_DISABLE_JIT", "0") in ("", "0"):
+            try:
+                import numba
+            except Exception as error:  # such as a numba that rejects the installed NumPy
+                if not (isinstance(error, ModuleNotFoundError) and error.name == "numba"):
+                    warnings.warn(
+                        f"numba is installed but could not be imported ({error!r}), so the "
+                        "built-in models run as plain Python, with the same results.",
+                        stacklevel=2,
+                    )
+        _STATE["numba"] = numba
+        have = numba is not None
         _STATE["HAVE_NUMBA"] = have
         ## numba's own switch turns njit into an identity decorator as well
         _STATE["JIT_ENABLED"] = have and os.environ.get("NUMBA_DISABLE_JIT", "0") in ("", "0")
@@ -73,7 +79,13 @@ def njit(*args, **kwargs):
     if not _flag("HAVE_NUMBA"):
         return _identity(*args, **kwargs)
     kwargs.setdefault("cache", True)
-    return _probe()["numba"].njit(*args, **kwargs)
+    numba = _probe()["numba"]
+    if not (len(args) == 1 and callable(args[0])):
+        return numba.njit(*args, **kwargs)
+    try:
+        return numba.njit(**kwargs)(args[0])
+    except RuntimeError:  # numba has nowhere to write its cache, such as on a read-only install
+        return numba.njit(**{**kwargs, "cache": False})(args[0])
 
 
 def decorator(namespace):
@@ -111,7 +123,8 @@ def kernels(name, python=False):
         module.__package__ = name.rpartition(".")[0]
         setattr(module, PYTHON_FLAG, True)
         sys.modules[copy_name] = module
-        copy_spec.loader.exec_module(module)
+        ## from the source, since the file does not exist if cpm is imported from a zip
+        exec(compile(spec.loader.get_source(name), spec.origin, "exec"), module.__dict__)
         _PYTHON_MODULES[name] = module
     return _PYTHON_MODULES[name]
 

@@ -91,6 +91,8 @@ python scripts/local_tests.py
 
 It runs the test suite with numba (if it is installed), with `CPM_DISABLE_JIT=1` (as if numba were not installed), and with `NUMBA_DISABLE_JIT=1`, and then `benchmarks/run.py`.
 
+numba caches compiled code in the `__pycache__` folders under `cpm/`, and only recompiles a function when its own file changes. After changing `cpm/models/kernels.py` (yourself, or by pulling), the compiled loops in `cpm/applications/_sessions.py` still use the old kernels until you delete the cached `*.nbi` and `*.nbc` files; `scripts/local_tests.py` deletes them before it runs.
+
 ## Documentation
 
 The documentation is built with [Sphinx](https://www.sphinx-doc.org/) and the [PyData theme](https://pydata-sphinx-theme.readthedocs.io/).

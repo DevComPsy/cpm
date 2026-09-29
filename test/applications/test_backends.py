@@ -11,11 +11,16 @@ objective values, the per-trial `simulation` records, a call of the per-trial
 `model` function, and a seeded simulation with `Simulator`.
 """
 
+import builtins
 import copy
 import gzip
 import os
+import pathlib
 import pickle
+import subprocess
+import sys
 import warnings
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -225,6 +230,44 @@ def test_numba_is_used_when_installed(monkeypatch):
     monkeypatch.setattr(_jit, "HAVE_NUMBA", False)
     monkeypatch.setattr(_jit, "JIT_ENABLED", False)
     assert RLRW(data=bandit(), dimensions=4)._session_model.backend == "python"
+
+
+def test_a_numba_that_fails_to_load_falls_back_to_python_with_a_warning(monkeypatch):
+    real_import = builtins.__import__
+
+    def failing_import(name, *args, **kwargs):
+        if name == "numba":
+            raise OSError("llvmlite could not be loaded")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.delenv("CPM_DISABLE_JIT", raising=False)
+    monkeypatch.setattr(builtins, "__import__", failing_import)
+    monkeypatch.setattr(_jit, "_STATE", {})
+    with pytest.warns(UserWarning, match="could not be imported"):
+        assert _jit._probe()["HAVE_NUMBA"] is False
+
+
+@pytest.mark.skipif(not _jit.JIT_ENABLED, reason="numba is not installed or disabled")
+def test_kernels_compile_where_numba_cannot_cache(monkeypatch):
+    from numba.core import caching
+
+    monkeypatch.setattr(caching.CacheImpl, "_locator_classes", [])
+
+    def double(x):
+        return 2 * x
+
+    assert _jit.njit(double)(2) == 4
+
+
+def test_cpm_imports_from_a_zip(tmp_path):
+    root = pathlib.Path(__file__).resolve().parents[2]
+    archive = tmp_path / "cpm.zip"
+    with zipfile.ZipFile(archive, "w") as z:
+        for path in (root / "cpm").rglob("*.py"):
+            z.write(path, path.relative_to(root))
+    code = "import cpm, cpm.models; assert 'cpm.zip' in cpm.__file__"
+    env = {**os.environ, "PYTHONPATH": str(archive)}
+    subprocess.run([sys.executable, "-c", code], cwd=tmp_path, env=env, check=True)
 
 
 def test_missing_columns_are_reported_when_the_model_runs():

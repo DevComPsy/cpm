@@ -35,6 +35,8 @@ expected_utility = kernels.expected_utility
 @njit
 def check_activations(activations):
     """Raise ValueError for NaN or infinite activations, as `cpm.models.decision.Softmax` does."""
+    if np.isfinite(activations).all():  # one call on every trial, the cheap one in plain Python
+        return
     if np.isnan(activations).any():
         raise ValueError("Activations contain NaN values. Please remove or impute missing values.")
     if np.isinf(activations).any():

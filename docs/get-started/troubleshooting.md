@@ -33,7 +33,7 @@ If they persist, lower the upper bound of the parameter, or rescale the values t
 
 numba is optional (see [Faster fitting with numba](installation.md#faster-fitting-with-numba)), and cpm works without it.
 numba supports a new NumPy release some time after it comes out, so the newest NumPy may not have a numba release yet; `pip` then either installs an older NumPy for numba, or cannot install numba.
-If numba is installed but cannot be imported, cpm runs the models as plain Python, with the same results, only more slowly.
+If numba is installed but cannot be imported, cpm warns once, with numba's error, and runs the models as plain Python, with the same results, only more slowly.
 To use numba, install a NumPy version that numba supports (see the [numba installation notes](https://numba.readthedocs.io/en/stable/user/installing.html)), for example in a separate virtual environment.
 
 ### The first fit of a built-in model takes a few seconds longer

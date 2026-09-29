@@ -10,7 +10,7 @@ numba is an optional dependency. Install it with cpm (see {doc}`/get-started/ins
 pip install "cpm-toolbox[numba]"
 ```
 
-That is all: the applications use numba whenever it can be imported, and your code stays the same. Without numba, they run the same computation as plain Python, with the same results. numba supports a new NumPy release some time after it comes out, and does not support PyPy; if numba cannot be imported, for either reason, cpm uses plain Python without further notice.
+That is all: the applications use numba whenever it can be imported, and your code stays the same. Without numba, they run the same computation as plain Python, with the same results. numba supports a new NumPy release some time after it comes out, and does not support PyPy; if numba is not installed, cpm uses plain Python without further notice, and if it is installed but cannot be imported, cpm warns once, with numba's error, and uses plain Python.
 
 ## What to expect
 
@@ -26,7 +26,7 @@ One evaluation of the objective function, with the parameters' priors, for one p
 
 With numba, the model itself takes 0.02 to 0.05 ms of this, and the loss function about 0.02 ms. The last column is the same model computed one trial at a time, see [below](#extend-an-application-trial-by-trial).
 
-The first time an application runs with numba, numba compiles it, which takes a few seconds: about 3 to 5 s for the reinforcement-learning models, and up to about 15 s for the prospect-theory models. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead.
+The first time an application runs with numba, numba compiles it, which takes a few seconds: about 3 to 5 s for the reinforcement-learning models, and up to about 15 s for the prospect-theory models. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead; if it cannot write there either, as on some clusters, it compiles the models again in every new Python session.
 
 To run without numba although it is installed, for example to compare, set the environment variable `CPM_DISABLE_JIT=1` before starting Python.
 

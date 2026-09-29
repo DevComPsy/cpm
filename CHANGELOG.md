@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a how-to guide on speeding up your own model with `SessionWrapper`, with a test that runs its example
 - Added test units for `SessionWrapper`, `cpm.models.kernels`, the fast priors, and the built-in applications with and without numba
 - Added a benchmark suite (`benchmarks/run.py` for one evaluation, `benchmarks/hierarchical.py` for the hierarchical tutorials) and `scripts/local_tests.py`, which runs the tests with and without numba
+- Added a GitHub Actions workflow that runs the tests with and without numba, on Python 3.11 to 3.14
 
 ### Changed
 
@@ -35,12 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made every model cheaper to evaluate: copies of a `cpm.generators.Value` share their prior, and the built-in priors are evaluated without scipy overhead, with identical results
 - `cpm.generators.Value.update_prior()` now replaces the prior instead of changing it in place; changing `value.prior.kwds` directly now affects every copy of the `Value`
 - `cpm.generators.Wrapper.reset()` now keeps the current priors and bounds of the parameters, instead of restoring the ones the model was created with
-- Made the built-in applications (`RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992`, `PTSM2025`) compute all trials at once: 90-230 times faster with numba, 13-25 times without, with the same interface and results
+- Made the built-in applications (`RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992`, `PTSM2025`) compute all trials at once: 90-220 times faster with numba, 11-23 times without, with the same interface and results
 - Made per-trial `cpm.generators.Wrapper` models about twice as fast, by reading trials without `DataFrame.iloc`
 - Made the classes in `cpm.models` faster, up to 17 times for large inputs, with identical results
 - Made `LogLikelihood.bernoulli` and `LogLikelihood.continuous` 2.5-3 times faster, with identical results
 - Made `cpm.applications.signal_detection.EstimatorMetaD` about 10 times faster, with identical results
 - `cpm.models.decision.Softmax` no longer overflows: it returns the correct policy where it returned NaN and warned
+- `cpm.models.activation.ProspectUtility.weights` and `.utilities` are float arrays instead of object arrays, and the `simulation` records of `HybridMBMF` hold NumPy scalars instead of Python numbers
+- `PTSM2025` always uses its power utility: replacing `parameters.utility_curvature` on a model no longer changes it
+- Required Python 3.11 or later (previously `>3.11.0`, which excluded 3.11.0), removed the PyPy classifier, and tagged the wheel for Python 3 only
 
 ### Fixed
 

@@ -10,7 +10,7 @@ kernelspec:
 *28 September 2026 · cpm 0.26.0, in development*
 
 The built-in models of cpm now compute all trials of a participant in one call instead of one call per trial, and, when [numba](https://numba.pydata.org/) is installed, that loop over trials is compiled.
-Fitting them is 90 to 230 times faster than in cpm 0.25, and more than 1,000 times faster for {py:class}`~cpm.applications.decision_making.PTSM2025`, with the same results.
+Fitting them is 90 to 220 times faster than in cpm 0.25, and more than 1,000 times faster for {py:class}`~cpm.applications.decision_making.PTSM2025`, with the same results.
 Your code does not change.
 
 ```{code-cell} ipython3
@@ -91,7 +91,7 @@ def dot_plot(rows, labels, unit, ticks, tick_labels, series=SERIES):
 ## What changes for you
 
 - **Install numba** with cpm: `pip install "cpm-toolbox[numba]"`. That is all it takes. {py:class}`~cpm.applications.reinforcement_learning.RLRW`, {py:class}`~cpm.applications.reinforcement_learning.HybridMBMF`, {py:class}`~cpm.applications.decision_making.PTSM`, {py:class}`~cpm.applications.decision_making.PTSM1992` and {py:class}`~cpm.applications.decision_making.PTSM2025` keep their arguments, parameters, priors and outputs, and give the same results.
-- **Without numba**, the same models run as plain Python, 13 to 25 times faster than in cpm 0.25 (about 250 times for `PTSM2025`). numba is optional because it supports a new NumPy release only some time after it comes out, and does not support PyPy.
+- **Without numba**, the same models run as plain Python, 11 to 23 times faster than in cpm 0.25 (about 250 times for `PTSM2025`). numba is optional because it supports a new NumPy release only some time after it comes out, and does not support PyPy.
 - **Your own models are faster too.** Every per-trial {py:class}`~cpm.generators.Wrapper` model runs about twice as fast, and you can compile your own models with the new {py:class}`~cpm.generators.SessionWrapper`: see {doc}`/how-to/fast-session-models`.
 - **Hierarchical results change.** {py:class}`~cpm.hierarchical.EmpiricalBayes` and {py:class}`~cpm.hierarchical.VariationalBayes` used to discard the population priors they estimated after the first evaluation of each fit. They now use them throughout, so their results differ from cpm 0.25 (see [below](#same-results-and-one-fix)).
 

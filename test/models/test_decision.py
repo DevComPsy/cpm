@@ -161,5 +161,12 @@ def test_softmax_is_unchanged_where_it_does_not_overflow():
         np.testing.assert_array_equal(Softmax(temperature=beta, activations=activations).compute(), expected)
 
 
+def test_softmax_replaces_a_nan_policy_as_before():
+    """0 * inf is NaN, so the whole policy is NaN, which is replaced by a uniform one."""
+    with pytest.warns(UserWarning, match="NaN values found in policies"):
+        policy = Softmax(temperature=np.inf, activations=np.array([0.0, 1.0])).compute()
+    np.testing.assert_array_equal(policy, [0.5, 0.5])
+
+
 if __name__ == "__main__":
     pytest.main()

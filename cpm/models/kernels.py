@@ -129,15 +129,13 @@ def softmax(values, beta):
     Returns
     -------
     numpy.ndarray
-        The policy. If the scaled activations contain NaN, their exponentials,
+        The policy. If the scaled activations contain NaN, it is NaN throughout,
         which `Softmax` then replaces.
     """
     scaled = values * beta
     top = np.max(scaled) if scaled.size else 0.0
     if -700.0 < top < 700.0:
         output = np.exp(scaled)
-    elif np.isnan(top):
-        return np.exp(scaled)
     else:
         output = np.exp(scaled - top)
     output /= output.sum()

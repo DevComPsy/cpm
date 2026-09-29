@@ -149,6 +149,13 @@ def test_humble_teacher_with_one_dimensional_weights():
     np.testing.assert_array_equal(rule.compute(), expected)
 
 
+@pytest.mark.parametrize("rule", [DeltaRule, SeparableRule, HumbleTeacher])
+def test_too_little_feedback_is_an_error_rather_than_broadcast(rule):
+    weights = np.zeros((2, 3))
+    with pytest.raises(IndexError):
+        rule(alpha=0.1, weights=weights, feedback=np.array([1.0]), input=np.array([1, 0, 1])).compute()
+
+
 @pytest.mark.parametrize("rule", [DeltaRule, SeparableRule])
 def test_learning_rules_keep_the_dtype_of_the_weights(rule):
     """Integer weights are updated in place with truncation, as element-wise assignment did."""

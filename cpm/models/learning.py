@@ -16,6 +16,10 @@ __all__ = [
 def _leading(values, n):
     """The first `n` elements of `values` as a float array (the loops this replaces read only those)."""
     values = np.asarray(values, dtype=float)
+    if values.shape[0] < n:  # which the loops raised as well, rather than broadcast
+        raise IndexError(
+            f"Expected {n} values, one per row or column of the weights, not {values.shape[0]}."
+        )
     return values if values.shape[0] == n else values[:n]
 
 

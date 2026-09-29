@@ -180,7 +180,7 @@ The tutorials themselves keep their per-trial model, which shows how a model is 
 
 ## Same results, and one fix
 
-- The objective function of the built-in models is bit-identical to cpm 0.25, and so are all their outputs: exports, dependent variables, states and seeded simulations, with and without numba.
+- The objective function of the built-in models is the same as in cpm 0.25, and so are all their outputs: exports, dependent variables, states and seeded simulations, with and without numba. They are bit-identical on the machine below; on other machines they can differ in the last digit, where numba and NumPy compute exponentials slightly differently.
 - The classes in {py:mod}`cpm.models` give bit-identical results, and the quickstart, the first tutorial and the two-step example reproduce their stored outputs.
 - Hierarchical estimation changes, as intended. The table compares the group estimates of the first chain with the group distribution the data were simulated from.
 

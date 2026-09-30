@@ -234,3 +234,53 @@ def load_two_step_data():
     Smid et al. (2022). Computational and behavioral correlates of developmental changes in model-based/model-free decision-making. Developmental Science, e13380.
     """
     return load_csv("two_step_adults.csv")
+
+
+def load_blocking_data():
+    """
+    Load the test-stage ratings of the blocking experiment of Spicer et al. (2021).
+
+    Returns
+    -------
+    pd.DataFrame
+        A pandas DataFrame with one row per test trial and participant.
+
+    Examples
+    --------
+    >>> data = load_blocking_data()
+    >>> data.groupby(["ppt", "cue"]).rating.mean().unstack().mean()
+
+    Notes
+    -----
+    Forty-one participants learned which foods caused stomach ache in a
+    fictional patient. In Stage 1, they saw twelve blocks of the single cues A+,
+    B- and C-, and in Stage 2, six blocks of the compounds AX+, BY+ and CD-, where
+    + means that the patient had stomach ache and - that they did not. X is the
+    blocked cue, Y its control, and C and D are fillers. In the test stage, they
+    rated how likely each single cue was to cause stomach ache, on a scale from 0
+    (very unlikely) to 10 (very likely), without feedback, in ten blocks of the six
+    cues. Only the test stage is included; the trial orders of the training stages
+    were randomised for each participant, and are not available.
+
+    The data were originally published by the authors on the Open Science
+    Framework (`osf.io/sa8ux <https://osf.io/sa8ux/>`__), and the experiment is
+    described in their supplementary materials
+    (`osf.io/7u6re <https://osf.io/7u6re/>`__). They are licensed under the
+    `Creative Commons Attribution 4.0 International License (CC BY 4.0)
+    <https://creativecommons.org/licenses/by/4.0/>`__; cite Spicer et al. (2021)
+    when you use them.
+
+    The dataset includes the following columns:
+
+    - ``ppt``: the participant number.
+    - ``block``: the test block (1 to 10).
+    - ``trial``: the test trial (1 to 60).
+    - ``cue``: the cue that was rated (A, B, C, D, X or Y).
+    - ``rating``: the rating, from 0 to 10.
+    - ``rt``: the response time, in seconds.
+
+    References
+    ----------
+    Spicer, S. G., Wills, A. J., Jones, P. M., Mitchell, C. J., & Dome, L. (2021). Representing uncertainty in the Rescorla-Wagner model: Blocking, the redundancy effect, and outcome base rate. Open Journal of Experimental Psychology and Neuroscience, 1, 14-21.
+    """
+    return load_csv("blocking_ratings.csv")

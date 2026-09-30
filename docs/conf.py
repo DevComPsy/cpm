@@ -84,12 +84,17 @@ API_TUTORIAL_LINKS = {
     ],
     "cpm.applications.reinforcement_learning.HybridMBMF": ["examples/two-step-task"],
     "cpm.models.learning.SARSATrace": ["examples/two-step-task"],
-    "cpm.models.learning.SeparableRule": ["examples/blocking"],
-    "cpm.models.learning.DeltaRule": ["examples/blocking", "tutorials/first-model"],
+    "cpm.models.learning.SeparableRule": ["examples/blocking", "examples/blocking-ratings"],
+    "cpm.models.learning.DeltaRule": [
+        "examples/blocking",
+        "examples/blocking-ratings",
+        "tutorials/first-model",
+    ],
     "cpm.applications.signal_detection.EstimatorMetaD": ["examples/meta-d"],
     "cpm.datasets.load_bandit_data": ["tutorials/first-model"],
     "cpm.datasets.load_metacognition_data": ["examples/meta-d"],
     "cpm.datasets.load_two_step_data": ["examples/two-step-task"],
+    "cpm.datasets.load_blocking_data": ["examples/blocking-ratings"],
 }
 autosummary_context = {"tutorial_links": API_TUTORIAL_LINKS}
 

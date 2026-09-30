@@ -5,7 +5,8 @@ cpm.applications
 
 Ready-made models from the literature. Most are subclasses of
 :class:`~cpm.generators.Wrapper`, so they can be simulated and fitted like any
-model you build yourself.
+model you build yourself. They compute all trials of a participant at once, and
+are compiled with numba if it is installed; see :doc:`/how-to/fast-session-models`.
 
 Reinforcement learning
 ----------------------

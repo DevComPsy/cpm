@@ -16,6 +16,12 @@ To install the package, run the following command:
 pip install cpm-toolbox
 ```
 
+To fit the built-in models many times faster, also install the optional [numba](https://numba.pydata.org/) dependency, which compiles them; nothing else changes:
+
+```bash
+pip install "cpm-toolbox[numba]"
+```
+
 Once the package is installed, you can import it in your Python code:
 
 ```python

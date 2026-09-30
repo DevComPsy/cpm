@@ -8,6 +8,7 @@ from scipy.stats import t as students_t
 
 from ..generators import Parameters
 from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
+from ._chains import starting_priors
 
 
 class VariationalBayes:
@@ -27,7 +28,7 @@ class VariationalBayes:
     tolerance_param : float, optional
         The tolerance for convergence with respect to the "normalized" means of parameters. Default is 1e-3.
     chain : int, optional
-        The number of random parameter initialisations. Default is 4.
+        The number of random parameter initialisations. Default is 4. The first chain starts from the priors of the model, and every later chain from priors drawn at random within the bounds of the parameters; `numpy.random.seed` makes them reproducible.
     hyperpriors: dict, optional
         A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.
     convergence : str, optional
@@ -663,17 +664,13 @@ class VariationalBayes:
         """
         output = []
         parameter_names = self.optimiser.model.parameters.free()
-        rng = np.random.default_rng()
+        # the priors the estimation starts from, before any chain updates them
+        priors = {name: getattr(self.optimiser.model.parameters, name).prior for name in parameter_names}
 
         for chain in range(self.chain):
             ## select a random starting point for each chain to avoid local minima
             if chain > 0:
-                population_updates = {}
-                for i, name in enumerate(parameter_names):
-                    population_updates[name] = {
-                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
-                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
-                    }
+                population_updates = starting_priors(parameter_names, self.__bounds__, priors)
                 self.optimiser.model.parameters.update_prior(**population_updates)
 
             if self.__quiet__ is False:

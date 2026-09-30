@@ -1,6 +1,10 @@
 import numpy as np
 import warnings
 from ..generators import Value
+from ..core._jit import kernels as _kernel_module
+
+## the formulas, as plain Python (numba is never needed for the classes)
+_kernels = _kernel_module("cpm.models.kernels", python=True)
 
 __all__ = [
     "Softmax",
@@ -73,11 +77,11 @@ class Softmax:
         else:
             self.activations = np.zeros(1)
         ## Throw error if activations contain missing values of infities
-        if np.isnan(self.activations).any():
-            raise ValueError(
-                "Activations contain NaN values. Please remove or impute missing values."
-            )
-        if np.isinf(self.activations).any():
+        if not np.isfinite(self.activations).all():
+            if np.isnan(self.activations).any():
+                raise ValueError(
+                    "Activations contain NaN values. Please remove or impute missing values."
+                )
             raise ValueError(
                 "Activations contain infinite values. Please remove or impute infinite values."
             )
@@ -94,17 +98,21 @@ class Softmax:
         self.__run__ = False
 
     def compute(self):
-        """
+        r"""
         Compute the policies based on the activations and temperature.
 
         Returns
         -------
         numpy.ndarray: Array of computed policies.
+
+        Notes
+        -----
+        Where the exponentials would overflow (or all underflow), that is where the
+        largest scaled activation is beyond ±700, the policies are computed as
+        :math:`e^{\beta x_i - m} / \sum_j e^{\beta x_j - m}` with :math:`m` the
+        largest scaled activation, which is the same function without overflow.
         """
-        output = np.exp(self.activations * self.temperature) / np.sum(
-            np.exp(self.activations * self.temperature)
-        )
-        self.policies = output
+        self.policies = _kernels.softmax(self.activations, self.temperature)
 
         if np.isnan(self.policies).any():
             self.policies[np.isnan(self.policies)] = 1
@@ -192,7 +200,7 @@ class Softmax:
             policies = self.policies
         else:
             policies = self.compute()
-        policies = policies * (1 - self.xi) + (self.xi / self.shape[0])
+        policies = _kernels.irreducible_noise(policies, self.xi)
         self.policies = policies
         return policies
 
@@ -278,7 +286,7 @@ class Sigmoid:
         output: ndarray
             A 2D array of outputs computed using the sigmoid function.
         """
-        output = 1 / (1 + np.exp((self.activations - self.beta) * -self.temperature))
+        output = _kernels.sigmoid(self.activations, self.temperature, self.beta)
         self.policies = output
 
         if np.isnan(self.policies).any():
@@ -374,17 +382,7 @@ class GreedyRule:
         output: ndarray
             A 2D array of outputs computed using the greedy rule.
         """
-        output = self.activations.sum(axis=1)
-        policies = np.zeros(output.shape)
-        maximum = np.max(output)
-        policies[output != maximum] = self.epsilon * 1
-        policies[output == maximum] = 1 - (output.shape[0] - 1) * self.epsilon
-        policies[output <= 0] = 0
-        if np.all(policies == 0):
-            policies.fill(1 / policies.shape[0])
-        else:
-            policies = policies / policies.sum()  # normalise
-        self.policies = policies
+        self.policies = _kernels.greedy(self.activations, self.epsilon)
         self.run = True
         return self.policies
 
@@ -495,14 +493,9 @@ class ChoiceKernel:
         self.run = False
 
     def compute(self):
-        output = np.zeros(self.shape[0])
-        values = self.activations * self.temperature_a
-        kernels = self.kernel * self.temperature_k
-        # activation of output unit for action/outcome
-        nominator = np.exp(np.sum(values, axis=1) * kernels)
-        # denominator term for scaling
-        denominator = np.sum(np.exp(np.sum(values, axis=1) * kernels))
-        output = nominator / denominator
+        output = _kernels.choice_kernel(
+            self.activations, self.kernel, self.temperature_a, self.temperature_k
+        )
         self.policies = output
         self.run = True
         return output

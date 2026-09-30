@@ -119,6 +119,16 @@ class TestOptimise:
         # each chain (after the first) starts from a different random prior
         assert set(multi.fit.chain.unique()) == {0, 1}
 
+    def test_seed_reproduces_every_chain(self, optimiser):
+        warnings.simplefilter("ignore")
+        runs = []
+        for _ in range(2):
+            np.random.seed(2026)
+            multi = EmpiricalBayes(optimiser=optimiser, iteration=2, chain=2, quiet=True)
+            multi.optimise()
+            runs.append(multi.hyperparameters)
+        pd.testing.assert_frame_equal(runs[0], runs[1])
+
     def test_parameters_method_returns_fit_history(self, eb):
         warnings.simplefilter("ignore")
         eb.optimise()

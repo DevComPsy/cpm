@@ -1,4 +1,8 @@
 import numpy as np
+from ..core._jit import kernels as _kernel_module
+
+## the formulas, as plain Python (numba is never needed for the classes)
+_kernels = _kernel_module("cpm.models.kernels", python=True)
 
 __all__ = ["SigmoidActivation", "CompetitiveGating", "ProspectUtility", "Offset"]
 
@@ -45,7 +49,7 @@ class SigmoidActivation:
         numpy.ndarray
             The computed activation value.
         """
-        return np.asarray(1 / (1 + np.exp(-self.input * self.weights)))
+        return np.asarray(_kernels.sigmoid_activation(self.input, self.weights))
 
 
 class CompetitiveGating:
@@ -114,12 +118,8 @@ class CompetitiveGating:
         array_like
             The values updated with the attentional gain and stimulus vector.
         """
-        self.gain = self.input * self.salience
-        self.gain = self.gain**self.P
-        self.gain = self.gain / np.sum(self.gain) ** (1 / self.P)
-        for i in range(self.values.shape[0]):
-            for k in range(self.values.shape[1]):
-                self.values[i, k] = self.values[i, k] * self.gain[k]
+        self.gain = _kernels.gating_gain(self.input, self.salience, self.P)
+        self.values[:] = _kernels.gate(self.values, self.gain)
         return self.values
 
     def __call__(self):
@@ -260,22 +260,31 @@ class ProspectUtility:
         weighting="tk",
         **kwargs,
     ):
-        self.magnitudes = np.asarray(magnitudes.copy())
-        self.magnitudes = np.array(
-            [
-                np.array(self.magnitudes[i], dtype=float)
-                for i in range(self.magnitudes.shape[0])
-            ],
-            dtype=object,
-        )
-        self.probabilities = np.asarray(probabilities.copy())
-        self.probabilities = np.array(
-            [
-                np.array(self.probabilities[i], dtype=float)
-                for i in range(self.probabilities.shape[0])
-            ],
-            dtype=object,
-        )
+        ## outcomes with the same number of outcomes per option are kept as float
+        ## arrays and computed at once; anything else as an array of arrays
+        try:
+            self.magnitudes = np.array(magnitudes, dtype=float)
+            self.probabilities = np.array(probabilities, dtype=float)
+            self.__regular = self.magnitudes.ndim > 0
+        except (TypeError, ValueError):
+            self.__regular = False
+        if not self.__regular:
+            self.magnitudes = np.asarray(magnitudes.copy())
+            self.magnitudes = np.array(
+                [
+                    np.array(self.magnitudes[i], dtype=float)
+                    for i in range(self.magnitudes.shape[0])
+                ],
+                dtype=object,
+            )
+            self.probabilities = np.asarray(probabilities.copy())
+            self.probabilities = np.array(
+                [
+                    np.array(self.probabilities[i], dtype=float)
+                    for i in range(self.probabilities.shape[0])
+                ],
+                dtype=object,
+            )
         self.alpha = alpha
         if beta is not None:
             self.beta = beta
@@ -293,18 +302,12 @@ class ProspectUtility:
             raise ValueError("magnitudes and probabilities do not have the same shape.")
 
         # Choose weighting function based on the argument
-        if weighting == "tk":
-            self.__weighting_fun = self.__weighting_tk
-        elif weighting == "power":
-            self.__weighting_fun = self.__weighting_power
-        elif weighting == "prelec":
-            self.__weighting_fun = self.__weighting_prelec
-        elif weighting == "gw":
-            self.__weighting_fun = self.__weighting_gw
-        else:
+        if weighting not in _kernels.WEIGHTING:
             raise ValueError(
                 "Invalid weighting type. Must be one of: 'tk', 'power', 'prelec', 'gw'."
             )
+        self.__weighting_code = _kernels.WEIGHTING[weighting]
+        self.__weighting_fun = self.__weighting
 
         if utility_curve is None:
             self.__utility_curve = self.__utility_power
@@ -324,31 +327,16 @@ class ProspectUtility:
         if x is None:
             raise ValueError("Magnitudes cannot be None.")
         x = np.asarray(x, dtype=float)
-        expected = np.zeros_like(x, dtype=float)
-        gains = x >= 0
-        losses = ~gains
-        expected[gains] = np.power(x[gains], self.alpha)
-        expected[losses] = -self.lambda_loss * np.power(-x[losses], self.beta)
-        return expected
+        return _kernels.prospect_utility(x, self.alpha, self.beta, self.lambda_loss)
 
-    def __weighting_tk(self, x=None, magnitudes=None):
-        # Vectorized implementation for speed
-        powers = np.where(np.asarray(magnitudes) > 0, self.gamma, self.delta)
-        # x is an array of probabilities, powers is an array of exponents
-        numerator = np.power(x, powers)
-        denominator = np.power(numerator + np.power(1 - x, powers), 1 / powers)
-        return numerator / denominator
-
-    def __weighting_power(self, x=None, magnitudes=None):
-        return np.power(x, self.gamma)
-
-    def __weighting_prelec(self, x=None, magnitudes=None):
-        return np.exp(-self.delta * np.power(-np.log(x), self.gamma))
-
-    def __weighting_gw(self, x=None, magnitudes=None):
-        numerator = self.delta * np.power(x, self.gamma)
-        denominator = numerator + np.power(1 - x, self.gamma)
-        return numerator / denominator
+    def __weighting(self, x=None, magnitudes=None):
+        # the weighting function chosen with `weighting`; the magnitudes decide
+        # between gamma and delta for the Tversky & Kahneman function
+        if magnitudes is not None:
+            magnitudes = np.asarray(magnitudes)
+        return _kernels.prospect_weight(
+            x, magnitudes, self.gamma, self.delta, self.__weighting_code
+        )
 
     def weight_probability(self, x, **kwargs):
         return self.__weighting_fun(x, **kwargs)
@@ -362,6 +350,8 @@ class ProspectUtility:
         numpy.ndarray
             The computed expected utility of each choice option.
         """
+        if self.__regular:
+            return self.__compute_regular()
         # Determine the utilities of the potential outcomes, for each choice option and each trial.
         self.utilities = np.array(
             [
@@ -386,6 +376,33 @@ class ProspectUtility:
         self.expected_utility = np.array(
             [np.sum(self.weights[j] * self.utilities[j]) for j in range(self.shape[0])],
         )
+        return self.expected_utility
+
+    def __compute_regular(self):
+        """`compute` for float arrays: all options at once."""
+        options = self.shape[0]
+        self.weights = self.__weighting_fun(x=self.probabilities, magnitudes=self.magnitudes)
+        if self.__utility_curve == self.__utility_power:
+            self.utilities = self.__utility_power(x=self.magnitudes)
+            self.expected_utility = _kernels.expected_utility(self.weights, self.utilities)
+            return self.expected_utility
+        ## a user-supplied utility curve is called for each option, as before
+        self.utilities = [
+            self.__utility_curve(
+                x=self.magnitudes[j], alpha=self.alpha, lambda_loss=self.lambda_loss
+            )
+            for j in range(options)
+        ]
+        try:
+            utilities = np.asarray(self.utilities, dtype=float)
+        except (TypeError, ValueError):
+            utilities = None
+        if utilities is not None and utilities.shape == np.shape(self.weights):
+            self.expected_utility = _kernels.expected_utility(self.weights, utilities)
+        else:  # utilities of a shape of their own: summed for each option
+            self.expected_utility = np.array(
+                [np.sum(self.weights[j] * self.utilities[j]) for j in range(options)],
+            )
         return self.expected_utility
 
     def __call__(self):
@@ -443,7 +460,7 @@ class Offset:
         numpy.ndarray
             The stimulus representation (vector) with offset added to the requested element.
         """
-        self.output[self.index] += self.offset
+        _kernels.add_offset(self.output, self.offset, self.index)
         return self.output
 
     def __call__(self):

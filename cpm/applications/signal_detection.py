@@ -9,6 +9,7 @@ import pandas as pd
 import cpm
 from scipy.optimize import SR1, Bounds, LinearConstraint, minimize
 from scipy.stats import norm, multivariate_normal
+from scipy.special import ndtr
 
 from cpm.core.optimisers import numerical_hessian, prepare_data
 from cpm.core.data import detailed_pandas_compiler, decompose
@@ -85,57 +86,41 @@ def metad_nll(
     nC_rS2 = [nR_S2[i + nRatings] for i in np.arange(nRatings)]
     nI_rS2 = [nR_S1[i + nRatings] for i in np.arange(nRatings)]
 
-    # get type 2 probabilities
-    C_area_rS1 = norm.cdf(t1c1, S1mu, S1sd)
-    I_area_rS1 = norm.cdf(t1c1, S2mu, S2sd)
+    # get type 2 probabilities; ndtr((x - mu) / sd) is what norm.cdf(x, mu, sd)
+    # evaluates, and a single vectorised call avoids scipy's per-call overhead
+    C_area_rS1 = ndtr((t1c1 - S1mu) / S1sd)
+    I_area_rS1 = ndtr((t1c1 - S2mu) / S2sd)
 
-    C_area_rS2 = 1 - norm.cdf(t1c1, S2mu, S2sd)
-    I_area_rS2 = 1 - norm.cdf(t1c1, S1mu, S1sd)
+    C_area_rS2 = 1 - ndtr((t1c1 - S2mu) / S2sd)
+    I_area_rS2 = 1 - ndtr((t1c1 - S1mu) / S1sd)
 
     t2c1x = [-np.inf]
     t2c1x.extend(t2c1[0 : (nRatings - 1)])
     t2c1x.append(t1c1)
     t2c1x.extend(t2c1[(nRatings - 1) :])
     t2c1x.append(np.inf)
+    t2c1x = np.asarray(t2c1x, dtype=float)
 
-    prC_rS1 = [
-        (norm.cdf(t2c1x[i + 1], S1mu, S1sd) - norm.cdf(t2c1x[i], S1mu, S1sd))
-        / C_area_rS1
-        for i in range(nRatings)
-    ]
-    prI_rS1 = [
-        (norm.cdf(t2c1x[i + 1], S2mu, S2sd) - norm.cdf(t2c1x[i], S2mu, S2sd))
-        / I_area_rS1
-        for i in range(nRatings)
-    ]
+    cdf_S1 = ndtr((t2c1x - S1mu) / S1sd)
+    cdf_S2 = ndtr((t2c1x - S2mu) / S2sd)
 
-    prC_rS2 = [
-        (
-            (1 - norm.cdf(t2c1x[nRatings + i], S2mu, S2sd))
-            - (1 - norm.cdf(t2c1x[nRatings + i + 1], S2mu, S2sd))
-        )
-        / C_area_rS2
-        for i in range(nRatings)
-    ]
-    prI_rS2 = [
-        (
-            (1 - norm.cdf(t2c1x[nRatings + i], S1mu, S1sd))
-            - (1 - norm.cdf(t2c1x[nRatings + i + 1], S1mu, S1sd))
-        )
-        / I_area_rS2
-        for i in range(nRatings)
-    ]
+    prC_rS1 = (cdf_S1[1 : nRatings + 1] - cdf_S1[:nRatings]) / C_area_rS1
+    prI_rS1 = (cdf_S2[1 : nRatings + 1] - cdf_S2[:nRatings]) / I_area_rS1
+    prC_rS2 = (
+        (1 - cdf_S2[nRatings : 2 * nRatings]) - (1 - cdf_S2[nRatings + 1 : 2 * nRatings + 1])
+    ) / C_area_rS2
+    prI_rS2 = (
+        (1 - cdf_S1[nRatings : 2 * nRatings]) - (1 - cdf_S1[nRatings + 1 : 2 * nRatings + 1])
+    ) / I_area_rS2
 
-    # calculate logL
+    # calculate logL, summed in the same order as before
+    terms_C_rS1 = np.asarray(nC_rS1, dtype=float) * np.log(prC_rS1)
+    terms_I_rS1 = np.asarray(nI_rS1, dtype=float) * np.log(prI_rS1)
+    terms_C_rS2 = np.asarray(nC_rS2, dtype=float) * np.log(prC_rS2)
+    terms_I_rS2 = np.asarray(nI_rS2, dtype=float) * np.log(prI_rS2)
     logL = 0.0
     for i in range(nRatings):
-        logL = (
-            logL
-            + nC_rS1[i] * np.log(prC_rS1[i])
-            + nI_rS1[i] * np.log(prI_rS1[i])
-            + nC_rS2[i] * np.log(prC_rS2[i])
-            + nI_rS2[i] * np.log(prI_rS2[i])
-        )
+        logL = logL + terms_C_rS1[i] + terms_I_rS1[i] + terms_C_rS2[i] + terms_I_rS2[i]
 
     if prior:
         parameters.update(**{

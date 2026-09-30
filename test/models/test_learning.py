@@ -141,5 +141,28 @@ def test_sarsa_trace():
     assert np.all(model_free_values == 0), "The input values should not be modified."
 
 
+def test_humble_teacher_with_one_dimensional_weights():
+    """1D weights are promoted to one row, as in the other learning rules; this used to raise."""
+    rule = HumbleTeacher(alpha=0.1, weights=np.array([0.1, 0.2, 0.3]), feedback=[1], input=np.array([1, 1, 0]))
+    expected = HumbleTeacher(alpha=0.1, weights=np.array([[0.1, 0.2, 0.3]]), feedback=[1],
+                             input=np.array([1, 1, 0])).compute()
+    np.testing.assert_array_equal(rule.compute(), expected)
+
+
+@pytest.mark.parametrize("rule", [DeltaRule, SeparableRule, HumbleTeacher])
+def test_too_little_feedback_is_an_error_rather_than_broadcast(rule):
+    weights = np.zeros((2, 3))
+    with pytest.raises(IndexError):
+        rule(alpha=0.1, weights=weights, feedback=np.array([1.0]), input=np.array([1, 0, 1])).compute()
+
+
+@pytest.mark.parametrize("rule", [DeltaRule, SeparableRule])
+def test_learning_rules_keep_the_dtype_of_the_weights(rule):
+    """Integer weights are updated in place with truncation, as element-wise assignment did."""
+    weights = np.array([[1, 2], [3, 4]])
+    out = rule(alpha=0.5, weights=weights, feedback=[1, 0], input=np.array([1, 1])).compute()
+    assert out.dtype == weights.dtype
+
+
 if __name__ == "__main__":
     pytest.main()

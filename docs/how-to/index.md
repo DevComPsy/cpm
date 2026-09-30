@@ -5,6 +5,20 @@ Short, task-focused recipes for problems you will meet once you have learned the
 ::::{grid} 1 2 2 2
 :gutter: 3
 
+:::{grid-item-card} {fas}`bolt` Speed up fitting with numba
+:link: fast-session-models
+:link-type: doc
+
+Install numba to fit the built-in models many times faster, and compile your own models too.
+:::
+
+:::{grid-item-card} {fas}`rocket` Speed up your own model
+:link: speed-up-your-model
+:link-type: doc
+
+Write your model function for all trials at once, check it against the per-trial version, and fit it about 10 times faster.
+:::
+
 :::{grid-item-card} {fas}`gauge-high` Parallelise model fitting
 :link: parallelise-fitting
 :link-type: doc
@@ -23,6 +37,8 @@ Split participants across the nodes of a SLURM cluster with a job array, then co
 ```{toctree}
 :hidden:
 
+fast-session-models
+speed-up-your-model
 parallelise-fitting
 run-on-hpc
 ```

@@ -25,6 +25,14 @@ pip install -e .
 pip install -e ".[docs]"
 ```
 
+5. (Optional) Install numba, which compiles the built-in models (`cpm.applications`) and the kernels in `cpm.models.kernels`:
+
+```bash
+pip install -e ".[numba]"
+```
+
+cpm has to work, with the same results, with and without numba, so changes to the models are tested both ways (see [Testing](#testing)).
+
 ## Development workflow (with direct access to repository)
 
 1. Create a branch from `main`.
@@ -74,6 +82,16 @@ pytest
 ```
 
 If you changed specific functionality, also run targeted tests first (for example, under `test/models/` or `test/optimisation/`).
+
+If you changed the models (`cpm.models`, `cpm.applications`) or anything they use, also run the tests with and without numba, and the benchmark suite:
+
+```bash
+python scripts/local_tests.py
+```
+
+It runs the test suite with numba (if it is installed), with `CPM_DISABLE_JIT=1` (as if numba were not installed), and with `NUMBA_DISABLE_JIT=1`, and then `benchmarks/run.py`.
+
+numba caches compiled code in the `__pycache__` folders under `cpm/`, and only recompiles a function when its own file changes. After changing `cpm/models/kernels.py` (yourself, or by pulling), the compiled loops in `cpm/applications/_sessions.py` still use the old kernels until you delete the cached `*.nbi` and `*.nbc` files; `scripts/local_tests.py` deletes them before it runs.
 
 ## Documentation
 

@@ -1,0 +1,97 @@
+name: tests
+
+# cpm has to give the same results with and without numba, so the test suite
+# runs in both setups: with numba installed, and without it.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }}, Python ${{ matrix.python }}, ${{ matrix.numba && 'numba' || 'no numba' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.11", "3.12", "3.13", "3.14"]
+        numba: [true, false]
+        include:
+          - { os: windows-latest, python: "3.14", numba: true }
+          - { os: windows-latest, python: "3.14", numba: false }
+          - { os: macos-latest, python: "3.14", numba: true }
+          - { os: macos-latest, python: "3.14", numba: false }
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install cpm
+        run: pip install -e "${{ matrix.numba && '.[numba]' || '.' }}" pytest
+
+      - name: Check that numba is used
+        if: matrix.numba
+        run: python -c "from cpm.core import _jit; assert _jit.JIT_ENABLED"
+
+      - name: Run the tests
+        run: python -m pytest -q
+
+      - name: Run the kernel and application tests with NUMBA_DISABLE_JIT=1
+        if: matrix.numba
+        env:
+          NUMBA_DISABLE_JIT: "1"
+        run: python -m pytest -q test/models/test_kernels.py test/applications/test_backends.py
+
+  lowest:
+    name: lowest supported versions, Python 3.11
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install cpm with the lowest versions pyproject.toml allows
+        run: |
+          pip install uv
+          uv pip install --system --resolution lowest-direct -e ".[numba]" "pytest>=8"
+
+      - name: Run the tests
+        run: python -m pytest -q
+
+  prerelease:
+    # the fast priors in cpm.generators._fast_priors follow scipy's internals,
+    # so pre-releases show early when a release would change them
+    name: pre-releases of NumPy, SciPy and pandas
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Install cpm and the pre-releases
+        run: |
+          pip install -e . pytest
+          pip install --pre --upgrade numpy scipy pandas
+
+      - name: Run the tests
+        run: python -m pytest -q

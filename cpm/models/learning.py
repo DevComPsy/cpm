@@ -1,4 +1,8 @@
 import numpy as np
+from ..core._jit import kernels as _kernel_module
+
+## the formulas, as plain Python (numba is never needed for the classes)
+_kernels = _kernel_module("cpm.models.kernels", python=True)
 
 __all__ = [
     "DeltaRule",
@@ -7,6 +11,25 @@ __all__ = [
     "HumbleTeacher",
     "SARSATrace",
 ]
+
+
+def _leading(values, n):
+    """The first `n` elements of `values` as a float array (the loops this replaces read only those)."""
+    values = np.asarray(values, dtype=float)
+    if values.shape[0] < n:  # which the loops raised as well, rather than broadcast
+        raise IndexError(
+            f"Expected {n} values, one per row or column of the weights, not {values.shape[0]}."
+        )
+    return values if values.shape[0] == n else values[:n]
+
+
+def _assign(rule, name, values):
+    """Set an array attribute, keeping its dtype as element-wise assignment into it did."""
+    current = getattr(rule, name)
+    if current.dtype == values.dtype:
+        setattr(rule, name, values)
+    else:
+        current[...] = values
 
 
 class DeltaRule:
@@ -125,13 +148,11 @@ class DeltaRule:
             It has the same shape as the weights input argument.
         """
 
-        for i in range(self.shape[0]):
-            # calculate summed error for a given output unit
-            activations = np.sum(self.weights[i] * self.input)
-            self.error[i] = self.teacher[i] - activations
-            for j in range(self.shape[1]):
-                # calcualte the change on weights
-                self.weights[i, j] = self.alpha * self.error[i] * self.input[j]
+        rows, columns = self.shape
+        change, self.error = _kernels.delta_rule(
+            self.weights, _leading(self.teacher, rows), _leading(self.input, columns), self.alpha
+        )
+        _assign(self, "weights", change)
         self.__run__ = True
         return self.weights
 
@@ -261,11 +282,12 @@ class SeparableRule:
         The prediction error for each stimuli-outcome mapping before the update is stored in `error`,
         which has the same shape as the weights.
         """
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                # separable prediction error for each outcome-stimulus pair
-                self.error[i, j] = self.teacher[i] - self.weights[i, j]
-                self.weights[i, j] = self.alpha * self.error[i, j] * self.input[j]
+        rows, columns = self.shape
+        # separable prediction error for each outcome-stimulus pair
+        change, self.error = _kernels.separable_rule(
+            self.weights, _leading(self.teacher, rows), _leading(self.input, columns), self.alpha
+        )
+        _assign(self, "weights", change)
         self.__run__ = True
         return self.weights
 
@@ -381,21 +403,7 @@ class QLearningRule:
             The computed output values.
         """
 
-        active = self.values.copy()
-        active[active > 0] = 1
-        output = np.zeros(self.values.shape[0])
-
-        for i in range(self.values.shape[0]):
-            output[i] += (
-                self.values[i]
-                + (
-                    self.alpha
-                    * (self.reward + self.gamma * self.maximum - self.values[i])
-                )
-                * active[i]
-            )
-
-        return output
+        return _kernels.q_learning(self.values, self.reward, self.maximum, self.alpha, self.gamma)
 
     def __repr__(self):
         return f"QLearningRule(alpha={self.alpha},\n gamma={self.gamma},\n values={self.values},\n reward={self.reward},\n maximum={self.maximum})"
@@ -487,10 +495,10 @@ class HumbleTeacher:
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
-        self.delta = np.zeros(self.weights.shape)
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.delta = np.zeros(self.shape)
 
     def compute(self):
         """
@@ -502,15 +510,11 @@ class HumbleTeacher:
             The updated weights matrix.
         """
 
-        for i in range(self.shape[0]):
-            activations = np.sum(self.weights[i] * self.input)
-            for j in range(self.shape[1]):
-                if self.teacher[i] == 0:
-                    teacher = np.min([-1, activations])
-                else:
-                    teacher = np.max([1, activations])
-                self.delta[i, j] = self.alpha * (teacher - activations) * self.input[j]
-                self.weights[i, j] += self.delta[i, j]
+        rows, columns = self.shape
+        self.delta[:] = _kernels.humble_teacher_change(
+            self.weights, _leading(self.teacher, rows), _leading(self.input, columns), self.alpha
+        )
+        np.add(self.weights, self.delta, out=self.weights, casting="unsafe")
         return self.weights
 
 
@@ -640,23 +644,20 @@ class SARSATrace:
         action = self.action
         planet = self.reached_second_stage
 
-        self.stage1_prediction_error = (
-            self.second_stage_values[planet] - self.model_free_values[state, action]
+        (
+            self.stage1_prediction_error,
+            self.stage2_prediction_error,
+            model_free_change,
+            second_stage_change,
+        ) = _kernels.sarsa_trace(
+            self.model_free_values, self.second_stage_values, state, action, planet,
+            self.reward, self.learning_rate, self.eligibility_trace,
         )
-        self.stage2_prediction_error = self.reward - self.second_stage_values[planet]
 
         self.model_free_delta = np.zeros_like(self.model_free_values)
         self.planet_value_delta = np.zeros_like(self.second_stage_values)
-
-        self.model_free_delta[state, action] = (
-            self.learning_rate * self.stage1_prediction_error
-            + self.eligibility_trace
-            * self.learning_rate
-            * self.stage2_prediction_error
-        )
-        self.planet_value_delta[planet] = (
-            self.learning_rate * self.stage2_prediction_error
-        )
+        self.model_free_delta[state, action] = model_free_change
+        self.planet_value_delta[planet] = second_stage_change
 
         return self.model_free_delta, self.planet_value_delta
 

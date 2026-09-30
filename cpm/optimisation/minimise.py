@@ -1,4 +1,5 @@
 from scipy.stats import norm, bernoulli, multinomial
+from scipy import special
 import numpy as np
 
 __all__ = ["LogLikelihood", "CrossEntropy", "Distance", "Discrete"]
@@ -31,6 +32,11 @@ def check_nan_and_bounds_in_input(predicted, observed):
         "pred_inf": "Predicted values contain Inf at indices {}. This is often due to out-of-bounds parameter values during model fitting. Investigate the parameter values and consider setting bounds or rescaling the model input to prevent this issue.",
         "obs_inf": "Observed values contain Inf at indices {}. This is often due to issues in your dataset. Consider handling such values appropriately before fitting the model.",
     }
+    ## one pass over each array in the common case; the checks below name the problem
+    if np.isfinite(predicted_s).all() and np.isfinite(observed_s).all():
+        if predicted_s.shape != observed_s.shape:
+            raise ValueError(f"Shape mismatch: predicted shape {predicted.shape} (squeezed {predicted_s.shape}) does not match observed shape {observed.shape} (squeezed {observed_s.shape}).")
+        return predicted_s, observed_s
     if np.any(np.isnan(predicted_s)):
         idx = np.where(np.isnan(predicted_s))
         raise ValueError(error_msgs["pred_nan"].format(idx))
@@ -61,6 +67,33 @@ def check_nan_bounds_in_log(value, bound=-1e100):
     output = np.asarray(value, copy=True)
     output = np.nan_to_num(output, copy=False, nan=bound, posinf=bound, neginf=bound)
     return output
+
+def _bernoulli_logpmf(k, p):
+    """
+    `scipy.stats.bernoulli.logpmf(k, p)` for probabilities in [0, 1], without scipy's argument handling.
+
+    It evaluates the same expression as scipy, ``xlogy(k, p) + xlog1py(1 - k, -p)``,
+    and gives the same values, including -inf where `k` is neither 0 nor 1, at a
+    fraction of the cost of a call to scipy's distribution machinery.
+    """
+    k = np.asarray(k)
+    p = np.asarray(p, dtype=float)
+    out = 0.0 + special.xlogy(k, p) + special.xlog1py(1 - k, -p)
+    support = (k == 0) | (k == 1)
+    if not support.all():
+        out = np.where(support, out, -np.inf)
+    return out
+
+
+## the normalising constant of scipy.stats.norm
+_NORM_PDF_LOGC = np.log(np.sqrt(2 * np.pi))
+
+
+def _standard_normal_logpdf(x):
+    """`scipy.stats.norm.logpdf(x)` for finite `x`, computed as scipy computes it."""
+    x = np.asarray(x, dtype=float)
+    return -(x**2) / 2.0 - _NORM_PDF_LOGC - np.log(1.0)
+
 
 # Define your custom objective function
 class LogLikelihood:
@@ -164,7 +197,7 @@ class LogLikelihood:
         ## bump up the probabilities to avoid log(0)
         np.clip(probabilities, 1e-10, 1 - 1e-10, out=probabilities)
 
-        LL = bernoulli.logpmf(k=observed.flatten(), p=probabilities)
+        LL = _bernoulli_logpmf(observed.flatten(), probabilities)
         LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)
         if negative:
@@ -201,7 +234,7 @@ class LogLikelihood:
 
         predicted, observed = check_nan_and_bounds_in_input(predicted, observed)
         bound = -1e100
-        LL = norm.logpdf(predicted, observed, 1)
+        LL = _standard_normal_logpdf(predicted - observed)
         LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)
         if negative:

@@ -183,7 +183,7 @@ html_theme_options = {
         },
     ],
     "navbar_align": "left",
-    "header_links_before_dropdown": 6,
+    "header_links_before_dropdown": 7,
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
     "navbar_persistent": ["search-button"],
     "use_edit_page_button": True,

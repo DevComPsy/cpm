@@ -1,13 +1,133 @@
-from cpm.generators import Wrapper, Parameters, Value
-
-import cpm
 import numpy
-import pandas
 import warnings
-import ipyparallel as ipp  ## for parallel computing with ipython (specific for Jupyter Notebook)
+
+from cpm.generators import Parameters, Value
+from cpm.applications._backend import (
+    Application, SessionModel, indices, ordered_columns, prepared, require, uniforms,
+)
 
 
-class RLRW(Wrapper):
+def _rlrw_parameters(parameters_settings, dimensions):
+    """The parameters of `RLRW`."""
+    if parameters_settings is None:
+        parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
+        warnings.warn("No parameters specified, using default parameters.", stacklevel=3)
+    return Parameters(
+        # freely varying parameters are indicated by specifying priors
+        alpha=Value(
+            value=parameters_settings[0][0],
+            lower=parameters_settings[0][1],
+            upper=parameters_settings[0][2],
+            prior="truncated_normal",
+            args={"mean": 0.5, "sd": 0.25},
+        ),
+        temperature=Value(
+            value=parameters_settings[1][0],
+            lower=parameters_settings[1][1],
+            upper=parameters_settings[1][2],
+            prior="truncated_normal",
+            args={"mean": 5, "sd": 2.5},
+        ),
+        values=numpy.ones(dimensions) / dimensions,
+    )
+
+
+def _hybrid_parameters(parameters_settings, q_init):
+    """The parameters of `HybridMBMF`."""
+    if parameters_settings is None:
+        parameters_settings = [
+            [2, 0, 5],
+            [0.5, 0, 1],
+            [0.5, 0, 1],
+            [0.5, 0, 1],
+            [0, -5, 5],
+            [0, -5, 5],
+        ]
+        warnings.warn("No parameters specified, using default parameters.", stacklevel=3)
+    priors = [
+        {"mean": 1.5, "sd": 2.0},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.0, "sd": 1.0},
+        {"mean": 0.0, "sd": 1.0},
+    ]
+    return Parameters(
+        # freely varying parameters are indicated by specifying priors
+        **{
+            name: Value(
+                value=settings[0],
+                lower=settings[1],
+                upper=settings[2],
+                prior="truncated_normal",
+                args=prior,
+            )
+            for name, settings, prior in zip(HYBRID_PARAMETERS, parameters_settings, priors)
+        },
+        # internal states of the model
+        q_mf=numpy.full((2, 2), q_init, dtype=float),
+        q2=numpy.full(2, q_init, dtype=float),
+        m=numpy.zeros((2, 2)),
+        r=numpy.zeros(2),
+    )
+
+
+
+HYBRID_PARAMETERS = [
+    "inv_temperature",
+    "learning_rate",
+    "eligibility_trace",
+    "mb_weight",
+    "choice_stickiness",
+    "response_stickiness",
+]
+
+
+class _RLRWModel(SessionModel):
+    """The model function of `RLRW`, for all trials at once."""
+
+    def __call__(self, parameters, data):
+        policy, reward, values, change, dependent = self.sessions.rlrw(
+            float(parameters.alpha),
+            float(parameters.temperature),
+            numpy.asarray(parameters.values, dtype=float),
+            data["arms"],
+            data["rewards"],
+            data["response"],
+            self.generate,
+            uniforms(data["arms"].shape[0], self.generate),
+        )
+        return {
+            "policy": policy,
+            "reward": reward,
+            "values": values,
+            "change": change,
+            "dependent": dependent,
+        }
+
+
+def _prepare_rlrw(data):
+    """Collect the arm and reward columns of the data into arrays, once."""
+    out = prepared(data)
+    arms = ordered_columns(data, "arm")
+    rewards = ordered_columns(data, "reward")
+    if not arms or not rewards:
+        raise KeyError(
+            "RLRW needs columns with 'arm' and 'reward' in their names, "
+            f"such as arm_left and reward_left, but the data have {sorted(out)}."
+        )
+    trials = len(out[arms[0]])
+    out["arms"] = indices(numpy.column_stack([out[c] for c in arms]))
+    out["rewards"] = numpy.ascontiguousarray(
+        numpy.column_stack([out[c] for c in rewards]), dtype=numpy.float64
+    )
+    response = out.get("response", numpy.zeros(trials))
+    out["response"] = indices(response)
+    return out
+
+
+
+class RLRW(Application):
     r"""
     The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
     The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019), which largely corresponds to the model presented by Sutton & Barto (2020) in Chapter 14.
@@ -68,6 +188,10 @@ class RLRW(Wrapper):
 
     where :math:`\alpha` is the learning rate, :math:`R` is the reward received for the chosen action, and :math:`Q(a_t)` is the estimated value of the chosen action before updating. The values of unchosen stimuli remain unchanged.
 
+    .. rubric:: Computation
+
+    The model computes all trials of a participant in one call, compiled with numba if numba is installed (``pip install cpm-toolbox[numba]``) and as plain Python otherwise, with the same results. `model` is the model function for a single trial, ``model(parameters, trial)``, which computes one trial from the states in `parameters` and returns its outputs.
+
     References
     ----------
 
@@ -85,102 +209,83 @@ class RLRW(Wrapper):
 
     """
 
+    _trial_shapes = {"change": (1, -1)}
+
     def __init__(
         self, data=None, dimensions=2, parameters_settings=None, generate=False
     ):
-        if parameters_settings is None:
-            parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
-            warnings.warn("No parameters specified, using default parameters.")
-        parameters = Parameters(
-            # freely varying parameters are indicated by specifying priors
-            alpha=Value(
-                value=parameters_settings[0][0],
-                lower=parameters_settings[0][1],
-                upper=parameters_settings[0][2],
-                prior="truncated_normal",
-                args={"mean": 0.5, "sd": 0.25},
-            ),
-            temperature=Value(
-                value=parameters_settings[1][0],
-                lower=parameters_settings[1][1],
-                upper=parameters_settings[1][2],
-                prior="truncated_normal",
-                args={"mean": 5, "sd": 2.5},
-            ),
-            values=numpy.ones(dimensions) / dimensions,
+        parameters = _rlrw_parameters(parameters_settings, dimensions)
+        self._setup(
+            data=data,
+            parameters=parameters,
+            session_model=_RLRWModel(generate),
+            prepare=_prepare_rlrw,
         )
 
-        @ipp.require("numpy")
-        def model(parameters, trial, generate=generate):
-            # pull out the parameters
-            alpha = parameters.alpha
-            temperature = parameters.temperature
-            values = numpy.asarray(parameters.values).copy()
-            ## first we get the bandits and their corresponding stimulus identifier
-            arm_names = [
-                col for col in trial.index if "arm" in col
-            ]  ## get column names beginning with stimulus
-            arms = numpy.array(
-                [trial[i] for i in arm_names],
-                dtype=int,
-            )  ## stimulus identifier for each arm of the bandit
-            k_arms = arms.shape[0]  ## number of arms
-            dims = values.shape[0]  ## number of stimuli
-            choice = trial.response.astype(int)
-            reward_names = [
-                col for col in trial.index if "reward" in col
-            ]  ## get column names beginning with stimulus
-            feedback = numpy.array(
-                [trial[i] for i in reward_names]
-            )  ## compile reward vector
-            ## get the activations for each arm given q-values for each stimulus
-            activations = numpy.array([values[i - 1] for i in arms])
 
-            ## compute softmax
-            response = cpm.models.decision.Softmax(
-                activations=activations, temperature=temperature
+class _HybridModel(SessionModel):
+    """The model function of `HybridMBMF`, for all trials at once."""
+
+    def __call__(self, parameters, data):
+        trials = data["s1"].shape[0]
+        out = self.sessions.hybrid_mbmf(
+            *(float(getattr(parameters, name)) for name in HYBRID_PARAMETERS),
+            numpy.asarray(parameters.q_mf, dtype=float),
+            numpy.asarray(parameters.q2, dtype=float),
+            numpy.asarray(parameters.m, dtype=float),
+            numpy.asarray(parameters.r, dtype=float),
+            data["s1"],
+            data["stimuli_first"],
+            data["action"],
+            data["s2"],
+            data["reward"],
+            data["position"],
+            data["reward_0"],
+            data["reward_1"],
+            self.generate,
+            uniforms(trials, self.generate),
+        )
+        policy, action, s2, reward, position, pe1, pe2, q_mf, q2, m, r = out
+        return {
+            "policy": policy,
+            "action": action,
+            "s2": s2,
+            "reward": reward,
+            "position": position,
+            "stage1_prediction_error": pe1,
+            "stage2_prediction_error": pe2,
+            "q_mf": q_mf,
+            "q2": q2,
+            "m": m,
+            "r": r,
+            "dependent": policy[:, 1].copy(),
+        }
+
+
+class _PrepareHybrid:
+    """The data preparation of `HybridMBMF`, filling in the optional columns once."""
+
+    def __init__(self, generate):
+        self.generate = generate
+
+    def __call__(self, data):
+        out = prepared(data)
+        require(out, ["s1"], "HybridMBMF")
+        needed = ["reward_0", "reward_1"] if self.generate else ["action", "s2", "reward"]
+        require(out, needed, "HybridMBMF")
+        trials = out["s1"].shape[0]
+        for key in ("s1", "stimuli_first", "action", "s2"):
+            out[key] = indices(out.get(key, numpy.zeros(trials)))
+        for key in ("reward", "reward_0", "reward_1"):
+            out[key] = numpy.ascontiguousarray(
+                out.get(key, numpy.zeros(trials)), dtype=numpy.float64
             )
-            response.compute()
-            ## check for NaN in policy
-            if numpy.isnan(response.policies).any():
-                # if the policy is NaN for a given action, then we need to set it to 1 to avoid numerical issues
-                warnings.warn(
-                    f"NaN in policy with parameters: {alpha.value}, {temperature.value}, \nand with policy: {response.policies}\n"
-                )
-                response.policies[numpy.isnan(response.policies)] = 1
-            # if generate is true, generate a response from softmax probabilities
-            if generate:
-                choice = response.choice()
-            ## match choice to stimulus identifier
-            stim_choice = arms[choice] - 1
-            # update the values for that stimulus
-            mute = numpy.zeros(dims)
-            mute[stim_choice] = (
-                1  ## determine which stimulus' q-values we need to update
-            )
-            teacher = feedback[choice]  ## get reward for that bandit
-            update = cpm.models.learning.SeparableRule(
-                weights=values, feedback=[teacher], input=mute, alpha=alpha
-            )
-            update.compute()
-
-            values += update.weights.flatten()
-            ## compile output
-            output = {
-                "policy": response.policies,  # policies
-                "reward": teacher,  # reward of the chosen action
-                "values": values.copy(),  # updated values
-                "change": update.weights,  # change in the values - prediction error
-                "dependent": numpy.asarray(
-                    [response.policies[1]]
-                ),  # dependent variable P(choosing the right | stimuli on right)
-            }
-            return output
-
-        super().__init__(data=data, model=model, parameters=parameters)
+        out["position"] = indices(out.get("position", out["stimuli_first"] ^ out["action"]))
+        return out
 
 
-class HybridMBMF(Wrapper):
+
+class HybridMBMF(Application):
     r"""
     The class implements the hybrid model-based / model-free reinforcement learning model for the deterministic two-step task (Kool et al., 2016), in the 6-parameter variant used by Smid et al. (2022).
     Model-free values are learned with a SARSA rule with an eligibility trace, model-based values are computed from the known transition structure, and the two are mixed before a Softmax decision rule.
@@ -269,6 +374,10 @@ class HybridMBMF(Wrapper):
 
     After the choice, the model-free and second-stage values are updated with a SARSA rule with an eligibility trace, see :class:`cpm.models.learning.SARSATrace`.
 
+    .. rubric:: Computation
+
+    The model computes all trials of a participant in one call, compiled with numba if numba is installed (``pip install cpm-toolbox[numba]``) and as plain Python otherwise, with the same results. `model` is the model function for a single trial, ``model(parameters, trial)``, which computes one trial from the states in `parameters` and returns its outputs.
+
     References
     ----------
 
@@ -281,135 +390,10 @@ class HybridMBMF(Wrapper):
     """
 
     def __init__(self, data=None, parameters_settings=None, q_init=0.5, generate=False):
-        if parameters_settings is None:
-            parameters_settings = [
-                [2, 0, 5],
-                [0.5, 0, 1],
-                [0.5, 0, 1],
-                [0.5, 0, 1],
-                [0, -5, 5],
-                [0, -5, 5],
-            ]
-            warnings.warn("No parameters specified, using default parameters.")
-        priors = [
-            {"mean": 1.5, "sd": 2.0},
-            {"mean": 0.5, "sd": 0.25},
-            {"mean": 0.5, "sd": 0.25},
-            {"mean": 0.5, "sd": 0.25},
-            {"mean": 0.0, "sd": 1.0},
-            {"mean": 0.0, "sd": 1.0},
-        ]
-        names = [
-            "inv_temperature",
-            "learning_rate",
-            "eligibility_trace",
-            "mb_weight",
-            "choice_stickiness",
-            "response_stickiness",
-        ]
-        parameters = Parameters(
-            # freely varying parameters are indicated by specifying priors
-            **{
-                name: Value(
-                    value=settings[0],
-                    lower=settings[1],
-                    upper=settings[2],
-                    prior="truncated_normal",
-                    args=prior,
-                )
-                for name, settings, prior in zip(names, parameters_settings, priors)
-            },
-            # internal states of the model
-            q_mf=numpy.full((2, 2), q_init, dtype=float),
-            q2=numpy.full(2, q_init, dtype=float),
-            m=numpy.zeros((2, 2)),
-            r=numpy.zeros(2),
+        parameters = _hybrid_parameters(parameters_settings, q_init)
+        self._setup(
+            data=data,
+            parameters=parameters,
+            session_model=_HybridModel(generate),
+            prepare=_PrepareHybrid(generate),
         )
-        ## deterministic transitions: action 0 -> state 1, action 1 -> state 0
-        transitions = numpy.array([[0.0, 1.0], [1.0, 0.0]])
-
-        @ipp.require("numpy")
-        def model(parameters, trial, generate=generate):
-            # pull out the parameters
-            inv_temperature = parameters.inv_temperature
-            learning_rate = parameters.learning_rate
-            eligibility_trace = parameters.eligibility_trace
-            mb_weight = parameters.mb_weight
-            choice_stickiness = parameters.choice_stickiness
-            response_stickiness = parameters.response_stickiness
-            q_mf = numpy.asarray(parameters.q_mf).copy()
-            q2 = numpy.asarray(parameters.q2).copy()
-            m = numpy.asarray(parameters.m).copy()
-            r = numpy.asarray(parameters.r).copy()
-
-            s1 = int(trial.s1)
-            stimuli_first = int(trial.get("stimuli_first", 0))
-            ## response stickiness is stored by screen position [left, right],
-            ## so flip it to action space when action 1 is displayed on the left
-            r_action = r[::-1] if stimuli_first == 1 else r
-
-            ## hybrid values
-            q_mb = transitions @ q2
-            q_hybrid = (
-                mb_weight * q_mb
-                + (1 - mb_weight) * q_mf[s1]
-                + choice_stickiness * m[s1]
-                + response_stickiness * r_action
-            )
-            response = cpm.models.decision.Softmax(
-                activations=q_hybrid, temperature=inv_temperature
-            )
-            response.compute()
-
-            if generate:
-                action = response.choice()
-                s2 = int(numpy.argmax(transitions[action]))
-                reward = float(trial[f"reward_{s2}"])
-                position = stimuli_first ^ action
-            else:
-                action = int(trial.action)
-                s2 = int(trial.s2)
-                reward = float(trial.reward)
-                position = int(trial.get("position", stimuli_first ^ action))
-
-            ## update stickiness for the next trial
-            m = numpy.zeros((2, 2))
-            m[s1, action] = 1
-            r = numpy.zeros(2)
-            r[position] = 1
-
-            ## update values
-            update = cpm.models.learning.SARSATrace(
-                learning_rate=learning_rate,
-                eligibility_trace=eligibility_trace,
-                model_free_values=q_mf,
-                second_stage_values=q2,
-                starting_state=s1,
-                action=action,
-                reached_second_stage=s2,
-                reward=reward,
-            )
-            model_free_delta, planet_value_delta = update.compute()
-            q_mf += model_free_delta
-            q2 += planet_value_delta
-
-            ## compile output
-            output = {
-                "policy": response.policies,  # policies
-                "action": action,  # chosen (or generated) first-stage action
-                "s2": s2,  # second-stage state reached
-                "reward": reward,  # reward received
-                "position": position,  # screen position of the response
-                "stage1_prediction_error": update.stage1_prediction_error,
-                "stage2_prediction_error": update.stage2_prediction_error,
-                "q_mf": q_mf.copy(),  # updated model-free values
-                "q2": q2.copy(),  # updated second-stage values
-                "m": m,  # choice stickiness for the next trial
-                "r": r,  # response stickiness for the next trial
-                "dependent": numpy.asarray(
-                    [response.policies[1]]
-                ),  # dependent variable P(choosing action 1)
-            }
-            return output
-
-        super().__init__(data=data, model=model, parameters=parameters)

@@ -9,6 +9,7 @@ import pandas as pd
 import cpm
 from scipy.optimize import SR1, Bounds, LinearConstraint, minimize
 from scipy.stats import norm, multivariate_normal
+from scipy.special import ndtr
 
 from cpm.core.optimisers import numerical_hessian, prepare_data
 from cpm.core.data import detailed_pandas_compiler, decompose
@@ -85,57 +86,41 @@ def metad_nll(
     nC_rS2 = [nR_S2[i + nRatings] for i in np.arange(nRatings)]
     nI_rS2 = [nR_S1[i + nRatings] for i in np.arange(nRatings)]
 
-    # get type 2 probabilities
-    C_area_rS1 = norm.cdf(t1c1, S1mu, S1sd)
-    I_area_rS1 = norm.cdf(t1c1, S2mu, S2sd)
+    # get type 2 probabilities; ndtr((x - mu) / sd) is what norm.cdf(x, mu, sd)
+    # evaluates, and a single vectorised call avoids scipy's per-call overhead
+    C_area_rS1 = ndtr((t1c1 - S1mu) / S1sd)
+    I_area_rS1 = ndtr((t1c1 - S2mu) / S2sd)
 
-    C_area_rS2 = 1 - norm.cdf(t1c1, S2mu, S2sd)
-    I_area_rS2 = 1 - norm.cdf(t1c1, S1mu, S1sd)
+    C_area_rS2 = 1 - ndtr((t1c1 - S2mu) / S2sd)
+    I_area_rS2 = 1 - ndtr((t1c1 - S1mu) / S1sd)
 
     t2c1x = [-np.inf]
     t2c1x.extend(t2c1[0 : (nRatings - 1)])
     t2c1x.append(t1c1)
     t2c1x.extend(t2c1[(nRatings - 1) :])
     t2c1x.append(np.inf)
+    t2c1x = np.asarray(t2c1x, dtype=float)
 
-    prC_rS1 = [
-        (norm.cdf(t2c1x[i + 1], S1mu, S1sd) - norm.cdf(t2c1x[i], S1mu, S1sd))
-        / C_area_rS1
-        for i in range(nRatings)
-    ]
-    prI_rS1 = [
-        (norm.cdf(t2c1x[i + 1], S2mu, S2sd) - norm.cdf(t2c1x[i], S2mu, S2sd))
-        / I_area_rS1
-        for i in range(nRatings)
-    ]
+    cdf_S1 = ndtr((t2c1x - S1mu) / S1sd)
+    cdf_S2 = ndtr((t2c1x - S2mu) / S2sd)
 
-    prC_rS2 = [
-        (
-            (1 - norm.cdf(t2c1x[nRatings + i], S2mu, S2sd))
-            - (1 - norm.cdf(t2c1x[nRatings + i + 1], S2mu, S2sd))
-        )
-        / C_area_rS2
-        for i in range(nRatings)
-    ]
-    prI_rS2 = [
-        (
-            (1 - norm.cdf(t2c1x[nRatings + i], S1mu, S1sd))
-            - (1 - norm.cdf(t2c1x[nRatings + i + 1], S1mu, S1sd))
-        )
-        / I_area_rS2
-        for i in range(nRatings)
-    ]
+    prC_rS1 = (cdf_S1[1 : nRatings + 1] - cdf_S1[:nRatings]) / C_area_rS1
+    prI_rS1 = (cdf_S2[1 : nRatings + 1] - cdf_S2[:nRatings]) / I_area_rS1
+    prC_rS2 = (
+        (1 - cdf_S2[nRatings : 2 * nRatings]) - (1 - cdf_S2[nRatings + 1 : 2 * nRatings + 1])
+    ) / C_area_rS2
+    prI_rS2 = (
+        (1 - cdf_S1[nRatings : 2 * nRatings]) - (1 - cdf_S1[nRatings + 1 : 2 * nRatings + 1])
+    ) / I_area_rS2
 
-    # calculate logL
+    # calculate logL, summed in the same order as before
+    terms_C_rS1 = np.asarray(nC_rS1, dtype=float) * np.log(prC_rS1)
+    terms_I_rS1 = np.asarray(nI_rS1, dtype=float) * np.log(prI_rS1)
+    terms_C_rS2 = np.asarray(nC_rS2, dtype=float) * np.log(prC_rS2)
+    terms_I_rS2 = np.asarray(nI_rS2, dtype=float) * np.log(prI_rS2)
     logL = 0.0
     for i in range(nRatings):
-        logL = (
-            logL
-            + nC_rS1[i] * np.log(prC_rS1[i])
-            + nI_rS1[i] * np.log(prI_rS1[i])
-            + nC_rS2[i] * np.log(prC_rS2[i])
-            + nI_rS2[i] * np.log(prI_rS2[i])
-        )
+        logL = logL + terms_C_rS1[i] + terms_I_rS1[i] + terms_C_rS2[i] + terms_I_rS2[i]
 
     if prior:
         parameters.update(**{
@@ -179,6 +164,7 @@ def fit_metad(
         each response category, conditional on presentation of S1 and S2. If
         nR_S1 = [100, 50, 20, 10, 5, 1], then when stimulus S1 was presented, the
         subject had the following response counts:
+
         * responded `'S1'`, rating=`3` : 100 times
         * responded `'S1'`, rating=`2` : 50 times
         * responded `'S1'`, rating=`1` : 20 times
@@ -189,16 +175,18 @@ def fit_metad(
         The ordering of response / rating counts for S2 should be the same as
         it is for S1. e.g. if nR_S2 = [3, 7, 8, 12, 27, 89], then when stimulus S2
         was presented, the subject had the following response counts:
+
         * responded `'S1'`, rating=`3` : 3 times
         * responded `'S1'`, rating=`2` : 7 times
         * responded `'S1'`, rating=`1` : 8 times
         * responded `'S2'`, rating=`1` : 12 times
         * responded `'S2'`, rating=`2` : 27 times
         * responded `'S2'`, rating=`3` : 89 times
+
     nRatings :
         Number of discrete ratings. If a continuous rating scale was used, and
         the number of unique ratings does not match `nRatings`, will convert to
-        discrete ratings using :py:func:`metadpy.utils.bin_ratings`.
+        discrete ratings using :func:`cpm.utils.metad.bin_ratings`.
         Default is set to 4.
     nCriteria :
         (Optional) Number criteria to be fitted. If `None`, the number of criteria is
@@ -210,22 +198,25 @@ def fit_metad(
         http://www.columbia.edu/~bsm2105/type2sdt for further discussion.
     verbose :
         Level of algorithm's verbosity:
+
             * 0 (default) : work silently.
             * 1 : display a termination report.
             * 2 : display progress during iterations.
             * 3 : display progress during iterations (more complete report).
+
     fninv :
         A function handle for the inverse CDF of the type 1 distribution. If
-        not specified, fninv defaults to :py:func:`scipy.stats.norm.ppf()`.
+        not specified, fninv defaults to :obj:`scipy.stats.norm.ppf <scipy.stats.norm>`.
     fncdf :
         A function handle for the CDF of the type 1 distribution. If not
-        specified, fncdf defaults to :py:func:`scipy.stats.norm.cdf()`.
+        specified, fncdf defaults to :obj:`scipy.stats.norm.cdf <scipy.stats.norm>`.
 
     Returns
     -------
     results :
         In the following, S1 and S2 represent the distributions of evidence generated
         by stimulus classes S1 and S2:
+
         * `'d'` : d-prime, the distance between the means of the S1 and S2 distributions, in RMS units.
         * `'s'` : ratio of the standard deviations of the S1 and S2
         * `'meta_d'` : meta-d' in RMS units
@@ -430,10 +421,12 @@ class EstimatorMetaD:
         If True, the log likelihoods will incorporate prior density of parameters.
     display : int, default 0
         Level of algorithm's verbosity:
+
             * 0 (default) : work silently.
             * 1 : display a termination report.
             * 2 : display progress during iterations.
             * 3 : display progress during iterations (more complete report).
+
     ppt_identifier : str, optional
         Identifier for participants in the data. If None, the default identifier will be used.
     ignore_invalid : bool, default False
@@ -445,8 +438,8 @@ class EstimatorMetaD:
     -------
     An EstimatorMetaD object.
 
-    Note
-    ----
+    Notes
+    -----
     The data DataFrame should contain the following columns:
 
     - 'participant': Identifier for each participant.
@@ -537,7 +530,7 @@ class EstimatorMetaD:
 
         Notes
         -----
-        If you want to tune the behaviour of the optimization, you can do so by passing additional keyword arguments to the class constructor. See the [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html) documentation for more details on the available options. By default, the optimization will use the `trust-constr` method with the default options specified in the `scipy.optimize.minimize` documentation.
+        If you want to tune the behaviour of the optimization, you can do so by passing additional keyword arguments to the class constructor. See the :func:`scipy.optimize.minimize` documentation for more details on the available options. By default, the optimization will use the `trust-constr` method with the default options specified in the `scipy.optimize.minimize` documentation.
 
 
         References

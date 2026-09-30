@@ -1,10 +1,39 @@
 import numpy as np
+from ..core._jit import kernels as _kernel_module
 
-__all__ = ["DeltaRule", "SeparableRule", "QLearningRule", "HumbleTeacher"]
+## the formulas, as plain Python (numba is never needed for the classes)
+_kernels = _kernel_module("cpm.models.kernels", python=True)
+
+__all__ = [
+    "DeltaRule",
+    "SeparableRule",
+    "QLearningRule",
+    "HumbleTeacher",
+    "SARSATrace",
+]
+
+
+def _leading(values, n):
+    """The first `n` elements of `values` as a float array (the loops this replaces read only those)."""
+    values = np.asarray(values, dtype=float)
+    if values.shape[0] < n:  # which the loops raised as well, rather than broadcast
+        raise IndexError(
+            f"Expected {n} values, one per row or column of the weights, not {values.shape[0]}."
+        )
+    return values if values.shape[0] == n else values[:n]
+
+
+def _assign(rule, name, values):
+    """Set an array attribute, keeping its dtype as element-wise assignment into it did."""
+    current = getattr(rule, name)
+    if current.dtype == values.dtype:
+        setattr(rule, name, values)
+    else:
+        current[...] = values
 
 
 class DeltaRule:
-    """
+    r"""
     DeltaRule class computes the prediction error for a given input and target value.
 
     Parameters
@@ -24,7 +53,7 @@ class DeltaRule:
 
     See Also
     --------
-    [cpm.models.learning.SeparableRule][cpm.models.learning.SeparableRule] : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
+    cpm.models.learning.SeparableRule : A class representing a learning rule based on the separable error-term of Bush and Mosteller (1951).
 
     Notes
     -----
@@ -38,14 +67,14 @@ class DeltaRule:
     extension of the Rescorla and Wagner (1972) learning rule to multi-outcome learning. Such that
 
 
-    $$
-    \\Delta w_{ij} = \\alpha \\cdot (\\lambda_i - \\sum_j w_{ij}) \\cdot x_j
-    $$
+    .. math::
 
-    where $\\Delta w_{ij}$ is the change in weight for the $j$-th stimulus for the $i$-th outcome,
-    $\\lambda_i$ is the target (feedback) value for the i-th outcome, $w_ij$ is the weights of stimulus $j$
-    for the $i$-th outcome,
-    $x_j$ is the j-th stimulus input, and $\\alpha$ is the learning rate. This is consistent with the
+        \Delta w_{ij} = \alpha \cdot (\lambda_i - \sum_j w_{ij}) \cdot x_j
+
+    where :math:`\Delta w_{ij}` is the change in weight for the :math:`j`-th stimulus for the :math:`i`-th outcome,
+    :math:`\lambda_i` is the target (feedback) value for the i-th outcome, :math:`w_{ij}` is the weights of stimulus :math:`j`
+    for the :math:`i`-th outcome,
+    :math:`x_j` is the j-th stimulus input, and :math:`\alpha` is the learning rate. This is consistent with the
     Rescorla and Wagner (1972)'s learning rule incorporating the summed error term.
 
     Examples
@@ -74,7 +103,7 @@ class DeltaRule:
     array([[0.03, 0.03, 0.  , 0.  ]])
 
     References
-    ---------
+    ----------
     Gluck, M. A., & Bower, G. H. (1988). From conditioning to category learning: An adaptive network model. Journal of Experimental Psychology: General, 117(3), 227–247.
 
     Rescorla, R. A., & Wagner, A. R. (1972). A theory of Pavlovian conditioning: Variations in the effectiveness of reinforcement and nonreinforcement. In A. H. Black & W. F. Prokasy (Eds.), Classical conditioning II: Current research and theory (pp. 64-99). New York:Appleton-Century-Crofts.
@@ -97,13 +126,13 @@ class DeltaRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = np.asarray(weights.copy())
-        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.error = np.zeros(self.shape[0])
         self.__run__ = False
 
     def compute(self):
@@ -119,13 +148,11 @@ class DeltaRule:
             It has the same shape as the weights input argument.
         """
 
-        for i in range(self.shape[0]):
-            # calculate summed error for a given output unit
-            activations = np.sum(self.weights[i] * self.input)
-            self.error[i] = self.teacher[i] - activations
-            for j in range(self.shape[1]):
-                # calcualte the change on weights
-                self.weights[i, j] = self.alpha * self.error[i] * self.input[j]
+        rows, columns = self.shape
+        change, self.error = _kernels.delta_rule(
+            self.weights, _leading(self.teacher, rows), _leading(self.input, columns), self.alpha
+        )
+        _assign(self, "weights", change)
         self.__run__ = True
         return self.weights
 
@@ -176,12 +203,12 @@ class DeltaRule:
 
 
 class SeparableRule:
-    """
+    r"""
     A class representing a learning rule based on the separable error-term of
     Bush and Mosteller (1951).
 
     Parameters
-    -----------
+    ----------
     alpha : float
         The learning rate.
     zeta : float, optional
@@ -197,16 +224,16 @@ class SeparableRule:
 
     See Also
     --------
-    [cpm.models.learning.DeltaRule][cpm.models.learning.DeltaRule] : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
+    cpm.models.learning.DeltaRule : An extension of the Rescorla and Wagner (1972) learning rule by Gluck and Bower (1988) to allow multi-outcome learning.
 
     Notes
     -----
     This type of learning rule was among the earliest formal models of associative learning (Le Pelley, 2004), which were based on standard linear operators (Bush & Mosteller, 1951; Estes, 1950; Kendler, 1971). It is used in a variety of reinforcement learning models. This learning rule is defined in `cpm` as
 
 
-    $$
-    \\Delta w_{ij} = \\alpha \\cdot (\\lambda_i - w_{ij}) \\cdot x_j
-    $$
+    .. math::
+
+        \Delta w_{ij} = \alpha \cdot (\lambda_i - w_{ij}) \cdot x_j
 
     which is consistent with the modification of the Rescorla and Wagner (1972) learning rule by Sutton and Barto (2018). The current implementation generalises to any number of outcomes and stimuli, which means that it can be applied to both single- and multi-outcome learning paradigms.
 
@@ -231,30 +258,36 @@ class SeparableRule:
         self.weights = [[]]
         if weights is not None:
             self.weights = weights.copy()
-        self.error = np.zeros(self.weights.shape[0])
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.error = np.zeros(self.shape)
         self.__run__ = False
 
     def compute(self):
         """
         Computes the prediction error using the learning rule.
 
-        Returns:
-        --------
+        Returns
+        -------
         ndarray
             The prediction error for each stimuli-outcome mapping.
             It has the same shape as the weights input argument.
+
+        Notes
+        -----
+        The prediction error for each stimuli-outcome mapping before the update is stored in `error`,
+        which has the same shape as the weights.
         """
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                self.weights[i, j] = (
-                    self.alpha * (self.teacher[i] - self.weights[i, j]) * self.input[j]
-                )
+        rows, columns = self.shape
+        # separable prediction error for each outcome-stimulus pair
+        change, self.error = _kernels.separable_rule(
+            self.weights, _leading(self.teacher, rows), _leading(self.input, columns), self.alpha
+        )
+        _assign(self, "weights", change)
         self.__run__ = True
         return self.weights
 
@@ -301,7 +334,7 @@ class SeparableRule:
 
 
 class QLearningRule:
-    """
+    r"""
     Q-learning rule (Watkins, 1989) for a one-dimensional array of Q-values.
 
     Parameters
@@ -322,11 +355,11 @@ class QLearningRule:
     The Q-learning rule is a model-free reinforcement learning algorithm that is used to learn the value of an action in a given state.
     It is defined as
 
-    $$
-    \\Delta \\mathcal{Q}(s, a) =  \\alpha \\cdot (r + \\gamma \\cdot \\max_{a'} \\mathcal{Q}(s', a') - \\mathcal{Q}(s, a))
-    $$
+    .. math::
 
-    where $\\Delta \\mathcal{Q}(s, a)$ is the change in value of action $a$ in state $s$, $r$ is the reward received on the current state, $\\gamma$ is the discount factor, and $\\max_{a'} \\mathcal{Q}(s', a')$ is the maximum estimated reward for the next state.
+        \Delta \mathcal{Q}(s, a) =  \alpha \cdot (r + \gamma \cdot \max_{a'} \mathcal{Q}(s', a') - \mathcal{Q}(s, a))
+
+    where :math:`\Delta \mathcal{Q}(s, a)` is the change in value of action :math:`a` in state :math:`s`, :math:`r` is the reward received on the current state, :math:`\gamma` is the discount factor, and :math:`\max_{a'} \mathcal{Q}(s', a')` is the maximum estimated reward for the next state.
 
     Examples
     --------
@@ -370,21 +403,7 @@ class QLearningRule:
             The computed output values.
         """
 
-        active = self.values.copy()
-        active[active > 0] = 1
-        output = np.zeros(self.values.shape[0])
-
-        for i in range(self.values.shape[0]):
-            output[i] += (
-                self.values[i]
-                + (
-                    self.alpha
-                    * (self.reward + self.gamma * self.maximum - self.values[i])
-                )
-                * active[i]
-            )
-
-        return output
+        return _kernels.q_learning(self.values, self.reward, self.maximum, self.alpha, self.gamma)
 
     def __repr__(self):
         return f"QLearningRule(alpha={self.alpha},\n gamma={self.gamma},\n values={self.values},\n reward={self.reward},\n maximum={self.maximum})"
@@ -397,7 +416,7 @@ class QLearningRule:
 
 
 class HumbleTeacher:
-    """
+    r"""
     A humble teacher learning rule (Kruschke, 1992; Love, Gureckis, and Medin, 2004) for multi-dimensional outcome learning.
 
     Attributes
@@ -430,20 +449,20 @@ class HumbleTeacher:
     -----
     The humble teacher is a learning rule that is based on the idea that if output node activations are larger than the teaching signal, they should not be counted as error, but should be rewarded. It is defined as:
 
-    $$
-    t_k = \\begin{cases}
-    \\min(-1, a_k) & \\text{if } t_k = 0 \\text{ if stimulus is not followed by outcome/category-label} \\\\
-    \\max(1, a_k) & \\text{if } t_k = 1 \\text{ if stimulus is followed by outcome/category-label}
-    \\end{cases}
-    $$
+    .. math::
 
-    where $t_k$ is the teaching signal. Then the change in weights is computed according to the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton & Williams, 1986; Gluck & Bower, 1988):
+        t_k = \begin{cases}
+        \min(-1, a_k) & \text{if } t_k = 0 \text{ if stimulus is not followed by outcome/category-label} \\
+        \max(1, a_k) & \text{if } t_k = 1 \text{ if stimulus is followed by outcome/category-label}
+        \end{cases}
 
-    $$
-    \\Delta w_{ij} = \\alpha \\cdot (t_k - a_k) \\cdot x_j
-    $$
+    where :math:`t_k` is the teaching signal. Then the change in weights is computed according to the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton & Williams, 1986; Gluck & Bower, 1988):
 
-    where $\\Delta w_{ij}$ is the change in weight for the $j$-th stimulus for the $i$-th outcome, $t_k$ is the teaching signal for the $k$-th outcome, $a_k$ is the summed activation of all nodes connected to the $k$-th outcome, $x_j$ is the j-th stimulus input, and $\\alpha$ is the learning rate.
+    .. math::
+
+        \Delta w_{ij} = \alpha \cdot (t_k - a_k) \cdot x_j
+
+    where :math:`\Delta w_{ij}` is the change in weight for the :math:`j`-th stimulus for the :math:`i`-th outcome, :math:`t_k` is the teaching signal for the :math:`k`-th outcome, :math:`a_k` is the summed activation of all nodes connected to the :math:`k`-th outcome, :math:`x_j` is the j-th stimulus input, and :math:`\alpha` is the learning rate.
 
     References
     ----------
@@ -476,10 +495,10 @@ class HumbleTeacher:
         self.teacher = feedback
         self.input = np.asarray(input)
         self.shape = self.weights.shape
-        self.delta = np.zeros(self.weights.shape)
         if len(self.shape) == 1:
             self.shape = (1, self.shape[0])
             self.weights = np.array([self.weights])
+        self.delta = np.zeros(self.shape)
 
     def compute(self):
         """
@@ -491,13 +510,162 @@ class HumbleTeacher:
             The updated weights matrix.
         """
 
-        for i in range(self.shape[0]):
-            activations = np.sum(self.weights[i] * self.input)
-            for j in range(self.shape[1]):
-                if self.teacher[i] == 0:
-                    teacher = np.min([-1, activations])
-                else:
-                    teacher = np.max([1, activations])
-                self.delta[i, j] = self.alpha * (teacher - activations) * self.input[j]
-                self.weights[i, j] += self.delta[i, j]
+        rows, columns = self.shape
+        self.delta[:] = _kernels.humble_teacher_change(
+            self.weights, _leading(self.teacher, rows), _leading(self.input, columns), self.alpha
+        )
+        np.add(self.weights, self.delta, out=self.weights, casting="unsafe")
         return self.weights
+
+
+class SARSATrace:
+    r"""
+    SARSA learning rule with an eligibility trace for a two-stage Markov decision task (Sutton & Barto, 2018; Kool et al., 2016).
+
+    Parameters
+    ----------
+    learning_rate : float
+        The learning rate, :math:`\alpha`.
+    eligibility_trace : float
+        The eligibility trace decay, :math:`\lambda`. It determines how much of the second-stage prediction error is carried back to the first-stage model-free value.
+    model_free_values : ndarray
+        The first-stage model-free Q-values, a 2D array of shape (n_states, n_actions). The array is not modified in-place.
+    second_stage_values : ndarray
+        The second-stage state values, a 1D array of shape (n_second_stage_states,). The array is not modified in-place.
+    starting_state : int
+        The first-stage starting state (0-indexed).
+    action : int
+        The chosen first-stage action (0-indexed).
+    reached_second_stage : int
+        The second-stage state reached after the transition (0-indexed).
+    reward : float
+        The reward received in the second-stage state.
+
+    Attributes
+    ----------
+    stage1_prediction_error : float
+        The first-stage prediction error, :math:`\delta_1`, set after calling `compute()`.
+    stage2_prediction_error : float
+        The second-stage prediction error, :math:`\delta_2`, set after calling `compute()`.
+    model_free_delta : ndarray
+        The change to add to `model_free_values`, set after calling `compute()`.
+    planet_value_delta : ndarray
+        The change to add to `second_stage_values`, set after calling `compute()`.
+
+    Notes
+    -----
+    The rule computes two coupled prediction errors. The first-stage prediction error compares the value of the reached second-stage state with the model-free value of the chosen first-stage action,
+
+    .. math::
+
+        \delta_1 = Q_2(s_2) - Q_{MF}(s_1, a),
+
+    and the second-stage prediction error compares the reward with the value of the reached second-stage state,
+
+    .. math::
+
+        \delta_2 = r - Q_2(s_2).
+
+    The values are then updated as
+
+    .. math::
+
+        \Delta Q_{MF}(s_1, a) = \alpha \delta_1 + \lambda \alpha \delta_2,
+
+    .. math::
+
+        \Delta Q_2(s_2) = \alpha \delta_2,
+
+    where the eligibility trace :math:`\lambda` carries the second-stage prediction error back to the first-stage choice. All other values remain unchanged.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from cpm.models.learning import SARSATrace
+    >>> model_free_values = np.zeros((2, 2))
+    >>> second_stage_values = np.array([4.5, 4.5])
+    >>> sarsa = SARSATrace(
+    ...     learning_rate=0.5, eligibility_trace=0.6,
+    ...     model_free_values=model_free_values, second_stage_values=second_stage_values,
+    ...     starting_state=0, action=1, reached_second_stage=0, reward=7.0,
+    ... )
+    >>> model_free_delta, planet_value_delta = sarsa.compute()
+    >>> model_free_delta
+    array([[0., 3.],
+           [0., 0.]])
+    >>> planet_value_delta
+    array([1.25, 0.  ])
+
+    References
+    ----------
+    Kool, W., Cushman, F. A., & Gershman, S. J. (2016). When does model-based control pay off? PLoS Computational Biology, 12(8), e1005090.
+
+    Sutton, R. S., & Barto, A. G. (2018). Reinforcement learning: An introduction (Second edition). The MIT Press.
+    """
+
+    def __init__(
+        self,
+        learning_rate=None,
+        eligibility_trace=None,
+        model_free_values=None,
+        second_stage_values=None,
+        starting_state=None,
+        action=None,
+        reached_second_stage=None,
+        reward=None,
+        **kwargs,
+    ):
+        self.learning_rate = learning_rate
+        self.eligibility_trace = eligibility_trace
+        self.model_free_values = np.asarray(model_free_values, dtype=float)
+        self.second_stage_values = np.asarray(second_stage_values, dtype=float)
+        self.starting_state = starting_state
+        self.action = action
+        self.reached_second_stage = reached_second_stage
+        self.reward = reward
+
+        self.stage1_prediction_error = None
+        self.stage2_prediction_error = None
+        self.model_free_delta = None
+        self.planet_value_delta = None
+
+    def compute(self):
+        """
+        Compute the changes in the model-free and second-stage values.
+
+        Returns
+        -------
+        model_free_delta : numpy.ndarray
+            The change to add to the model-free values. Non-zero only at `[starting_state, action]`.
+        planet_value_delta : numpy.ndarray
+            The change to add to the second-stage values. Non-zero only at `[reached_second_stage]`.
+        """
+        state = self.starting_state
+        action = self.action
+        planet = self.reached_second_stage
+
+        (
+            self.stage1_prediction_error,
+            self.stage2_prediction_error,
+            model_free_change,
+            second_stage_change,
+        ) = _kernels.sarsa_trace(
+            self.model_free_values, self.second_stage_values, state, action, planet,
+            self.reward, self.learning_rate, self.eligibility_trace,
+        )
+
+        self.model_free_delta = np.zeros_like(self.model_free_values)
+        self.planet_value_delta = np.zeros_like(self.second_stage_values)
+        self.model_free_delta[state, action] = model_free_change
+        self.planet_value_delta[planet] = second_stage_change
+
+        return self.model_free_delta, self.planet_value_delta
+
+    def __repr__(self):
+        return f"SARSATrace(learning_rate={self.learning_rate},\n eligibility_trace={self.eligibility_trace},\n starting_state={self.starting_state},\n action={self.action},\n reached_second_stage={self.reached_second_stage},\n reward={self.reward})"
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __call__(self):
+        return self.compute()

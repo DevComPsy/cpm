@@ -185,6 +185,16 @@ class TestOptimise:
         assert set(multi.hyperparameters.chain.unique()) == {1, 2}
         assert set(multi.fit.chain.unique()) == {1, 2}
 
+    def test_seed_reproduces_every_chain(self, optimiser):
+        warnings.simplefilter("ignore")
+        runs = []
+        for _ in range(2):
+            np.random.seed(2026)
+            multi = VariationalBayes(optimiser=optimiser, iteration=2, chain=2, quiet=True)
+            multi.optimise()
+            runs.append(multi.hyperparameters)
+        pd.testing.assert_frame_equal(runs[0], runs[1])
+
 
 class TestTtest:
     def test_dict_null_matches_dataframe_null(self, vb):

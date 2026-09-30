@@ -1,0 +1,9 @@
+analysis,variant,separate_fits_s,hierarchical_fit_s,iterations,seconds_per_iteration,fitting_total_s
+empirical Bayes,"main, tutorial model",37.02,458.9981,10,45.8998,496.0181
+empirical Bayes,"branch, tutorial model",18.5401,224.9755,12,18.748,243.5156
+empirical Bayes,"branch, RLRW without numba",3.0379,45.0587,12,3.7549,48.0966
+empirical Bayes,"branch, RLRW with numba",1.0321,7.5243,12,0.627,8.5564
+variational Bayes,"main, tutorial model",,180.9569,4,45.2392,180.9569
+variational Bayes,"branch, tutorial model",,227.5081,12,18.959,227.5081
+variational Bayes,"branch, RLRW without numba",,43.6024,12,3.6335,43.6024
+variational Bayes,"branch, RLRW with numba",,8.4628,12,0.7052,8.4628

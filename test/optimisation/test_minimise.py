@@ -353,5 +353,31 @@ class TestDiscrete:
         result = Discrete.G2(predicted, observed)
         assert isinstance(result, float)
 
+
+def test_bernoulli_and_continuous_equal_scipy():
+    """The losses no longer call scipy.stats, but must give the same values."""
+    from scipy.stats import bernoulli, norm
+
+    rng = np.random.default_rng(5)
+    p = rng.uniform(0, 1, 200)
+    p[:3] = [0.0, 1.0, 1e-12]
+    k = rng.integers(0, 2, 200).astype(float)
+    k[5] = 0.5  # not a Bernoulli outcome: log probability -inf, replaced by -1e100
+    clipped = np.clip(p, 1e-10, 1 - 1e-10)
+    expected = -np.sum(np.nan_to_num(bernoulli.logpmf(k, clipped), neginf=-1e100))
+    assert LogLikelihood.bernoulli(predicted=p.copy(), observed=k) == expected
+    x, y = rng.normal(0, 1, 50), rng.normal(0, 1, 50)
+    assert LogLikelihood.continuous(predicted=x, observed=y) == -np.sum(norm.logpdf(x, y, 1))
+
+
+def test_losses_still_name_nan_and_inf():
+    with pytest.raises(ValueError, match="Predicted values contain NaN"):
+        LogLikelihood.bernoulli(predicted=np.array([0.5, np.nan]), observed=np.array([1, 0]))
+    with pytest.raises(ValueError, match="Observed values contain Inf"):
+        LogLikelihood.bernoulli(predicted=np.array([0.5, 0.5]), observed=np.array([1, np.inf]))
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        LogLikelihood.bernoulli(predicted=np.array([0.5, 0.5]), observed=np.array([1, 0, 1]))
+
+
 if __name__ == "__main__":
     pytest.main()

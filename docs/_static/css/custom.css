@@ -1,0 +1,106 @@
+/* cpm brand colours, taken from the logo. */
+html[data-theme="light"] {
+  --pst-color-primary: #2350b0;
+  --pst-color-primary-highlight: #1a3d87;
+  --pst-color-secondary: #0c0c45;
+  --pst-color-secondary-highlight: #1e1e6e;
+  --pst-color-link: #2350b0;
+  --pst-color-link-hover: #0c0c45;
+  --cpm-hero-bg: linear-gradient(180deg, #eef2fb 0%, rgba(238, 242, 251, 0) 100%);
+  --cpm-announcement-bg: #e8ecf8;
+  --cpm-announcement-fg: #0c0c45;
+}
+
+html[data-theme="dark"] {
+  --pst-color-primary: #98aedd;
+  --pst-color-primary-highlight: #b7c7ea;
+  --pst-color-secondary: #c8d3f0;
+  --pst-color-secondary-highlight: #e3e9f8;
+  --pst-color-link: #98aedd;
+  --pst-color-link-hover: #c8d3f0;
+  --cpm-hero-bg: linear-gradient(180deg, #161b2e 0%, rgba(22, 27, 46, 0) 100%);
+  --cpm-announcement-bg: #1e2748;
+  --cpm-announcement-fg: #e8ecf8;
+}
+
+/* Announcement banner */
+.bd-header-announcement {
+  background-color: var(--cpm-announcement-bg);
+  color: var(--cpm-announcement-fg);
+}
+
+.bd-header-announcement::after {
+  background-color: transparent;
+}
+
+.bd-header-announcement a {
+  color: var(--pst-color-primary);
+}
+
+/* Landing page */
+.bd-main .bd-content .bd-article-container:has(img.hero-logo) {
+  max-width: 64rem;
+}
+
+img.hero-logo {
+  max-width: min(28rem, 90%);
+  margin: 1rem auto 1.5rem;
+}
+
+/* The title of the landing page is shown by the logo. */
+section:has(> p > img.hero-logo) > h1,
+section:has(> img.hero-logo) > h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.landing-cards {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.landing-cards .sd-card {
+  border-top: 3px solid var(--pst-color-primary);
+}
+
+/* Cards */
+.sd-card {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.sd-card:hover {
+  transform: translateY(-2px);
+}
+
+.sd-card-img-top {
+  height: 11rem;
+  object-fit: contain;
+  background: #fff;
+  padding: 0.5rem;
+}
+
+.example-gallery .sd-card-title {
+  font-size: 1.05rem;
+}
+
+.tutorial-path .sd-card-title {
+  font-size: 1.1rem;
+}
+
+/* Notebook figures often have transparent backgrounds that disappear in the dark theme. */
+html[data-theme="dark"] .cell_output img {
+  background: #fff;
+  border-radius: 0.25rem;
+}
+
+/* Wide DataFrames scroll instead of breaking the layout. */
+.cell_output .output.text_html {
+  overflow-x: auto;
+}
+
+.notebook-links a {
+  font-size: 0.9rem;
+}

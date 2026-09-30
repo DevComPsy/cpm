@@ -373,3 +373,11 @@ def test_converter_compatibility_with_decision_making_wrapper():
         model2025.run()
     except Exception as e:
         pytest.fail(f"PTSM2025 model.run() raised an exception: {e}")
+
+
+def test_utils_submodules_reachable_from_package():
+    import cpm
+
+    assert cpm.utils.data.convert_to_RLRW is convert_to_RLRW
+    assert cpm.utils.data.convert_to_PTSM is convert_to_PTSM
+    assert hasattr(cpm.utils, "metad")

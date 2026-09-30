@@ -1,6 +1,10 @@
 import numpy as np
 import warnings
 from ..generators import Value
+from ..core._jit import kernels as _kernel_module
+
+## the formulas, as plain Python (numba is never needed for the classes)
+_kernels = _kernel_module("cpm.models.kernels", python=True)
 
 __all__ = [
     "Softmax",
@@ -11,7 +15,7 @@ __all__ = [
 
 
 class Softmax:
-    """
+    r"""
     Softmax class for computing policies based on activations and temperature (Bridle, 1990).
 
     Parameters
@@ -30,9 +34,9 @@ class Softmax:
 
     The softmax is defined as:
 
-    $$
-    P(x) = \\frac{e^{\\beta x}}{\\sum_{i} e^{\\beta x_i}}
-    $$
+    .. math::
+
+        P(x) = \frac{e^{\beta x}}{\sum_{i} e^{\beta x_i}}
 
     The inverse temperature parameter beta represents the degree of randomness in the choice process.
     As beta approaches positive infinity, choices becomes more deterministic,
@@ -73,11 +77,11 @@ class Softmax:
         else:
             self.activations = np.zeros(1)
         ## Throw error if activations contain missing values of infities
-        if np.isnan(self.activations).any():
-            raise ValueError(
-                "Activations contain NaN values. Please remove or impute missing values."
-            )
-        if np.isinf(self.activations).any():
+        if not np.isfinite(self.activations).all():
+            if np.isnan(self.activations).any():
+                raise ValueError(
+                    "Activations contain NaN values. Please remove or impute missing values."
+                )
             raise ValueError(
                 "Activations contain infinite values. Please remove or impute infinite values."
             )
@@ -94,17 +98,21 @@ class Softmax:
         self.__run__ = False
 
     def compute(self):
-        """
+        r"""
         Compute the policies based on the activations and temperature.
 
         Returns
         -------
         numpy.ndarray: Array of computed policies.
+
+        Notes
+        -----
+        Where the exponentials would overflow (or all underflow), that is where the
+        largest scaled activation is beyond ±700, the policies are computed as
+        :math:`e^{\beta x_i - m} / \sum_j e^{\beta x_j - m}` with :math:`m` the
+        largest scaled activation, which is the same function without overflow.
         """
-        output = np.exp(self.activations * self.temperature) / np.sum(
-            np.exp(self.activations * self.temperature)
-        )
-        self.policies = output
+        self.policies = _kernels.softmax(self.activations, self.temperature)
 
         if np.isnan(self.policies).any():
             self.policies[np.isnan(self.policies)] = 1
@@ -117,41 +125,41 @@ class Softmax:
         return self.policies
 
     def irreducible_noise(self):
-        """
+        r"""
         Extended softmax class for computing policies based on activations, with parameters inverse temperature and irreducible noise.
 
         The softmax function with irreducible noise is defined as:
 
-        $$
-        P(x) = \\frac{e^{\\beta x}}{\\sum_{i} e^{\\beta x_i}} * (1 - \\xi) + \\frac{\\xi}{n}
-        $$
+        .. math::
 
-        where x is the input array of activations or Q-values, $\\beta$ is the inverse temperature parameter, $n$ is the number of options, and $\\xi$ is the irreducible noise parameter.
+            P(x) = \frac{e^{\beta x}}{\sum_{i} e^{\beta x_i}} * (1 - \xi) + \frac{\xi}{n}
+
+        where x is the input array of activations or Q-values, :math:`\beta` is the inverse temperature parameter, :math:`n` is the number of options, and :math:`\xi` is the irreducible noise parameter.
 
         Notes
         -----
 
-        The irreducible noise parameter $\\xi$ accounts for attentional lapses in the choice process.
-        Specifically, the terms $(1-\\xi) + (\\xi/n)$ cause the choice probabilities to be proportionally scaled towards $1/n$.
+        The irreducible noise parameter :math:`\xi` accounts for attentional lapses in the choice process.
+        Specifically, the terms :math:`(1-\xi) + (\xi/n)` cause the choice probabilities to be proportionally scaled towards :math:`1/n`.
         Relatively speaking, this increases the probability that an option is selected if its activation is exceptionally low.
         This may seem counterintuitive in theory, but in practice it enables the model to capture highly surprising responses that can occur during attentional lapses.
 
         This particular formalisation is a combination of the softmax policy with the uniform
-        distribution: with (noise weight) probability $(1 - \\xi)$ the value-based rule is followed, and with
-        probability $\\xi$ an option is drawn uniformly. The uniform floor is $\\xi/n$,
-        i.e. $1/|A|$; the original formulation in Guitart-Masip et al. (2012) used $\\xi/2$ because
+        distribution: with (noise weight) probability :math:`(1 - \xi)` the value-based rule is followed, and with
+        probability :math:`\xi` an option is drawn uniformly. The uniform floor is :math:`\xi/n`,
+        i.e. :math:`1/|A|`; the original formulation in Guitart-Masip et al. (2012) used :math:`\xi/2` because
         the task had two actions, whereas the form implemented here generalises to an arbitrary
         number of options.
 
         The exact functional form originates in Talmi et al. (2009; Supplementary Methods, Eq. 4),
-        where the equivalent parameter is called the *tremble* $\\tau$ and weights the value-based
-        term directly. The two parameterisations are complementary: $\\xi = 1 - \\tau$. Note also
+        where the equivalent parameter is called the *tremble* :math:`\tau` and weights the value-based
+        term directly. The two parameterisations are complementary: :math:`\xi = 1 - \tau`. Note also
         that for two actions the softmax kernel equals the logistic,
-        $\\exp(W_+) / (\\exp(W_+) + \\exp(W_-)) = \\sigma(W_+ - W_-)$, so the softmax and logistic
+        :math:`\exp(W_+) / (\exp(W_+) + \exp(W_-)) = \sigma(W_+ - W_-)`, so the softmax and logistic
         statements of this rule are identical in the binary case.
 
         The same equation appears under two independent traditions. As a *lapse rate* it is the
-        symmetric special case (guess rate = lapse rate = $\\xi/2$) of the four-parameter
+        symmetric special case (guess rate = lapse rate = :math:`\xi/2`) of the four-parameter
         psychometric function in Wichmann and Hill (2001); it is a more general case,
         since it permits asymmetric lower and upper asymptotes that are collapsed here. As a
         *tremble* the term traces to the trembling-hand in Selten (1975), in which an
@@ -162,23 +170,24 @@ class Softmax:
         ----------
         Guitart-Masip, M., Huys, Q. J. M., Fuentemilla, L., Dayan, P., Düzel, E., & Dolan, R. J.
             (2012). Go and no-go learning in reward and punishment: Interactions between affect and
-            effect. *NeuroImage, 62*(1), 154-166. https://doi.org/10.1016/j.neuroimage.2012.04.024
+            effect. *NeuroImage, 62*\ (1), 154-166. https://doi.org/10.1016/j.neuroimage.2012.04.024
 
         Selten, R. (1975). Reexamination of the perfectness concept for equilibrium points in
-            extensive games. *International Journal of Game Theory, 4*(1), 25-55.
+            extensive games. *International Journal of Game Theory, 4*\ (1), 25-55.
             https://doi.org/10.1007/BF01766400
 
         Talmi, D., Dayan, P., Kiebel, S. J., Frith, C. D., & Dolan, R. J. (2009). How humans
             integrate the prospects of pain and reward during choice. *The Journal of Neuroscience,
-            29*(46), 14617-14626. https://doi.org/10.1523/JNEUROSCI.2026-09.2009
+            29*\ (46), 14617-14626. https://doi.org/10.1523/JNEUROSCI.2026-09.2009
 
         Wichmann, F. A., & Hill, N. J. (2001). The psychometric function: I. Fitting, sampling, and
-            goodness of fit. *Perception & Psychophysics, 63*(8), 1293-1313.
+            goodness of fit. *Perception & Psychophysics, 63*\ (8), 1293-1313.
             https://doi.org/10.3758/BF03194544
 
         Returns
         -------
-        numpy.ndarray: Array of computed policies with irreducible noise.
+        numpy.ndarray
+            Array of computed policies with irreducible noise.
 
         Examples
         --------
@@ -191,7 +200,7 @@ class Softmax:
             policies = self.policies
         else:
             policies = self.compute()
-        policies = policies * (1 - self.xi) + (self.xi / self.shape[0])
+        policies = _kernels.irreducible_noise(policies, self.xi)
         self.policies = policies
         return policies
 
@@ -212,7 +221,7 @@ class Softmax:
 
 
 class Sigmoid:
-    """
+    r"""
     A class representing a sigmoid function that takes an n by m array of activations and returns an n
     array of outputs, where n is the number of output and m is the number of
     inputs.
@@ -243,11 +252,11 @@ class Sigmoid:
     The current implementation is based on Gluck and Bower's (1988) logistic choice function.
     Our current implementation is based on the following equation:
 
-    $$
-    P(x) = \\frac{1}{1 + e^{-\\theta (x - \\beta)}}
-    $$
+    .. math::
 
-    where $\\theta$ is the inverse temperature parameter, $x$ is the input array of activations, and $\\beta$ is the bias parameter.
+        P(x) = \frac{1}{1 + e^{-\theta (x - \beta)}}
+
+    where :math:`\theta` is the inverse temperature parameter, :math:`x` is the input array of activations, and :math:`\beta` is the bias parameter.
     The bias parameter is not part of the original Gluck and Bower (1988) model. bias in the current implementation helps comparisons between simulations using the act2probrat logistic choice function. Set bias to 0 for operation as specified in Gluck & Bower (1988). Also note that, where there is more than one output node, the same bias value is subtracted from the output of each node. This form of decision mechanism is not present in the literature as far as we are aware, although using a negative bias value would, in multi-outcome cases, approximate a 'background noise' decision rule, as used in, for example, Nosofsky et al. (1994).
 
     """
@@ -277,7 +286,7 @@ class Sigmoid:
         output: ndarray
             A 2D array of outputs computed using the sigmoid function.
         """
-        output = 1 / (1 + np.exp((self.activations - self.beta) * -self.temperature))
+        output = _kernels.sigmoid(self.activations, self.temperature, self.beta)
         self.policies = output
 
         if np.isnan(self.policies).any():
@@ -314,7 +323,7 @@ class Sigmoid:
 
 
 class GreedyRule:
-    """
+    r"""
     A class representing an ε-greedy rule based on Daw et al. (2006).
 
     Parameters
@@ -340,14 +349,14 @@ class GreedyRule:
     -----
     The greedy rule is defined as follows:
     
-    $$
-    P(x) = \\begin{cases}
-    1 - (n - 1)\\epsilon & \\text{if } x = \\text{argmax}(a) \\\\
-    \\frac{\\epsilon}{n} & \\text{otherwise}
-    \\end{cases}
-    $$
+    .. math::
 
-    where $x$ is the action, $a$ is the array of activations or the expected reward for each action, $n$ is the number of actions, and $\\epsilon$ is the exploration parameter. Values are normalised to keep the probabilities valid. The greedy rule selects the action with the highest activation with probability $1 - (n - 1)\\epsilon$, and selects a random action with probability $\\frac{\\epsilon}{n}$.
+        P(x) = \begin{cases}
+        1 - (n - 1)\epsilon & \text{if } x = \text{argmax}(a) \\
+        \frac{\epsilon}{n} & \text{otherwise}
+        \end{cases}
+
+    where :math:`x` is the action, :math:`a` is the array of activations or the expected reward for each action, :math:`n` is the number of actions, and :math:`\epsilon` is the exploration parameter. Values are normalised to keep the probabilities valid. The greedy rule selects the action with the highest activation with probability :math:`1 - (n - 1)\epsilon`, and selects a random action with probability :math:`\frac{\epsilon}{n}`.
 
     References
     ----------
@@ -373,17 +382,7 @@ class GreedyRule:
         output: ndarray
             A 2D array of outputs computed using the greedy rule.
         """
-        output = self.activations.sum(axis=1)
-        policies = np.zeros(output.shape)
-        maximum = np.max(output)
-        policies[output != maximum] = self.epsilon * 1
-        policies[output == maximum] = 1 - (output.shape[0] - 1) * self.epsilon
-        policies[output <= 0] = 0
-        if np.all(policies == 0):
-            policies.fill(1 / policies.shape[0])
-        else:
-            policies = policies / policies.sum()  # normalise
-        self.policies = policies
+        self.policies = _kernels.greedy(self.activations, self.epsilon)
         self.run = True
         return self.policies
 
@@ -432,7 +431,7 @@ class GreedyRule:
 
 
 class ChoiceKernel:
-    """
+    r"""
     A class representing a choice kernel based on a softmax function that incorporates the frequency of choosing an action.
     It is based on Equation 7 in Wilson and Collins (2019).
 
@@ -452,11 +451,11 @@ class ChoiceKernel:
 
     The choice kernel is defined as follows:
 
-    $$
-    P(x) = \\frac{e^{\\theta_a a + \\theta_k k}}{\\sum_{i} e^{\\theta_a a_i + \\theta_k k_i}}
-    $$
+    .. math::
 
-    where $\\theta_a$ is the inverse temperature parameter for the activations, $\\theta_k$ is the inverse temperature parameter for the kernel, $a$ is the array of activations for each action, and $k$ is the array of kernel values for each action. The kernel values represent the frequency of choosing each action in the past, and they are updated after each choice.
+        P(x) = \frac{e^{\theta_a a + \theta_k k}}{\sum_{i} e^{\theta_a a_i + \theta_k k_i}}
+
+    where :math:`\theta_a` is the inverse temperature parameter for the activations, :math:`\theta_k` is the inverse temperature parameter for the kernel, :math:`a` is the array of activations for each action, and :math:`k` is the array of kernel values for each action. The kernel values represent the frequency of choosing each action in the past, and they are updated after each choice.
 
     In order to get Equation 6 from Wilson and Collins (2019), either set `activations` to None (default) or set it to 0.
 
@@ -494,14 +493,9 @@ class ChoiceKernel:
         self.run = False
 
     def compute(self):
-        output = np.zeros(self.shape[0])
-        values = self.activations * self.temperature_a
-        kernels = self.kernel * self.temperature_k
-        # activation of output unit for action/outcome
-        nominator = np.exp(np.sum(values, axis=1) * kernels)
-        # denominator term for scaling
-        denominator = np.sum(np.exp(np.sum(values, axis=1) * kernels))
-        output = nominator / denominator
+        output = _kernels.choice_kernel(
+            self.activations, self.kernel, self.temperature_a, self.temperature_k
+        )
         self.policies = output
         self.run = True
         return output

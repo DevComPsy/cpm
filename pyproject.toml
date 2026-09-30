@@ -21,25 +21,58 @@ maintainers = [
     { name = "Lenard Dome", email = "lenarddome@gmail.com" }
 ]
 license = { text = "AGPLv3" }
-requires-python = ">3.11.0"
+requires-python = ">=3.11"
 keywords = ["cpm-toolbox", "cpm", "computational-psychiatry", "computational-psychology", "psychometrics", "psychology"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: Implementation :: PyPy"
+    "Programming Language :: Python :: 3"
 ]
 dependencies = [
     "numpy>=2.0.0",
     "SciPy>=1.16.0",
-    "pandas>=2.1.4",
+    "pandas>=2.2.2",  # the first release that works with NumPy 2
     "multiprocess>=0.70.16",
     "ipyparallel>=8.8.0",
     "numdifftools>=0.9.41",
-    "pybads>=1.0.4",
-    "dill>=0.3.8"
+    "pybads>=1.0.5",  # the first release that works with NumPy 2
+    "gpyreg>=1.2.1", # see 7ced733
+    "dill>=0.3.8",
+    "matplotlib>=3.8.4"  # the first release that works with NumPy 2
+]
+
+[project.optional-dependencies]
+# compiles the session models of cpm.applications and the kernels in cpm.models.kernels;
+# numba supports a new NumPy release some time after it comes out (0.64 is the first
+# release that supports NumPy 2.4), and does not support PyPy
+numba = [
+    "numba>=0.64",
+]
+docs = [
+    "sphinx>=8.2",
+    "pydata-sphinx-theme>=0.16",
+    "myst-nb>=1.2",
+    "sphinx-design>=0.6",
+    "sphinx-copybutton>=0.5",
+    "numpydoc>=1.8",
+    "sphinx-codeautolink>=0.17",
+    "sphinx-reredirects>=0.1.5",
+    "sphinx-sitemap>=2.6",
+    "sphinx-notfound-page>=1.0",
+    "sphinx-autobuild>=2024.10",
+    "ipykernel",
+    "matplotlib>=3.8",
+]
+notebooks = [
+    "ipykernel",
+    "nbconvert>=7",
+    "nbmake>=1.5",
+    "pytest-xdist",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "statsmodels>=0.14",
 ]
 
 [project.urls]
@@ -54,6 +87,7 @@ version = { attr = "cpm.__version__.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["cpm", "cpm.*"]
 
 [tool.setuptools.package-data]
 cpm = ["**/*.csv"]

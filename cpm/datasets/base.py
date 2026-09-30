@@ -36,7 +36,7 @@ def load_bandit_data():
     Returns
     -------
     pd.DataFrame
-        A pandas DataFrame containing the 4-arm bandit data.
+        A pandas DataFrame containing the two-armed bandit data.
 
     Examples
     --------
@@ -45,15 +45,17 @@ def load_bandit_data():
 
     Notes
     -----
-    The dataset will include the following columns:
+    On each trial, two of four stimuli (arms) are shown on the left and right,
+    and the participant chooses one of them. The dataset includes the following columns:
 
-        - `index`: variable to identify each row - this variable is clutter.
-        - `left`: the stimulus presented on the left side.
-        - `right`: the stimulus presented on the right side.
-        - `reward_left`: the reward received when the left stimulus is selected.
-        - `reward_right`: the reward received when the right stimulus is selected.
-        - `ppt`: the participant number.
-        - `responses`: the response of the participant (1 for right, 0 for left).
+    - `ppt`: the participant number.
+    - `trial`: the trial number.
+    - `arm_left`: the stimulus (1 to 4) presented on the left side.
+    - `arm_right`: the stimulus (1 to 4) presented on the right side.
+    - `reward_left`: the reward received when the left stimulus is selected.
+    - `reward_right`: the reward received when the right stimulus is selected.
+    - `response`: the response of the participant (0 for left, 1 for right).
+    - `feedback`: the reward the participant received.
     """
     return load_csv("bandit_small.csv")
 
@@ -75,7 +77,7 @@ def load_risky_choices():
     Notes
     -----
     
-    The data are from a risky decision-making task (similar to e.g., Rutledge et al., 2014), a two-alternative forced-choice task, which is implemented as a smartphone-compatible gamified application available in the BrainExplorer app (https://brainexplorer.net/) as the game called "_Scavenger_".
+    The data are from a risky decision-making task (similar to e.g., Rutledge et al., 2014), a two-alternative forced-choice task, which is implemented as a smartphone-compatible gamified application available in the BrainExplorer app (https://brainexplorer.net/) as the game called "*Scavenger*".
     On each trial, participants are presented with two stimuli and asked to select one of them. After they make their choice, they receive feedback in the form of rewards (coins).
     The stimuli are cartoonish depictions of stranded spaceships that participants have to salvage in order to obtain coins.
     In addition, participants are shown a radar, two circles drawn at the bottom of the screen, revealing the possible outcomes for each spaceship and their associated probabilities.
@@ -103,11 +105,11 @@ def load_risky_choices():
     See Also
     --------
 
-    [cpm.applications.decision_making.PTSM][cpm.applications.decision_making.PTSM]:  simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992).
+    cpm.applications.decision_making.PTSM : simplified version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992).
 
-    [cpm.applications.decision_making.PTSM1992][cpm.applications.decision_making.PTSM1992]: full version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992).
+    cpm.applications.decision_making.PTSM1992 : full version of the Prospect Theory-based Softmax Model (PTSM) for decision-making tasks based on Tversky & Kahneman (1992).
 
-    [cpm.applications.decision_making.PTSM2025][cpm.applications.decision_making.PTSM2025]: Prospect Theory Softmax Model loosely based on Chew et al. (2019).
+    cpm.applications.decision_making.PTSM2025 : Prospect Theory Softmax Model loosely based on Chew et al. (2019).
 
     References
     ----------
@@ -135,7 +137,7 @@ def load_metacognition_data():
     -----
     
     The data are from an experiment combining a perceptual decision making task with an additional post-decision component assessing participants' confidence in their choices (Marzuki et al., 2025; Moses-Payne et al., 2021).
-    The experiment is implemented as a gamified smartphone-compatible application available in the BrainExplorer platform (https://brainexplorer.net/) as the game "_Space Observer_".
+    The experiment is implemented as a gamified smartphone-compatible application available in the BrainExplorer platform (https://brainexplorer.net/) as the game "*Space Observer*".
     The task is designed to assess aspects of metacognition, i.e., the extent to which one can accurately reflect on and evaluate their own performance, specifically how well one’s confidence is calibrated to their actual performance.
     For a more thorough description of the experimental procedure, please refer to Marzuki et al. (2025).
     Briefly, in each trial of the game, participants are presented with a planet in the centre of the screen.
@@ -158,12 +160,12 @@ def load_metacognition_data():
 
     See Also
     --------
-    [cpm.applications.signal_detection.EstimatorMetaD][cpm.applications.signal_detection.EstimatorMetaD]: Class to estimate metacognitive sensitivity (meta-d') from confidence ratings and choices.
+    cpm.applications.signal_detection.EstimatorMetaD : Class to estimate metacognitive sensitivity (meta-d') from confidence ratings and choices.
 
     References
     ----------
     
-    Chen, Y., Daly, H. R., Pitt, M. A., & Van Zandt, T. (2024). Assessing the distortions introduced when calculating d’: A simulation approach. _Behavior Research Methods_. https://doi.org/10.3758/s13428-024-02447-8
+    Chen, Y., Daly, H. R., Pitt, M. A., & Van Zandt, T. (2024). Assessing the distortions introduced when calculating d’: A simulation approach. *Behavior Research Methods*. https://doi.org/10.3758/s13428-024-02447-8
     
     Cornsweet, T. (1962). The staircase-method in psychophysics. Am. J. Psychol. 75, 485491. https://doi.org/10.2307/1419876
     
@@ -171,10 +173,64 @@ def load_metacognition_data():
     
     Levitt, H. (1971). Transformed up-down methods in psychoacoustics. Journal of the Acoustical Society of America, 49, 467–477. https://doi.org/10.1121/1.1912375
 
-    Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. _Research Square_. https://doi.org/10.21203/rs.3.rs-7544256/v1
+    Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. *Research Square*. https://doi.org/10.21203/rs.3.rs-7544256/v1
     
     Moses‐Payne, M. E., Habicht, J., Bowler, A., Steinbeis, N., & Hauser, T. U. (2021). I know better! Emerging metacognition allows adolescents to ignore false advice. Developmental Science, 24(5), e13101. https://doi.org/10.1111/desc.13101
 
 
     """
     return load_csv("metacognition_data.csv")
+
+def load_two_step_data():
+    """
+    Load the adult two-step task dataset of Smid et al. (2022).
+
+    Returns
+    -------
+    pd.DataFrame
+        A pandas DataFrame with one row per trial and participant.
+
+    Examples
+    --------
+    >>> data = load_two_step_data()
+    >>> print(data.head())
+
+    Notes
+    -----
+    The data are from the adult group of Smid et al. (2022), who completed 140
+    trials of the deterministic two-step task of Kool et al. (2016). The task
+    uses the original coding, so the columns need converting before they can be
+    passed to :class:`~cpm.applications.reinforcement_learning.HybridMBMF`
+    (see the two-step task example in the documentation).
+
+    The data were originally published by the authors in the
+    `Model-based_Model-free_Developmental <https://github.com/ClaireSmid/Model-based_Model-free_Developmental>`__
+    repository on GitHub.
+
+    The dataset includes the following columns:
+
+    - ``ppt``: the participant number.
+    - ``trial``: the trial number.
+    - ``block``: the block number.
+    - ``stake``: the stake of the trial (1 or 5).
+    - ``s1``, ``s2``: the starting state and the planet reached (1 or 2; 0 marks a missed trial).
+    - ``choice``: the chosen spaceship, numbered 1 to 4 across both starting states (-1 marks a missed trial).
+    - ``stimuli_left``, ``stimuli_right``: which spaceships were displayed on the left and right.
+    - ``points``: the reward, scaled between 0 and 1.
+    - ``rews_1``, ``rews_2``: the rewards both planets would have paid out, scaled between 0 and 1.
+    - ``rt_1``, ``rt_2``: the response times at the first and second stage, in seconds.
+    - ``timeout_1``, ``timeout_2``: whether the participant failed to respond in time at either stage.
+    - ``missed``: whether the trial was missed.
+    - ``score``: the running score.
+
+    See Also
+    --------
+    cpm.applications.reinforcement_learning.HybridMBMF : hybrid model-based / model-free reinforcement learning model of the two-step task.
+
+    References
+    ----------
+    Kool, W., Cushman, F. A., & Gershman, S. J. (2016). When does model-based control pay off? PLoS Computational Biology, 12(8), e1005090.
+
+    Smid et al. (2022). Computational and behavioral correlates of developmental changes in model-based/model-free decision-making. Developmental Science, e13380.
+    """
+    return load_csv("two_step_adults.csv")

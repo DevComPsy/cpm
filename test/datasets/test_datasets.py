@@ -2,7 +2,7 @@ import os
 import pytest
 import pandas as pd
 from unittest.mock import patch, mock_open
-from cpm.datasets import load_csv, load_bandit_data, load_risky_choices
+from cpm.datasets import load_csv, load_bandit_data, load_risky_choices, load_two_step_data
 
 
 @pytest.fixture
@@ -72,3 +72,25 @@ def test_load_risky_choices(mock_load_csv):
     mock_load_csv.assert_called_once_with("risky_choices.csv")
     assert isinstance(result, pd.DataFrame)
     assert result.equals(pd.DataFrame({"col1": [1, 3], "col2": [2, 4]}))
+
+
+@patch("cpm.datasets.base.load_csv")
+def test_load_two_step_data(mock_load_csv):
+    # Mock load_csv to return a DataFrame
+    mock_load_csv.return_value = pd.DataFrame({"col1": [1, 3], "col2": [2, 4]})
+
+    # Call the function
+    result = load_two_step_data()
+
+    # Assertions
+    mock_load_csv.assert_called_once_with("two_step_adults.csv")
+    assert isinstance(result, pd.DataFrame)
+    assert result.equals(pd.DataFrame({"col1": [1, 3], "col2": [2, 4]}))
+
+
+def test_load_two_step_data_columns():
+    # The packaged file must contain the columns the two-step example relies on
+    data = load_two_step_data()
+    expected = {"ppt", "trial", "s1", "s2", "choice", "stimuli_left", "points", "timeout_1", "timeout_2"}
+    assert expected.issubset(data.columns)
+    assert data.ppt.nunique() > 1

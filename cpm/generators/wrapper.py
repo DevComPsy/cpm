@@ -6,9 +6,55 @@ import warnings
 
 ## import local modules
 from .parameters import Parameters, Value
-from ..core.data import unpack_trials, determine_data_length
+from ..core.data import unpack_trials, trial_reader, determine_data_length
 from ..core.exports import simulation_export
 from ..core.optimisers import objective
+
+
+def _copy_value(value):
+    """A copy of a parameter value or state that the model cannot change in place."""
+    if isinstance(value, np.ndarray):
+        return value.copy()
+    if isinstance(value, (float, int, str, bool, np.generic)) or value is None:
+        return value
+    return copy.deepcopy(value)
+
+
+def restore_parameters(initial, current):
+    """
+    Parameters with the values of `initial` and the priors and bounds of `current`.
+
+    This is what `Wrapper.reset` does after a run. It is equivalent to deep-copying
+    `initial`, except that the prior distributions are neither copied (which takes
+    about 0.1 ms each) nor reset: priors updated in `current` are kept.
+
+    Parameters
+    ----------
+    initial : Parameters
+        The parameters the model was created with.
+    current : Parameters
+        The parameters after a run.
+
+    Returns
+    -------
+    Parameters
+        A new Parameters object.
+    """
+    restored = {}
+    for key, value in initial.__dict__.items():
+        now = current.__dict__.get(key)
+        if isinstance(value, Value):
+            source = now if isinstance(now, Value) else value
+            new = type(source).__new__(type(source))
+            new.__dict__.update(source.__dict__)
+            new.value = _copy_value(value.value)
+            restored[key] = new
+        else:
+            restored[key] = copy.deepcopy(value)
+    ## not constructed with **restored, since LogParameters transforms the values it is given
+    new = type(current).__new__(type(current))
+    new.__dict__.update(restored)
+    return new
 
 
 class Wrapper:
@@ -33,7 +79,7 @@ class Wrapper:
 
     Notes
     -----
-    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a [Parameter][cpm.generators.Parameters] object specifying the model parameters. The `trial` argument should be a dictionary or `pd.Series` containing all input to the model on a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:
+    The model function should take two arguments: `parameters` and `trial`. The `parameters` argument should be a :class:`Parameter <cpm.generators.Parameters>` object specifying the model parameters. The `trial` argument should be a dictionary or `pd.Series` containing all input to the model on a single trial. The model function should return a dictionary containing the model output for the trial. If the model is intended to be fitted to data, its output should contain the following keys:
 
     - 'dependent': Any dependent variables calculated by the model that will be used for the loss function.
 
@@ -78,9 +124,10 @@ class Wrapper:
         None
 
         """
+        read = trial_reader(self.data, self.__pandas__)
         for i in range(self.__len__):
             ## create input for the model
-            trial = unpack_trials(self.data, i, self.__pandas__)
+            trial = read(i)
             ## run the model
             output = self.model(parameters=self.parameters, trial=trial)
             self.simulation.append(output.copy())
@@ -119,8 +166,14 @@ class Wrapper:
         Notes
         -----
         When resetting the model, and `parameters` is None, reset model to initial state.
-        If parameter is `array_like`, it resets the only the parameters in the order they are provided,
-        where the last parameter updated is the element in parameters corresponding to len(parameters).
+        After a run, resetting restores the values of all parameters and initial states
+        to the ones the model was created with. The prior distributions and bounds are
+        kept as they currently are, so that priors updated with
+        :meth:`Parameters.update_prior <cpm.generators.Parameters.update_prior>`, for
+        example by `cpm.hierarchical`, stay in effect.
+        If parameter is `array_like`, it resets only the freely-varying parameters (those with a prior),
+        matching elements to parameters in the order returned by `Parameters.free()`, so non-free
+        attributes such as initial states can be declared in any order.
 
         Examples
         --------
@@ -139,17 +192,19 @@ class Wrapper:
 
         """
         if self.__run__:
-            self.dependent.fill(0)
+            if isinstance(self.dependent, np.ndarray):  # a SessionWrapper model may return none
+                self.dependent.fill(0)
             self.simulation = []
-            self.parameters = copy.deepcopy(self.__init_parameters__)
+            self.parameters = restore_parameters(
+                self.__init_parameters__, self.parameters
+            )
             self.__run__ = False
         # if dict, update using parameters update method
         if isinstance(parameters, dict) or isinstance(parameters, pd.Series):
             self.parameters.update(**parameters)
-        # if list, update the parameters in for keys in range of 0:len(parameters)
+        # if list, update the freely-varying parameters in the order returned by Parameters.free()
         if isinstance(parameters, list) or isinstance(parameters, np.ndarray):
-            for keys in self.parameter_names[0 : len(parameters)]:
-                value = parameters[self.parameter_names.index(keys)]
+            for keys, value in zip(self.parameters.free(), parameters):
                 self.parameters.update(**{keys: value})
         if data is not None:
             self.data = data
@@ -213,6 +268,7 @@ class Wrapper:
         Notes
         -----
         The `loss` function should take the following named arguments:
+
             - `predicted`: The predicted values from the model.
             - `observed`: The observed values from the data.
 

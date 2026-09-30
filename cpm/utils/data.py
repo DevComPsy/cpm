@@ -60,7 +60,7 @@ def convert_to_RLRW(data, human_response, reward, stimulus, participant, **kwarg
     ...     "reward_left": [1, 0, 1],
     ...     "reward_right": [0, 1, 0],
     ...     "block": [1, 1, 2],
-            "condition": ["A", "A", "B"]
+    ...     "condition": ["A", "A", "B"],
     ... })
     >>> output = convert_to_RLRW(
     ...     data=data,
@@ -77,9 +77,9 @@ def convert_to_RLRW(data, human_response, reward, stimulus, participant, **kwarg
     1       1       0         0         0         1            1      1         A
     2       0       1         1         1         0            2      2         B
 
-    See also
+    See Also
     --------
-    [cpm.applications.reinforcement_learning.RLRW][cpm.applications.reinforcement_learning.RLRW]: The RLRW wrapper that this function is designed to be compatible with.
+    cpm.applications.reinforcement_learning.RLRW : The RLRW wrapper that this function is designed to be compatible with.
     """
     ## perform a series of checks to ensure that the specified columns exist in the input data
     if participant not in data.columns:
@@ -200,11 +200,11 @@ def convert_to_PTSM(
     1               20                50                0.5         1       1        A
     2               30               100                0.8         0       2        B
 
-    See also
+    See Also
     --------
-    [cpm.applications.decision_making.PTSM][cpm.applications.decision_making.PTSM]: The PTSM wrapper that this function is designed to be compatible with.
-    [cpm.applications.decision_making.PTSM1992][cpm.applications.decision_making.PTSM1992]: The PTSM1992 wrapper that this function is designed to be compatible with.
-    [cpm.applications.decision_making.PTSM2025][cpm.applications.decision_making.PTSM2025]: The PTSM2025 wrapper that this function is designed to be compatible with.
+    cpm.applications.decision_making.PTSM : The PTSM wrapper that this function is designed to be compatible with.
+    cpm.applications.decision_making.PTSM1992 : The PTSM1992 wrapper that this function is designed to be compatible with.
+    cpm.applications.decision_making.PTSM2025 : The PTSM2025 wrapper that this function is designed to be compatible with.
     """
     if isinstance(safe_magnitudes, str):
         if safe_magnitudes not in data.columns:

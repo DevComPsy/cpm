@@ -7,7 +7,8 @@ from scipy.special import digamma
 from scipy.stats import t as students_t
 
 from ..generators import Parameters
-from ..core.diagnostics import convergence_diagnostics_plots
+from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
+from ._chains import starting_priors
 
 
 class VariationalBayes:
@@ -19,7 +20,7 @@ class VariationalBayes:
     optimiser : object
         The initialized Optimiser object. It must use an optimisation algorithm that also returns the Hessian matrix.
     objective : str
-        The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level _a posteriori_ parameter estimates.
+        The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level *a posteriori* parameter estimates.
     iteration : int, optional
         The maximum number of iterations. Default is 1000.
     tolerance_lme : float, optional
@@ -27,7 +28,7 @@ class VariationalBayes:
     tolerance_param : float, optional
         The tolerance for convergence with respect to the "normalized" means of parameters. Default is 1e-3.
     chain : int, optional
-        The number of random parameter initialisations. Default is 4.
+        The number of random parameter initialisations. Default is 4. The first chain starts from the priors of the model, and every later chain from priors drawn at random within the bounds of the parameters; `numpy.random.seed` makes them reproducible.
     hyperpriors: dict, optional
         A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.
     convergence : str, optional
@@ -64,7 +65,26 @@ class VariationalBayes:
 
     Examples
     --------
+    >>> from cpm.applications.reinforcement_learning import RLRW
+    >>> from cpm.datasets import load_bandit_data
+    >>> from cpm.hierarchical import VariationalBayes
+    >>> from cpm.optimisation import FminBound, minimise
+    >>> data = load_bandit_data()
+    >>> data["observed"] = data["response"]
+    >>> model = RLRW(data=data[data.ppt == 1], dimensions=4)
+    >>> optimiser = FminBound(
+    ...     model=model,
+    ...     data=data.groupby("ppt"),
+    ...     minimisation=minimise.LogLikelihood.bernoulli,
+    ...     prior=True,
+    ...     number_of_starts=2,
+    ...     ppt_identifier="ppt",
+    ...     display=False,
+    ... )
+    >>> vb = VariationalBayes(optimiser=optimiser, iteration=50, chain=4)
+    >>> vb.optimise()
 
+    See the hierarchical estimation tutorials in the documentation for a full walkthrough.
     """
 
     def __init__(
@@ -644,17 +664,13 @@ class VariationalBayes:
         """
         output = []
         parameter_names = self.optimiser.model.parameters.free()
-        rng = np.random.default_rng()
+        # the priors the estimation starts from, before any chain updates them
+        priors = {name: getattr(self.optimiser.model.parameters, name).prior for name in parameter_names}
 
         for chain in range(self.chain):
             ## select a random starting point for each chain to avoid local minima
             if chain > 0:
-                population_updates = {}
-                for i, name in enumerate(parameter_names):
-                    population_updates[name] = {
-                        "mean": rng.beta(a=2, b=2, size=1) * self.__bounds__[1][i],
-                        "sd": rng.beta(a=2, b=2, size=1) * (self.__bounds__[1][i] / 2),
-                    }
+                population_updates = starting_priors(parameter_names, self.__bounds__, priors)
                 self.optimiser.model.parameters.update_prior(**population_updates)
 
             if self.__quiet__ is False:
@@ -739,5 +755,9 @@ class VariationalBayes:
         It also shows the distribution of the means and the standard deviations of the group-level hyperparameters sampled for each chain.
         """
         convergence_diagnostics_plots(
-            self.hyperparameters, show=show, save=save, path=path
+            self.hyperparameters,
+            bounds=parameter_bounds(self.optimiser.model.parameters),
+            show=show,
+            save=save,
+            path=path,
         )

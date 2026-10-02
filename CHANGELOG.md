@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `cpm.models.learning.SARSATrace`, a SARSA learning rule with an eligibility trace
 - Added test units for `HybridMBMF` and `SARSATrace`
 - Added a two-step task example replicating Smid et al. (2022), with its data in `cpm.datasets.load_two_step_data`
+- Added an example that fits causal ratings in a blocking experiment, recreating Figures 1 and 2 of Spicer et al. (2021), with its data in `cpm.datasets.load_blocking_data`; based on an earlier version by @chotong
 - Added `cpm.generators.SessionWrapper`, a `Wrapper` for models that compute all trials of a participant at once
 - Added `cpm.models.kernels`, the formulas of the `cpm.models` classes as functions that numba can compile, used by the classes and the built-in applications
 - Added numba as an optional dependency (`pip install "cpm-toolbox[numba]"`) that compiles the built-in applications; without it, they give the same results as plain Python

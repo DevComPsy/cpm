@@ -19,6 +19,18 @@ Why does a cue learned in compound with a pretrained cue gain so little strength
 {bdg-success}`Beginner` {bdg-light}`15 min`
 :::
 
+:::{grid-item-card} Fitting causal ratings in a blocking experiment
+:link: blocking-ratings
+:link-type: doc
+:img-top: ../_static/thumbnails/blocking-ratings.png
+
+{bdg-primary-line}`Associative learning`
+^^^
+Fit both learning rules to the ratings of a human blocking experiment, and recreate the finding of Spicer et al. (2021) that novel cues need an intermediate starting strength.
++++
+{bdg-warning}`Intermediate` {bdg-light}`25 min`
+:::
+
 :::{grid-item-card} Model-based and model-free control in the two-step task
 :link: two-step-task
 :link-type: doc
@@ -49,6 +61,7 @@ Estimate how well confidence ratings track the accuracy of perceptual decisions.
 :caption: Associative learning
 
 blocking
+blocking-ratings
 ```
 
 ```{toctree}

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from cpm.brainexplorer.perceptual_decision_making import SpaceObserver
 
@@ -193,7 +194,8 @@ def test_spaceobserver_metrics_computes_expected_values(tmp_path):
     assert np.isclose(run1["evidence_strength_incorrect_mean"], 3.0)  # mean([2, 4])
     assert np.isclose(run1["diff_evidence_strength_correct_incorrect"], -1.0)
     assert np.isclose(run1["median_ES"], 2.5)
-    np.testing.assert_allclose(run1["ES_bins"], np.array([1.0, 2.0, 3.0, 4.0]))
+    bins = [run1[f"ES_bin_{i}"] for i in range(1, 5)]
+    np.testing.assert_allclose(bins, [1.0, 2.0, 3.0, 4.0])
 
     # run 2 has time_of_day == evening (18:30)
     assert run2["time_of_day"] == "evening"
@@ -301,3 +303,105 @@ def test_spaceobserver_clean_data_excludes_invalid_participants(tmp_path):
     remaining_users = set(cleaned["userID"].unique())
     assert remaining_users == {"keep"}
     assert observer.deleted_participants == 8
+
+
+def _keep_rows(user_id="keep", run=1, date="2025-02-20 09:00:00.000"):
+    return _participant_rows(
+        user_id=user_id,
+        run=run,
+        accuracies=[1, 1, 0, 1],
+        rt_choices=[400, 500, 600, 700],
+        confidences=[20, 30, 40, 50],
+        confidence_rts=[500, 550, 600, 650],
+        stimulus_intensities=[10, 12, 14, 16],
+        date=date,
+    )
+
+
+def test_spaceobserver_accepts_dataframe_and_path(tmp_path):
+    rows = _keep_rows()
+    filepath = _write_space_observer_csv(tmp_path, rows)
+    from_path = SpaceObserver(filepath).metrics()
+    from_frame = SpaceObserver(pd.DataFrame(rows)).metrics()
+    pd.testing.assert_frame_equal(from_path, from_frame)
+
+
+def test_spaceobserver_does_not_change_the_input_dataframe():
+    data = pd.DataFrame(_keep_rows())
+    original = data.copy()
+    SpaceObserver(data).metrics()
+    pd.testing.assert_frame_equal(data, original)
+
+
+def test_spaceobserver_requires_data_and_columns():
+    with pytest.raises(ValueError, match="needs data"):
+        SpaceObserver()
+    data = pd.DataFrame(_keep_rows()).drop(columns=["confidenceRT"])
+    with pytest.raises(KeyError, match="confidenceRT"):
+        SpaceObserver(data)
+
+
+def test_spaceobserver_metrics_can_be_run_twice():
+    observer = SpaceObserver(pd.DataFrame(_keep_rows()))
+    first = observer.metrics().copy()
+    second = observer.metrics()
+    pd.testing.assert_frame_equal(first, second)
+    assert len(second) == 1
+
+
+def test_spaceobserver_dates_without_fractional_seconds():
+    observer = SpaceObserver(pd.DataFrame(_keep_rows(date="2025-02-22 23:15:00")))
+    result = observer.metrics().iloc[0]
+    assert result["day_of_week"] == "Saturday"
+    assert result["time_of_day"] == "evening"
+    assert str(result["time"]) == "23:15:00"
+
+
+def test_spaceobserver_all_correct_session_is_nan_for_incorrect_trials(recwarn):
+    rows = _participant_rows(
+        user_id="u1",
+        run=1,
+        accuracies=[1, 1, 1],
+        rt_choices=[300, 400, 500],
+        confidences=[50, 60, 70],
+        confidence_rts=[300, 300, 300],
+        stimulus_intensities=[5, 6, 7],
+    )
+    result = SpaceObserver(pd.DataFrame(rows)).metrics().iloc[0]
+    assert np.isnan(result["median_RT_incorrect"])
+    assert np.isnan(result["mean_confidence_incorrect"])
+    assert np.isnan(result["diff_median_RT_correct_incorrect"])
+    assert not [w for w in recwarn if issubclass(w.category, RuntimeWarning)]
+
+
+def test_spaceobserver_clean_data_runs_metrics_first():
+    observer = SpaceObserver(pd.DataFrame(_keep_rows()))
+    cleaned = observer.clean_data()
+    assert list(cleaned["userID"]) == ["keep"]
+    assert observer.deleted_participants == 0
+
+
+def test_spaceobserver_trial_limit_counts_all_sessions():
+    # 4 sessions of 21 trials: no session has more than 80 trials, but the participant has 84
+    rows = []
+    for run in range(1, 5):
+        rows += _participant_rows(
+            user_id="many_sessions",
+            run=run,
+            accuracies=[1, 0, 1] * 7,
+            rt_choices=[400, 500, 600] * 7,
+            confidences=[20, 50, 80] * 7,
+            confidence_rts=[500, 550, 600] * 7,
+            stimulus_intensities=[10, 12, 14] * 7,
+        )
+    rows += _keep_rows()
+    observer = SpaceObserver(pd.DataFrame(rows))
+    cleaned = observer.clean_data()
+    assert set(cleaned["userID"]) == {"keep"}
+    assert observer.deleted_participants == 1
+
+
+def test_spaceobserver_codebook_describes_every_metric():
+    observer = SpaceObserver(pd.DataFrame(_keep_rows()))
+    results = observer.metrics()
+    assert set(results.columns) == set(observer.get_codebook())

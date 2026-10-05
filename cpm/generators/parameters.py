@@ -160,13 +160,11 @@ class Parameters:
                 if value.prior is not None:
                     prior += value.PDF(log=True)
         if np.isneginf(prior):
-            prior = np.finfo(np.float64).tiny
-
+            prior = np.finfo(np.float64).min
         if not log:
             prior = np.exp(prior)
             if prior <= 0:
                 prior = np.finfo(np.float64).tiny
-
         return prior
 
     def update_prior(self, **kwargs):

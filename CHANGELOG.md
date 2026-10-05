@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.26.0.dev0] - 2026-09-28
+## [0.26.0.dev1] - 2026-10-05
 
 ### Added
 
@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a two-step task example replicating Smid et al. (2022), with its data in `cpm.datasets.load_two_step_data`
 - Added `cpm.brainexplorer`, which computes descriptive statistics and applies the exclusion criteria for the BrainExplorer games Space Observer, Scavenger, Treasure Hunt, and Milky Way and Pirate Market, with a page in the API reference
 - Added test units for `cpm.brainexplorer`
+- Added `cpm.datasets.load_model_based_model_free`, two-step task data from the BrainExplorer game Goblin Heist
 - Added an example that fits causal ratings in a blocking experiment, recreating Figures 1 and 2 of Spicer et al. (2021), with its data in `cpm.datasets.load_blocking_data`; based on an earlier version by @chotong
 - Added `cpm.generators.SessionWrapper`, a `Wrapper` for models that compute all trials of a participant at once
 - Added `cpm.models.kernels`, the formulas of the `cpm.models` classes as functions that numba can compile, used by the classes and the built-in applications

@@ -1,98 +1,82 @@
-import pandas as pd
 import numpy as np
-import warnings
-from scipy.stats import zscore
+import pandas as pd
+
+from ._utils import load_data, quiet_empty_slices, require, session_time
+
+__all__ = ["SpaceObserver"]
+
+COLUMNS = ["userID", "run", "Date", "accuracy", "RT_choice", "confidence", "confidenceRT", "stimulus_intensity"]
 
 
 class SpaceObserver:
     """
-    A class to analyze and compute statistics from behavioural data from a perceptual decision-making task with confidence judgements in BrainExplorer, Space Observer. In these tasks, participants have to choose if stimulus has more of one type of alien or the other,
-    and rate their confidence in their choice. For a more complete description of the task, see Dome, Moses-Payne, and Hauser (in prep.) or Marzuki et al. (2025).
+    Compute descriptive statistics from the perceptual decision-making task with confidence judgements in BrainExplorer, *Space Observer*.
+
+    On each trial, participants decide which of two types of alien is more numerous, and rate their confidence in their choice.
+    For a more complete description of the task, see Dome, Moses-Payne, and Hauser (in prep.) or Marzuki et al. (2025).
+
+    Parameters
+    ----------
+    filepath : str, os.PathLike or pandas.DataFrame
+        The data, as a DataFrame or the path to a CSV or Excel (``.xlsx``) file. The column names must follow the convention in Notes.
 
     Attributes
     ----------
-    data_raw : pd.DataFrame
-        The data loaded from the CSV or Excel file.
-    data_processed : pd.DataFrame
-        A DataFrame to store the computed metrics.
+    data_raw : pandas.DataFrame
+        The trials that pass the trial-level exclusion criteria.
+    data_processed : pandas.DataFrame
+        The metrics of each session, one row per participant and session, filled by :meth:`metrics`.
+    cleanedresults : pandas.DataFrame
+        The metrics of the sessions that pass the participant-level exclusion criteria, filled by :meth:`clean_data`.
+    deleted_participants : int
+        The number of participants that :meth:`clean_data` excluded.
     codebook : dict
-        A dictionary containing the codebook for the computed metrics.
+        The description of each column of the metrics.
+
+    Examples
+    --------
+    >>> from cpm.brainexplorer.perceptual_decision_making import SpaceObserver
+    >>> observer = SpaceObserver("2025-02-20_SpaceObserver_Data.csv")
+    >>> results = observer.metrics()
+    >>> cleaned = observer.clean_data()
+    >>> observer.get_codebook()["accuracy"]
+    'Mean accuracy across all trials (proportion correct)'
+
+    Notes
+    -----
+    The data must contain the following columns:
+
+    - ``userID``: the unique identifier of the participant.
+    - ``run``: the session number of the participant.
+    - ``Date``: the date and time of the trial.
+    - ``accuracy``: whether the choice was correct (1) or incorrect (0).
+    - ``RT_choice``: the response time of the choice, in ms.
+    - ``confidence``: the confidence rating.
+    - ``confidenceRT``: the response time of the confidence rating, in ms.
+    - ``stimulus_intensity``: the evidence strength, the difference in evidence between the two types of stimuli.
+
+    Trials are excluded if the response time of the choice or of the confidence rating is below 150 ms or above 10000 ms, or if they have no confidence rating, since those are practice trials.
+    For participant-level exclusions, see :meth:`clean_data`, and Dome, Moses-Payne, and Hauser (in prep.).
+
+    References
+    ----------
+    Dome, L., Moses-Payne, M. E., & Hauser, T. U. (in prep.). Age-related shifts in metacognition reveals converging confidence for correct and error judgments across the lifespan.
+
+    Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. *Research Square*. https://doi.org/10.21203/rs.3.rs-7544256/v1
     """
 
     def __init__(self, filepath=None):
-        """
-        Load data to be analyised and turn into Pandas DataFrame.
-        Exlude trials not meeting the criteria.
+        data = load_data(filepath, "SpaceObserver", na_values=["NaN", "nan"])
+        require(data, COLUMNS, "SpaceObserver")
 
-        Parameters
-        ----------
-        filepath : str
-            The path to the CSV file to be processed. The column names in the data must subscribe to a prespecified convention, see Notes.
+        data = data[data["RT_choice"].between(150, 10000)]
+        data = data[data["confidenceRT"].between(150, 10000)]
+        # trials without confidence ratings are practice trials
+        confidence = data["confidence"].replace(["NaN", "nan", "NAN", ""], np.nan)
+        data = data[confidence.notna()].copy()
+        data["confidence"] = pd.to_numeric(data["confidence"], errors="coerce")
 
-        Example
-        ----------
-
-        >>> spaceObserver = SpaceObserver("/example/2025-02-20_SpaceObserver_Data.csv")
-        >>> results = spaceObserver.metrics()
-        >>> spaceObserver.clean_data()
-        >>> results = spaceObserver.results
-        >>> results.to_csv("/example/spaceObserver_results.csv", index=False)
-        >>> spaceObserver.get_codebook()
-
-        Notes
-        -----
-        The columns required in data:
-
-        - **userID: unique identifier for each participant
-        - **date**: the date and time of the trial
-        - **run**: number of sessions completed by the participant (where 1 is the practice phase)
-        - **accuracy**: the accuracy of the trial (1 for correct, 0 for incorrect)
-        - **RT_choice**: the reaction time of the choice in the trial
-        - **confidence**: the confidence rating of the trial
-        - **confidenceRT**: the reaction time of the confidence rating in the trial
-        - **stimulus_intensity**: the evidence strength of the trial, which is the difference of evidence for each group of stimuli.
-
-        Currently, we are excluding trials that took too long or too short to respond (RT < 150 ms or RT > 10000 ms) and trials without confidence data because those are practice trials. We are only including trials with confidence data because those without confidence data are practice trials. For participant exclusion, we recommend to follow Dome, Moses-Payne, and Hauser (in prep.).
-
-        Reference
-        ---------
-        Dome, L., Moses-Payne, M. E., & Hauser, T. U. (in prep.). Age-related shifts in metacognition reveals converging confidence for correct and error judgments across the lifespan.
-
-        Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. Research Square. https://doi.org/10.21203/rs.3.rs-7544256/v1
-        """
-
-        ## read data
-        if filepath is None:
-            raise ValueError("filepath must be provided")
-        if filepath.endswith(".xlsx"):
-            self.data_raw = pd.read_excel(filepath, header=0, na_values=["NaN", "nan"])
-        else:
-            self.data_raw = pd.read_csv(filepath, header=0, na_values=["NaN", "nan"])
-
-        self.data_raw = self.data_raw[
-            self.data_raw["RT_choice"] >= 150
-        ]  # only keep trials with reaction time > 150 ms
-        self.data_raw = self.data_raw[
-            self.data_raw["RT_choice"] <= 10000
-        ]  # only keep trials with reaction time < 10000 ms
-        self.data_raw = self.data_raw[
-            self.data_raw["confidenceRT"] >= 150
-        ]  # only keep trials with confidence reaction time > 150 ms
-        self.data_raw = self.data_raw[
-            self.data_raw["confidenceRT"] <= 10000
-        ]  # only keep trials with confidence reaction time < 10000 ms
-
-        self.data_raw["confidence"] = self.data_raw["confidence"].replace(
-            ["NaN", "nan", "NAN", ""], pd.NA
-        )
-        self.data_raw = self.data_raw[
-            self.data_raw["confidence"].notna()
-        ]  # only keep trials with confidence data because trials without confidence data are practice trials
-
-        self.data_raw["confidence"] = pd.to_numeric(
-            self.data_raw["confidence"], errors="coerce"
-        )
-
+        self.data_raw = data
         self.data_processed = pd.DataFrame()
         self.codebook = {
             # --- Participant info ---
@@ -149,255 +133,131 @@ class SpaceObserver:
 
     def metrics(self):
         """
-        Compute metrics for each participant and return a DataFrame with the results. The metrics are computed for each run separately.
+        Compute the metrics of each session of each participant.
 
         Returns
         -------
-        results : pd.DataFrame
-            A DataFrame containing the results of the metrics.
+        pandas.DataFrame
+            The metrics, one row per participant and session, also stored in `data_processed`. The columns are described in `codebook`.
 
-        Variables
-        ---------
-        - userID: unique identifier for each participant
-        - n_trials: number of trials completed by the participant
-        - day_of_week: day of the week of the trial
-        - time: time of the trial
-        - time_of_day: time of day of the trial (morning, afternoon, evening, night)
-        - accuracy : The mean accuracy across all trials.
-        - mean_RT : The mean response time across all trials.
-        - median_RT : The median response time across all trials.
-        - median_RT_correct : The median response time for trials where the participant made the correct choice.
-        - median_RT_incorrect : The median response time for trials where the participant made the incorrect choice.
-        - diff_median_RT_correct_incorrect : The difference between the median response time for correct and incorrect choices.
-        - mean_confidence : The mean confidence rating across all trials.
-        - median_confidence : The median confidence rating across all trials.
-        - median_confidence_correct : The median confidence rating for trials where the participant made the correct choice.
-        - median_confidence_incorrect : The median confidence rating for trials where the participant made the incorrect choice.
-        - diff_median_conf_correct_incorrect : The difference between the median confidence rating for correct and incorrect choices.
-        - sd_confidence : The standard deviation of the confidence rating across all trials.
-        - sd_confidence_correct : The standard deviation of the confidence rating for trials where the participant made the correct choice.
-        - sd_confidence_incorrect : The standard deviation of the confidence rating for trials where the participant made the incorrect choice.
-        - diff_sd_confidence_correct_incorrect : The difference between the standard deviation of the confidence rating for correct and incorrect choices.
-        - mean_confidenceRT : The mean confidence response time across all trials.
-        - median_confidenceRT : The median confidence response time across all trials.
-        - median_confidenceRT_correct : The median confidence response time for trials where the participant made the correct choice.
-        - median_confidenceRT_incorrect : The median confidence response time for trials where the participant made the incorrect choice.
-        - diff_median_confidenceRT_correct_incorrect : The difference between the median confidence response time for correct and incorrect choices.
-        - confidence_10 : The 10th percentile of the confidence rating across all trials.
-        - confidence_25 : The 25th percentile of the confidence rating across all trials.
-        - confidence_75 : The 75th percentile of the confidence rating across all trials.
-        - confidence_90 : The 90th percentile of the confidence rating across all trials.
-        - evidence_strength_mean : The mean evidence strength across all trials.
-        - evidence_strength_correct_mean : The mean evidence strength for trials where the participant made the correct choice.
-        - evidence_strength_incorrect_mean : The mean evidence strength for trials where the participant made the incorrect choice.
-        - diff_evidence_strength_correct_incorrect : The difference between the mean evidence strength for correct and incorrect choices.
-        - ES_bins : The mean evidence strength for each of the bins. The trials here are split into 4 quarters. The evidence strength is divided into four equal bins and the mean is calculated for each bin.
+        Notes
+        -----
+        Correct trials are those with an ``accuracy`` of 1, and incorrect trials those with an ``accuracy`` of 0.
+        Metrics of an empty selection, such as the median response time of incorrect trials when every choice was correct, are NaN.
+        The evidence strength bins split the trials of a session, in the order they were played, into four parts of (nearly) equal size.
         """
-
-        # Group data by subject
-        grouped_data = self.data_raw.groupby(["userID", "run"])
-
-        for (user_id, run), user_data in grouped_data:
-
-            user_results = {"userID": user_id, "run": run}
-
-            user_results["n_trials"] = len(user_data)
-
-            date = user_data["Date"].iloc[0]
-            if isinstance(date, str):
-                date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
-            user_results["date"] = date
-            user_results["day_of_week"] = date.day_name()
-            user_results["time"] = (
-                date.time() if hasattr(date, "time") else date.strftime("%H:%M:%S.%f")
-            )
-            # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
-            user_results["time_of_day"] = (
-                "night"
-                if date.hour < 6
-                else (
-                    "morning"
-                    if date.hour < 12
-                    else ("afternoon" if date.hour < 18 else "evening")
-                )
-            )
-
-            user_results["accuracy"] = np.nanmean(user_data["accuracy"])
-
-            user_results["mean_RT"] = np.nanmean(user_data["RT_choice"])
-            user_results["median_RT"] = np.nanmedian(user_data["RT_choice"])
-            # different RT for correct and incorrect trials
-            user_results["median_RT_correct"] = np.nanmedian(
-                user_data["RT_choice"][user_data["accuracy"] == 1]
-            )
-            user_results["median_RT_incorrect"] = np.nanmedian(
-                user_data["RT_choice"][user_data["accuracy"] != 1]
-            )
-            user_results["diff_median_RT_correct_incorrect"] = (
-                user_results["median_RT_correct"] - user_results["median_RT_incorrect"]
-            )
-
-            user_results["mean_confidence"] = np.nanmean(user_data["confidence"])
-            user_results["sd_confidence"] = np.nanstd(user_data["confidence"])
-            user_results["median_confidence"] = np.nanmedian(user_data["confidence"])
-            # confidence difference for correct and incorrect trials
-            user_results["mean_confidence_correct"] = np.nanmean(
-                user_data["confidence"][user_data["accuracy"] == 1]
-            )
-            user_results["mean_confidence_incorrect"] = np.nanmean(
-                user_data["confidence"][user_data["accuracy"] != 1]
-            )
-            user_results["median_confidence_correct"] = np.nanmedian(
-                user_data["confidence"][user_data["accuracy"] == 1]
-            )
-            user_results["median_confidence_incorrect"] = np.nanmedian(
-                user_data["confidence"][user_data["accuracy"] != 1]
-            )
-            user_results["diff_median_conf_correct_incorrect"] = (
-                user_results["median_confidence_correct"]
-                - user_results["median_confidence_incorrect"]
-            )
-            # standard deviation of confidence for correct and incorrect trials
-            user_results["sd_confidence_correct"] = np.nanstd(
-                user_data["confidence"][user_data["accuracy"] == 1]
-            )
-            user_results["sd_confidence_incorrect"] = np.nanstd(
-                user_data["confidence"][user_data["accuracy"] != 1]
-            )
-            user_results["diff_sd_confidence_correct_incorrect"] = (
-                user_results["sd_confidence_correct"]
-                - user_results["sd_confidence_incorrect"]
-            )
-
-            user_results["mean_confidenceRT"] = np.nanmean(user_data["confidenceRT"])
-            user_results["median_confidenceRT"] = np.nanmedian(
-                user_data["confidenceRT"]
-            )
-            # different RT for correct and incorrect trials
-            user_results["median_confidenceRT_correct"] = np.nanmedian(
-                user_data["confidenceRT"][user_data["accuracy"] == 1]
-            )
-            user_results["median_confidenceRT_incorrect"] = np.nanmedian(
-                user_data["confidenceRT"][user_data["accuracy"] != 1]
-            )
-            user_results["diff_median_confidenceRT_correct_incorrect"] = (
-                user_results["median_confidenceRT_correct"]
-                - user_results["median_confidenceRT_incorrect"]
-            )
-
-            # calculate confidence percentiles
-            confidence = user_data["confidence"]
-            user_results["confidence_10"] = np.nanpercentile(confidence, 10)
-            user_results["confidence_25"] = np.nanpercentile(confidence, 25)
-            user_results["confidence_75"] = np.nanpercentile(confidence, 75)
-            user_results["confidence_90"] = np.nanpercentile(confidence, 90)
-
-            # calculate evidence strength
-            evidence_strength = user_data["stimulus_intensity"]
-
-            user_results["evidence_strength_mean"] = np.nanmean(evidence_strength)
-
-            # evidence strenth per correct and incorrect trials
-            user_results["evidence_strength_correct_mean"] = np.nanmean(
-                evidence_strength[user_data["accuracy"] == 1]
-            )
-            user_results["evidence_strength_incorrect_mean"] = np.nanmean(
-                evidence_strength[user_data["accuracy"] != 1]
-            )
-            user_results["diff_evidence_strength_correct_incorrect"] = (
-                user_results["evidence_strength_correct_mean"]
-                - user_results["evidence_strength_incorrect_mean"]
-            )
-
-            # calcualte evidence strength for each bin
-            bin_size = 4
-
-            # Divide evidence strength into 4 equal bins and calculate the mean for each bin
-            bins = np.array_split(evidence_strength.values, bin_size)
-            user_results["ES_bin_1"] = np.nanmean(bins[0]) if len(bins[0]) > 0 else np.nan
-            user_results["ES_bin_2"] = np.nanmean(bins[1]) if len(bins[1]) > 0 else np.nan
-            user_results["ES_bin_3"] = np.nanmean(bins[2]) if len(bins[2]) > 0 else np.nan
-            user_results["ES_bin_4"] = np.nanmean(bins[3]) if len(bins[3]) > 0 else np.nan
-
-            # median evidence strength
-            user_results["median_ES"] = np.nanmedian(evidence_strength)
-
-            # Append user-level results
-            self.data_processed = pd.concat(
-                [self.data_processed, pd.DataFrame([user_results])], ignore_index=True
-            )
-
+        rows = []
+        with quiet_empty_slices():
+            for (user_id, run), user_data in self.data_raw.groupby(["userID", "run"]):
+                rows.append({"userID": user_id, "run": run, **_session_metrics(user_data)})
+        self.data_processed = pd.DataFrame(rows)
         return self.data_processed
 
     def clean_data(self):
         """
-        Clean aggregated data by applyign participant-level exclusion criteria.
-        Exclusion criteria:
-        ---------
-        - Mean accuracy < 0.5
-        - Median reaction time > 3000 ms
-        - Median reaction time for confidence ratings > 3000 ms
-        - Median evidence strength > 25
-        - Mean confidence <3 or > 97
-        - Participants with more than 80 trials (due to technical error)
-        - Exclude participants if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
+        Exclude participants with the participant-level exclusion criteria.
+
+        Runs :meth:`metrics` first if it has not been run yet.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The metrics of the sessions that pass the criteria, also stored in `cleanedresults`.
+
+        Notes
+        -----
+        A session is excluded if
+
+        - the mean accuracy is below 0.5,
+        - the median response time of the choices is above 3000 ms,
+        - the median response time of the confidence ratings is above 3000 ms,
+        - the median evidence strength is above 25,
+        - the median confidence is below 3 or above 97,
+        - the 10th and 25th percentiles of confidence are equal, and so are the 75th and 90th percentiles.
+
+        Participants with more than 80 trials in total, across all their sessions, are excluded entirely (due to a technical error).
         """
+        if self.data_processed.empty:
+            self.metrics()
+        results = self.data_processed
+        n_before = results["userID"].nunique()
 
-        nr_part_before = len(self.data_processed["userID"].unique())
-
-        self.cleanedresults = self.data_processed.copy()
-
-        # exclude participants who have more than 80 trials with run == 1
-        users_80trials = (
-            self.data_raw.groupby("userID")
-            .filter(lambda x: len(x) <= 80)["userID"]
-            .unique()
+        trials = self.data_raw.groupby("userID").size()
+        keep = results["userID"].isin(trials.index[trials <= 80])
+        keep &= results["accuracy"] >= 0.5
+        keep &= results["median_RT"] <= 3000
+        keep &= results["median_confidenceRT"] <= 3000
+        keep &= results["median_ES"] <= 25
+        keep &= results["median_confidence"].between(3, 97)
+        flat = (results["confidence_10"] == results["confidence_25"]) & (
+            results["confidence_75"] == results["confidence_90"]
         )
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["userID"].isin(users_80trials)
-        ]
+        keep &= ~flat
 
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["accuracy"] >= 0.5
-        ]  # only keep participants with mean accuracy >= 50%
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["median_RT"] <= 3000
-        ]  # only keep participants with median reaction time <= 3000 ms
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["median_confidenceRT"] <= 3000
-        ]  # only keep participants with median confidence reaction time <= 3000 ms
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["median_ES"] <= 25
-        ]  # only keep participants with median evidence strength <= 25
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["median_confidence"] <= 97
-        ]  # only keep participants with mean confidence <= 97
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["median_confidence"] >= 3
-        ]  # only keep participants with mean confidence >= 3
-
-        # exclude if 10th and 25th percentile of confidence is the same AND 75th and 90th percentile of confidence is the same
-        self.cleanedresults = self.cleanedresults[
-            ~(
-                (
-                    self.cleanedresults["confidence_10"]
-                    == self.cleanedresults["confidence_25"]
-                )
-                & (
-                    self.cleanedresults["confidence_75"]
-                    == self.cleanedresults["confidence_90"]
-                )
-            )
-        ]
-
-        self.deleted_participants = nr_part_before - len(
-            self.cleanedresults["userID"].unique()
-        )
-
+        self.cleanedresults = results[keep].copy()
+        self.deleted_participants = n_before - self.cleanedresults["userID"].nunique()
         return self.cleanedresults
 
     def get_codebook(self):
         """
-        Return a codebook describing the metrics.
+        Return the codebook, which describes each column of the metrics.
+
+        Returns
+        -------
+        dict
+            The description of each column, keyed by column name.
         """
         return self.codebook
+
+
+def _session_metrics(data):
+    """The metrics of one session."""
+    correct = (data["accuracy"] == 1).to_numpy()
+    incorrect = (data["accuracy"] == 0).to_numpy()
+    rt = data["RT_choice"].to_numpy(dtype=float)
+    confidence = data["confidence"].to_numpy(dtype=float)
+    confidence_rt = data["confidenceRT"].to_numpy(dtype=float)
+    evidence = data["stimulus_intensity"].to_numpy(dtype=float)
+
+    out = {"n_trials": len(data), **session_time(data["Date"].iloc[0])}
+    out["accuracy"] = np.nanmean(data["accuracy"])
+
+    out["mean_RT"] = np.nanmean(rt)
+    out["median_RT"] = np.nanmedian(rt)
+    out["median_RT_correct"] = np.nanmedian(rt[correct])
+    out["median_RT_incorrect"] = np.nanmedian(rt[incorrect])
+    out["diff_median_RT_correct_incorrect"] = out["median_RT_correct"] - out["median_RT_incorrect"]
+
+    out["mean_confidence"] = np.nanmean(confidence)
+    out["sd_confidence"] = np.nanstd(confidence)
+    out["median_confidence"] = np.nanmedian(confidence)
+    out["mean_confidence_correct"] = np.nanmean(confidence[correct])
+    out["mean_confidence_incorrect"] = np.nanmean(confidence[incorrect])
+    out["median_confidence_correct"] = np.nanmedian(confidence[correct])
+    out["median_confidence_incorrect"] = np.nanmedian(confidence[incorrect])
+    out["diff_median_conf_correct_incorrect"] = out["median_confidence_correct"] - out["median_confidence_incorrect"]
+    out["sd_confidence_correct"] = np.nanstd(confidence[correct])
+    out["sd_confidence_incorrect"] = np.nanstd(confidence[incorrect])
+    out["diff_sd_confidence_correct_incorrect"] = out["sd_confidence_correct"] - out["sd_confidence_incorrect"]
+
+    out["mean_confidenceRT"] = np.nanmean(confidence_rt)
+    out["median_confidenceRT"] = np.nanmedian(confidence_rt)
+    out["median_confidenceRT_correct"] = np.nanmedian(confidence_rt[correct])
+    out["median_confidenceRT_incorrect"] = np.nanmedian(confidence_rt[incorrect])
+    out["diff_median_confidenceRT_correct_incorrect"] = (
+        out["median_confidenceRT_correct"] - out["median_confidenceRT_incorrect"]
+    )
+
+    for percentile in (10, 25, 75, 90):
+        out[f"confidence_{percentile}"] = np.nanpercentile(confidence, percentile)
+
+    out["evidence_strength_mean"] = np.nanmean(evidence)
+    out["evidence_strength_correct_mean"] = np.nanmean(evidence[correct])
+    out["evidence_strength_incorrect_mean"] = np.nanmean(evidence[incorrect])
+    out["diff_evidence_strength_correct_incorrect"] = (
+        out["evidence_strength_correct_mean"] - out["evidence_strength_incorrect_mean"]
+    )
+    for i, part in enumerate(np.array_split(evidence, 4), start=1):
+        out[f"ES_bin_{i}"] = np.nanmean(part) if len(part) > 0 else np.nan
+    out["median_ES"] = np.nanmedian(evidence)
+    return out

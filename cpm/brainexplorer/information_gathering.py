@@ -1,263 +1,167 @@
-import pandas as pd
-import numpy as np
-import warnings
-from scipy.stats import zscore
+import re
 
-# import statsmodels.api as sm
-# import statsmodels.formula.api as smf
+import numpy as np
+import pandas as pd
+
+from ._utils import load_data, quiet_empty_slices, require, session_time
+
+__all__ = ["TreasureHunt"]
+
+COLUMNS = ["userID", "date", "run", "outcome", "choseCurEv", "confidence", "draws", "median_diffRT", "confidenceRT"]
 
 
 class TreasureHunt:
     """
-    Class to calculate metrics for the Treasure Hunt task. Includes regresssion model to predict the influence of previous evidence on current choice.
+    Compute descriptive statistics from the information-gathering task in BrainExplorer, *Treasure Hunt*.
+
+    On each trial, participants draw samples of evidence until they decide to stop and choose an option, and then rate their confidence in their choice.
+
+    Parameters
+    ----------
+    filepath : str, os.PathLike or pandas.DataFrame
+        The data, as a DataFrame or the path to a CSV or Excel (``.xlsx``) file. The column names must follow the convention in Notes.
 
     Attributes
     ----------
-    data : pd.DataFrame
-        The data loaded from the CSV or Excel file.
-    results : pd.DataFrame
-        A DataFrame to store the computed metrics.
+    data : pandas.DataFrame
+        The trials that pass the trial-level exclusion criteria.
+    results : pandas.DataFrame
+        The metrics of each participant, filled by :meth:`metrics`.
+    cleanedresults : pandas.DataFrame
+        The metrics of the participants that pass the participant-level exclusion criteria, filled by :meth:`clean_data`.
+    deleted_participants : int
+        The number of participants that :meth:`clean_data` excluded.
     codebook : dict
-        A dictionary containing the codebook for the computed metrics.
+        The description of each column of the metrics.
+
+    Examples
+    --------
+    >>> from cpm.brainexplorer.information_gathering import TreasureHunt
+    >>> treasure_hunt = TreasureHunt("2025-02-20_TreasureHunt_Data.csv")
+    >>> results = treasure_hunt.metrics()
+    >>> cleaned = treasure_hunt.clean_data()
+    >>> treasure_hunt.get_codebook()["mean_n_draws"]
+    'Mean number of stimulus draws before making a decision'
+
+    Notes
+    -----
+    The data must contain the following columns:
+
+    - ``userID``: the unique identifier of the participant.
+    - ``date``: the date and time of the trial.
+    - ``run``: the attempt number of the participant.
+    - ``outcome``: the points received on the trial.
+    - ``confidence``: the confidence rating.
+    - ``confidenceRT``: the response time of the confidence rating, in ms.
+    - ``draws``: the number of draws on the trial.
+    - ``choseCurEv``: whether the choice was in line with the current evidence (1) or not (0).
+    - ``median_diffRT``: the median response time between the actions of the trial, in ms.
+
+    If the data contain a column ``ev``, the evidence after each draw as a list of integers such as ``"[1 2 -1]"``, it is converted to lists of integers.
+
+    Only the first attempt of each participant (``run`` equal to 1) is kept.
     """
 
     def __init__(self, filepath=None):
-        """
-        Load data to be analyised and turn into Pandas DataFrame
+        data = load_data(filepath, "TreasureHunt")
+        require(data, COLUMNS, "TreasureHunt")
+        data = data[data["run"] == 1].copy()  # only keep the first attempt
+        if "ev" in data:
+            data["ev"] = data["ev"].apply(_parse_evidence)
 
-        Parameters
-        ----------
-        filepath : str
-            The path to the CSV file to be processed. The column names in the data must subscribe to a prespecified convention, see Notes.
-
-        Example
-        ----------
-
-        >>> treasurehunt = treasurehunt("/example/2025-02-20_SpaceObserver_Data_short.xlsx")
-        >>> treasurehunt.metrics()
-        >>> treasurehunt.clean_data()
-        >>> results = treasurehunt.results
-        >>> treasurehunt.codebook()
-
-
-        Notes
-        -----
-        The columns required in data:
-        - userID: unique identifier for each participant
-        - "date": the date and time of the trial
-        - run: number of attempt by participant
-        - outcome: the outcome of the trial
-        - confidence: the confidence of the trial
-        - RT: the reaction time of the trial
-        - confidenceRT: the confidence reaction time of the trial
-        - draws: number of draws in the trial
-        - choseCurEv: whether the choice was in line with current evidence (1 = yes, 0 = no)
-        - ev: the evidence in the trial as a list of integers
-
-        Trial-level exclusion criteria:
-
-        - attempts after the first attempt ("run" variable)
-        """
-
-        self.data = pd.read_csv(filepath, header=0)
-
-        self.data = self.data[self.data["run"] == 1]  # only keep first attempt
-
+        self.data = data
         self.results = pd.DataFrame()
-
         self.codebook = {
             "userID": "Unique identifier for each participant",
             "n_trials": "Number of trials completed by the participant",
-            "day_of_week": "Day of the week of the trial",
-            "time": "Time of the trial",
-            "time_of_day": "Time of day of the trial (morning, afternoon, evening, night)",
-            "accuracy": "Mean accuracy (if the choice was the majority choice)",
+            "date": "Date and time of the first trial",
+            "day_of_week": "Day of the week of the first trial",
+            "time": "Clock time of the first trial",
+            "time_of_day": "Time of day of the first trial (night: 0-6h, morning: 6-12h, afternoon: 12-18h, evening: 18-24h)",
             "mean_points": "Mean points received across all trials",
+            "accuracy": "Mean accuracy (proportion of choices in line with the current evidence)",
+            "mean_confidence": "Mean confidence rating across all trials",
+            "sd_confidence": "Standard deviation of confidence ratings across all trials",
             "mean_n_draws": "Mean number of stimulus draws before making a decision",
             "sd_n_draws": "Standard deviation of the number of stimulus draws before making a decision",
-            "median_RT_between_actions": "Median reaction time between actions",
-            "median_confidenceRT": "Median confidence reaction time across all trials",
+            "median_RT_between_actions": "Median reaction time between actions (ms)",
+            "median_confidenceRT": "Median confidence reaction time across all trials (ms)",
             "unique_draws": "Number of unique values in number of draws",
         }
 
     def metrics(self):
         """
+        Compute the metrics of each participant.
 
         Returns
         -------
-        results : pd.DataFrame
-            A DataFrame containing the results of the metrics.
-
-        Variables
-        ----------
-        - userID: unique identifier for each participant
-        - n_trials: number of trials completed by the participant
-        - day_of_week: day of the week of the trial
-        - time: time of the trial
-        - time_of_day: time of day of the trial (morning, afternoon, evening
-        - accuracy: mean accuracy (if the choice was the majority choice)
-        - mean_points: mean points received across all trials
-        - mean_n_draws: mean number of stimulus draws before making a decision
-        - sd_n_draws: standard deviation of the number of stimulus draws before making a decision
-        - median_RT_between_actions: median reaction time between actions
-        - median_confidenceRT: median confidence reaction time across all trials
-        - unique_draws: number of unique values in number of draws
+        pandas.DataFrame
+            The metrics, one row per participant, also stored in `results`. The columns are described in `codebook`.
         """
-        # turn string fields into list of ints
-        self.data["ev"] = self.data["ev"].apply(
-            lambda x: [int(i) for i in x.strip("[]").split(" ")]
-        )
-
-        # Group data by userID
-        grouped_data = self.data.groupby("userID")
-
-        # Loop through each group of user data
-        for user_id, user_data in grouped_data:
-
-            user_results = {"userID": user_id}
-
-            user_results["n_trials"] = len(user_data)
-
-            date = user_data["date"].iloc[0]
-            if isinstance(date, str):
-                date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
-            user_results["day_of_week"] = date.day_name()
-            user_results["time"] = (
-                date.time() if hasattr(date, "time") else date.strftime("%H:%M:%S.%f")
-            )
-            # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
-            user_results["time_of_day"] = (
-                "morning"
-                if date.hour < 12
-                else (
-                    "afternoon"
-                    if date.hour < 18
-                    else (
-                        "evening"
-                        if date.hour < 24
-                        else "night" if date.hour < 6 else "-"
-                    )
-                )
-            )
-
-            user_results["mean_points"] = np.nanmean(user_data["outcome"])
-
-            user_results["accuracy"] = np.nanmean(user_data["choseCurEv"])
-
-            user_results["mean_confidence"] = np.nanmean(user_data["confidence"])
-            user_results["sd_confidence"] = np.nanstd(user_data["confidence"])
-
-            user_results["mean_n_draws"] = np.nanmean(user_data["draws"])
-            user_results["sd_n_draws"] = np.nanstd(user_data["draws"])
-
-            user_results["median_RT_between_actions"] = np.nanmedian(
-                user_data["median_diffRT"]
-            )
-
-            user_results["median_confidenceRT"] = np.median(user_data["confidenceRT"])
-
-            # check if < 3 unique values in number of samples
-            user_results["unique_draws"] = user_data["draws"].nunique()
-
-            # regression for influence of recent results on current choice
-            """
-            ev = []
-
-            for idx, row in user_data.iterrows():
-                ev_sequence = row["ev"]
-                
-                for i in range(len(ev_sequence)):
-                    if i == 0:
-                        totevminus = np.nan
-                        deltaev = np.nan
-                    else:
-                        totevminus = ev_sequence[i - 1]
-                        deltaev = ev_sequence[i] - ev_sequence[i - 1]
-
-                    cont_ch = 1 if i < len(ev_sequence) - 1 else 0  # continue vs stop
-
-                    ev.append({
-                        "totev": ev_sequence[i],
-                        "totevminus": totevminus,
-                        "deltaev": deltaev,
-                        "cont_ch": cont_ch
-                    })
-
-            ev_reg_data = pd.DataFrame(ev)
-
-            model_data = ev_reg_data.dropna(subset=["totevminus", "deltaev", "cont_ch"])
-
-            if not model_data.empty:
-                model = smf.glm(
-                    formula="cont_ch ~ totevminus + deltaev",
-                    data=model_data,
-                    family=sm.families.Binomial()
-                ).fit()
-
-                user_results["totevminus_coef"] = model.params.get("totevminus", np.nan)
-                user_results["deltaev_coef"] = model.params.get("deltaev", np.nan)
-            else:
-                user_results["totevminus_coef"] = np.nan
-                user_results["deltaev_coef"] = np.nan
-            """
-
-            # Append user-level results
-            self.results = pd.concat(
-                [self.results, pd.DataFrame([user_results])], ignore_index=True
-            )
-
-        # Convert results to a DataFrame
-        self.results = pd.DataFrame(self.results)
-
+        rows = []
+        with quiet_empty_slices():
+            for user_id, user_data in self.data.groupby("userID"):
+                row = {"userID": user_id, "n_trials": len(user_data)}
+                row.update(session_time(user_data["date"].iloc[0]))
+                row["mean_points"] = np.nanmean(user_data["outcome"])
+                row["accuracy"] = np.nanmean(user_data["choseCurEv"])
+                row["mean_confidence"] = np.nanmean(user_data["confidence"])
+                row["sd_confidence"] = np.nanstd(user_data["confidence"])
+                row["mean_n_draws"] = np.nanmean(user_data["draws"])
+                row["sd_n_draws"] = np.nanstd(user_data["draws"])
+                row["median_RT_between_actions"] = np.nanmedian(user_data["median_diffRT"])
+                row["median_confidenceRT"] = np.nanmedian(user_data["confidenceRT"])
+                row["unique_draws"] = user_data["draws"].nunique()
+                rows.append(row)
+        self.results = pd.DataFrame(rows)
         return self.results
 
     def clean_data(self):
         """
-        Clean the aggregated data by applying participant-level exclusion criteria.
+        Exclude participants with the participant-level exclusion criteria.
 
-        Exclusion criteria:
-        ---------
-        - Mean number of draws < 2 or > 23
-        - Make choice not in line with current evidence in >= 20% of trials
-        - < 3 unique values in number of samples
+        Runs :meth:`metrics` first if it has not been run yet.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The metrics of the participants that pass the criteria, also stored in `cleanedresults`.
+
+        Notes
+        -----
+        A participant is excluded if
+
+        - the mean number of draws is below 2 or above 23,
+        - at least 20% of their choices were not in line with the current evidence (an accuracy of 0.8 or below),
+        - the number of draws took fewer than 3 different values.
         """
-        nr_part_before = len(self.results["userID"].unique())
+        if self.results.empty:
+            self.metrics()
+        results = self.results
+        n_before = results["userID"].nunique()
 
-        self.cleanedresults = self.results.copy()
+        keep = results["mean_n_draws"].between(2, 23)
+        keep &= results["accuracy"] > 0.8
+        keep &= results["unique_draws"] >= 3
 
-        # Filter out participants who have less than 3 unique values for draws
-        valid_users = (
-            self.data.groupby("userID")
-            .filter(lambda group: group["draws"].nunique() >= 3)["userID"]
-            .unique()
-        )
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["userID"].isin(valid_users)
-        ]
-
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["mean_n_draws"] >= 2
-        ]  # only keep participants with mean number of draws >= 2
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["mean_n_draws"] <= 23
-        ]  # only keep participants with mean number of draws <= 23
-
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["accuracy"] > 0.8
-        ]  # only keep participants with mean choice in line with current evidence > 80%
-
-        self.cleanedresults = self.cleanedresults[
-            self.cleanedresults["unique_draws"] >= 3
-        ]  # only keep participants with at least 3 unique values in number of draws
-
-        self.deleted_participants = nr_part_before - len(
-            self.cleanedresults["userID"].unique()
-        )
-
+        self.cleanedresults = results[keep].copy()
+        self.deleted_participants = n_before - self.cleanedresults["userID"].nunique()
         return self.cleanedresults
 
-    def codebook(self):
+    def get_codebook(self):
         """
-        Return a codebook describing the metrics.
+        Return the codebook, which describes each column of the metrics.
+
+        Returns
+        -------
+        dict
+            The description of each column, keyed by column name.
         """
         return self.codebook
+
+
+def _parse_evidence(value):
+    """Turn evidence such as ``"[1 2 -1]"`` or ``"[1, 2, -1]"`` into a list of integers; other values are kept."""
+    if isinstance(value, str):
+        return [int(number) for number in re.findall(r"-?\d+", value)]
+    return value

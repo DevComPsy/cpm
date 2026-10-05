@@ -1,71 +1,85 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
+
+from ._utils import load_data, quiet_empty_slices, require, session_time
+
+__all__ = ["MilkyWay"]
+
+COLUMNS = ["userID", "trial_type", "run", "date", "correct", "outchosen", "obt_min_forg", "rep", "WSLS_v1", "WSLS_v2"]
+
+## the two games, by their trial_type in the data: (name, suffix of the metrics)
+GAMES = {"reward": ("Milky Way", "MW"), "punish": ("Pirate Market", "PM")}
+
+## the metrics that are compared between the games: (name of the difference, metric without its suffix)
+DIFFERENCES = [
+    ("accuracy_diff", "accuracy"),
+    ("outcome_diff", "mean_outcome"),
+    ("reward_diff_obt_forg_diff", "reward_diff_obt_forg"),
+    ("prop_same_choice_diff", "prop_same_choice"),
+    ("prop_WSLS_1_diff", "prop_WSLS_1"),
+    ("prop_WSLS_2_diff", "prop_WSLS_2"),
+]
 
 
 class MilkyWay:
     """
-    Class to calculate metrics for a two-arm bandit task, Milky Way & Pirate Market in BrainExplorer.
+    Compute descriptive statistics from the two-armed bandit tasks in BrainExplorer, *Milky Way* (reward) and *Pirate Market* (punishment).
 
+    The metrics of the two games are computed separately, and :meth:`difference_metrics` compares them within participants.
+
+    Parameters
+    ----------
+    filepath : str, os.PathLike or pandas.DataFrame
+        The data, as a DataFrame or the path to a CSV or Excel (``.xlsx``) file. The column names must follow the convention in Notes.
+
+    Attributes
+    ----------
+    MW_data, PM_data : pandas.DataFrame
+        The Milky Way and Pirate Market trials that pass the trial-level exclusion criteria.
+    results_MW, results_PM : pandas.DataFrame
+        The metrics of each participant in each game, filled by :meth:`metrics`.
+    results_diff : pandas.DataFrame
+        The differences between the games, filled by :meth:`difference_metrics`.
+    cleanedresults_MW, cleanedresults_PM, cleanedresults_diff : pandas.DataFrame
+        The results of the participants that pass the participant-level exclusion criteria, filled by :meth:`clean_data`.
+    deleted_participants_MW, deleted_participants_PM, deleted_participants_diff : int
+        The number of participants that :meth:`clean_data` excluded from each table.
+    codebook : dict
+        The description of each column of the metrics.
+
+    Examples
+    --------
+    >>> from cpm.brainexplorer.bandits import MilkyWay
+    >>> milky_way = MilkyWay("2025-02-20_MilkyWay_Data.csv")
+    >>> results_MW, results_PM = milky_way.metrics()
+    >>> differences = milky_way.difference_metrics()
+    >>> cleaned_MW, cleaned_PM, cleaned_diff = milky_way.clean_data()
+
+    Notes
+    -----
+    The data must contain the following columns:
+
+    - ``userID``: the unique identifier of the participant.
+    - ``trial_type``: the game, ``"reward"`` for Milky Way or ``"punish"`` for Pirate Market.
+    - ``run``: the attempt number of the participant.
+    - ``date``: the date and time of the trial.
+    - ``correct``: whether the choice was correct (1) or incorrect (0).
+    - ``outchosen``: the outcome of the chosen option.
+    - ``obt_min_forg``: the obtained minus the foregone outcome.
+    - ``rep``: whether the choice repeated the previous one (1) or not (0).
+    - ``WSLS_v1``, ``WSLS_v2``: whether the choice was a win-stay/lose-shift choice, in two versions of the definition.
+
+    Only the first attempt of each participant in each game is kept, which is not necessarily ``run`` 1 for Pirate Market.
+
+    Response times are not analysed. They would have to be corrected for the average time between the previous choice and the presentation of the new stimuli, 4200 ms, which can make them negative.
     """
 
-    def __init__(self, filepath):
-        """
-        Load data to be analyised and turn into Pandas DataFrame.
-        Trial-level exclusion criteria are applied to the data.
-        The results for Milky Way and Pirate Market trials are stored in separate DataFrames.
-
-        Parameters
-        ----------
-        filepath : str
-            The path to the CSV file to be processed. The column names in the data must subscribe to a prespecified convention, see Notes.
-
-        Example
-        ----------
-
-        >>> milkyWay = milkyWay("/example/2025-02-20_SpaceObserver_Data_short.xlsx")
-        >>> milkyWay.metrics()
-        >>> milkyWay.clean_data()
-        >>> results_MW = milkyWay.results_MW
-        >>> results_PM = milkyWay.results_PM
-        >>> milkyWay.codebook()
-        >>> diff_results = milkyWay.difference_metrics()
-
-
-        Notes
-        -----
-        The columns required in data:
-        - userID: unique identifier for each participant
-        - trial_type: the type of trial (Milky Way or Pirate Market)
-        - date: the date and time of the trial
-        - correct: whether the choice was correct (1) or incorrect (0)
-        - outchosen: the outcome of the trial
-        - rep: whether the choice was repeated (1) or not (0)
-        - WSLS_v1: whether the choice was a win-stay/loose-shift choice for correct trials version 1
-        - WSLS_v2: whether the choice was a win-stay/loose-shift choice for correct trials version 2
-
-        The trial-level exclusion criteria are applied:
-        - Attempts after the first attempt ("run" variable)
-
-        The reaction times have to be corrected by the average time between the previous choice and new stimulus presentation which is 4200 ms. However, this correction can lead to negative reaction times, which may exclude some participants from the analysis.
-        """
-
-        self.data = pd.read_csv(filepath)
-
-        # Separate into MW and PM data
-        self.MW_data = self.data[self.data["trial_type"] == "reward"]
-        self.PM_data = self.data[self.data["trial_type"] == "punish"]
-
-        # Take first attempt (i.e., not neccessarily run == 1 for PM)
-        min_run_per_user = self.MW_data.groupby("userID")["run"].transform("min")
-        self.MW_data = self.MW_data[
-            self.MW_data["run"] == min_run_per_user
-        ].reset_index(drop=True)
-
-        min_run_per_user = self.PM_data.groupby("userID")["run"].transform("min")
-        self.PM_data = self.PM_data[
-            self.PM_data["run"] == min_run_per_user
-        ].reset_index(drop=True)
+    def __init__(self, filepath=None):
+        data = load_data(filepath, "MilkyWay")
+        require(data, COLUMNS, "MilkyWay")
+        self.data = data
+        self.MW_data = _first_attempt(data[data["trial_type"] == "reward"])
+        self.PM_data = _first_attempt(data[data["trial_type"] == "punish"])
 
         self.results_MW = pd.DataFrame()
         self.results_PM = pd.DataFrame()
@@ -75,310 +89,155 @@ class MilkyWay:
             "userID": "Unique identifier for each participant",
             "n_trials": "Number of trials completed by the participant",
             "trial_type": "Type of trial (Milky Way or Pirate Market)",
-            "day_of_week": "Day of the week when the trial was conducted",
-            "time": "Time when the trial was conducted",
-            "time_of_day": "Time of day when the trial was conducted (morning, afternoon, evening, night)",
-            "mean_RT_MW": "Mean reaction time for Milky Way trials",
-            "median_RT_MW": "Median reaction time for Milky Way trials",
-            "mean_RT_PM": "Mean reaction time for Pirate Market trials",
-            "median_RT_PM": "Median reaction time for Pirate Market trials",
-            "accuracy_MW": "Mean accuracy for Milky Way trials",
-            "accuracy_PM": "Mean accuracy for Pirate Market trials",
-            "prop_same_choice_MW": "Proportion of same choice in Milky Way trials",
-            "prop_same_choice_PM": "Proportion of same choice in Pirate Market trials",
-            "mean_outcome_MW": "Mean outcome for Milky Way trials",
-            "mean_outcome_PM": "Mean outcome for Pirate Market trials",
-            "reward_diff_obt_forg_MW": "Mean difference between obtained and foregone reward for Milky Way trials",
-            "reward_diff_obt_forg_PM": "Mean difference between obtained and foregone reward for Pirate Market trials",
-            "prop_WSLS_1_MW": "Proportion of win-stay/loose-shift choices for correct trials version 1 for Milky Way trials",
-            "prop_WSLS_2_MW": "Proportion of win-stay/loose-shift choices for correct trials version 2 for Milky Way trials",
-            "prop_WSLS_1_PM": "Proportion of win-stay/loose-shift choices for correct trials version 1 for Pirate Market trials",
-            "prop_WSLS_2_PM": "Proportion of win-stay/loose-shift choices for correct trials version 2 for Pirate Market trials",
+            "date": "Date and time of the first trial",
+            "day_of_week": "Day of the week of the first trial",
+            "time": "Clock time of the first trial",
+            "time_of_day": "Time of day of the first trial (night: 0-6h, morning: 6-12h, afternoon: 12-18h, evening: 18-24h)",
         }
+        for name, suffix in GAMES.values():
+            self.codebook.update(
+                {
+                    f"accuracy_{suffix}": f"Mean accuracy for {name} trials",
+                    f"mean_outcome_{suffix}": f"Mean outcome for {name} trials",
+                    f"reward_diff_obt_forg_{suffix}": f"Mean difference between obtained and foregone reward for {name} trials",
+                    f"prop_same_choice_{suffix}": f"Proportion of same choice in {name} trials",
+                    f"prop_WSLS_1_{suffix}": f"Proportion of win-stay/lose-shift choices (version 1) for {name} trials",
+                    f"prop_WSLS_2_{suffix}": f"Proportion of win-stay/lose-shift choices (version 2) for {name} trials",
+                }
+            )
+        self.codebook.update(
+            {
+                "accuracy_diff": "Difference in accuracy: Milky Way minus Pirate Market",
+                "outcome_diff": "Difference in mean outcome: Milky Way minus Pirate Market",
+                "reward_diff_obt_forg_diff": "Difference in the mean obtained minus foregone reward: Milky Way minus Pirate Market",
+                "prop_same_choice_diff": "Difference in the proportion of same choices: Milky Way minus Pirate Market",
+                "prop_WSLS_1_diff": "Difference in the proportion of win-stay/lose-shift choices (version 1): Milky Way minus Pirate Market",
+                "prop_WSLS_2_diff": "Difference in the proportion of win-stay/lose-shift choices (version 2): Milky Way minus Pirate Market",
+            }
+        )
 
     def metrics(self):
         """
-        Calculate the metrics for the data.
+        Compute the metrics of each participant in each game.
 
         Returns
         -------
-        results : pd.DataFrame
-            A DataFrame containing the results of the metrics.
-
-        Variables
-        ----------
-        - userID: unique identifier for each participant
-        - n_trials: number of trials completed by the participant
-        - day_of_week: day of the week of the trial
-        - time: time of the trial
-        - time_of_day: time of day of the trial (morning, afternoon, evening
-        - trial_type: type of trial (Milky Way or Pirate Market)
-        - mean_RT_MW: Mean reaction time for Milky Way trials
-        - median_RT_MW: Median reaction time for Milky Way trials
-        - mean_RT_PM: Mean reaction time for Pirate Market trials
-        - median_RT_PM: Median reaction time for Pirate Market trials
-        - accuracy_MW: Accuracy for Milky Way trials
-        - accuracy_PM: Accuracy for Pirate Market trials
-        - prop_same_choice_MW: Proportion of same choice in Milky Way trials
-        - prop_same_choice_PM: Proportion of same choice in Pirate Market trials
-        - mean_outcome_MW: Mean outcome for Milky Way trials
-        - mean_outcome_PM: Mean outcome for Pirate Market trials
-        - reward_diff_obt_forg_MW: Mean difference between obtained and foregone reward for Milky Way trials
-        - reward_diff_obt_forg_PM: Mean difference between obtained and foregone reward for Pirate Market trials
-        - prop_WSLS_1_MW: Proportion of win-stay/loose-shift choices for correct trials version 1 for Milky Way trials
-        - prop_WSLS_2_MW: Proportion of win-stay/loose-shift choices for correct trials version 2 for Milky Way trials
-        - prop_WSLS_1_PM: Proportion of win-stay/loose-shift choices for correct trials version 1 for Pirate Market trials
-        - prop_WSLS_2_PM: Proportion of win-stay/loose-shift choices for correct trials version 2 for Pirate Market trials
-
+        tuple of pandas.DataFrame
+            The metrics of Milky Way and of Pirate Market, one row per participant, also stored in `results_MW` and `results_PM`. The columns are described in `codebook`.
         """
-        # group MilkyWay and Pirate Market data
-        MW_data = self.MW_data.groupby("userID")
-        PM_data = self.PM_data.groupby("userID")
-
-        # Loop through each group of user data
-        for user_id, user_data_MW in MW_data:
-
-            user_results_MW = {"userID": user_id}
-
-            user_results_MW["n_trials"] = len(user_data_MW)
-
-            user_results_MW["trial_type"] = "Milky Way"
-
-            date = user_data_MW["date"].iloc[0]
-            if isinstance(date, str):
-                date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
-            user_data_MW["day_of_week"] = date.day_name()
-            user_data_MW["time"] = (
-                date.time() if hasattr(date, "time") else date.strftime("%H:%M:%S.%f")
-            )
-            # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
-            user_data_MW["time_of_day"] = (
-                "morning"
-                if date.hour < 12
-                else (
-                    "afternoon"
-                    if date.hour < 18
-                    else (
-                        "evening"
-                        if date.hour < 24
-                        else "night" if date.hour < 6 else "-"
-                    )
-                )
-            )
-
-            # user_results_MW["mean_RT_MW"] = np.mean(user_data_MW['rt_adj'])
-            # user_results_MW["median_RT_MW"] = np.median(user_data_MW['rt_adj'])
-
-            user_results_MW["accuracy_MW"] = np.nanmean(user_data_MW["correct"])
-
-            user_results_MW["mean_outcome_MW"] = np.nanmean(user_data_MW["outchosen"])
-
-            # Mean difference between obtained and foregone reward
-            user_results_MW["reward_diff_obt_forg_MW"] = np.nanmean(
-                user_data_MW["obt_min_forg"]
-            )
-
-            # proportion of repeated choices
-            user_results_MW["prop_same_choice_MW"] = np.nanmean(user_data_MW["rep"])
-
-            # proportion of win-stay/loose-shift choices
-            user_results_MW["prop_WSLS_1_MW"] = np.nanmean(user_data_MW["WSLS_v1"])
-
-            user_results_MW["prop_WSLS_2_MW"] = np.nanmean(user_data_MW["WSLS_v2"])
-
-            # Append user-level results
-            self.results_MW = pd.concat(
-                [self.results_MW, pd.DataFrame([user_results_MW])], ignore_index=True
-            )
-
-        self.results_MW = pd.DataFrame(self.results_MW)
-
-        for user_id, user_data_PM in PM_data:
-
-            user_results_PM = {"userID": user_id}
-
-            user_results_PM["n_trials"] = len(user_data_PM)
-
-            user_results_PM["trial_type"] = "Pirate Market"
-
-            date = user_data_PM["date"].iloc[0]
-            if isinstance(date, str):
-                date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S.%f")
-            user_data_PM["day_of_week"] = date.day_name()
-            user_data_PM["time"] = (
-                date.time() if hasattr(date, "time") else date.strftime("%H:%M:%S.%f")
-            )
-            # morning 6-12, afternoon 12-18, evening 18-24, night 0-6
-            user_data_PM["time_of_day"] = (
-                "morning"
-                if date.hour < 12
-                else (
-                    "afternoon"
-                    if date.hour < 18
-                    else "evening" if date.hour < 24 else "night"
-                )
-            )
-
-            # user_results_PM["mean_RT_PM"] = np.mean(user_data_PM['rt_adj'])
-            # user_results_PM["median_RT_PM"] = np.median(user_data_PM['rt_adj'])
-
-            user_results_PM["accuracy_PM"] = np.nanmean(user_data_PM["correct"])
-
-            user_results_PM["mean_outcome_PM"] = np.nanmean(user_data_PM["outchosen"])
-
-            # Mean difference between obtained and foregone reward
-            user_results_PM["reward_diff_obt_forg_PM"] = np.nanmean(
-                user_data_PM["obt_min_forg"]
-            )
-
-            # proportion of repeated choices
-            user_results_PM["prop_same_choice_PM"] = np.nanmean(user_data_PM["rep"])
-
-            # proportion of win-stay/loose-shift choices
-            user_results_PM["prop_WSLS_1_PM"] = np.nanmean(user_data_PM["WSLS_v1"])
-
-            user_results_PM["prop_WSLS_2_PM"] = np.nanmean(user_data_PM["WSLS_v2"])
-
-            # Append user-level results
-            self.results_PM = pd.concat(
-                [self.results_PM, pd.DataFrame([user_results_PM])], ignore_index=True
-            )
-
-        self.results_PM = pd.DataFrame(self.results_PM)
+        self.results_MW = _game_metrics(self.MW_data, *GAMES["reward"])
+        self.results_PM = _game_metrics(self.PM_data, *GAMES["punish"])
+        return self.results_MW, self.results_PM
 
     def difference_metrics(self):
         """
-        Calculate the difference between the metrics of Milky Way and Pirate Market trials.
+        Compute the difference between the metrics of Milky Way and Pirate Market, for each participant who played both.
+
+        Runs :meth:`metrics` first if it has not been run yet.
 
         Returns
         -------
-        results_diff : pd.DataFrame
-            A DataFrame containing the difference of the metrics between Milky Way and Pirate Market trials.
-
-        Variables
-        ----------
-        - accuracy_diff: Difference in accuracy between Milky Way and Pirate Market trials
-        - outcome_diff: Difference in mean outcome between Milky Way and Pirate Market trials
-        - reward_diff_obt_forg_diff: Difference in mean difference between obtained and foregone reward between Milky Way and Pirate Market trials
-        - prop_same_choice_diff: Difference in proportion of same choice between Milky Way and Pirate Market trials
-        - prop_WSLS_1_diff: Difference in proportion of win-stay/loose-shift choices for correct trials version 1 between Milky Way and Pirate Market trials
-        - prop_WSLS_2_diff: Difference in proportion of win-stay/loose-shift choices for correct trials version 2 between Milky Way and Pirate Market trials
+        pandas.DataFrame
+            The differences, Milky Way minus Pirate Market, one row per participant, also stored in `results_diff`. The columns are described in `codebook`.
         """
-
-        # Calculate differences for each user
-        for user_id in pd.unique(self.results_MW["userID"]):
-            user_results_MW = self.results_MW[self.results_MW["userID"] == user_id]
-            user_results_PM = self.results_PM[self.results_PM["userID"] == user_id]
-
-            if not user_results_MW.empty and not user_results_PM.empty:
-                diff_results = {
-                    "userID": user_id,
-                    "accuracy_diff": user_results_MW["accuracy_MW"].values[0]
-                    - user_results_PM["accuracy_PM"].values[0],
-                    "outcome_diff": user_results_MW["mean_outcome_MW"].values[0]
-                    - user_results_PM["mean_outcome_PM"].values[0],
-                    "reward_diff_obt_forg_diff": user_results_MW[
-                        "reward_diff_obt_forg_MW"
-                    ].values[0]
-                    - user_results_PM["reward_diff_obt_forg_PM"].values[0],
-                    "prop_same_choice_diff": user_results_MW[
-                        "prop_same_choice_MW"
-                    ].values[0]
-                    - user_results_PM["prop_same_choice_PM"].values[0],
-                    "prop_WSLS_1_diff": user_results_MW["prop_WSLS_1_MW"].values[0]
-                    - user_results_PM["prop_WSLS_1_PM"].values[0],
-                    "prop_WSLS_2_diff": user_results_MW["prop_WSLS_2_MW"].values[0]
-                    - user_results_PM["prop_WSLS_2_PM"].values[0],
-                }
-                self.results_diff = pd.concat(
-                    [self.results_diff, pd.DataFrame([diff_results])], ignore_index=True
-                )
-
-        return pd.DataFrame(self.results_diff)
+        if self.results_MW.empty and self.results_PM.empty:
+            self.metrics()
+        columns = ["userID"] + [name for name, _ in DIFFERENCES]
+        if self.results_MW.empty or self.results_PM.empty:
+            self.results_diff = pd.DataFrame(columns=columns)
+            return self.results_diff
+        both = self.results_MW.merge(self.results_PM, on="userID", sort=False)
+        for name, metric in DIFFERENCES:
+            both[name] = both[f"{metric}_MW"] - both[f"{metric}_PM"]
+        self.results_diff = both[columns].reset_index(drop=True)
+        return self.results_diff
 
     def clean_data(self):
         """
-        Clean the data by removing participants who do not meet the participant-level inclusion criteria.
+        Exclude participants with the participant-level exclusion criteria.
 
-        Exclusion Critera
-        -----------------
+        Runs :meth:`metrics` and :meth:`difference_metrics` first if they have not been run yet.
 
-        Participant-level:
-        - Same choice on >= 95% of trials
-        - Missing accuracy data
-        - Participants with more than 72 trials (due to technical error)
+        Returns
+        -------
+        tuple of pandas.DataFrame
+            The metrics of Milky Way, of Pirate Market, and their differences, for the participants that pass the criteria, also stored in `cleanedresults_MW`, `cleanedresults_PM` and `cleanedresults_diff`.
+
+        Notes
+        -----
+        A participant is excluded from the metrics of a game if
+
+        - they made the same choice on at least 95% of the trials,
+        - their accuracy is missing,
+        - they played more than 72 trials of the game (due to a technical error).
+
+        The differences are kept only for participants who pass the criteria in both games.
         """
-        nr_part_before_MW = len(self.results_MW["userID"].unique())
-        nr_part_before_PM = len(self.results_PM["userID"].unique())
+        if self.results_MW.empty and self.results_PM.empty:
+            self.metrics()
+        if self.results_diff.empty:
+            self.difference_metrics()
 
-        # created cleaned verison of results object but also keep old object for comparison
-        self.cleanedresults_MW = self.results_MW.copy()
-        self.cleanedresults_PM = self.results_PM.copy()
+        self.cleanedresults_MW = _clean_game(self.results_MW, self.MW_data, "MW")
+        self.cleanedresults_PM = _clean_game(self.results_PM, self.PM_data, "PM")
+        self.deleted_participants_MW = _n_users(self.results_MW) - _n_users(self.cleanedresults_MW)
+        self.deleted_participants_PM = _n_users(self.results_PM) - _n_users(self.cleanedresults_PM)
 
-        # Remove users with more than 72 trials
-        valid_user_ids = (
-            self.MW_data.groupby("userID")["userID"].transform("count") <= 72
-        )
-        user_ids_to_keep = self.MW_data.loc[valid_user_ids, "userID"].unique()
-        self.cleanedresults_MW = self.cleanedresults_MW[
-            self.cleanedresults_MW["userID"].isin(user_ids_to_keep)
-        ]
-
-        valid_user_ids = (
-            self.PM_data.groupby("userID")["userID"].transform("count") <= 72
-        )
-        user_ids_to_keep = self.PM_data.loc[valid_user_ids, "userID"].unique()
-        self.cleanedresults_PM = self.cleanedresults_PM[
-            self.cleanedresults_PM["userID"].isin(user_ids_to_keep)
-        ]
-
-        # Remove users with at least 95% same choice
-        self.cleanedresults_MW = self.cleanedresults_MW[
-            self.cleanedresults_MW["prop_same_choice_MW"] < 0.95
-        ]
-        self.cleanedresults_PM = self.cleanedresults_PM[
-            self.cleanedresults_PM["prop_same_choice_PM"] < 0.95
-        ]
-
-        # remove users with missing accuracy
-        self.cleanedresults_MW = self.cleanedresults_MW[
-            self.cleanedresults_MW["accuracy_MW"].notna()
-        ]
-        self.cleanedresults_PM = self.cleanedresults_PM[
-            self.cleanedresults_PM["accuracy_PM"].notna()
-        ]
-
-        self.deleted_participants_MW = nr_part_before_MW - len(
-            pd.unique(self.cleanedresults_MW["userID"])
-        )
-        self.deleted_participants_PM = nr_part_before_PM - len(
-            pd.unique(self.cleanedresults_PM["userID"])
-        )
-
-        # Also clean the diff file by keeping only participants who are in both the cleanedresults_MW and in the cleanedresults_PM file
-        self.cleanedresults_diff = self.results_diff.copy()
-
-        nr_part_before_diff = len(self.results_diff["userID"].unique())
-
-        user_ids_MW = set(
-            self.cleanedresults_MW["userID"].unique()
-        )  # Get userIDs from both cleaned datasets
-        user_ids_PM = set(self.cleanedresults_PM["userID"].unique())
-        valid_user_ids_diff = user_ids_MW.intersection(
-            user_ids_PM
-        )  # Keep only userIDs that are in both
-        self.cleanedresults_diff = self.cleanedresults_diff[
-            self.cleanedresults_diff["userID"].isin(valid_user_ids_diff)
-        ]
-
-        self.deleted_participants_diff = nr_part_before_diff - len(
-            self.cleanedresults_diff["userID"].unique()
-        )
+        both = set(_users(self.cleanedresults_MW)) & set(_users(self.cleanedresults_PM))
+        self.cleanedresults_diff = self.results_diff[self.results_diff["userID"].isin(both)].copy()
+        self.deleted_participants_diff = _n_users(self.results_diff) - _n_users(self.cleanedresults_diff)
 
         return self.cleanedresults_MW, self.cleanedresults_PM, self.cleanedresults_diff
 
-    def codebook(self):
+    def get_codebook(self):
         """
-        Create a codebook for the data.
+        Return the codebook, which describes each column of the metrics.
+
+        Returns
+        -------
+        dict
+            The description of each column, keyed by column name.
         """
         return self.codebook
+
+
+def _first_attempt(data):
+    """The trials of the first attempt of each participant, which is their lowest `run`."""
+    first = data.groupby("userID")["run"].transform("min")
+    return data[data["run"] == first].reset_index(drop=True)
+
+
+def _game_metrics(data, name, suffix):
+    """The metrics of each participant in one game."""
+    rows = []
+    with quiet_empty_slices():
+        for user_id, user_data in data.groupby("userID"):
+            row = {"userID": user_id, "n_trials": len(user_data), "trial_type": name}
+            row.update(session_time(user_data["date"].iloc[0]))
+            row[f"accuracy_{suffix}"] = np.nanmean(user_data["correct"])
+            row[f"mean_outcome_{suffix}"] = np.nanmean(user_data["outchosen"])
+            row[f"reward_diff_obt_forg_{suffix}"] = np.nanmean(user_data["obt_min_forg"])
+            row[f"prop_same_choice_{suffix}"] = np.nanmean(user_data["rep"])
+            row[f"prop_WSLS_1_{suffix}"] = np.nanmean(user_data["WSLS_v1"])
+            row[f"prop_WSLS_2_{suffix}"] = np.nanmean(user_data["WSLS_v2"])
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def _clean_game(results, data, suffix):
+    """The metrics of one game, for the participants that pass the exclusion criteria."""
+    if results.empty:
+        return results.copy()
+    trials = data.groupby("userID").size()
+    keep = results["userID"].isin(trials.index[trials <= 72])
+    keep &= results[f"prop_same_choice_{suffix}"] < 0.95
+    keep &= results[f"accuracy_{suffix}"].notna()
+    return results[keep].copy()
+
+
+def _users(results):
+    return results["userID"].unique() if "userID" in results else []
+
+
+def _n_users(results):
+    return len(_users(results))

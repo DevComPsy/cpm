@@ -10,20 +10,16 @@ import pandas as pd
 
 def load_data(source, name, **kwargs):
     """
-    Read the data of a task from a file, or copy a DataFrame.
+    Read the data of a task from a CSV file, or copy a DataFrame.
 
-    `source` is a pandas DataFrame, or the path to a CSV or Excel (``.xlsx``) file.
-    Keyword arguments are passed on to :func:`pandas.read_csv` or
-    :func:`pandas.read_excel`.
+    `source` is a pandas DataFrame, or the path to a CSV file. Keyword arguments
+    are passed on to :func:`pandas.read_csv`.
     """
     if source is None:
-        raise ValueError(f"{name} needs data: a pandas DataFrame or the path to a CSV or Excel file.")
+        raise ValueError(f"{name} needs data: a pandas DataFrame or the path to a CSV file.")
     if isinstance(source, pd.DataFrame):
         return source.copy()
-    path = os.fspath(source)
-    if path.endswith(".xlsx"):
-        return pd.read_excel(path, header=0, **kwargs)
-    return pd.read_csv(path, header=0, **kwargs)
+    return pd.read_csv(os.fspath(source), header=0, **kwargs)
 
 
 def require(data, columns, name):

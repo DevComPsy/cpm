@@ -33,7 +33,7 @@ class Scavenger:
     Parameters
     ----------
     filepath : str, os.PathLike or pandas.DataFrame
-        The data, as a DataFrame or the path to a CSV or Excel (``.xlsx``) file. The column names must follow the convention in Notes.
+        The data, as a DataFrame or the path to a CSV file. The column names must follow the convention in Notes.
 
     Attributes
     ----------
@@ -56,7 +56,7 @@ class Scavenger:
     Examples
     --------
     >>> from cpm.brainexplorer.risky_decision_making import Scavenger
-    >>> scavenger = Scavenger("2025-01-10_Scavenger.xlsx")
+    >>> scavenger = Scavenger("2025-01-10_Scavenger.csv")
     >>> results = scavenger.metrics()
     >>> cleaned = scavenger.clean_data()
     >>> scavenger.get_codebook()["risky_choices"]

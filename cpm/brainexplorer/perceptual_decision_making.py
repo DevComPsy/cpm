@@ -18,7 +18,7 @@ class SpaceObserver:
     Parameters
     ----------
     filepath : str, os.PathLike or pandas.DataFrame
-        The data, as a DataFrame or the path to a CSV or Excel (``.xlsx``) file. The column names must follow the convention in Notes.
+        The data, as a DataFrame or the path to a CSV file. The column names must follow the convention in Notes.
 
     Attributes
     ----------

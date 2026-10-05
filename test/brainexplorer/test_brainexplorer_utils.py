@@ -34,11 +34,11 @@ def test_load_data_copies_dataframes():
     assert data.loc[0, "a"] == 1
 
 
-def test_load_data_reads_excel(tmp_path):
-    pytest.importorskip("openpyxl")
-    filepath = tmp_path / "data.xlsx"
-    pd.DataFrame({"a": [1, 2]}).to_excel(filepath, index=False)
+def test_load_data_reads_csv(tmp_path):
+    filepath = tmp_path / "data.csv"
+    pd.DataFrame({"a": [1, 2]}).to_csv(filepath, index=False)
     pd.testing.assert_frame_equal(load_data(filepath, "Task"), pd.DataFrame({"a": [1, 2]}))
+    pd.testing.assert_frame_equal(load_data(str(filepath), "Task"), pd.DataFrame({"a": [1, 2]}))
 
 
 def test_load_data_needs_a_source():

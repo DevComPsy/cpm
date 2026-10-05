@@ -1,19 +1,136 @@
-from cpm.generators import Wrapper, Parameters, Value
-
-import cpm
 import numpy
-import pandas
 import warnings
-import ipyparallel as ipp  ## for parallel computing with ipython (specific for Jupyter Notebook)
+
+from cpm.generators import Parameters, Value
+from cpm.applications._backend import (
+    Application, SessionModel, indices, ordered_columns, prepared, require, uniforms,
+)
 
 
-from scipy.special import logsumexp
+def _rlrw_parameters(parameters_settings, dimensions):
+    """The parameters of `RLRW`."""
+    if parameters_settings is None:
+        parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
+        warnings.warn("No parameters specified, using default parameters.", stacklevel=3)
+    return Parameters(
+        # freely varying parameters are indicated by specifying priors
+        alpha=Value(
+            value=parameters_settings[0][0],
+            lower=parameters_settings[0][1],
+            upper=parameters_settings[0][2],
+            prior="truncated_normal",
+            args={"mean": 0.5, "sd": 0.25},
+        ),
+        temperature=Value(
+            value=parameters_settings[1][0],
+            lower=parameters_settings[1][1],
+            upper=parameters_settings[1][2],
+            prior="truncated_normal",
+            args={"mean": 5, "sd": 2.5},
+        ),
+        values=numpy.ones(dimensions) / dimensions,
+    )
 
 
-class RLRW(Wrapper):
-    """
+def _hybrid_parameters(parameters_settings, q_init):
+    """The parameters of `HybridMBMF`."""
+    if parameters_settings is None:
+        parameters_settings = [
+            [2, 0, 5],
+            [0.5, 0, 1],
+            [0.5, 0, 1],
+            [0.5, 0, 1],
+            [0, -5, 5],
+            [0, -5, 5],
+        ]
+        warnings.warn("No parameters specified, using default parameters.", stacklevel=3)
+    priors = [
+        {"mean": 1.5, "sd": 2.0},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.5, "sd": 0.25},
+        {"mean": 0.0, "sd": 1.0},
+        {"mean": 0.0, "sd": 1.0},
+    ]
+    return Parameters(
+        # freely varying parameters are indicated by specifying priors
+        **{
+            name: Value(
+                value=settings[0],
+                lower=settings[1],
+                upper=settings[2],
+                prior="truncated_normal",
+                args=prior,
+            )
+            for name, settings, prior in zip(HYBRID_PARAMETERS, parameters_settings, priors)
+        },
+        # internal states of the model
+        q_mf=numpy.full((2, 2), q_init, dtype=float),
+        q2=numpy.full(2, q_init, dtype=float),
+        m=numpy.zeros((2, 2)),
+        r=numpy.zeros(2),
+    )
+
+
+
+HYBRID_PARAMETERS = [
+    "inv_temperature",
+    "learning_rate",
+    "eligibility_trace",
+    "mb_weight",
+    "choice_stickiness",
+    "response_stickiness",
+]
+
+
+class _RLRWModel(SessionModel):
+    """The model function of `RLRW`, for all trials at once."""
+
+    def __call__(self, parameters, data):
+        policy, reward, values, change, dependent = self.sessions.rlrw(
+            float(parameters.alpha),
+            float(parameters.temperature),
+            numpy.asarray(parameters.values, dtype=float),
+            data["arms"],
+            data["rewards"],
+            data["response"],
+            self.generate,
+            uniforms(data["arms"].shape[0], self.generate),
+        )
+        return {
+            "policy": policy,
+            "reward": reward,
+            "values": values,
+            "change": change,
+            "dependent": dependent,
+        }
+
+
+def _prepare_rlrw(data):
+    """Collect the arm and reward columns of the data into arrays, once."""
+    out = prepared(data)
+    arms = ordered_columns(data, "arm")
+    rewards = ordered_columns(data, "reward")
+    if not arms or not rewards:
+        raise KeyError(
+            "RLRW needs columns with 'arm' and 'reward' in their names, "
+            f"such as arm_left and reward_left, but the data have {sorted(out)}."
+        )
+    trials = len(out[arms[0]])
+    out["arms"] = indices(numpy.column_stack([out[c] for c in arms]))
+    out["rewards"] = numpy.ascontiguousarray(
+        numpy.column_stack([out[c] for c in rewards]), dtype=numpy.float64
+    )
+    response = out.get("response", numpy.zeros(trials))
+    out["response"] = indices(response)
+    return out
+
+
+
+class RLRW(Application):
+    r"""
     The class implements a simple reinforcement learning model for a multi-armed bandit tasks using a standard update rule calculating prediction error and a Softmax decision rule.
-    The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019), which largely corresponds to the model presented by Suttong & Barto (2021) in Chapter 14.
+    The model is an n-dimensional and k-armed implementation of model 3 from Wilson and Collins (2019), which largely corresponds to the model presented by Sutton & Barto (2020) in Chapter 14.
 
     Parameters
     ----------
@@ -31,20 +148,19 @@ class RLRW(Wrapper):
 
     Examples
     --------
-    >>> import numpy
-    >>> import pandas
-    >>> from cpm.applications import RLRW
+    >>> from cpm.applications.reinforcement_learning import RLRW
     >>> from cpm.datasets import load_bandit_data
-
-    >>> twoarm = load_bandit_data()
-    >>> model = RLRW(data=data, dimensions=4)
+    >>> data = load_bandit_data()
+    >>> model = RLRW(data=data[data.ppt == 1], dimensions=4)
     >>> model.run()
+    >>> model.export().head()
 
 
     Notes
     -----
 
     The model implementation uses two parameters:
+
     - alpha: the learning rate, which determines how much the model updates its values based on the prediction error.
     - temperature: the inverse temperature, which determines the choice stochasticity -- how sensitive is the model to value differences.
 
@@ -54,23 +170,27 @@ class RLRW(Wrapper):
     - arm_n: the stimulus identifier for each option (arms in the bandit task), where n is the option available on a given trial. If there are more than one options, the stimulus identifier should be specified as separate columns of arm_1, arm_2, arm_3, etc. or arm_left, arm_middle, arm_right, etc.
     - reward_n: the reward given after each options, where n is the corresponding arm of the bandit available on a given trial. If there are more than one options, the reward should be specified as separate columns of reward_1, reward_2, reward_3, etc.
 
-    parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 1, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 1 and an upper bound of 10.
+    parameters_settings must be a 2D array, like [[0.5, 0, 1], [5, 0, 10]], where the first list specifies the alpha parameter and the second list specifies the temperature parameter. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are 0.5 for alpha with a lower bound of 0 and an upper bound of 1, and 5 for temperature with a lower bound of 0 and an upper bound of 10.
 
     The model is defined as follows:
 
-    Let each stimulus have an associated value, which is the expected reward that can be obtained from selecting that stimulus. Let also $Q(a)$ be the estimated value of action $a$. In each trial, $t$, there are two stimuli present, so $Q(a)$ could be $Q(\text{left})$ or $Q(\\text{right})$, where the corresponding $Q$ values are derived from the associated value of the stimulus present on the left or right. In each trial $t$ , the Softmax choice rule (Bridle, 1990) will convert the estimated value of each action into a probability according to the following policy:
+    Let each stimulus have an associated value, which is the expected reward that can be obtained from selecting that stimulus. Let also :math:`Q(a)` be the estimated value of action :math:`a`. In each trial, :math:`t`, there are two stimuli present, so :math:`Q(a)` could be :math:`Q(\text{left})` or :math:`Q(\text{right})`, where the corresponding :math:`Q` values are derived from the associated value of the stimulus present on the left or right. In each trial :math:`t` , the Softmax choice rule (Bridle, 1990) will convert the estimated value of each action into a probability according to the following policy:
 
-    $$
-    P(a) = \\frac{e^{Q(a)/\\tau}}{\\sum_{a'} e^{Q(a')/\\tau}}
-    $$
+    .. math::
 
-    where $\\tau$ is the temperature parameter. After the choice is made and feedback is received, the value of the chosen stimulus is updated. The current implementation uses the variant of the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton, & Williams, 1986) adapted for multi-armed bandit problems where each option has a single stimulus dimension (Sutton & Barto, 2020), reducing Rescorla-Wagner's summed error-term to the following equation, similar to (Bush & Mosteller, 1951):
+        P(a) = \frac{e^{Q(a)/\tau}}{\sum_{a'} e^{Q(a')/\tau}}
 
-    $$
-    \\Delta Q(a_t) = \\alpha \\times [R - Q(a_t)]
-    $$
+    where :math:`\tau` is the temperature parameter. After the choice is made and feedback is received, the value of the chosen stimulus is updated. The current implementation uses the variant of the delta rule (Rescorla & Wagner, 1972; Rumelhart, Hinton, & Williams, 1986) adapted for multi-armed bandit problems where each option has a single stimulus dimension (Sutton & Barto, 2020), reducing Rescorla-Wagner's summed error-term to the following equation, similar to (Bush & Mosteller, 1951):
 
-    where $\\alpha$ is the learning rate, $R$ is the reward received for the chosen action, and $Q(a_t)$ is the estimated value of the chosen action before updating. The values of unchosen stimuli remain unchanged.
+    .. math::
+
+        \Delta Q(a_t) = \alpha \times [R - Q(a_t)]
+
+    where :math:`\alpha` is the learning rate, :math:`R` is the reward received for the chosen action, and :math:`Q(a_t)` is the estimated value of the chosen action before updating. The values of unchosen stimuli remain unchanged.
+
+    .. rubric:: Computation
+
+    The model computes all trials of a participant in one call, compiled with numba if numba is installed (``pip install cpm-toolbox[numba]``) and as plain Python otherwise, with the same results. `model` is the model function for a single trial, ``model(parameters, trial)``, which computes one trial from the states in `parameters` and returns its outputs.
 
     References
     ----------
@@ -89,302 +209,191 @@ class RLRW(Wrapper):
 
     """
 
+    _trial_shapes = {"change": (1, -1)}
+
     def __init__(
         self, data=None, dimensions=2, parameters_settings=None, generate=False
     ):
-        if parameters_settings is None:
-            parameters_settings = [[0.5, 0, 1], [5, 0, 10]]
-            warnings.warn("No parameters specified, using default parameters.")
-        parameters = Parameters(
-            # freely varying parameters are indicated by specifying priors
-            alpha=Value(
-                value=parameters_settings[0][0],
-                lower=parameters_settings[0][1],
-                upper=parameters_settings[0][2],
-                prior="truncated_normal",
-                args={"mean": 0.5, "sd": 0.25},
-            ),
-            temperature=Value(
-                value=parameters_settings[1][0],
-                lower=parameters_settings[1][1],
-                upper=parameters_settings[1][2],
-                prior="truncated_normal",
-                args={"mean": 5, "sd": 2.5},
-            ),
-            values=numpy.ones(dimensions) / dimensions,
+        parameters = _rlrw_parameters(parameters_settings, dimensions)
+        self._setup(
+            data=data,
+            parameters=parameters,
+            session_model=_RLRWModel(generate),
+            prepare=_prepare_rlrw,
         )
 
-        @ipp.require("numpy")
-        def model(parameters, trial, generate=generate):
-            # pull out the parameters
-            alpha = parameters.alpha
-            temperature = parameters.temperature
-            values = numpy.asarray(parameters.values)
-            ## first we get the bandits and their corresponding stimulus identifier
-            arm_names = [
-                col for col in trial.index if "arm" in col
-            ]  ## get column names beginning with stimulus
-            arms = numpy.array(
-                [trial[i] for i in arm_names],
-                dtype=int,
-            )  ## stimulus identifier for each arm of the bandit
-            k_arms = arms.shape[0]  ## number of arms
-            dims = values.shape[0]  ## number of stimuli
-            choice = trial.response.astype(int)
-            reward_names = [
-                col for col in trial.index if "reward" in col
-            ]  ## get column names beginning with stimulus
-            feedback = numpy.array(
-                [trial[i] for i in reward_names]
-            )  ## compile reward vector
-            ## get the activations for each arm given q-values for each stimulus
-            activations = numpy.array([values[i - 1] for i in arms])
 
-            ## compute softmax
-            response = cpm.models.decision.Softmax(
-                activations=activations, temperature=temperature
+class _HybridModel(SessionModel):
+    """The model function of `HybridMBMF`, for all trials at once."""
+
+    def __call__(self, parameters, data):
+        trials = data["s1"].shape[0]
+        out = self.sessions.hybrid_mbmf(
+            *(float(getattr(parameters, name)) for name in HYBRID_PARAMETERS),
+            numpy.asarray(parameters.q_mf, dtype=float),
+            numpy.asarray(parameters.q2, dtype=float),
+            numpy.asarray(parameters.m, dtype=float),
+            numpy.asarray(parameters.r, dtype=float),
+            data["s1"],
+            data["stimuli_first"],
+            data["action"],
+            data["s2"],
+            data["reward"],
+            data["position"],
+            data["reward_0"],
+            data["reward_1"],
+            self.generate,
+            uniforms(trials, self.generate),
+        )
+        policy, action, s2, reward, position, pe1, pe2, q_mf, q2, m, r = out
+        return {
+            "policy": policy,
+            "action": action,
+            "s2": s2,
+            "reward": reward,
+            "position": position,
+            "stage1_prediction_error": pe1,
+            "stage2_prediction_error": pe2,
+            "q_mf": q_mf,
+            "q2": q2,
+            "m": m,
+            "r": r,
+            "dependent": policy[:, 1].copy(),
+        }
+
+
+class _PrepareHybrid:
+    """The data preparation of `HybridMBMF`, filling in the optional columns once."""
+
+    def __init__(self, generate):
+        self.generate = generate
+
+    def __call__(self, data):
+        out = prepared(data)
+        require(out, ["s1"], "HybridMBMF")
+        needed = ["reward_0", "reward_1"] if self.generate else ["action", "s2", "reward"]
+        require(out, needed, "HybridMBMF")
+        trials = out["s1"].shape[0]
+        for key in ("s1", "stimuli_first", "action", "s2"):
+            out[key] = indices(out.get(key, numpy.zeros(trials)))
+        for key in ("reward", "reward_0", "reward_1"):
+            out[key] = numpy.ascontiguousarray(
+                out.get(key, numpy.zeros(trials)), dtype=numpy.float64
             )
-            response.compute()
-            ## check for NaN in policy
-            if numpy.isnan(response.policies).any():
-                # if the policy is NaN for a given action, then we need to set it to 1 to avoid numerical issues
-                warnings.warn(
-                    f"NaN in policy with parameters: {alpha.value}, {temperature.value}, \nand with policy: {response.policies}\n"
-                )
-                response.policies[numpy.isnan(response.policies)] = 1
-            # if generate is true, generate a response from softmax probabilities
-            if generate:
-                choice = response.choice()
-            ## match choice to stimulus identifier
-            stim_choice = arms[choice] - 1
-            # update the values for that stimulus
-            mute = numpy.zeros(dims)
-            mute[stim_choice] = (
-                1  ## determine which stimulus' q-values we need to update
-            )
-            teacher = feedback[choice]  ## get reward for that bandit
-            update = cpm.models.learning.SeparableRule(
-                weights=values, feedback=[teacher], input=mute, alpha=alpha
-            )
-            update.compute()
-
-            values += update.weights.flatten()
-            ## compile output
-            output = {
-                "policy": response.policies,  # policies
-                "reward": teacher,  # reward of the chosen action
-                "values": values,  # updated values
-                "change": update.weights,  # change in the values - prediction error
-                "dependent": numpy.array(
-                    [response.policies[1]]
-                ),  # dependent variable P(choosing the right | stimuli on right)
-            }
-            return output
-
-        super().__init__(data=data, model=model, parameters=parameters)
+        out["position"] = indices(out.get("position", out["stimuli_first"] ^ out["action"]))
+        return out
 
 
-class MBMF(Wrapper):
-    """
-    This class implements a model for model-based vs model-free decision making in a decision making task.
-    The model uses a combination of model-based and model-free learning to predict choices based on the rewards received for each stimulus.
-    It is based on the model described in Kool et al. (2016) and adds choice stickiness calcualtions to the model.
 
-    Attributes
+class HybridMBMF(Application):
+    r"""
+    The class implements the hybrid model-based / model-free reinforcement learning model for the deterministic two-step task (Kool et al., 2016), in the 6-parameter variant used by Smid et al. (2022).
+    Model-free values are learned with a SARSA rule with an eligibility trace, model-based values are computed from the known transition structure, and the two are mixed before a Softmax decision rule.
+
+    Parameters
     ----------
-    data : pd.DataFrame
-            The individual user data to be processed. The column names in the data must subscribe to a prespecified convention, see Notes.
+    data: pandas.DataFrame
+        The data to be fit by the model. See Notes for the columns required.
+    parameters_settings: list-like
+        The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters and for the default settings.
+    q_init: float
+        The initial value of all model-free and second-stage values. It should be on the same scale as the rewards, for example, 0.5 for rewards scaled between 0 and 1, or 4.5 for rewards between 0 and 9. Default is 0.5.
+    generate: bool
+        If True, the model samples a first-stage action on each trial from its policy instead of using the observed one, and the reward is taken from the reward schedule of the reached second-stage state. Default is False.
 
-    parameters: list, optional
-        A list of parameters to be used in the model. If not specified, default parameters are used.
-        Order of parameters: inverse temperature, learning rate, eligibility trace decay, mixing weight for low stake trials, mixing weight for high stake trials, stickiness, response stickiness.
+    Returns
+    -------
+    cpm.generators.Wrapper
+        A cpm.generators.Wrapper object.
 
-    Example
-    ----------
-
+    Examples
+    --------
     >>> import numpy
     >>> import pandas
-    >>> from cpm.applications import MBMF
-    >>> data = pandas.read_csv("datasets/data/GH_example_data.csv")
+    >>> from cpm.applications.reinforcement_learning import HybridMBMF
 
-    >>> model = MBMF(data=data, parameters_settings=[[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]])
+    >>> data = pandas.DataFrame({
+    ...     "s1": [0, 1, 0],
+    ...     "action": [1, 0, 0],
+    ...     "s2": [0, 1, 1],
+    ...     "reward": [0.7, 0.2, 0.4],
+    ...     "stimuli_first": [0, 1, 0],
+    ...     "observed": [1, 0, 0],
+    ... })
+    >>> model = HybridMBMF(data=data, parameters_settings=[
+    ...     [2, 0, 5], [0.5, 0, 1], [0.5, 0, 1], [0.5, 0, 1], [0, -5, 5], [0, -5, 5]
+    ... ])
+    >>> model.run()
+    >>> model.dependent.shape
+    (3, 1)
 
     Notes
     -----
-    The columns required in data:
-    - userID: unique identifier for each participant
-    - stimuli: which planets presented in stage of the trial
-    - s: the state of the trial
-    - rews: the rewards for each stimulus / planet
-    - choice: the choice made by the participant
-    - stake: the stake of the trial (1 or 5)
-    - points: the points received in the trial
 
-    parameters_settings must be a 2D array, like [[0.8, 0, 2], [0.5, 0, 1], [0.8, 0, 1], [0.8, 0, 1], [0.8, 0, 2], [-0.1, -0.5, 0.5], [-0.1, -0.5, 0.5]], where the first list specifies the inverse temperature, the second list specifies the learning rate, the third list specifies the eligibility trace decay, the fourth list specifies the mixing weight for low stake trials, the fifth list specifies the mixing weight for high stake trials, the sixth list specifies the stickiness, and the seventh list specifies the response stickiness. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound.
+    The task has two first-stage starting states, each offering two actions. Transitions are deterministic and shared across starting states: action 0 leads to second-stage state 1 and action 1 leads to second-stage state 0. The second-stage states pay out a drifting reward, and there is no second-stage choice.
+
+    The model implementation uses six parameters:
+
+    - inv_temperature: the Softmax inverse temperature, :math:`\beta`.
+    - learning_rate: the learning rate for the SARSA updates, :math:`\alpha`.
+    - eligibility_trace: the eligibility trace decay, :math:`\lambda`.
+    - mb_weight: the model-based mixing weight, :math:`w`, where 0 is purely model-free and 1 is purely model-based.
+    - choice_stickiness: the bonus for repeating the last action taken in the same starting state, :math:`\pi`.
+    - response_stickiness: the bonus for repeating the last screen position (left or right), :math:`\rho`.
+
+    parameters_settings must be a 2D array, like [[2, 0, 5], [0.5, 0, 1], [0.5, 0, 1], [0.5, 0, 1], [0, -5, 5], [0, -5, 5]], where each list specifies one parameter in the order above. The first element of each list is the initial value of the parameter, the second element is the lower bound, and the third element is the upper bound. The default settings are the ones in the example.
+
+    Data must contain the following columns:
+
+    - s1: the first-stage starting state, 0 or 1.
+    - stimuli_first: the action displayed on the left side of the screen, 0 or 1. Optional; if absent, action 0 is assumed to be on the left.
+    - action: the chosen first-stage action, 0 or 1. Not required if `generate` is True.
+    - s2: the second-stage state reached, 0 or 1. Not required if `generate` is True.
+    - reward: the reward received in the second-stage state. Not required if `generate` is True.
+    - position: the screen position of the chosen action, 0 for left and 1 for right. Optional; if absent, it is derived from `stimuli_first` and `action`.
+    - reward_0, reward_1: the reward each second-stage state would pay out on the trial. Only required if `generate` is True.
+    - observed: the chosen first-stage action, 0 or 1, used by the loss function. The dependent variable of the model is the probability of choosing action 1.
+
+    The model is defined as follows (Kool et al., 2016; Smid et al., 2022). The model-based value of each first-stage action is computed from the transition matrix, :math:`T`, and the second-stage values, :math:`Q_2`:
+
+    .. math::
+
+        Q_{MB}(a) = \sum_{s_2} T(a, s_2) Q_2(s_2)
+
+    The model-based and model-free values are combined with the stickiness terms into a single hybrid value:
+
+    .. math::
+
+        Q_{hybrid}(s_1, a) = w Q_{MB}(a) + (1 - w) Q_{MF}(s_1, a) + \pi M(s_1, a) + \rho R(a)
+
+    where :math:`M(s_1, a)` is 1 if :math:`a` was chosen on the previous trial and the previous starting state was also :math:`s_1`, and 0 otherwise, and :math:`R(a)` is 1 if :math:`a` is displayed at the same screen position as the response on the previous trial, and 0 otherwise. The hybrid values are converted into a policy with the Softmax choice rule (Bridle, 1990):
+
+    .. math::
+
+        P(a) = \frac{e^{\beta Q_{hybrid}(s_1, a)}}{\sum_{a'} e^{\beta Q_{hybrid}(s_1, a')}}
+
+    After the choice, the model-free and second-stage values are updated with a SARSA rule with an eligibility trace, see :class:`cpm.models.learning.SARSATrace`.
+
+    .. rubric:: Computation
+
+    The model computes all trials of a participant in one call, compiled with numba if numba is installed (``pip install cpm-toolbox[numba]``) and as plain Python otherwise, with the same results. `model` is the model function for a single trial, ``model(parameters, trial)``, which computes one trial from the states in `parameters` and returns its outputs.
 
     References
     ----------
 
-    Kool W, Cushman FA, Gershman SJ (2016) When Does Model-Based Control Pay Off? PLoS Comput Biol 12
+    Bridle, J. S. (1990). Probabilistic Interpretation of Feedforward Classification Network Outputs, with Relationships to Statistical Pattern Recognition. In F. F. Soulié & J. Hérault (Eds.), Neurocomputing (pp. 227–236). Springer. https://doi.org/10.1007/978-3-642-76153-9_28
 
-    Smid, C.R., K. Ganesan, A. Thompson, R. Cañigueral, S. Veselic, J. Royer, W. Kool, T.U. Hauser, B. Bernhardt, and N. Steinbeis. “Neurocognitive Basis of Model-Based Decision Making and Its Metacontrol in Childhood.” Developmental Cognitive Neuroscience 62 (August 1, 2023): 101269.
+    Kool, W., Cushman, F. A., & Gershman, S. J. (2016). When does model-based control pay off? PLoS Computational Biology, 12(8), e1005090. https://doi.org/10.1371/journal.pcbi.1005090
+
+    Smid et al. (2022). Computational and behavioral correlates of developmental changes in model-based/model-free decision-making. Developmental Science, e13380.
 
     """
 
-    def __init__(self, data=None, parameters_settings=None):
-        if parameters_settings is None:
-            parameters_settings = [
-                [0.8, 0, 2],
-                [0.5, 0, 1],
-                [0.8, 0, 1],
-                [0.8, 0, 1],
-                [0.8, 0, 2],
-                [-0.1, -0.5, 0.5],
-                [-0.1, -0.5, 0.5],
-            ]
-        parameters = Parameters(
-            temperature=Value(
-                value=parameters_settings[0][0],
-                lower=parameters_settings[0][1],
-                upper=parameters_settings[0][2],
-            ),
-            learning_rate=Value(
-                value=parameters_settings[1][0],
-                lower=parameters_settings[1][1],
-                upper=parameters_settings[1][2],
-            ),
-            eligibility_trace_decay=Value(
-                value=parameters_settings[2][0],
-                lower=parameters_settings[2][1],
-                upper=parameters_settings[2][2],
-            ),
-            mixing_weight_low_stake=Value(
-                value=parameters_settings[3][0],
-                lower=parameters_settings[3][1],
-                upper=parameters_settings[3][2],
-            ),
-            mixing_weight_high_stake=Value(
-                value=parameters_settings[4][0],
-                lower=parameters_settings[4][1],
-                upper=parameters_settings[4][2],
-            ),
-            stickiness=Value(
-                value=parameters_settings[5][0],
-                lower=parameters_settings[5][1],
-                upper=parameters_settings[5][2],
-            ),
-            response_stickiness=Value(
-                value=parameters_settings[6][0],
-                lower=parameters_settings[6][1],
-                upper=parameters_settings[6][2],
-            ),
-            Q_MF=numpy.ones((2, 2)) * 4.5,
-            Q2=numpy.ones((2, 1)) * 4.5,
-            M=numpy.zeros((2, 2)),  # last action matrix
-            R=numpy.zeros(2),  # last choice structure
+    def __init__(self, data=None, parameters_settings=None, q_init=0.5, generate=False):
+        parameters = _hybrid_parameters(parameters_settings, q_init)
+        self._setup(
+            data=data,
+            parameters=parameters,
+            session_model=_HybridModel(generate),
+            prepare=_PrepareHybrid(generate),
         )
-
-        @ipp.require("numpy")
-        def MF_MB_model(parameters, trial):
-            """
-            Model for model-based vs model-free decision making in a decison making task
-
-
-            Returns
-            -------
-            LL:
-                Log Likelihood
-            Q:
-                Q values for the mixing model
-            Q_MF:
-                Q values for model-free learning
-            Q_MB:
-                Q values for model-based learning
-            """
-
-            # pull out the paramters
-            b = parameters.temperature  # softmax inverse temperature
-            lr = parameters.learning_rate  # learning rate
-            lamb = parameters.eligibility_trace_decay  # eligibility trace decay
-            w_lo = (
-                parameters.mixing_weight_low_stake
-            )  # mixing weight for low stake trials
-            w_hi = (
-                parameters.mixing_weight_high_stake
-            )  # mixing weight for high stake trials
-            st = parameters.stickiness  # stickiness
-            respst = parameters.response_stickiness  # response stickiness
-
-            # initialization
-
-            # initialization
-            Q_MF = numpy.array(parameters.Q_MF)  # Q values for model-free learning
-            Q2 = numpy.array(parameters.Q2)  # Q values for model-based learning
-
-            M = numpy.array(parameters.M)  # last action matrix
-            R = numpy.array(parameters.R)  # last choice structure
-
-            TM = [numpy.eye(2), numpy.eye(2)]  # transition matrix
-
-            if trial["stimuli"][0] == 2 or trial["stimuli"][0] == 4:
-                R = R = numpy.flipud(R)
-
-            s1 = trial["s"][0]  # first choice stage
-            s2 = trial["s"][1]  # second choice stage
-            action = trial["choice"]
-            a = action[0] - (s1 == 2) * 2
-
-            # choose which weight to update based on stake of trial
-            if trial["stake"] == 1:
-                w = w_lo
-            else:
-                w = w_hi
-
-            # calculating the Q values for model-based learning
-            Q_MB = TM[s1 - 1].T @ Q2
-
-            # calculating the Q values for mixing model
-            Q = (
-                w * Q_MB
-                + (1 - w) * Q_MF[s1 - 1, :].T
-                + st * M[s1 - 1, :].T
-                + respst * numpy.array(R)
-            )
-
-            # calculating the probability choosing action a given Q
-            policy = numpy.exp(b * Q) / numpy.sum(numpy.exp(b * Q))
-
-            # update choice structure
-            M = numpy.zeros((2, 2))
-            M[s1 - 1, a - 1] = 1
-
-            R = numpy.zeros((2, 1))
-            if action == trial["stimuli"][0]:
-                R[0] = 1
-            else:
-                R[1] = 1
-
-            # update Q values for model-free learning
-            # first choice stage
-            dtQ1 = Q2[s2 - 1] - Q_MF[s1 - 1, a - 1]
-            Q_MF[s1 - 1, a - 1] = Q_MF[s1 - 1, a - 1] + lr * dtQ1
-            # second choice stage
-            dtQ2 = trial["points"] - Q2[s2 - 1]
-            Q2[s2 - 1] = Q2[s2 - 1] + lr * dtQ2
-            Q_MF[s1 - 1, a - 1] = Q_MF[s1 - 1, a - 1] + lamb * lr * dtQ2
-
-            # compile results
-            results = {
-                "policy": numpy.array(policy),
-                "R": numpy.array(R),
-                "M": numpy.array(M),
-                "Q": numpy.array(Q.flatten()),
-                "Q2": numpy.array(Q2),
-                "Q_MF": numpy.array(Q_MF),
-                "Q_MB": numpy.array(Q_MB.flatten()),
-                "dependent": numpy.array([policy[1]]),
-            }
-
-            return results
-
-        super().__init__(data=data, model=MF_MB_model, parameters=parameters)

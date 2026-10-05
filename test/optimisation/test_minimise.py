@@ -1,60 +1,8 @@
 import numpy as np
 import pytest
-from cpm.optimisation.minimise import Bayesian, LogLikelihood, Distance, Discrete
+from cpm.optimisation.minimise import LogLikelihood, Distance, Discrete
 
-class TestBayesian:
-    def test_bic_basic(self):
-        likelihood = -100.0
-        n = 150
-        k = 3
-        expected = -2 * likelihood + k * np.log(n)
-        result = Bayesian.BIC(likelihood, n, k)
-        assert np.isclose(result, expected)
 
-    def test_aic_basic(self):
-        likelihood = -100.0
-        n = 150  # n is not used in AIC, but included for interface
-        k = 3
-        expected = -2 * likelihood + 2 * k
-        result = Bayesian.AIC(likelihood, n, k)
-        assert np.isclose(result, expected)
-
-    def test_bic_zero_likelihood(self):
-        likelihood = 0.0
-        n = 10
-        k = 1
-        expected = -2 * likelihood + k * np.log(n)
-        result = Bayesian.BIC(likelihood, n, k)
-        assert np.isclose(result, expected)
-
-    def test_aic_zero_likelihood(self):
-        likelihood = 0.0
-        n = 10
-        k = 1
-        expected = -2 * likelihood + 2 * k
-        result = Bayesian.AIC(likelihood, n, k)
-        assert np.isclose(result, expected)
-
-    def test_bic_invalid_n(self):
-        likelihood = -10.0
-        n = 0
-        k = 2
-        with pytest.raises(ValueError):
-            Bayesian.BIC(likelihood, n, k)
-
-    def test_bic_invalid_k(self):
-        likelihood = -10.0
-        n = 10
-        k = -1
-        with pytest.raises(ValueError):
-            Bayesian.BIC(likelihood, n, k)
-
-    def test_aic_invalid_k(self):
-        likelihood = -10.0
-        n = 10
-        k = -1
-        with pytest.raises(ValueError):
-            Bayesian.AIC(likelihood, n, k)
 
 class TestLogLikelihood:
     def test_categorical(self):
@@ -404,6 +352,32 @@ class TestDiscrete:
         assert isinstance(result, float)
         result = Discrete.G2(predicted, observed)
         assert isinstance(result, float)
+
+
+def test_bernoulli_and_continuous_equal_scipy():
+    """The losses no longer call scipy.stats, but must give the same values."""
+    from scipy.stats import bernoulli, norm
+
+    rng = np.random.default_rng(5)
+    p = rng.uniform(0, 1, 200)
+    p[:3] = [0.0, 1.0, 1e-12]
+    k = rng.integers(0, 2, 200).astype(float)
+    k[5] = 0.5  # not a Bernoulli outcome: log probability -inf, replaced by -1e100
+    clipped = np.clip(p, 1e-10, 1 - 1e-10)
+    expected = -np.sum(np.nan_to_num(bernoulli.logpmf(k, clipped), neginf=-1e100))
+    assert LogLikelihood.bernoulli(predicted=p.copy(), observed=k) == expected
+    x, y = rng.normal(0, 1, 50), rng.normal(0, 1, 50)
+    assert LogLikelihood.continuous(predicted=x, observed=y) == -np.sum(norm.logpdf(x, y, 1))
+
+
+def test_losses_still_name_nan_and_inf():
+    with pytest.raises(ValueError, match="Predicted values contain NaN"):
+        LogLikelihood.bernoulli(predicted=np.array([0.5, np.nan]), observed=np.array([1, 0]))
+    with pytest.raises(ValueError, match="Observed values contain Inf"):
+        LogLikelihood.bernoulli(predicted=np.array([0.5, 0.5]), observed=np.array([1, np.inf]))
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        LogLikelihood.bernoulli(predicted=np.array([0.5, 0.5]), observed=np.array([1, 0, 1]))
+
 
 if __name__ == "__main__":
     pytest.main()

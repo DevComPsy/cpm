@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+message: "If you use cpm, please cite the software paper below."
+title: "cpm: A Python library for theory-driven modelling in computational psychiatry"
+type: software
+repository-code: "https://github.com/DevComPsy/cpm"
+url: "https://devcompsy.github.io/cpm/"
+license: AGPL-3.0
+authors:
+  - family-names: Dome
+    given-names: Lenard
+  - family-names: Hezemans
+    given-names: Frank H.
+  - family-names: Kadri
+    given-names: Kenza
+  - family-names: Wagner
+    given-names: Ben J.
+  - family-names: Webb
+    given-names: Andrew
+  - family-names: Hauser
+    given-names: Tobias U.
+preferred-citation:
+  type: article
+  title: "cpm: A Python library for theory-driven modelling in computational psychiatry"
+  authors:
+    - family-names: Dome
+      given-names: Lenard
+    - family-names: Hezemans
+      given-names: Frank H.
+    - family-names: Kadri
+      given-names: Kenza
+    - family-names: Wagner
+      given-names: Ben J.
+    - family-names: Webb
+      given-names: Andrew
+    - family-names: Hauser
+      given-names: Tobias U.
+  journal: "PLOS Computational Biology"
+  year: 2026
+  volume: 22
+  issue: 7
+  start: 1
+  end: 31
+  doi: "10.1371/journal.pcbi.1014481"

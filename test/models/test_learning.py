@@ -4,8 +4,8 @@ from cpm.models.learning import (
     DeltaRule,
     SeparableRule,
     QLearningRule,
-    KernelUpdate,
     HumbleTeacher,
+    SARSATrace,
 )
 
 
@@ -51,6 +51,39 @@ def test_separable_rule():
     ), "The weights are not updated correctly with the separable delta rule."
 
 
+def test_separable_rule_error():
+    separable_rule = SeparableRule(
+        alpha=0.5, weights=np.array([0.2, 0.8]), input=np.array([1.0, 0.0]), feedback=[1.0]
+    )
+    separable_rule.compute()
+    assert separable_rule.error.shape == (1, 2)
+    assert np.allclose(separable_rule.error, np.array([[0.8, 0.2]]))
+
+
+def test_separable_rule_noisy_learning_rule():
+    np.random.seed(0)
+    separable_rule = SeparableRule(
+        alpha=0.5,
+        zeta=10.0,
+        weights=np.array([0.2, 0.8]),
+        input=np.array([1.0, 0.0]),
+        feedback=[1.0],
+    )
+    computed_weights = separable_rule.noisy_learning_rule()
+    assert computed_weights.shape == (1, 2)
+    assert not np.allclose(computed_weights, np.array([[0.4, 0.0]]))
+    assert computed_weights[0, 1] == 0.0, "Noise must not reach absent stimuli."
+
+
+def test_delta_rule_error_1d_weights():
+    delta_rule = DeltaRule(
+        alpha=0.5, weights=np.array([0.2, 0.8]), input=np.array([1.0, 0.0]), feedback=[1.0]
+    )
+    delta_rule.compute()
+    assert delta_rule.error.shape == (1,)
+    assert np.allclose(delta_rule.error, np.array([0.8]))
+
+
 def test_q_learning_rule():
     values = np.array([1, 0.5, 0.99])
     q_learning_rule = QLearningRule(
@@ -64,22 +97,6 @@ def test_q_learning_rule():
         computed_values, np.array([1.8, 1.35, 1.791])
     ), "The Q-values are not updated correctly."
 
-
-def test_kernel_update():
-    response = np.array([0, 1, 0, 0])
-    alpha = 0.1
-    kernel = np.array([0.2, 0.3, 0.4, 0.5])
-    input = np.array([1, 1, 0, 0])
-    kernel_update = KernelUpdate(
-        response=response, alpha=alpha, kernel=kernel, input=input
-    )
-    computed_kernel = kernel_update.compute()
-    assert computed_kernel.shape == kernel.shape
-    assert np.allclose(
-        computed_kernel, np.array([-0.02, 0.07, 0.0, 0.0])
-    ), "The kernel is not updated correctly with the KernelUpdate rule."
-
-
 def test_humble_teacher():
     weights = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     teacher = np.array([0, 1])
@@ -92,11 +109,60 @@ def test_humble_teacher():
     computed_weights = humble_teacher.delta
     assert computed_weights.shape == weights.shape
     assert np.allclose(
-        computed_weights, np.array([[-0.16, -0.16, -0.16], [ 0. ,  0. ,  0. ]]) 
+        computed_weights, np.array([[-0.16, -0.16, -0.16], [0.0, 0.0, 0.0]])
     ), "The weights are not updated correctly with the HumbleTeacher rule."
     assert np.allclose(
-        humble_teacher.weights, np.array([[-0.06,  0.04,  0.14], [ 0.4 ,  0.5 ,  0.6 ]])
+        humble_teacher.weights, np.array([[-0.06, 0.04, 0.14], [0.4, 0.5, 0.6]])
     ), "The teacher should be zero after the HumbleTeacher update."
+
+
+def test_sarsa_trace():
+    model_free_values = np.zeros((2, 2))
+    second_stage_values = np.array([4.5, 4.5])
+    sarsa = SARSATrace(
+        learning_rate=0.5,
+        eligibility_trace=0.6,
+        model_free_values=model_free_values,
+        second_stage_values=second_stage_values,
+        starting_state=0,
+        action=1,
+        reached_second_stage=0,
+        reward=7.0,
+    )
+    model_free_delta, planet_value_delta = sarsa.compute()
+    assert sarsa.stage1_prediction_error == 4.5
+    assert sarsa.stage2_prediction_error == 2.5
+    assert np.allclose(
+        model_free_delta, np.array([[0.0, 3.0], [0.0, 0.0]])
+    ), "The model-free values are not updated correctly with the SARSA rule."
+    assert np.allclose(
+        planet_value_delta, np.array([1.25, 0.0])
+    ), "The second-stage values are not updated correctly with the SARSA rule."
+    assert np.all(model_free_values == 0), "The input values should not be modified."
+
+
+def test_humble_teacher_with_one_dimensional_weights():
+    """1D weights are promoted to one row, as in the other learning rules; this used to raise."""
+    rule = HumbleTeacher(alpha=0.1, weights=np.array([0.1, 0.2, 0.3]), feedback=[1], input=np.array([1, 1, 0]))
+    expected = HumbleTeacher(alpha=0.1, weights=np.array([[0.1, 0.2, 0.3]]), feedback=[1],
+                             input=np.array([1, 1, 0])).compute()
+    np.testing.assert_array_equal(rule.compute(), expected)
+
+
+@pytest.mark.parametrize("rule", [DeltaRule, SeparableRule, HumbleTeacher])
+def test_too_little_feedback_is_an_error_rather_than_broadcast(rule):
+    weights = np.zeros((2, 3))
+    with pytest.raises(IndexError):
+        rule(alpha=0.1, weights=weights, feedback=np.array([1.0]), input=np.array([1, 0, 1])).compute()
+
+
+@pytest.mark.parametrize("rule", [DeltaRule, SeparableRule])
+def test_learning_rules_keep_the_dtype_of_the_weights(rule):
+    """Integer weights are updated in place with truncation, as element-wise assignment did."""
+    weights = np.array([[1, 2], [3, 4]])
+    out = rule(alpha=0.5, weights=weights, feedback=[1, 0], input=np.array([1, 1])).compute()
+    assert out.dtype == weights.dtype
+
 
 if __name__ == "__main__":
     pytest.main()

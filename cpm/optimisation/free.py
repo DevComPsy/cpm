@@ -1,5 +1,11 @@
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import (
+    objective,
+    evaluate_fit,
+    fit_extras,
+    numerical_hessian,
+    prepare_data,
+)
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 from ..core.parallel import detect_cores, execute_parallel
@@ -24,6 +30,10 @@ class Minimize:
         The data used for optimization. If a pd.Dataframe, it is grouped by the `ppt_identifier`. If it is a pd.DataFrameGroupby, groups are assumed to be participants. An array of dictionaries, where each dictionary contains the data for a single participant, including information about the experiment and the results too. See Notes for more information.
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
+    prior : bool
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -38,8 +48,21 @@ class Minimize:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html) documentation for what is supported.
+        Additional keyword arguments. See the :func:`scipy.optimize.minimize` documentation for what is supported.
 
+    Attributes
+    ----------
+    number_of_starts : int
+        The number of starts requested, retained so that it is recoverable from
+        a constructed optimiser rather than only implied by
+        `initial_guess.shape[0]`.
+    initial_guess_supplied : bool
+        Whether `initial_guess` currently holds guesses supplied by the user
+        (`True`) or guesses drawn from the parameter bounds (`False`). This
+        distinguishes a fit started from a fixed point from one started from
+        random restarts, which is otherwise not recoverable after fitting.
+        `reset(initial_guess=True)` draws new random guesses and therefore sets
+        this attribute to `False`.
 
     Notes
     -----
@@ -59,6 +82,7 @@ class Minimize:
         parallel=False,
         libraries=["numpy", "pandas"],
         prior=False,
+        metrics=None,
         number_of_starts=1,
         ppt_identifier=None,
         display=False,
@@ -73,9 +97,9 @@ class Minimize:
 
         self.loss = minimisation
         self.prior = prior
+        self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
-        self.prior = prior
 
         self.method = method
         if isinstance(model, Wrapper):
@@ -93,6 +117,8 @@ class Minimize:
         self.details = []
         self.parameters = []
 
+        self.number_of_starts = number_of_starts
+        self.initial_guess_supplied = initial_guess is not None
         self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
@@ -113,12 +139,14 @@ class Minimize:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):
             keys = ["x", "fun", "nit", "nfev", "status", "success", "message"]
+            keys += fit_extras(self.prior, self.metrics)
             if id is not None:
                 keys.append(id)
             out = {}
@@ -151,6 +179,14 @@ class Minimize:
             hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
 
             result.update({"hessian": hessian})
+
+            if prior or self.metrics:
+                result.update(
+                    evaluate_fit(
+                        result["x"], model, observed, loss, prior, self.metrics
+                    )
+                )
+
             # if participant data contains identifiers, add the identifier key to the result
             if self.ppt_identifier is not None:
                 result.update({self.ppt_identifier: ppt})
@@ -238,10 +274,13 @@ class Minimize:
         if initial_guess:
             self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
-                number_of_starts=self.initial_guess.shape[0],
+                number_of_starts=self.number_of_starts,
                 guesses=None,
                 shape=self.initial_guess.shape,
             )
+            # The guesses are now randomly generated, whatever was passed to
+            # __init__, so the flag must follow the array it describes.
+            self.initial_guess_supplied = False
         return None
 
     def export(self):

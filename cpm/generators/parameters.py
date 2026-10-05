@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import copy
+from ._fast_priors import fast_logpdf
 from scipy.stats import (
     truncnorm,
     truncexpon,
@@ -59,8 +60,8 @@ class Parameters:
             if isinstance(value, Value):
                 setattr(self, key, value)
             elif callable(value):
-                # Create a static method on the class with the key as the method name
-                setattr(self.__class__, key, staticmethod(value))
+                # store callables on the instance, so they do not leak onto other Parameters
+                setattr(self, key, value)
             elif value is None:
                 setattr(self, key, None)
             else:
@@ -133,7 +134,7 @@ class Parameters:
         """
         lower, upper = [], []
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     lower.append(value.lower)
                     upper.append(value.upper)
@@ -153,7 +154,7 @@ class Parameters:
         """
         prior = 0
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 # Check if the value has a prior distribution
                 # and if so, add its PDF to the prior
                 if value.prior is not None:
@@ -194,7 +195,7 @@ class Parameters:
         for i in range(size):
             sample = {}
             for key, value in self.__dict__.items():
-                if value.prior is not None:
+                if isinstance(value, Value) and value.prior is not None:
                     if jump:
                         sample[key] = value.prior.rvs(loc=value.value)
                     else:
@@ -213,7 +214,7 @@ class Parameters:
         """
         free = []
         for key, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     free.append(key)
         return free
@@ -229,7 +230,7 @@ class Parameters:
         """
         table = pd.DataFrame()
         for key, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     output = pd.Series(
                         {
@@ -260,7 +261,7 @@ class Value:
         The upper bound of the parameter.
     prior : string or object, optional
         If a string, it should be one of continuous distributions from `scipy.stats`.
-        See the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details.
+        See the `scipy documentation <https://docs.scipy.org/doc/scipy/reference/stats.html>`__ for more details.
         The default is None.
         If an object, it should be or contain a callable function representing the prior distribution of the parameter with methods similar to `scipy.stats` distributions.
         See Notes for more details.
@@ -278,7 +279,7 @@ class Value:
     - 'truncated_exponential'
     - 'norm'
 
-    Because these distributions are inherited from `scipy.stats`, see the [scipy documentation](https://docs.scipy.org/doc/scipy/reference/stats.html) for more details on how to update variables of the distribution.
+    Because these distributions are inherited from `scipy.stats`, see the `scipy documentation <https://docs.scipy.org/doc/scipy/reference/stats.html>`__ for more details on how to update variables of the distribution.
 
     Returns
     -------
@@ -307,7 +308,7 @@ class Value:
         if prior is None:
             self.prior = None
         if prior == "uniform":
-            self.prior = uniform(loc=lower, scale=upper)
+            self.prior = uniform(loc=lower, scale=upper - lower)
         elif prior == "truncated_normal":
             # calculate the bounds of the truncated normal distribution
             below, above = (lower - args.get("mean")) / args.get("sd"), (
@@ -421,8 +422,10 @@ class Value:
     def __copy__(self):
         return Value(**self.__dict__)
 
-    def __array__(self) -> np.ndarray:
-        return np.asarray(self.value)
+    def __array__(self, dtype=None, copy=None) -> np.ndarray:
+        if copy:
+            return np.array(self.value, dtype=dtype, copy=True)
+        return np.asarray(self.value, dtype=dtype)
 
     def __float__(self) -> float:
         return float(self.value)
@@ -446,7 +449,16 @@ class Value:
         return Value(**self.__dict__)
 
     def __deepcopy__(self, memo):
-        return Value(**copy.deepcopy(self.__dict__, memo))
+        # copies share the prior distribution instead of deep-copying it: a frozen
+        # scipy distribution takes about 0.1 ms to copy, and the model's
+        # parameters are copied on every evaluation of the objective function.
+        # `update_prior` replaces the prior rather than changing it in place, so
+        # copies do not see each other's updates.
+        new = type(self).__new__(type(self))
+        memo[id(self)] = new
+        for key, item in self.__dict__.items():
+            new.__dict__[key] = item if key == "prior" else copy.deepcopy(item, memo)
+        return new
 
     def copy(self):
         """
@@ -484,7 +496,10 @@ class Value:
             The probability of the parameter value under the prior distribution. If `log` is True, the log probability is returned.
         """
         if log:
-            return self.prior.logpdf(self.value)
+            density = fast_logpdf(self.prior, self.value)
+            if density is None:
+                density = self.prior.logpdf(self.value)
+            return density
         else:
             return self.prior.pdf(self.value)
 
@@ -524,8 +539,11 @@ class Value:
             updates["a"] = (self.lower - kwargs.get("mean")) / kwargs.get("sd")
             updates["b"] = (self.upper - kwargs.get("mean")) / kwargs.get("sd")
 
-        # now, update the prior object
-        self.prior.kwds.update(**updates)
+        # now, replace the prior object with an updated copy: copies of a Value
+        # share their prior, so changing it in place would change theirs too
+        prior = copy.deepcopy(self.prior)
+        prior.kwds.update(**updates)
+        self.prior = prior
 
 
 class LogParameters(Parameters):
@@ -577,7 +595,7 @@ class LogParameters(Parameters):
 
         """
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None and isinstance(value, Value):
                     value.value = self.__logit(value.value, value.lower, value.upper)
 
@@ -659,7 +677,7 @@ class LogParameters(Parameters):
         """
         lower, upper = [], []
         for _, value in self.__dict__.items():
-            if value is not None:
+            if isinstance(value, Value):
                 if value.prior is not None:
                     if value.lower == 0:
                         lower.append(

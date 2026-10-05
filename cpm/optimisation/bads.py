@@ -1,6 +1,12 @@
 from . import minimise
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import (
+    objective,
+    evaluate_fit,
+    fit_extras,
+    numerical_hessian,
+    prepare_data,
+)
 from ..core.data import detailed_pandas_compiler, decompose
 from ..generators import Simulator, Wrapper
 from ..core.parallel import detect_cores, execute_parallel
@@ -11,6 +17,52 @@ import numpy as np
 import pandas as pd
 import copy
 import multiprocess as mp
+
+
+## pybads (<=1.0.6) evaluates `~options["gp_fixed_mean"]` in `local_gp_fitting`,
+## which runs on every BADS fit. `~` on a Python `bool` inverts the underlying
+## int - `~False` is -1 and `~True` is -2, both truthy - instead of negating it,
+## and Python 3.16 removes the operator for `bool` altogether, which would make
+## every fit raise `TypeError`. Handing pybads the option as a NumPy boolean
+## sidesteps both: `~np.bool_` negates correctly, emits no deprecation warning
+## and is unaffected by the removal. `not np.bool_` is correct too, so this
+## keeps working once pybads fixes the operator.
+## See https://github.com/DevComPsy/cpm/issues/88
+BITWISE_INVERTED_OPTIONS = ("gp_fixed_mean",)
+
+
+def numpy_bool_options(kwargs):
+    """
+    Coerce the pybads options that pybads inverts with `~` into NumPy booleans.
+
+    Parameters
+    ----------
+    kwargs : dict
+        The keyword arguments forwarded to `pybads.BADS`.
+
+    Returns
+    -------
+    dict
+        A copy of `kwargs` whose `options` entry holds a NumPy boolean for every
+        option in `BITWISE_INVERTED_OPTIONS`.
+
+    Notes
+    -----
+    Options absent from `kwargs` are added at the default pybads documents for
+    them, `False`, because the fit has to carry a NumPy boolean even when the
+    caller never mentioned the option. This changes no results: the branch the
+    option selects writes to a value pybads discards.
+    """
+    options = kwargs.get("options")
+    if options is not None and not isinstance(options, dict):
+        return kwargs
+
+    kwargs = dict(kwargs)
+    options = dict(options) if options else {}
+    for key in BITWISE_INVERTED_OPTIONS:
+        options[key] = np.bool_(options.get(key, False))
+    kwargs["options"] = options
+    return kwargs
 
 
 class Bads:
@@ -26,7 +78,9 @@ class Bads:
     minimisation : function
         The loss function for the objective minimization function. Default is `minimise.LogLikelihood.continuous`. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
-        Whether to include the prior in the optimization. Default is `False`.
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -41,7 +95,21 @@ class Bads:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`pybads.bads`](https://acerbilab.github.io/pybads/api/classes/bads.html) documentation for what is supported.
+        Additional keyword arguments. See the `pybads.bads <https://acerbilab.github.io/pybads/api/classes/bads.html>`__ documentation for what is supported.
+
+    Attributes
+    ----------
+    number_of_starts : int
+        The number of starts requested, retained so that it is recoverable from
+        a constructed optimiser rather than only implied by
+        `initial_guess.shape[0]`.
+    initial_guess_supplied : bool
+        Whether `initial_guess` currently holds guesses supplied by the user
+        (`True`) or guesses drawn from the parameter bounds (`False`). This
+        distinguishes a fit started from a fixed point from one started from
+        random restarts, which is otherwise not recoverable after fitting.
+        `reset(initial_guess=True)` draws new random guesses and therefore sets
+        this attribute to `False`.
 
     Notes
     -----
@@ -51,7 +119,7 @@ class Bads:
 
     The BADS algorithm has been designed to handle both deterministic and noisy (stochastic) target functions. A deterministic target function is a target function that returns the same exact probability value for a given dataset and proposed set of parameter values. By contrast, a stochastic target function returns varying probability values for the same input (data and parameters).
     The vast majority of models use a deterministic target function. We recommend that users make this explicit to BADS, by providing an `options` dictionary that includes the key `uncertainty_handling` set to `False`.
-    Please see that [BADS options](https://acerbilab.github.io/pybads/api/options/bads_options.html) documentation for more details.
+    Please see that `BADS options <https://acerbilab.github.io/pybads/api/options/bads_options.html>`__ documentation for more details.
     """
 
     def __init__(
@@ -60,6 +128,7 @@ class Bads:
         data=None,
         minimisation=minimise.LogLikelihood.continuous,
         prior=False,
+        metrics=None,
         number_of_starts=1,
         initial_guess=None,
         parallel=False,
@@ -78,7 +147,8 @@ class Bads:
         self.display = display
         self.loss = minimisation
         self.prior = prior
-        self.kwargs = kwargs
+        self.metrics = metrics
+        self.kwargs = numpy_bool_options(kwargs)
 
         self.fit = []
         self.details = []
@@ -95,6 +165,8 @@ class Bads:
                 "The Bads algorithm is not compatible with the Simulator object."
             )
 
+        self.number_of_starts = number_of_starts
+        self.initial_guess_supplied = initial_guess is not None
         self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
@@ -116,8 +188,9 @@ class Bads:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):
@@ -130,6 +203,7 @@ class Bads:
                 "total_time",
                 "hessian",
             ]
+            keys += fit_extras(self.prior, self.metrics)
             if id is not None:
                 keys.append(id)
             out = {}
@@ -174,6 +248,14 @@ class Bads:
 
             hessian = numerical_hessian(func=f, params=result["x"] + 1e-3)
             result.update({"hessian": hessian})
+
+            if prior or self.metrics:
+                result.update(
+                    evaluate_fit(
+                        result["x"], model, observed, loss, prior, self.metrics
+                    )
+                )
+
             # if participant data contains identifiers, return the identifiers too
 
             result.update({"ppt": ppt})
@@ -258,10 +340,13 @@ class Bads:
         if initial_guess:
             self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
-                number_of_starts=self.initial_guess.shape[0],
+                number_of_starts=self.number_of_starts,
                 guesses=None,
                 shape=self.initial_guess.shape,
             )
+            # The guesses are now randomly generated, whatever was passed to
+            # __init__, so the flag must follow the array it describes.
+            self.initial_guess_supplied = False
         return None
 
     def export(self):

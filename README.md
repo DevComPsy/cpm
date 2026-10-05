@@ -1,8 +1,10 @@
 # cpm
 
-![the toolbox logo](./docs/img/cpm-logo.png)
+![the toolbox logo](https://raw.githubusercontent.com/DevComPsy/cpm/main/docs/_static/logo/cpm-logo-light.png)
 
 ![PyPI - Version](https://img.shields.io/pypi/v/cpm-toolbox)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/cpm-toolbox?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/cpm-toolbox)
+
 
 cpm is a fundamental package for Computational Psychiatry. It is designed to provide a set of tools for researchers and clinicians to analyze and model data in the field of Computational Psychiatry.
 
@@ -12,6 +14,12 @@ To install the package, run the following command:
 
 ```bash
 pip install cpm-toolbox
+```
+
+To fit the built-in models many times faster, also install the optional [numba](https://numba.pydata.org/) dependency, which compiles them; nothing else changes:
+
+```bash
+pip install "cpm-toolbox[numba]"
 ```
 
 Once the package is installed, you can import it in your Python code:
@@ -32,42 +40,38 @@ pip install git+https://github.com/DevComPsy/cpm.git
 
 The documentation can be viewed here: [link](https://devcompsy.github.io/cpm/).
 
+## Citing _cpm_
+
+If you are using _cpm_, we recommend citing the titular software paper [(Dome et al., 2026)](https://doi.org/10.1371/journal.pcbi.1014481):
+
+```
+@article{dome2026cpm,
+  title = {cpm: {{A}} Python Library for Theory-Driven Modelling in Computational Psychiatry},
+  author = {Dome, Lenard and Hezemans, Frank H. and Kadri, Kenza and Wagner, Ben J. and Webb, Andrew and Hauser, Tobias U.},
+  year = 2026,
+  journal = {PLOS Computational Biology},
+  volume = {22},
+  number = {7},
+  pages = {1--31},
+  publisher = {Public Library of Science},
+  doi = {10.1371/journal.pcbi.1014481}
+}
+```
+
 ### Development of documentation
 
-The documentation is written in docstrings and markdown files. The markdown files are located in the `docs` directory. The documentation is built using mkdocs.
-
-### Vieweing developmental versions of the documentation
-
-First, install all requirements:
+The documentation is built with [Sphinx](https://www.sphinx-doc.org/) from the docstrings in `cpm/` and the pages in `docs/`.
+To build it locally, run the following commands in the root directory:
 
 ```bash
-pip install -r docs/requirements.txt
+pip install -e ".[docs]"
+python -m sphinx -b html docs docs/_build/html
 ```
 
-In the root directory, run the following commands:
+Then open `docs/_build/html/index.html` in a browser.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to write documentation and tutorials, and for a live preview while you write.
 
-```bash
-mkdocs build
-mkdocs serve
-```
-
-Then open a browser and go to <http://127.0.0.1:8000/>
-
-Depending on the version you have, you might need to add Jupyter to PATH, see this [link](https://github.com/jupyter/nbconvert/issues/1773#issuecomment-1283852572) for more information.
-
-### Building the documentation
-
-To build the documentation, run the following command in the root directory:
-
-```bash
-mkdocs build
-```
-
-To deploy the documentation to GitHub pages, run the following command in the root directory:
-
-```bash
-mkdocs gh-deploy
-```
+The documentation is published to GitHub Pages by the `docs` GitHub Actions workflow whenever `main` changes.
 
 # Development process
 
@@ -114,7 +118,7 @@ twine upload dist/*
 
 * `black linter` for python code formatting
 * `numpy`-style docstrings for documentation
-* `mkdocs` for documentation generation
+* `sphinx` for documentation generation
 * `pytest` for testing
 
 ## TODO

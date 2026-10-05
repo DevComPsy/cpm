@@ -1,5 +1,11 @@
 from ..core.generators import generate_guesses
-from ..core.optimisers import objective, numerical_hessian, prepare_data
+from ..core.optimisers import (
+    objective,
+    evaluate_fit,
+    fit_extras,
+    numerical_hessian,
+    prepare_data,
+)
 from ..core.data import detailed_pandas_compiler, decompose
 from ..core.parallel import detect_cores, execute_parallel
 from ..generators import Simulator, Wrapper
@@ -10,8 +16,56 @@ import numpy as np
 import pandas as pd
 import multiprocess as mp
 import copy
+import inspect
+import warnings
 
 __all__ = ["Fmin", "FminBound"]
+
+## SciPy 1.18.0 removed the `disp` and `iprint` options of the L-BFGS-B solver,
+## deprecated since 1.15.0, so they can only be forwarded to older SciPy.
+LBFGSB_VERBOSITY_SUPPORTED = "disp" in inspect.signature(fmin_l_bfgs_b).parameters
+
+
+def lbfgsb_options(display=False, **kwargs):
+    """
+    Assemble the keyword arguments for `scipy.optimize.fmin_l_bfgs_b`, keeping the solver's verbosity options only where the installed SciPy still accepts them.
+
+    Parameters
+    ----------
+    display : bool
+        Whether the solver should report its own progress. Ignored on SciPy 1.18.0 and later.
+    **kwargs : dict
+        The remaining keyword arguments forwarded to the solver.
+
+    Returns
+    -------
+    dict
+        The keyword arguments to forward to `scipy.optimize.fmin_l_bfgs_b`.
+
+    Notes
+    -----
+    `disp` is only added when `display` is truthy, so that the default case does not trip the deprecation warning SciPy 1.15.0 to 1.17.x emits for these options.
+    """
+    ignored = [key for key in ("disp", "iprint") if key in kwargs]
+    if display:
+        ignored.append("disp")
+
+    if LBFGSB_VERBOSITY_SUPPORTED:
+        if display:
+            kwargs["disp"] = display
+        return kwargs
+
+    for key in ("disp", "iprint"):
+        kwargs.pop(key, None)
+    if ignored:
+        warnings.warn(
+            f"The installed SciPy no longer supports the {', '.join(sorted(set(ignored)))} "
+            "option(s) of the L-BFGS-B solver, removed in SciPy 1.18.0, so they are ignored. "
+            "`display` still reports the progress of the multi-start loop.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+    return kwargs
 
 
 class Fmin:
@@ -27,7 +81,9 @@ class Fmin:
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
-        Whether to include the prior in the optimization. Default is `False`.
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -42,8 +98,21 @@ class Fmin:
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.fmin`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin.html) documentation for what is supported.
+        Additional keyword arguments. See the :func:`scipy.optimize.fmin` documentation for what is supported.
 
+    Attributes
+    ----------
+    number_of_starts : int
+        The number of starts requested, retained so that it is recoverable from
+        a constructed optimiser rather than only implied by
+        `initial_guess.shape[0]`.
+    initial_guess_supplied : bool
+        Whether `initial_guess` currently holds guesses supplied by the user
+        (`True`) or guesses drawn from the parameter bounds (`False`). This
+        distinguishes a fit started from a fixed point from one started from
+        random restarts, which is otherwise not recoverable after fitting.
+        `reset(initial_guess=True)` draws new random guesses and therefore sets
+        this attribute to `False`.
 
     Notes
     -----
@@ -62,6 +131,7 @@ class Fmin:
         parallel=False,
         libraries=["numpy", "pandas"],
         prior=False,
+        metrics=None,
         number_of_starts=1,
         ppt_identifier=None,
         display=False,
@@ -76,9 +146,9 @@ class Fmin:
 
         self.loss = minimisation
         self.prior = prior
+        self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
-        self.prior = prior
 
         self.fit = []
         self.details = []
@@ -95,6 +165,8 @@ class Fmin:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
+        self.number_of_starts = number_of_starts
+        self.initial_guess_supplied = initial_guess is not None
         self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
@@ -115,12 +187,14 @@ class Fmin:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):
             keys = ["xopt", "fopt", "iter", "funcalls", "warnflag", "hessian"]
+            keys += fit_extras(self.prior, self.metrics)
             if id is not None:
                 keys.append(id)
             out = {}
@@ -153,6 +227,14 @@ class Fmin:
 
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
             result = (*result, hessian)
+
+            if prior or self.metrics:
+                result = (
+                    *result,
+                    *evaluate_fit(
+                        result[0], model, observed, loss, prior, self.metrics
+                    ).values(),
+                )
 
             # if participant data contains identifiers, return the identifiers too
             result = (*result, ppt)
@@ -235,10 +317,13 @@ class Fmin:
         if initial_guess:
             self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
-                number_of_starts=self.initial_guess.shape[0],
+                number_of_starts=self.number_of_starts,
                 guesses=None,
                 shape=self.initial_guess.shape,
             )
+            # The guesses are now randomly generated, whatever was passed to
+            # __init__, so the flag must follow the array it describes.
+            self.initial_guess_supplied = False
         return None
 
     def export(self):
@@ -268,7 +353,9 @@ class FminBound:
     minimisation : function
         The loss function for the objective minimization function. See the `minimise` module for more information. User-defined loss functions are also supported.
     prior: bool
-        Whether to include the prior in the optimization. Default is `False`.
+        Whether to include the prior in the optimization. Default is `False`. When `True`, each entry of `fit` additionally records `log_likelihood` and `log_prior`, the summed log likelihood and the summed log prior density at the optimised parameter values, because `fun` is then the negative summed log posterior density and cannot be split apart after the fact.
+    metrics : dict, iterable, callable or None
+        Goodness-of-fit metrics to evaluate at the optimised parameter values and record alongside the fit, so that they reach `export()` too. Supply a mapping of output names to callables, an iterable of callables named after themselves, or a single callable. Each is called with keyword arguments only - `likelihood` and `log_likelihood` (both the summed log likelihood), `log_prior`, `predicted`, `observed`, `n`, `k` and `parameters` - so a metric takes what it needs and absorbs the rest in `**kwargs`, as `cpm.optimisation.compare.PenalisedLikelihoods` and the loss functions in `cpm.optimisation.minimise` already do. Default is `None`.
     number_of_starts : int
         The number of random initialisations for the optimization. Default is `1`.
     initial_guess : list or array-like
@@ -276,15 +363,28 @@ class FminBound:
     parallel : bool
         Whether to use parallel processing. Default is `False`.
     cl : int
-        The number of cores to use for parallel processing. Default is `None`. If `None`, the number of cores is set to 2.
+        The number of cores to use for parallel processing. Default is `None`.
         If `cl` is set to `None` and `parallel` is set to `True`, the number of cores is set to the number of cores available on the machine.
     libraries : list, optional
         The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`.
     ppt_identifier : str
         The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
     **kwargs : dict
-        Additional keyword arguments. See the [`scipy.optimize.fmin_l_bfgs_b`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html) documentation for what is supported.
+        Additional keyword arguments. See the :func:`scipy.optimize.fmin_l_bfgs_b` documentation for what is supported. The solver's own `disp` and `iprint` options, which `display` also sets, were removed in SciPy 1.18.0 and are ignored there.
 
+    Attributes
+    ----------
+    number_of_starts : int
+        The number of starts requested, retained so that it is recoverable from
+        a constructed optimiser rather than only implied by
+        `initial_guess.shape[0]`.
+    initial_guess_supplied : bool
+        Whether `initial_guess` currently holds guesses supplied by the user
+        (`True`) or guesses drawn from the parameter bounds (`False`). This
+        distinguishes a fit started from a fixed point from one started from
+        random restarts, which is otherwise not recoverable after fitting.
+        `reset(initial_guess=True)` draws new random guesses and therefore sets
+        this attribute to `False`.
 
     Notes
     -----
@@ -304,6 +404,7 @@ class FminBound:
         parallel=False,
         libraries=["numpy", "pandas"],
         prior=False,
+        metrics=None,
         ppt_identifier=None,
         display=False,
         **kwargs,
@@ -317,9 +418,9 @@ class FminBound:
 
         self.loss = minimisation
         self.prior = prior
+        self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
-        self.prior = prior
 
         self.fit = []
         self.details = []
@@ -336,6 +437,8 @@ class FminBound:
                 "The Fmin algorithm is not compatible with the Simulator object."
             )
 
+        self.number_of_starts = number_of_starts
+        self.initial_guess_supplied = initial_guess is not None
         self.initial_guess = generate_guesses(
             bounds=self.model.parameters.bounds(),
             number_of_starts=number_of_starts,
@@ -356,12 +459,14 @@ class FminBound:
         """
         Performs the optimization process.
 
-        Returns:
-        - None
+        Returns
+        -------
+        None
         """
 
         def __unpack(x, id=None):
             keys = ["x", "f", "grad", "task", "funcalls", "nit", "warnflag", "hessian"]
+            keys += fit_extras(self.prior, self.metrics)
             if id is not None:
                 keys.append(id)
             out = {}
@@ -376,6 +481,7 @@ class FminBound:
         loss = self.loss
         model = self.model
         prior = self.prior
+        options = lbfgsb_options(display=self.display, **self.kwargs)
 
         def __task(participant, **args):
 
@@ -392,8 +498,7 @@ class FminBound:
                 x0=self.__current_guess__,
                 bounds=bounds,
                 args=(model, observed, loss, prior),
-                disp=self.display,
-                **self.kwargs,
+                **options,
             )
 
             def f(x):
@@ -402,6 +507,14 @@ class FminBound:
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
 
             result = (*result[0:2], *tuple(list(result[2].values())), hessian)
+
+            if prior or self.metrics:
+                result = (
+                    *result,
+                    *evaluate_fit(
+                        result[0], model, observed, loss, prior, self.metrics
+                    ).values(),
+                )
 
             result = (*result, ppt)
             return result
@@ -479,10 +592,13 @@ class FminBound:
         if initial_guess:
             self.initial_guess = generate_guesses(
                 bounds=self.model.parameters.bounds(),
-                number_of_starts=self.initial_guess.shape[0],
+                number_of_starts=self.number_of_starts,
                 guesses=None,
                 shape=self.initial_guess.shape,
             )
+            # The guesses are now randomly generated, whatever was passed to
+            # __init__, so the flag must follow the array it describes.
+            self.initial_guess_supplied = False
         return None
 
     def export(self):

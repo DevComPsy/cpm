@@ -1,3 +1,4 @@
+import copy
 import pytest
 import pandas as pd
 import numpy as np
@@ -216,6 +217,36 @@ def test_log_parameters_bounds():
     lower, upper = params.bounds()
     assert np.isclose(lower[0], -23.0258, atol=1e-4)  # logit(1e-10)
     assert np.isclose(upper[0], 23.0258, atol=1e-4)  # logit(1 - 1e-10)
+
+
+def test_value_uniform_prior_support():
+    v = Value(value=3, lower=2, upper=5, prior="uniform")
+    assert v.prior.support() == (2.0, 5.0)
+    samples = v.prior.rvs(size=1000)
+    assert np.all((samples >= 2) & (samples <= 5))
+
+
+def test_parameters_sample_skips_none():
+    params = Parameters(
+        a=Value(value=0.5, lower=0, upper=1, prior="norm", args={"mean": 0.5, "sd": 0.1}),
+        b=None,
+    )
+    samples = params.sample(2)
+    assert len(samples) == 2
+    assert all(list(s.keys()) == ["a"] for s in samples)
+
+
+def test_parameters_callable_is_instance_scoped():
+    p1 = Parameters(
+        f=lambda x: x * 2,
+        a=Value(value=0.5, lower=0, upper=1, prior="norm", args={"mean": 0.5, "sd": 0.1}),
+    )
+    p2 = Parameters(a=0.9)
+    assert p1.f(2) == 4
+    assert not hasattr(p2, "f"), "Callable leaked onto another Parameters instance"
+    assert p1.free() == ["a"]
+    assert np.isfinite(p1.PDF(log=True))
+    assert copy.deepcopy(p1).f(3) == 6
 
 
 if __name__ == "__main__":

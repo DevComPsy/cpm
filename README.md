@@ -120,15 +120,3 @@ twine upload dist/*
 * `numpy`-style docstrings for documentation
 * `sphinx` for documentation generation
 * `pytest` for testing
-
-## TODO
-
-* [ ] MBMF parameterisation should use toolbox functions
-* [ ] MBMF should be part of application (use RWRL template)
-* [ ] Create example dataset for MBMF (goblin heist) -- cpm.datasets.model_based_model_free
-* [ ] Example jupyter notebook for MBMF: explaining model with references, and fitting it to data, plotting parameters
-* [ ] (least important for now) Parameter recovery for MBMF
-  * [ ] generating data with MBMF
-  * [ ] save parameters used to generate data
-  * [ ] fitting MBMF to generated data
-  * [ ] plotting parameters (pearson correlation, etc.)

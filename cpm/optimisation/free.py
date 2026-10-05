@@ -4,6 +4,7 @@ from ..core.optimisers import (
     evaluate_fit,
     fit_extras,
     numerical_hessian,
+    group_identifier,
     prepare_data,
 )
 from ..core.data import detailed_pandas_compiler, decompose
@@ -46,7 +47,7 @@ class Minimize:
     libraries : list, optional
         The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`
     ppt_identifier : str
-        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
+        The column (or the key in the participant data dictionaries) that contains the participant identifier, returned in the optimization details. Required if `data` is a pd.DataFrame. If `data` is a pd.DataFrameGroupBy grouped by a single column, such as `data.groupby("ppt")`, it defaults to the name of that column. Default is `None`.
     **kwargs : dict
         Additional keyword arguments. See the :func:`scipy.optimize.minimize` documentation for what is supported.
 
@@ -90,7 +91,7 @@ class Minimize:
     ):
         self.model = copy.deepcopy(model)
         self.data = data
-        self.ppt_identifier = ppt_identifier
+        self.ppt_identifier = group_identifier(data, ppt_identifier)
         self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
             data, self.ppt_identifier
         )

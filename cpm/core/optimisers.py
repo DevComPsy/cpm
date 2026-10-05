@@ -9,6 +9,7 @@ __all__ = [
     "normalise_metrics",
     "fit_extras",
     "evaluate_fit",
+    "group_identifier",
     "prepare_data",
     "numerical_hessian",
 ]
@@ -281,6 +282,34 @@ def evaluate_fit(pars, function, data, loss, prior=False, metrics=None):
     return output
 
 
+def group_identifier(data, identifier):
+    """
+    The name of the participant identifier, taken from the grouping of the data if it is not given.
+
+    Parameters
+    ----------
+    data : pd.DataFrame, pd.DataFrameGroupBy, list
+        The data that is used to fit the model.
+    identifier : str or None
+        The name of the participant identifier given by the user.
+
+    Returns
+    -------
+    str or None
+        `identifier` if it is given. Otherwise, if `data` is grouped by a single
+        named column, such as ``data.groupby("ppt")``, the name of that column, and
+        None in all other cases.
+    """
+    if identifier is not None or not isinstance(data, pd.api.typing.DataFrameGroupBy):
+        return identifier
+    keys = data.keys
+    if isinstance(keys, list) and len(keys) == 1:
+        keys = keys[0]
+    if isinstance(keys, pd.Series):
+        keys = keys.name
+    return keys if isinstance(keys, str) else None
+
+
 def prepare_data(data, identifier):
     """
     The function extracts variables from data and converts the data to a right structure before fitting.
@@ -291,23 +320,40 @@ def prepare_data(data, identifier):
         The `data` parameter is the data that is used to fit the model.
     identifier : str
         The `identifier` parameter is the column name that is used to group the data.
+        It is required if `data` is a pd.DataFrame.
+
     Returns
     -------
         The data, participants, groups and __pandas__ are being returned.
+
+    Raises
+    ------
+    ValueError
+        If `data` is a pd.DataFrame and `identifier` is None.
+    TypeError
+        If `data` is none of the supported types.
     """
 
+    if isinstance(data, pd.DataFrame):
+        if identifier is None:
+            raise ValueError(
+                "The data is a pandas DataFrame, but no ppt_identifier was given. "
+                "Pass the name of the column that identifies the participants as ppt_identifier, "
+                "or group the data yourself, for example data.groupby('ppt')."
+            )
+        data = data.groupby(identifier)
     if isinstance(data, pd.api.typing.DataFrameGroupBy):
         groups = list(data.groups.keys())
         participants = data.get_group(groups[0])
         __pandas__ = True
-    if isinstance(data, list):
+    elif isinstance(data, list):
         participants = data[0]
         groups = None
         __pandas__ = False
-    if isinstance(data, pd.DataFrame) and identifier is not None:
-        data = data.groupby(identifier)
-        groups = list(data.groups.keys())
-        participants = data.get_group(groups[0])
-        __pandas__ = True
+    else:
+        raise TypeError(
+            "The data must be a pandas DataFrame, a pandas DataFrameGroupBy or a list of dictionaries, "
+            f"not {type(data).__name__}."
+        )
 
     return data, participants, groups, __pandas__

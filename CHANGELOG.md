@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed the optimisers and `cpm.applications.signal_detection.EstimatorMetaD` raising `UnboundLocalError` for a pandas DataFrame without `ppt_identifier`; they now raise a `ValueError` that explains what to pass, and take `ppt_identifier` from the grouping of data grouped by a single column, such as `data.groupby("ppt")`, so that the fits record the participants
 - Fixed `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes` discarding the estimated population priors after the first evaluation of each fit; hierarchical results change
 - Fixed the random starting priors of later chains of `EmpiricalBayes` and `VariationalBayes` being length-one arrays
 - Fixed `numpy.random.seed` not reproducing the later chains of `EmpiricalBayes` and `VariationalBayes`, whose starting priors now also respect the lower bound and work with infinite bounds

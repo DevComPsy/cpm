@@ -330,6 +330,8 @@ def prepare_data(data, identifier):
     ------
     ValueError
         If `data` is a pd.DataFrame and `identifier` is None.
+    KeyError
+        If `data` is a pd.DataFrame without a column named `identifier`.
     TypeError
         If `data` is none of the supported types.
     """
@@ -340,6 +342,11 @@ def prepare_data(data, identifier):
                 "The data is a pandas DataFrame, but no ppt_identifier was given. "
                 "Pass the name of the column that identifies the participants as ppt_identifier, "
                 "or group the data yourself, for example data.groupby('ppt')."
+            )
+        if identifier not in data.columns:
+            raise KeyError(
+                f"The ppt_identifier {identifier!r} is not a column of the data, so the data cannot be grouped by participant. "
+                f"The columns are {list(data.columns)}."
             )
         data = data.groupby(identifier)
     if isinstance(data, pd.api.typing.DataFrameGroupBy):

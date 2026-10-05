@@ -54,6 +54,17 @@ def test_prepare_data_needs_an_identifier_for_a_dataframe():
         prepare_data(make_data(), None)
 
 
+def test_prepare_data_needs_the_identifier_column():
+    with pytest.raises(KeyError, match="'subject' is not a column of the data"):
+        prepare_data(make_data(), "subject")
+
+
+def test_prepare_data_groups_a_dataframe_by_the_identifier():
+    data, participants, groups, pandas = prepare_data(make_data(), "ppt")
+    assert pandas and groups == [1, 2]
+    assert list(participants["ppt"]) == [1, 1, 1]
+
+
 def test_prepare_data_rejects_other_types():
     with pytest.raises(TypeError, match="ndarray"):
         prepare_data(np.zeros(3), None)

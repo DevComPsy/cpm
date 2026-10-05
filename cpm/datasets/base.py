@@ -122,12 +122,12 @@ def load_risky_choices():
 
 def load_model_based_model_free():
     """
-    Load the model-based/model-free dataset from a CSV file.
+    Load the two-step task dataset from BrainExplorer.
 
     Returns
     -------
     pd.DataFrame
-        A pandas DataFrame containing the model-based/model-free data.
+        A pandas DataFrame with one row per trial and participant.
 
     Examples
     --------
@@ -136,20 +136,37 @@ def load_model_based_model_free():
 
     Notes
     -----
-    The dataset will include the following columns:
+    The data are from 93 participants who played the two-step task in the BrainExplorer app (https://brainexplorer.net/), the game called "*Goblin Heist*", in up to two sessions of 80 trials.
+    On each trial, participants choose one of two spaceships, which takes them to one of two planets, where they receive a reward.
+    Like the task of Kool et al. (2016), on which it is based, it has two starting states with two spaceships each, deterministic transitions, and a stake of 1 or 5 on each trial.
+    The task uses the original coding, so the columns need converting before they can be passed to :class:`~cpm.applications.reinforcement_learning.HybridMBMF`.
 
-        - userID: unique identifier for each participant
-        - stimuli: which planets presented in stage of the trial
-        - s: the state of the trial
-        - rews: the rewards for each stimulus / planet
-        - choice: the choice made by the participant
-        - stake: the stake of the trial (1 or 5)
-        - points: the points received in the trial
+    The dataset includes the following columns:
 
+    - ``userID``: the participant number.
+    - ``trial``: the trial number.
+    - ``block``: the block number.
+    - ``stimuli``: the two spaceships shown on the trial, numbered 1 to 4 across both starting states, in the order they were displayed, such as ``"[1, 2]"``.
+    - ``s``: the starting state and the planet reached, such as ``"[1, 2]"``.
+    - ``rews``: the reward values of the two planets recorded by the game on the trial, from 0 to 100, such as ``"[40, 50]"``. They are not always the reward received; that is ``points``.
+    - ``choice``: the chosen spaceship, numbered 1 to 4.
+    - ``stake``: the stake of the trial (1 or 5).
+    - ``points``: the reward received, from 0 to 9.
+    - ``points_real``: the points shown to the participant, ``points`` times 10 times ``stake``.
+    - ``planet``: the planet reached (1 or 2).
+    - ``theor_best_choice``: the spaceship that leads to the planet with the higher reward.
+    - ``RT``: the response time of the choice, in ms.
+
+    See Also
+    --------
+    cpm.applications.reinforcement_learning.HybridMBMF : hybrid model-based / model-free reinforcement learning model of the two-step task.
+    load_two_step_data : the two-step task data of Smid et al. (2022).
+
+    References
+    ----------
+    Kool, W., Cushman, F. A., & Gershman, S. J. (2016). When does model-based control pay off? PLoS Computational Biology, 12(8), e1005090.
     """
     return load_csv("model_based_model_free.csv")
-
-
 
 
 def load_metacognition_data():

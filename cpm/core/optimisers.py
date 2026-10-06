@@ -13,6 +13,7 @@ __all__ = [
     "prepare_data",
     "numerical_hessian",
     "finite_difference_hessian",
+    "check_hessian",
 ]
 
 
@@ -33,6 +34,15 @@ def numerical_hessian(func=None, params=None, hessian=None):
     hesse_func = nd.Hessian(func, step=1e-4, method="forward")
     computed_hessian = hesse_func(params)
     return computed_hessian
+
+
+def check_hessian(hessian):
+    """Raise a ValueError unless `hessian` is one of the optimisers' `hessian` options."""
+    if hessian not in ("numdifftools", "finite_differences"):
+        raise ValueError(
+            f'hessian must be "numdifftools" or "finite_differences", not {hessian!r}.'
+        )
+    return hessian
 
 
 def finite_difference_hessian(func, x, lower, upper, step=1e-4):

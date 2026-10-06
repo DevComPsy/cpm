@@ -8,7 +8,7 @@ from scipy.stats import t as students_t
 
 from ..generators import Parameters
 from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
-from ._chains import starting_priors
+from ._chains import check_start, start_from_prior_locations, starting_priors
 
 
 class VariationalBayes:
@@ -33,6 +33,8 @@ class VariationalBayes:
         A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.
     convergence : str, optional
         The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.
+    start : {"random", "prior_mean"}, optional
+        Where the participant-wise fits start on every iteration. With "random", every start is drawn at random within the bounds of the parameters. With "prior_mean", the first start is the mean (location) of the current prior of each parameter, clipped into its bounds, as in the HBI implementation of Piray et al. (2019), and the others are drawn at random. Default is "random".
 
     Notes
     -----
@@ -98,8 +100,10 @@ class VariationalBayes:
         hyperpriors=None,
         convergence="parameters",
         quiet=False,
+        start="random",
         **kwargs,
     ):
+        self.start = check_start(start)
         # write input arguments to self
         self.optimiser = copy.deepcopy(optimiser)
         self.objective = objective
@@ -203,6 +207,8 @@ class VariationalBayes:
 
         # delete any pre-existing optimisation output / parameter estimates
         self.optimiser.reset()
+        if self.start == "prior_mean":
+            start_from_prior_locations(self.optimiser)
 
         # run the optimisation
         self.optimiser.optimise()

@@ -1,6 +1,30 @@
-"""The random starting priors of the chains of the hierarchical methods."""
+"""The random starting priors of the chains of the hierarchical methods, and where their participant-wise fits start."""
 
 import numpy as np
+
+
+def check_start(start):
+    if start not in ("random", "prior_mean"):
+        raise ValueError(f'start must be "random" or "prior_mean", not {start!r}.')
+    return start
+
+
+def start_from_prior_locations(optimiser):
+    """
+    Replace the first start of `optimiser` with the location of the current prior of each free parameter, clipped into its bounds.
+
+    The other starts are the random guesses that `optimiser.reset()` drew, so the
+    same random numbers are drawn as with random starts only.
+
+    Parameters
+    ----------
+    optimiser : object
+        An optimiser of `cpm.optimisation`, after `reset()`.
+    """
+    parameters = optimiser.model.parameters
+    locations = [getattr(parameters, name).prior.kwds["loc"] for name in parameters.free()]
+    lower, upper = parameters.bounds()
+    optimiser.initial_guess[0] = np.clip(locations, lower, upper)
 
 
 def starting_priors(names, bounds, priors):

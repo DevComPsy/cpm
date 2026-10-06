@@ -96,7 +96,7 @@ def load(path):
     return data
 
 
-def setup(data, iterations, **options):
+def setup(data, iterations, start="random", **options):
     """`VariationalBayes` with the settings of the speed comparison, forced to run `iterations` iterations; `options` go to `FminBound`."""
     first = data[data.ppt == data.ppt.iloc[0]]
     model = RLRW(data=first, dimensions=STIMULI, parameters_settings=[[0.5, *BOUNDS["alpha"]], [2.0, *BOUNDS["temperature"]]])
@@ -121,6 +121,7 @@ def setup(data, iterations, **options):
         tolerance_param=0.0,
         hyperpriors={"a0": np.array([p["mean"] for p in STARTING_PRIOR.values()]), "b": 1, "v": 0.5, "s": np.repeat(0.01, 2)},
         quiet=True,
+        start=start,
     )
 
 
@@ -200,13 +201,14 @@ def main():
     parser.add_argument("--iterations", type=int, default=5)
     parser.add_argument("--label", default="hierarchical-profile")
     parser.add_argument("--hessian", default="numdifftools", help="the `hessian` option of FminBound")
+    parser.add_argument("--start", default="random", help="the `start` option of VariationalBayes")
     args = parser.parse_args()
 
     warnings.simplefilter("ignore")
     np.seterr(all="ignore")
     data = load(args.data) if args.data else simulate()
     participants, iterations = data.ppt.nunique(), args.iterations
-    options = {"hessian": args.hessian}
+    options = {"hessian": args.hessian, "start": args.start}
     print(f"cpm {cpm.__version__}: {participants} participants, {data.trial.max()} trials, {iterations} iterations, 2 starts, {options}")
 
     # the compiled model and everything else that loads on the first call

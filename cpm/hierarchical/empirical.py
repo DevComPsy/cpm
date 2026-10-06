@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
-from ._chains import starting_priors
+from ._chains import check_start, start_from_prior_locations, starting_priors
 
 
 class EmpiricalBayes:
@@ -23,6 +23,8 @@ class EmpiricalBayes:
         The number of random parameter initialisations. Default is 4. The first chain starts from the priors of the model, and every later chain from priors drawn at random within the bounds of the parameters; `numpy.random.seed` makes them reproducible.
     quiet : bool, optional
         Whether to suppress the output. Default is False.
+    start : {"random", "prior_mean"}, optional
+        Where the participant-wise fits start on every iteration. With "random", every start is drawn at random within the bounds of the parameters. With "prior_mean", the first start is the mean (location) of the current prior of each parameter, clipped into its bounds, as the cbm toolbox does, and the others are drawn at random. Default is "random".
 
     Notes
     -----
@@ -89,8 +91,10 @@ class EmpiricalBayes:
         tolerance=1e-6,
         chain=4,
         quiet=False,
+        start="random",
         **kwargs,
     ):
+        self.start = check_start(start)
         self.function = copy.deepcopy(optimiser.model)
         self.optimiser = copy.deepcopy(optimiser)
         # bounds here should include mean and std for all parameters
@@ -219,6 +223,8 @@ class EmpiricalBayes:
         for iteration in range(self.iteration):
 
             self.optimiser.reset()
+            if self.start == "prior_mean":
+                start_from_prior_locations(self.optimiser)
 
             # perform participant-wise optimisation, extracting MAP parameter estimates,
             # the Hessian matrix of the target function evaluated at the MAP parameter estimates,

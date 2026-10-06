@@ -251,3 +251,12 @@ def test_parameters_callable_is_instance_scoped():
 
 if __name__ == "__main__":
     pytest.main()
+
+
+def test_parameters_pdf_outside_the_support_is_impossible():
+    # a value outside the support must get the lowest log prior, never a value near 0 (probability 1)
+    params = Parameters(
+        a=Value(value=2.0, lower=0, upper=1, prior="truncated_normal", args={"mean": 0.5, "sd": 0.25})
+    )
+    assert params.PDF(log=True) == np.finfo(np.float64).min
+    assert params.PDF(log=False) == np.finfo(np.float64).tiny

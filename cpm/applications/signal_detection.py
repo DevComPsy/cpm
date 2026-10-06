@@ -11,7 +11,7 @@ from scipy.optimize import SR1, Bounds, LinearConstraint, minimize
 from scipy.stats import norm, multivariate_normal
 from scipy.special import ndtr
 
-from cpm.core.optimisers import numerical_hessian, prepare_data
+from cpm.core.optimisers import group_identifier, numerical_hessian, prepare_data
 from cpm.core.data import detailed_pandas_compiler, decompose
 from cpm.core.parallel import detect_cores, execute_parallel
 from cpm.utils.metad import count_trials, bin_ratings
@@ -428,7 +428,7 @@ class EstimatorMetaD:
             * 3 : display progress during iterations (more complete report).
 
     ppt_identifier : str, optional
-        Identifier for participants in the data. If None, the default identifier will be used.
+        The column that identifies the participants in the data. Required if `data` is a pandas.DataFrame. If `data` is grouped by a single column, such as `data.groupby("ppt")`, it defaults to the name of that column.
     ignore_invalid : bool, default False
         If True, invalid confidence ratings will be ignored during binning. If False, an error will be raised if invalid ratings are found. We recommend setting this to False (Default).
     **kwargs : additional keyword arguments
@@ -464,7 +464,7 @@ class EstimatorMetaD:
     ):
         self.data = data
         self.bins = bins
-        self.ppt_identifier = ppt_identifier
+        self.ppt_identifier = group_identifier(data, ppt_identifier)
         self.data, self.participants, self.groups, self.__pandas__ = prepare_data(
             data, self.ppt_identifier
         )

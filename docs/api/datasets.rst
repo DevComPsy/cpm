@@ -12,6 +12,7 @@ and examples.
 
    load_bandit_data
    load_two_step_data
+   load_model_based_model_free
    load_blocking_data
    load_risky_choices
    load_metacognition_data

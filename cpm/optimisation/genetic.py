@@ -8,7 +8,7 @@ import multiprocess as mp
 from . import minimise
 from ..core.data import decompose, detailed_pandas_compiler, extract_params_from_fit
 from ..generators import Simulator, Wrapper
-from ..core.optimisers import objective, evaluate_fit, fit_extras, prepare_data
+from ..core.optimisers import objective, evaluate_fit, fit_extras, group_identifier, prepare_data
 from ..core.parallel import detect_cores, execute_parallel
 
 
@@ -36,7 +36,7 @@ class DifferentialEvolution:
     libraries : list, optional
         The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`
     ppt_identifier : str
-        The key in the participant data dictionary that contains the participant identifier. Default is `None`. Returned in the optimization details.
+        The column (or the key in the participant data dictionaries) that contains the participant identifier, returned in the optimization details. Required if `data` is a pd.DataFrame. If `data` is a pd.DataFrameGroupBy grouped by a single column, such as `data.groupby("ppt")`, it defaults to the name of that column. Default is `None`.
     **kwargs : dict
         Additional keyword arguments. See the :func:`scipy.optimize.differential_evolution` documentation for what is supported.
 
@@ -72,7 +72,7 @@ class DifferentialEvolution:
         self.parameters = []
 
         self.display = display
-        self.ppt_identifier = ppt_identifier
+        self.ppt_identifier = group_identifier(data, ppt_identifier)
         self.prior = prior
         self.metrics = metrics
 

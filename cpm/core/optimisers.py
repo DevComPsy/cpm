@@ -12,6 +12,7 @@ __all__ = [
     "group_identifier",
     "prepare_data",
     "numerical_hessian",
+    "finite_difference_hessian",
 ]
 
 
@@ -32,6 +33,62 @@ def numerical_hessian(func=None, params=None, hessian=None):
     hesse_func = nd.Hessian(func, step=1e-4, method="forward")
     computed_hessian = hesse_func(params)
     return computed_hessian
+
+
+def finite_difference_hessian(func, x, lower, upper, step=1e-4):
+    """
+    The Hessian of `func` at `x` by finite differences that stay within the bounds.
+
+    Parameters
+    ----------
+    func : callable
+        The function, of a 1-D array.
+    x : numpy.ndarray
+        The point, within the bounds, normally the optimum.
+    lower, upper : numpy.ndarray
+        The bounds of each element of `x`, possibly infinite.
+    step : float, optional
+        The step, relative to ``max(1, |x|)``. Default is 1e-4.
+
+    Returns
+    -------
+    numpy.ndarray
+        The Hessian matrix.
+
+    Notes
+    -----
+    If every parameter is at least one step from its bounds, the Hessian is
+    computed with second-order differences (Abramowitz and Stegun, 1972,
+    equations 25.3.23 and 25.3.27), which take d² + d + 1 evaluations for d
+    parameters. Otherwise, forward differences step away from the bounds, which
+    take d(d + 1) / 2 + d + 1 evaluations and are first-order accurate.
+    """
+    x = np.asarray(x, dtype=float)
+    d = x.size
+    h = step * np.maximum(1.0, np.abs(x))
+    f0 = func(x)
+    hessian = np.empty((d, d))
+    if np.all((x - h >= lower) & (x + h <= upper)):
+        steps = np.diag(h)
+        plus = [func(x + steps[i]) for i in range(d)]
+        minus = [func(x - steps[i]) for i in range(d)]
+        for i in range(d):
+            hessian[i, i] = (plus[i] - 2 * f0 + minus[i]) / h[i] ** 2
+            for j in range(i + 1, d):
+                both = func(x + steps[i] + steps[j]) + func(x - steps[i] - steps[j])
+                hessian[i, j] = hessian[j, i] = (
+                    both - plus[i] - plus[j] + 2 * f0 - minus[i] - minus[j]
+                ) / (2 * h[i] * h[j])
+        return hessian
+    h = np.where(x + 2 * h > upper, -h, h)
+    steps = np.diag(h)
+    single = [func(x + steps[i]) for i in range(d)]
+    for i in range(d):
+        for j in range(i, d):
+            hessian[i, j] = hessian[j, i] = (
+                func(x + steps[i] + steps[j]) - single[i] - single[j] + f0
+            ) / (h[i] * h[j])
+    return hessian
 
 
 def objective(pars, function, data, loss, prior=False):

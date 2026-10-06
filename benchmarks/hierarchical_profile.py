@@ -96,8 +96,8 @@ def load(path):
     return data
 
 
-def setup(data, iterations):
-    """`VariationalBayes` with the settings of the speed comparison, forced to run `iterations` iterations."""
+def setup(data, iterations, **options):
+    """`VariationalBayes` with the settings of the speed comparison, forced to run `iterations` iterations; `options` go to `FminBound`."""
     first = data[data.ppt == data.ppt.iloc[0]]
     model = RLRW(data=first, dimensions=STIMULI, parameters_settings=[[0.5, *BOUNDS["alpha"]], [2.0, *BOUNDS["temperature"]]])
     model.parameters.update_prior(**STARTING_PRIOR)
@@ -111,6 +111,7 @@ def setup(data, iterations):
         parallel=False,
         display=False,
         approx_grad=True,
+        **options,
     )
     return VariationalBayes(
         optimiser=optimiser,
@@ -129,33 +130,39 @@ class Counter:
     def __init__(self):
         self.phase = "optimiser"
         self.counts = {"optimiser": 0, "hessian": 0, "evaluate_fit": 0}
-        self.originals = (fmin_module.objective, fmin_module.numerical_hessian, fmin_module.evaluate_fit)
+        self.originals = (fmin_module.objective, fmin_module.numerical_hessian, fmin_module.finite_difference_hessian,
+                          fmin_module.evaluate_fit)
 
     def __enter__(self):
-        objective, numerical_hessian, evaluate_fit = self.originals
+        objective, numerical_hessian, finite_difference_hessian, evaluate_fit = self.originals
 
         def counted_objective(*args, **kwargs):
             self.counts[self.phase] += 1
             return objective(*args, **kwargs)
 
-        def counted_hessian(*args, **kwargs):
-            self.phase = "hessian"
-            try:
-                return numerical_hessian(*args, **kwargs)
-            finally:
-                self.phase = "optimiser"
+        def counted(hessian):
+            def counted_hessian(*args, **kwargs):
+                self.phase = "hessian"
+                try:
+                    return hessian(*args, **kwargs)
+                finally:
+                    self.phase = "optimiser"
+
+            return counted_hessian
 
         def counted_evaluate_fit(*args, **kwargs):
             self.counts["evaluate_fit"] += 1  # one model run per call
             return evaluate_fit(*args, **kwargs)
 
         fmin_module.objective = counted_objective
-        fmin_module.numerical_hessian = counted_hessian
+        fmin_module.numerical_hessian = counted(numerical_hessian)
+        fmin_module.finite_difference_hessian = counted(finite_difference_hessian)
         fmin_module.evaluate_fit = counted_evaluate_fit
         return self
 
     def __exit__(self, *exc):
-        fmin_module.objective, fmin_module.numerical_hessian, fmin_module.evaluate_fit = self.originals
+        (fmin_module.objective, fmin_module.numerical_hessian, fmin_module.finite_difference_hessian,
+         fmin_module.evaluate_fit) = self.originals
 
 
 def profile(vb):
@@ -192,28 +199,30 @@ def main():
     parser.add_argument("--data", help="a dataset CSV; simulated if not given")
     parser.add_argument("--iterations", type=int, default=5)
     parser.add_argument("--label", default="hierarchical-profile")
+    parser.add_argument("--hessian", default="numdifftools", help="the `hessian` option of FminBound")
     args = parser.parse_args()
 
     warnings.simplefilter("ignore")
     np.seterr(all="ignore")
     data = load(args.data) if args.data else simulate()
     participants, iterations = data.ppt.nunique(), args.iterations
-    print(f"cpm {cpm.__version__}: {participants} participants, {data.trial.max()} trials, {iterations} iterations, 2 starts")
+    options = {"hessian": args.hessian}
+    print(f"cpm {cpm.__version__}: {participants} participants, {data.trial.max()} trials, {iterations} iterations, 2 starts, {options}")
 
     # the compiled model and everything else that loads on the first call
-    setup(data[data.ppt.isin(data.ppt.unique()[:5])], 1).optimise()
+    setup(data[data.ppt.isin(data.ppt.unique()[:5])], 1, **options).optimise()
 
     # once without the profiler, for the time
     np.random.seed(2026)
     start = time.perf_counter()
     with Counter() as counter:
-        setup(data, iterations).optimise()
+        setup(data, iterations, **options).optimise()
     seconds = time.perf_counter() - start
     per = participants * iterations
     counts = {k: v / per for k, v in counter.counts.items()}
 
     np.random.seed(2026)
-    stats = profile(setup(data, iterations))
+    stats = profile(setup(data, iterations, **options))
     total = inclusive(stats, "variational.py", "optimise")
     objective_key = find(stats, "optimisers.py", "objective")
     rows = [
@@ -223,7 +232,8 @@ def main():
         ("evaluations per participant and iteration", "hessian", counts["hessian"]),
         ("evaluations per participant and iteration", "evaluate_fit", counts["evaluate_fit"]),
         ("share of profiled time", "fmin_l_bfgs_b", inclusive(stats, "_lbfgsb_py.py", "fmin_l_bfgs_b") / total),
-        ("share of profiled time", "numerical_hessian", inclusive(stats, "optimisers.py", "numerical_hessian") / total),
+        ("share of profiled time", "hessian", (inclusive(stats, "optimisers.py", "numerical_hessian")
+                                               + inclusive(stats, "optimisers.py", "finite_difference_hessian")) / total),
         ("share of profiled time", "evaluate_fit", inclusive(stats, "optimisers.py", "evaluate_fit") / total),
         ("share of profiled time", "update_population", inclusive(stats, "variational.py", "update_population") / total),
         ("share of profiled time", "get_lme", inclusive(stats, "variational.py", "get_lme") / total),

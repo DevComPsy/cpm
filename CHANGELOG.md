@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `cpm.models.activation.ProspectUtility` with `weighting="prelec"` failing for options with several outcomes
 - Fixed `cpm.applications.decision_making.PTSM2025` stopping a fit with `ValueError` when its exponentials overflowed
 - Fixed `cpm.models.learning.HumbleTeacher` raising `IndexError` for 1D weights
+- Fixed `cpm.applications.reinforcement_learning.RLRW` not returning the choices it simulates with `generate=True`; it now outputs `response` ([#100](https://github.com/DevComPsy/cpm/issues/100))
 - Fixed `cpm.generators.Simulator` not raising its intended `TypeError` for an ungrouped `pandas.DataFrame`
 - Fixed `cpm.generators.Simulator` raising `AttributeError` for parameters in a `pandas.DataFrame` with grouped data
 - Fixed `cpm.generators.Simulator` raising `ValueError` for a single parameter set given as `Parameters`, `dict` or `pandas.Series`

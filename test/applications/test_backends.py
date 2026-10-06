@@ -112,6 +112,16 @@ CASES = [
     ("PTSM2025-standard", PTSM2025, risky, dict(parameters_settings=PT, variant="standard")),
 ]
 IDS = [case[0] for case in CASES]
+## outputs added since the reference was frozen, tested separately
+ADDED = {RLRW: ["response"]}
+
+
+def without_added(case, output):
+    """`output` (an export or a per-trial record) without the outputs added since the reference."""
+    added = ADDED.get(case[1], [])
+    if isinstance(output, pd.DataFrame):
+        return output.drop(columns=added)
+    return {key: value for key, value in output.items() if key not in added}
 
 
 def on_backend(model, backend):
@@ -151,7 +161,7 @@ def test_runs_equal_the_per_trial_implementation(case, backend):
         model.run()
         np.testing.assert_allclose(model.dependent, reference["dependent"][scale], **TOLERANCE)
         if scale in reference["exports"]:
-            expected, got = pd.DataFrame(reference["exports"][scale]), model.export()
+            expected, got = pd.DataFrame(reference["exports"][scale]), without_added(case, model.export())
             assert list(got.columns) == list(expected.columns)
             assert dict(got.dtypes) == dict(expected.dtypes)
             np.testing.assert_allclose(got.to_numpy(float), expected.to_numpy(float), **TOLERANCE)
@@ -161,7 +171,7 @@ def test_runs_equal_the_per_trial_implementation(case, backend):
             ## the per-trial records of the run, as a per-trial Wrapper kept them
             assert len(model.simulation) == len(model.dependent)
             for got, expected in zip(model.simulation[:3], reference["simulation"]):
-                assert_same_records(got, expected)
+                assert_same_records(without_added(case, got), expected)
 
 
 @pytest.mark.parametrize("backend", BACKENDS)
@@ -185,7 +195,7 @@ def test_the_per_trial_model_function_is_unchanged(case, backend):
     np.random.seed(5)
     first = unpack_trials(model.data, 0, model.__pandas__)
     got = model.model(parameters=model.parameters, trial=first)
-    assert_same_records(got, REFERENCE["cases"][case[0]]["model"])
+    assert_same_records(without_added(case, got), REFERENCE["cases"][case[0]]["model"])
 
 
 @pytest.mark.parametrize("backend", BACKENDS)
@@ -214,6 +224,50 @@ def test_simulations_equal_the_per_trial_implementation(backend):
     simulator.run()
     pd.testing.assert_frame_equal(simulator.export(), pd.DataFrame(REFERENCE["simulator"]), check_exact=False,
                                   rtol=1e-12, atol=1e-12)
+
+
+def simulate_rlrw(backend, seed=0):
+    data = pd.concat([bandit(p).assign(ppt=p) for p in (1, 2, 3)], ignore_index=True)
+    draws = pd.DataFrame({"alpha": [0.3, 0.5, 0.7], "temperature": [2.0, 5.0, 8.0]})
+    wrapper = on_backend(RLRW(data=bandit(1), dimensions=4, parameters_settings=[[0.5, 0, 1], [5, 0, 10]],
+                              generate=True), backend)
+    simulator = Simulator(wrapper=wrapper, data=data.groupby("ppt"), parameters=draws)
+    np.random.seed(seed)
+    simulator.run()
+    return data, simulator.export()
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_rlrw_returns_the_choices_it_simulates(backend):
+    """The sampled choices follow the policy, and the reward is that of the chosen arm."""
+    data, simulated = simulate_rlrw(backend)
+    response = simulated["response"].to_numpy()
+    assert simulated["response"].dtype == np.int64
+    ## the uniforms are drawn per participant in turn, one per trial, as `choose` uses them
+    np.random.seed(0)
+    uniforms = np.random.random_sample(len(simulated))
+    cdf = simulated[["policy_0", "policy_1"]].cumsum(axis=1).to_numpy()
+    np.testing.assert_array_equal(response, (cdf / cdf[:, -1:] <= uniforms[:, None]).sum(axis=1))
+    rewards = data[["reward_left", "reward_right"]].to_numpy()
+    np.testing.assert_array_equal(simulated["reward"], rewards[np.arange(len(data)), response])
+    ## not all the same choice
+    assert 0 < response.mean() < 1
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_rlrw_returns_the_observed_choices_when_not_generating(backend):
+    data = bandit()
+    model = on_backend(RLRW(data=data, dimensions=4, parameters_settings=[[0.3, 0, 1], [4, 0, 10]]), backend)
+    model.run()
+    np.testing.assert_array_equal(model.export()["response"], data["response"])
+    assert model.simulation[0]["response"] == data["response"][0]
+
+
+@pytest.mark.skipif(not _jit.JIT_ENABLED, reason="numba is not installed or disabled")
+def test_rlrw_simulates_the_same_choices_with_and_without_numba():
+    _, python = simulate_rlrw("python", seed=11)
+    _, numba = simulate_rlrw("numba", seed=11)
+    np.testing.assert_array_equal(python["response"], numba["response"])
 
 
 @pytest.mark.skipif(not _jit.JIT_ENABLED, reason="numba is not installed or disabled")

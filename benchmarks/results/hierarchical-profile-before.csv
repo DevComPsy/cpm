@@ -1,0 +1,18 @@
+section,item,value
+fit,seconds without profiler,8.6299
+fit,ms per participant and iteration,17.2597
+evaluations per participant and iteration,optimiser,70.59
+evaluations per participant and iteration,hessian,22.0
+evaluations per participant and iteration,evaluate_fit,2.0
+share of profiled time,fmin_l_bfgs_b,0.7824
+share of profiled time,numerical_hessian,0.1838
+share of profiled time,evaluate_fit,0.0143
+share of profiled time,update_population,0.0006
+share of profiled time,get_lme,0.0002
+share of profiled time,objective (all callers),0.6966
+share of objective,SessionWrapper.run,0.3991
+share of objective,  of which the RLRW model function,0.3183
+share of objective,Wrapper.reset,0.1337
+share of objective,deepcopy,0.0428
+share of objective,loss,0.2729
+share of objective,Parameters.PDF,0.1246

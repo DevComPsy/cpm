@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added `benchmarks/hierarchical_profile.py`, which shows where the time of a `VariationalBayes` fit goes and counts the objective evaluations per participant and iteration. On the speed comparison with cbm (RLRW, 100 participants, 120 trials), cpm made 71 evaluations in the optimiser and 22 for the Hessian, against cbm's 72 in all, at 17.3 against 5.0 ms per participant and iteration: the gap is the cost of each evaluation, not their number
+
 ## [0.26.0.dev1] - 2026-10-05
 
 ### Added

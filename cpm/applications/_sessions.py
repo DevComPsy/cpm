@@ -68,7 +68,9 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
 
     Returns
     -------
-    policy, reward, values, change, dependent : numpy.ndarray
+    policy, response, reward, values, change, dependent : numpy.ndarray
+        `response` is the arm chosen on each trial: the sampled one if
+        `generate`, otherwise the observed one.
     """
     n, k = arms.shape
     d = initial_values.shape[0]
@@ -78,6 +80,7 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
         raise ValueError("RLRW needs at least two arms.")
     values = initial_values.copy()
     policy = np.empty((n, k))
+    out_response = np.empty(n, dtype=np.int64)
     reward = np.empty(n)
     history = np.empty((n, d))
     change = np.empty((n, d))
@@ -94,6 +97,9 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
         choice = choose(policy[t], uniforms[t]) if generate else response[t]
         if not -k <= choice < k:
             raise IndexError("RLRW: response must be an arm, from 0 to the number of arms - 1.")
+        if choice < 0:
+            choice += k
+        out_response[t] = choice
         stimulus = arms[t, choice] - 1
         if stimulus < 0:
             stimulus += d
@@ -107,7 +113,7 @@ def rlrw(alpha, temperature, initial_values, arms, rewards, response, generate, 
         change[t] = update[0]
         values += update[0]
         history[t] = values
-    return policy, reward, history, change, policy[:, 1].copy()
+    return policy, out_response, reward, history, change, policy[:, 1].copy()
 
 
 @njit

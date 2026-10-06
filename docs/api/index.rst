@@ -37,6 +37,12 @@ To learn how the pieces fit together, start with the :doc:`/tutorials/index`.
 
       Ready-made models for reinforcement learning, decision making and metacognition.
 
+   .. grid-item-card:: :fas:`gamepad` BrainExplorer
+      :link: brainexplorer
+      :link-type: doc
+
+      Descriptive statistics and exclusion criteria for the BrainExplorer games.
+
    .. grid-item-card:: :fas:`database` Datasets
       :link: datasets
       :link-type: doc
@@ -57,5 +63,6 @@ To learn how the pieces fit together, start with the :doc:`/tutorials/index`.
    optimisation
    hierarchical
    applications
+   brainexplorer
    datasets
    utils

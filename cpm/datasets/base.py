@@ -59,6 +59,7 @@ def load_bandit_data():
     """
     return load_csv("bandit_small.csv")
 
+
 def load_risky_choices():
     """
     Load the risky choices dataset from a CSV file.
@@ -119,6 +120,55 @@ def load_risky_choices():
     return load_csv("risky_choices.csv")
 
 
+def load_model_based_model_free():
+    """
+    Load the two-step task dataset from BrainExplorer.
+
+    Returns
+    -------
+    pd.DataFrame
+        A pandas DataFrame with one row per trial and participant.
+
+    Examples
+    --------
+    >>> data = load_model_based_model_free()
+    >>> print(data.head())
+
+    Notes
+    -----
+    The data are from 93 participants who played the two-step task in the BrainExplorer app (https://brainexplorer.net/), the game called "*Goblin Heist*", in up to two sessions of 80 trials.
+    On each trial, participants choose one of two spaceships, which takes them to one of two planets, where they receive a reward.
+    Like the task of Kool et al. (2016), on which it is based, it has two starting states with two spaceships each, deterministic transitions, and a stake of 1 or 5 on each trial.
+    The task uses the original coding, so the columns need converting before they can be passed to :class:`~cpm.applications.reinforcement_learning.HybridMBMF`.
+
+    The dataset includes the following columns:
+
+    - ``userID``: the participant number.
+    - ``trial``: the trial number.
+    - ``block``: the block number.
+    - ``stimuli``: the two spaceships shown on the trial, numbered 1 to 4 across both starting states, in the order they were displayed, such as ``"[1, 2]"``.
+    - ``s``: the starting state and the planet reached, such as ``"[1, 2]"``.
+    - ``rews``: the reward values of the two planets recorded by the game on the trial, from 0 to 100, such as ``"[40, 50]"``. They are not always the reward received; that is ``points``.
+    - ``choice``: the chosen spaceship, numbered 1 to 4.
+    - ``stake``: the stake of the trial (1 or 5).
+    - ``points``: the reward received, from 0 to 9.
+    - ``points_real``: the points shown to the participant, ``points`` times 10 times ``stake``.
+    - ``planet``: the planet reached (1 or 2).
+    - ``theor_best_choice``: the spaceship that leads to the planet with the higher reward.
+    - ``RT``: the response time of the choice, in ms.
+
+    See Also
+    --------
+    cpm.applications.reinforcement_learning.HybridMBMF : hybrid model-based / model-free reinforcement learning model of the two-step task.
+    load_two_step_data : the two-step task data of Smid et al. (2022).
+
+    References
+    ----------
+    Kool, W., Cushman, F. A., & Gershman, S. J. (2016). When does model-based control pay off? PLoS Computational Biology, 12(8), e1005090.
+    """
+    return load_csv("model_based_model_free.csv")
+
+
 def load_metacognition_data():
     """
     Load the metacognition dataset from a CSV file.
@@ -135,7 +185,7 @@ def load_metacognition_data():
 
     Notes
     -----
-    
+
     The data are from an experiment combining a perceptual decision making task with an additional post-decision component assessing participants' confidence in their choices (Marzuki et al., 2025; Moses-Payne et al., 2021).
     The experiment is implemented as a gamified smartphone-compatible application available in the BrainExplorer platform (https://brainexplorer.net/) as the game "*Space Observer*".
     The task is designed to assess aspects of metacognition, i.e., the extent to which one can accurately reflect on and evaluate their own performance, specifically how well one’s confidence is calibrated to their actual performance.
@@ -143,17 +193,17 @@ def load_metacognition_data():
     Briefly, in each trial of the game, participants are presented with a planet in the centre of the screen.
     On top of the planet, participants are shown 68 differently coloured aliens for 250 ms, overlaying the planet.
     The aliens are drawn from two distinct categories (S1 and S2), which differ in colour, but are identical in shape.
-    After the 68 aliens disappear, participants are presented with an example of the two differently coloured aliens and asked to choose which of the two had been more abundant on that trial. 
+    After the 68 aliens disappear, participants are presented with an example of the two differently coloured aliens and asked to choose which of the two had been more abundant on that trial.
     After each of the trials, they are asked to indicate how confident they are about their decision on a visual analogue scale ranging from “totally guessing” (0) to “totally certain” (100).
     The scale is not labelled with numbers and participants are not informed about the numerical values associated with their confidence ratings.
     A staircase procedure (Cornsweet, 1962; García-Pérez, 1998; Levitt, 1971) is used throughout the task to dynamically adjust the stimulus intensity, defined as the difference in aliens required to keep participants’ performance at approximately 70%.
 
-    
+
     The dataset includes the following columns:
 
         - `participant`: the participant number.
         - `signal`: which alien is more abundant (0 = S1, 1 = S2).
-        - `stimulus_intensity`: absolute difference in number of aliens (i.e., evidence strength). 
+        - `stimulus_intensity`: absolute difference in number of aliens (i.e., evidence strength).
         - `response`: participant's choice (0 = S1, 1 = S2).
         - `confidence`: participant's confidence rating for their response.
         - `accuracy`: accuracy of the participant's response (0 = incorrect, 1 = correct).
@@ -168,9 +218,9 @@ def load_metacognition_data():
     Chen, Y., Daly, H. R., Pitt, M. A., & Van Zandt, T. (2024). Assessing the distortions introduced when calculating d’: A simulation approach. *Behavior Research Methods*. https://doi.org/10.3758/s13428-024-02447-8
     
     Cornsweet, T. (1962). The staircase-method in psychophysics. Am. J. Psychol. 75, 485491. https://doi.org/10.2307/1419876
-    
+
     García-Pérez M.A. (1998). Forced-choice staircases with fixed step sizes: asymptotic and small-sample properties. Vision Res., 38(12), 1861-81. https://doi.org/10.1016/s0042-6989(97)00340-4.
-    
+
     Levitt, H. (1971). Transformed up-down methods in psychoacoustics. Journal of the Acoustical Society of America, 49, 467–477. https://doi.org/10.1121/1.1912375
 
     Marzuki, A., Kosina, L., Dome, L., Hewitt, S., & Hauser, T. (2025). Metacognitive antecedents to states of mental ill-health: Drops in confidence precede symptoms of OCD. *Research Square*. https://doi.org/10.21203/rs.3.rs-7544256/v1

@@ -21,5 +21,6 @@ from . import optimisation
 from . import hierarchical
 from . import utils
 from . import datasets
+from . import brainexplorer
 
 del os, sys, warnings, logging

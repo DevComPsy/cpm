@@ -198,7 +198,9 @@ class LogLikelihood:
         np.clip(probabilities, 1e-10, 1 - 1e-10, out=probabilities)
 
         LL = _bernoulli_logpmf(observed.flatten(), probabilities)
-        LL = check_nan_bounds_in_log(LL, bound=bound)
+        ## LL is a new array, which only needs replacing where it is not finite
+        if not np.isfinite(LL).all():
+            LL = check_nan_bounds_in_log(LL, bound=bound)
         LL = np.sum(LL)
         if negative:
             LL = -1 * LL

@@ -27,6 +27,61 @@ __all__ = ["Fmin", "FminBound"]
 LBFGSB_VERBOSITY_SUPPORTED = "disp" in inspect.signature(fmin_l_bfgs_b).parameters
 
 
+def gradient_by_forward_differences(fun, x, f0, lower, upper, epsilon):
+    """
+    The gradient of `fun` at `x` by forward differences, as SciPy's L-BFGS-B estimates it with `approx_grad=True`.
+
+    Parameters
+    ----------
+    fun : callable
+        The function, of a 1-D array.
+    x : numpy.ndarray
+        The point, within the bounds.
+    f0 : float
+        `fun(x)`.
+    lower, upper : numpy.ndarray
+        The bounds of each element of `x`, possibly infinite.
+    epsilon : float
+        The step.
+
+    Returns
+    -------
+    numpy.ndarray
+        The gradient.
+
+    Notes
+    -----
+    This follows `scipy.optimize._numdiff.approx_derivative` with the "2-point"
+    method and an absolute step: a step that would leave the bounds is taken in
+    the other direction, and each difference is divided by the step as it is
+    represented, ``(x + h) - x``. The gradient is therefore exactly the one SciPy
+    computes, so the optimiser takes exactly the same path, but without SciPy's
+    overhead on every evaluation. It works on Python floats, which follow the
+    same IEEE arithmetic as NumPy's and are faster for a few parameters.
+    """
+    gradient = np.empty(x.size)
+    for i, (value, low, high) in enumerate(zip(x.tolist(), lower.tolist(), upper.tolist())):
+        h = epsilon
+        ## a step too small to change x falls back to SciPy's default relative step
+        if (value + h) - value == 0:
+            h = _SQRT_EPS * (1.0 if value >= 0 else -1.0) * max(1.0, abs(value))
+        lower_distance, upper_distance = value - low, high - value
+        if abs(h) <= max(lower_distance, upper_distance):
+            if value + h < low or value + h > high:
+                h = -h
+        elif upper_distance >= lower_distance:
+            h = upper_distance
+        else:
+            h = -lower_distance
+        step = x.copy()
+        step[i] = value + h
+        gradient[i] = (fun(step) - f0) / ((value + h) - value)
+    return gradient
+
+
+_SQRT_EPS = float(np.finfo(float).eps ** 0.5)
+
+
 def lbfgsb_options(display=False, **kwargs):
     """
     Assemble the keyword arguments for `scipy.optimize.fmin_l_bfgs_b`, keeping the solver's verbosity options only where the installed SciPy still accepts them.
@@ -483,6 +538,17 @@ class FminBound:
         model = self.model
         prior = self.prior
         options = lbfgsb_options(display=self.display, **self.kwargs)
+        ## with `approx_grad`, the gradient is computed here, exactly as SciPy
+        ## would, together with the objective (see `gradient_by_forward_differences`)
+        approx_grad = options.pop("approx_grad", False)
+        if approx_grad:
+            options.pop("fprime", None)
+            epsilon = options.pop("epsilon", 1e-8)
+            lower, upper = np.asarray(bounds, dtype=float).T
+            evaluations_per_point = len(self.parameter_names) + 1
+            ## SciPy counts the evaluations of the gradient towards `maxfun`, but
+            ## here it only counts the points, so the limit is in points
+            options["maxfun"] = options.get("maxfun", 15000) // evaluations_per_point
 
         def __task(participant, **args):
 
@@ -494,13 +560,30 @@ class FminBound:
 
             model.reset(data=participant_dc)
 
-            result = fmin_l_bfgs_b(
-                objective,
-                x0=self.__current_guess__,
-                bounds=bounds,
-                args=(model, observed, loss, prior),
-                **options,
-            )
+            if approx_grad:
+
+                def f(x):
+                    return objective(x, model, observed, loss, prior)
+
+                def objective_and_gradient(x):
+                    f0 = f(x)
+                    return f0, gradient_by_forward_differences(f, x, f0, lower, upper, epsilon)
+
+                result = fmin_l_bfgs_b(
+                    objective_and_gradient,
+                    x0=self.__current_guess__,
+                    bounds=bounds,
+                    **options,
+                )
+                result[2]["funcalls"] *= evaluations_per_point
+            else:
+                result = fmin_l_bfgs_b(
+                    objective,
+                    x0=self.__current_guess__,
+                    bounds=bounds,
+                    args=(model, observed, loss, prior),
+                    **options,
+                )
 
             def f(x):
                 return objective(x, model, observed, loss, prior)

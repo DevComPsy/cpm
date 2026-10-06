@@ -370,6 +370,16 @@ def test_bernoulli_and_continuous_equal_scipy():
     assert LogLikelihood.continuous(predicted=x, observed=y) == -np.sum(norm.logpdf(x, y, 1))
 
 
+def test_bernoulli_equals_scipy_when_every_term_is_finite():
+    from scipy.stats import bernoulli
+
+    rng = np.random.default_rng(6)
+    p = rng.uniform(0, 1, (120, 1))
+    k = rng.integers(0, 2, 120)
+    expected = -np.sum(np.nan_to_num(bernoulli.logpmf(k, np.clip(p.ravel(), 1e-10, 1 - 1e-10)), neginf=-1e100))
+    assert LogLikelihood.bernoulli(predicted=p, observed=k) == expected
+
+
 def test_losses_still_name_nan_and_inf():
     with pytest.raises(ValueError, match="Predicted values contain NaN"):
         LogLikelihood.bernoulli(predicted=np.array([0.5, np.nan]), observed=np.array([1, 0]))

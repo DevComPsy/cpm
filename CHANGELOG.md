@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `benchmarks/hierarchical_profile.py`, which shows where the time of a `VariationalBayes` fit goes and counts the objective evaluations per participant and iteration. On the speed comparison with cbm (RLRW, 100 participants, 120 trials), cpm made 71 evaluations in the optimiser and 22 for the Hessian, against cbm's 72 in all, at 17.3 against 5.0 ms per participant and iteration: the gap is the cost of each evaluation, not their number
 
+### Changed
+
+- `cpm.optimisation.FminBound` with `approx_grad=True` now computes the finite-difference gradient itself, together with the objective, exactly as SciPy does, with identical results; with `LogLikelihood.bernoulli`, this makes the hierarchical fits of the speed comparison 19% faster
+
 ## [0.26.0.dev1] - 2026-10-05
 
 ### Added

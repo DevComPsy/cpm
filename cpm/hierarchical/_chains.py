@@ -3,6 +3,31 @@
 import numpy as np
 
 
+def positive_definite(hessians):
+    """
+    Whether each participant's Hessian is positive definite (finite, with a Cholesky decomposition).
+
+    Parameters
+    ----------
+    hessians : array-like
+        The Hessians of the negative log posterior density, shape (participants, parameters, parameters).
+
+    Returns
+    -------
+    numpy.ndarray
+        One boolean per participant.
+    """
+    out = np.zeros(len(hessians), dtype=bool)
+    for i, hessian in enumerate(hessians):
+        if np.all(np.isfinite(hessian)):
+            try:
+                np.linalg.cholesky(hessian)
+                out[i] = True
+            except np.linalg.LinAlgError:
+                pass
+    return out
+
+
 def check_start(start):
     if start not in ("random", "prior_mean"):
         raise ValueError(f'start must be "random" or "prior_mean", not {start!r}.')

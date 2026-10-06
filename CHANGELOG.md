@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `benchmarks/hierarchical_profile.py`, which shows where the time of a `VariationalBayes` fit goes and counts the objective evaluations per participant and iteration. On the speed comparison with cbm (RLRW, 100 participants, 120 trials), cpm made 71 evaluations in the optimiser and 22 for the Hessian, against cbm's 72 in all, at 17.3 against 5.0 ms per participant and iteration: the gap is the cost of each evaluation, not their number
 - Added a `hessian` argument to `cpm.optimisation.FminBound`, `Fmin`, `Minimize` and `Bads`. `hessian="finite_differences"` computes the Hessian at the optimum, with finite differences that stay within the bounds (`cpm.core.optimisers.finite_difference_hessian`), once per participant for the best start, together with `log_likelihood`, `log_prior` and `metrics`: 7 instead of 22 evaluations per participant and iteration in the speed comparison, and no Hessian of zeros for an estimate on an upper bound. The default, `"numdifftools"`, keeps the previous Hessian
 - Added a `start` argument to `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`. `start="prior_mean"` starts the first optimisation of every participant from the location of the current prior, clipped into the bounds, as cbm does; the other starts stay random. It does not reduce the evaluations per iteration, but the fits stop sooner (see the results below). The default, `"random"`, keeps the previous starts
+- Added a `positive_definite` column to the `fit` of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`, which records whether each participant's Hessian was positive definite on each iteration, and a `not_positive_definite` column to their `hyperparameters`, with the number that were not. An estimate on a bound can have a Hessian that is not positive definite; it is kept, as the bounds require. In the speed comparison, this happened in about 0.1% of the participant-wise fits with `hessian="finite_differences"`, all of them on a bound
 - Added the results of the speed comparison with cbm for 100 participants and 120 trials (20 datasets, 10 fits at once on 12 cores) in `benchmarks/results/hierarchical-comparison-*.csv`. Median ms per participant and iteration, iterations and seconds per fit, for `EmpiricalBayes` / `VariationalBayes`:
   - 0.26.0.dev1: 20.8 / 20.1 ms, 50 / 50 iterations, 91 / 88 s
   - defaults: 17.2 / 16.4 ms, 50 / 50 iterations, 74 / 72 s, with identical results
@@ -26,11 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `cpm.optimisation.FminBound` with `approx_grad=True` now computes the finite-difference gradient itself, together with the objective, exactly as SciPy does, with identical results; with `LogLikelihood.bernoulli`, this makes the hierarchical fits of the speed comparison 19% faster
-
-### Open questions
-
-- Should `hessian="finite_differences"` and `start="prior_mean"` become the defaults? Both change results for the same seed, so they are options for now.
-- cbm's default is a single start, from the prior mean. With `number_of_starts=1`, cpm's fits take half the time, with the same recovery in the speed comparison; the tutorials and the comparison use two.
+- The defaults of the new arguments, `hessian="numdifftools"` and `start="random"`, give the same results as before for the same seed; the faster options have to be chosen
 
 ## [0.26.0.dev1] - 2026-10-05
 

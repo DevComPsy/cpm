@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
-from ._chains import check_start, start_from_prior_locations, starting_priors
+from ._chains import check_start, positive_definite, start_from_prior_locations, starting_priors
 
 
 class EmpiricalBayes:
@@ -50,6 +50,8 @@ class EmpiricalBayes:
     - When calculating the within-subject variance via the Hessian matrix, the algorithm clips the variance to a minimum value of 1e-6 to avoid numerical instability.
     - When calculating the within-subject variance via the Hessian matrix, the algorithm sets any non-finite or non-positive values to NaN.
     - If the second derivative of the negative log posterior density function is not finite, we set the log determinant to -1e6.
+
+    An estimate on a bound of a parameter can have a Hessian matrix that is not positive definite. The estimate is kept, as the bounds require. The `positive_definite` column of `fit` records whether each participant's Hessian matrix was positive definite on each iteration, and the `not_positive_definite` column of `hyperparameters` how many were not.
 
     References
     ----------
@@ -254,6 +256,9 @@ class EmpiricalBayes:
             parameter_long["ppt"] = np.arange(len(parameters))
             parameter_long["iteration"] = iteration + 1
             parameter_long["chain"] = chain_index
+            ## an estimate on a bound can have a Hessian that is not positive definite
+            definite = positive_definite(hessian)
+            parameter_long["positive_definite"] = definite
             fit_records.append(parameter_long)
             # turn any non-finite values into NaN, to avoid subsequent issues
             # with calculating parameter means and variances
@@ -339,6 +344,7 @@ class EmpiricalBayes:
                         "sd": stdev[i],
                         "lme": summed_lme,
                         "reject": reject,
+                        "not_positive_definite": int((~definite).sum()),
                     }
                 )
 

@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cpm.optimisation.FminBound` with `approx_grad=True` now computes the finite-difference gradient itself, together with the objective, exactly as SciPy does, with identical results; with `LogLikelihood.bernoulli`, this makes the hierarchical fits of the speed comparison 19% faster
 - The defaults of the new arguments, `hessian="numdifftools"` and `start="random"`, give the same results as before for the same seed; the faster options have to be chosen
 
-## [0.26.0.dev1] - 2026-10-05
+## [0.26.0.dev2] - 2026-10-06
 
 ### Added
 
@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `cpm.models.activation.ProspectUtility` with `weighting="prelec"` failing for options with several outcomes
 - Fixed `cpm.applications.decision_making.PTSM2025` stopping a fit with `ValueError` when its exponentials overflowed
 - Fixed `cpm.models.learning.HumbleTeacher` raising `IndexError` for 1D weights
+- Fixed `cpm.applications.reinforcement_learning.RLRW` not returning the choices it simulates with `generate=True`; it now outputs `response` ([#100](https://github.com/DevComPsy/cpm/issues/100))
 - Fixed `cpm.generators.Simulator` not raising its intended `TypeError` for an ungrouped `pandas.DataFrame`
 - Fixed `cpm.generators.Simulator` raising `AttributeError` for parameters in a `pandas.DataFrame` with grouped data
 - Fixed `cpm.generators.Simulator` raising `ValueError` for a single parameter set given as `Parameters`, `dict` or `pandas.Series`

@@ -87,7 +87,7 @@ class _RLRWModel(SessionModel):
     """The model function of `RLRW`, for all trials at once."""
 
     def __call__(self, parameters, data):
-        policy, reward, values, change, dependent = self.sessions.rlrw(
+        policy, response, reward, values, change, dependent = self.sessions.rlrw(
             float(parameters.alpha),
             float(parameters.temperature),
             numpy.asarray(parameters.values, dtype=float),
@@ -99,6 +99,7 @@ class _RLRWModel(SessionModel):
         )
         return {
             "policy": policy,
+            "response": response,
             "reward": reward,
             "values": values,
             "change": change,
@@ -140,11 +141,13 @@ class RLRW(Application):
         The number of distinct stimuli present in the data.
     parameters_settings: list-like
         The parameters to be fit by the model. The parameters must be specified as a list of lists, with each list containing the value, lower, and upper bounds of the parameter. See Notes for more information on how to specify parameters and for the default settings.
+    generate: bool
+        If True, the model samples a choice on each trial from its policy instead of using the observed one, and learns from the reward of the sampled arm. Default is False.
 
     Returns
     -------
     cpm.generators.Wrapper
-        A cpm.generators.Wrapper object.
+        A cpm.generators.Wrapper object. Its outputs include `response`, the arm chosen on each trial: the sampled one if `generate` is True, otherwise the observed one. Simulated data can therefore be fitted directly.
 
     Examples
     --------

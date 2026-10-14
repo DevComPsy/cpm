@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cpm.optimisation.FminBound` with `approx_grad=True` now computes the finite-difference gradient itself, together with the objective, exactly as SciPy does, with identical results; with `LogLikelihood.bernoulli`, this makes the hierarchical fits of the speed comparison 19% faster
 - The defaults of the new arguments, `hessian="numdifftools"` and `start="random"`, give the same results as before for the same seed; the faster options have to be chosen
 
+### Fixed
+
+- Fixed fits with `parallel=True` and `prior=True` going back to the priors the model was created with after the first evaluation in every worker, so that priors updated with `update_prior`, such as the population priors of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`, were ignored; parallel fits now equal serial ones, and parallel results with updated priors change. `cpm.generators` no longer deletes its submodules, which made dill copy its classes into the workers instead of referencing them
+- Fixed `Fmin`, `FminBound`, `Minimize` and `Bads` comparing every later start with the first instead of the best so far, which with three or more starts could replace a participant's best fit with a worse one; results with three or more starts can change
+- Fixed the `cpm.hierarchical.VariationalBayes` docstring giving 1000 as the default of `iteration`, which is 50
+
 ## [0.26.0.dev2] - 2026-10-06
 
 ### Added

@@ -8,5 +8,3 @@ from .simulator import Simulator
 from .wrapper import Wrapper
 from .session import SessionWrapper
 from .parameters import Parameters, Value, LogParameters
-
-del simulator, wrapper, session, parameters

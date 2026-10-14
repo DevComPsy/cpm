@@ -8,7 +8,7 @@ from scipy.stats import t as students_t
 
 from ..generators import Parameters
 from ..core.diagnostics import convergence_diagnostics_plots, parameter_bounds
-from ._chains import starting_priors
+from ._chains import check_start, positive_definite, start_from_prior_locations, starting_priors
 
 
 class VariationalBayes:
@@ -33,6 +33,8 @@ class VariationalBayes:
         A dictionary of given parameter values of the prior distributions on the population-level parameters (means mu and precisions tau). See Notes for details. Default is None.
     convergence : str, optional
         The convergence criterion. Default is 'parameters'. Options are 'lme' and 'parameters'.
+    start : {"random", "prior_mean"}, optional
+        Where the participant-wise fits start on every iteration. With "random", every start is drawn at random within the bounds of the parameters. With "prior_mean", the first start is the mean (location) of the current prior of each parameter, clipped into its bounds, as in the HBI implementation of Piray et al. (2019), and the others are drawn at random. Default is "random".
 
     Notes
     -----
@@ -57,6 +59,8 @@ class VariationalBayes:
 
 
     The convergence criterion can be set to 'lme' or 'parameters'. If set to 'lme', the algorithm will stop when the log model evidence converges. If set to 'parameters', the algorithm will stop when the "normalized" means of the population-level parameters converge.
+
+    An estimate on a bound of a parameter can have a Hessian matrix that is not positive definite. The estimate is kept, as the bounds require. The `positive_definite` column of `fit` records whether each participant's Hessian matrix was positive definite on each iteration, and the `not_positive_definite` column of `hyperparameters` how many were not.
 
     References
     ----------
@@ -98,8 +102,10 @@ class VariationalBayes:
         hyperpriors=None,
         convergence="parameters",
         quiet=False,
+        start="random",
         **kwargs,
     ):
+        self.start = check_start(start)
         # write input arguments to self
         self.optimiser = copy.deepcopy(optimiser)
         self.objective = objective
@@ -203,6 +209,8 @@ class VariationalBayes:
 
         # delete any pre-existing optimisation output / parameter estimates
         self.optimiser.reset()
+        if self.start == "prior_mean":
+            start_from_prior_locations(self.optimiser)
 
         # run the optimisation
         self.optimiser.optimise()
@@ -226,7 +234,6 @@ class VariationalBayes:
         parameter_long["ppt"] = np.arange(self.__n_ppt__)
         parameter_long["iteration"] = iter_idx + 1
         parameter_long["chain"] = chain_idx
-        self.__fit_chunks__.append(parameter_long)
 
         # extract the participant-wise unnormalised log posterior density at the
         # optimised parameter values
@@ -246,6 +253,10 @@ class VariationalBayes:
         # was to maximise, we need to multiply the entries of the Hessian by -1.
         if self.objective != "minimise":
             hessian = -1 * hessian
+
+        ## an estimate on a bound can have a Hessian that is not positive definite
+        parameter_long["positive_definite"] = positive_definite(hessian)
+        self.__fit_chunks__.append(parameter_long)
 
         return param, log_posterior, hessian
 
@@ -499,6 +510,7 @@ class VariationalBayes:
         # buffered (see the `hyperparameters` property above) rather than
         # concatenated into self.hyperparameters on every single parameter,
         # to avoid an O(n^2) cost across many iterations x parameters.
+        not_definite = int((~positive_definite(hessian)).sum())
         for i, name in enumerate(self.__param_names__):
             self.__hyper_chunks__.append(
                 {
@@ -509,6 +521,7 @@ class VariationalBayes:
                     "mean_se": E_mu_error[i],
                     "sd": E_sd[i],
                     "lme": lme,
+                    "not_positive_definite": not_definite,
                 }
             )
 

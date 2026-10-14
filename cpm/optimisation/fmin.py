@@ -4,6 +4,8 @@ from ..core.optimisers import (
     evaluate_fit,
     fit_extras,
     numerical_hessian,
+    finite_difference_hessian,
+    check_hessian,
     group_identifier,
     prepare_data,
 )
@@ -25,6 +27,61 @@ __all__ = ["Fmin", "FminBound"]
 ## SciPy 1.18.0 removed the `disp` and `iprint` options of the L-BFGS-B solver,
 ## deprecated since 1.15.0, so they can only be forwarded to older SciPy.
 LBFGSB_VERBOSITY_SUPPORTED = "disp" in inspect.signature(fmin_l_bfgs_b).parameters
+
+
+def gradient_by_forward_differences(fun, x, f0, lower, upper, epsilon):
+    """
+    The gradient of `fun` at `x` by forward differences, as SciPy's L-BFGS-B estimates it with `approx_grad=True`.
+
+    Parameters
+    ----------
+    fun : callable
+        The function, of a 1-D array.
+    x : numpy.ndarray
+        The point, within the bounds.
+    f0 : float
+        `fun(x)`.
+    lower, upper : numpy.ndarray
+        The bounds of each element of `x`, possibly infinite.
+    epsilon : float
+        The step.
+
+    Returns
+    -------
+    numpy.ndarray
+        The gradient.
+
+    Notes
+    -----
+    This follows `scipy.optimize._numdiff.approx_derivative` with the "2-point"
+    method and an absolute step: a step that would leave the bounds is taken in
+    the other direction, and each difference is divided by the step as it is
+    represented, ``(x + h) - x``. The gradient is therefore exactly the one SciPy
+    computes, so the optimiser takes exactly the same path, but without SciPy's
+    overhead on every evaluation. It works on Python floats, which follow the
+    same IEEE arithmetic as NumPy's and are faster for a few parameters.
+    """
+    gradient = np.empty(x.size)
+    for i, (value, low, high) in enumerate(zip(x.tolist(), lower.tolist(), upper.tolist())):
+        h = epsilon
+        ## a step too small to change x falls back to SciPy's default relative step
+        if (value + h) - value == 0:
+            h = _SQRT_EPS * (1.0 if value >= 0 else -1.0) * max(1.0, abs(value))
+        lower_distance, upper_distance = value - low, high - value
+        if abs(h) <= max(lower_distance, upper_distance):
+            if value + h < low or value + h > high:
+                h = -h
+        elif upper_distance >= lower_distance:
+            h = upper_distance
+        else:
+            h = -lower_distance
+        step = x.copy()
+        step[i] = value + h
+        gradient[i] = (fun(step) - f0) / ((value + h) - value)
+    return gradient
+
+
+_SQRT_EPS = float(np.finfo(float).eps ** 0.5)
 
 
 def lbfgsb_options(display=False, **kwargs):
@@ -98,6 +155,8 @@ class Fmin:
         The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`.
     ppt_identifier : str
         The column (or the key in the participant data dictionaries) that contains the participant identifier, returned in the optimization details. Required if `data` is a pd.DataFrame. If `data` is a pd.DataFrameGroupBy grouped by a single column, such as `data.groupby("ppt")`, it defaults to the name of that column. Default is `None`.
+    hessian : {"numdifftools", "finite_differences"}
+        How the Hessian matrix recorded in `fit` is computed. With "numdifftools", it is computed with numdifftools' forward differences at the optimised parameter values plus 1e-3, for every start. With "finite_differences", it is computed at the optimised parameter values with finite differences that stay within the bounds of the parameters, if the optimum is within them (see :func:`cpm.core.optimisers.finite_difference_hessian`), once per participant, for the best start only, together with `log_likelihood`, `log_prior` and `metrics`. Default is "numdifftools".
     **kwargs : dict
         Additional keyword arguments. See the :func:`scipy.optimize.fmin` documentation for what is supported.
 
@@ -136,6 +195,7 @@ class Fmin:
         number_of_starts=1,
         ppt_identifier=None,
         display=False,
+        hessian="numdifftools",
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -150,6 +210,7 @@ class Fmin:
         self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
+        self.hessian = check_hessian(hessian)
 
         self.fit = []
         self.details = []
@@ -222,6 +283,9 @@ class Fmin:
                 **self.kwargs,
                 full_output=True,
             )
+            if self.hessian == "finite_differences":
+                ## the Hessian and the extras follow for the best start (see __complete)
+                return (*result, ppt)
 
             def f(x):
                 return objective(x, model, observed, loss, prior)
@@ -241,16 +305,54 @@ class Fmin:
             result = (*result, ppt)
             return result
 
+        def __complete(item):
+            ## the Hessian and the extras of a participant's best start
+            participant, result = item
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+            model.reset(data=participant_dc)
+
+            def f(x):
+                return objective(x, model, observed, loss, prior)
+
+            result = (*result[:-1], finite_difference_hessian(f, result[0], lower, upper))
+            if prior or self.metrics:
+                result = (
+                    *result,
+                    *evaluate_fit(
+                        result[0], model, observed, loss, prior, self.metrics
+                    ).values(),
+                )
+            return (*result, ppt)
+
         def __extract_nll(result):
             output = np.zeros(len(result))
             for i in range(len(result)):
                 output[i] = result[i][1]
             return output.copy()
 
+        def __record(results):
+            self.details = copy.deepcopy(results)
+            parameters = {}
+            for result in results:
+                for i in range(len(self.parameter_names)):
+                    parameters[self.parameter_names[i]] = copy.deepcopy(
+                        result[0][i]
+                    )
+                self.parameters.append(copy.deepcopy(parameters))
+                self.fit.append(
+                    __unpack(copy.deepcopy(result), id=self.ppt_identifier)
+                )
+
         loss = self.loss
         model = self.model
         prior = self.prior
+        lower, upper = (np.asarray(b, dtype=float) for b in self.model.parameters.bounds())
 
+        starts = []
         for i in range(len(self.initial_guess)):
             if self.display:
                 print(
@@ -270,19 +372,11 @@ class Fmin:
                 results = list(map(__task, self.data))
 
             ## extract the negative log likelihoods for each ppt
-            if i == 0:
+            if self.hessian == "finite_differences":
+                starts.append(results)
+            elif i == 0:
                 old_nll = __extract_nll(results)
-                self.details = copy.deepcopy(results)
-                parameters = {}
-                for result in results:
-                    for i in range(len(self.parameter_names)):
-                        parameters[self.parameter_names[i]] = copy.deepcopy(
-                            result[0][i]
-                        )
-                    self.parameters.append(copy.deepcopy(parameters))
-                    self.fit.append(
-                        __unpack(copy.deepcopy(result), id=self.ppt_identifier)
-                    )
+                __record(results)
             else:
                 nll = __extract_nll(results)
                 # check if ppt fit is better than the previous fit
@@ -296,6 +390,28 @@ class Fmin:
                     self.fit[ppt] = __unpack(
                         copy.deepcopy(results[ppt]), id=self.ppt_identifier
                     )
+
+        if self.hessian == "finite_differences":
+            ## choose each participant's start as above: a later start replaces
+            ## the first where it is better
+            best = list(starts[0])
+            first_nll = __extract_nll(starts[0])
+            for results in starts[1:]:
+                for ppt in np.where(__extract_nll(results) < first_nll)[0]:
+                    best[ppt] = results[ppt]
+            items = list(zip(self.data, best))
+            if self.__parallel__:
+                results = execute_parallel(
+                    job=__complete,
+                    data=items,
+                    pandas=False,
+                    method=None,
+                    cl=self.cl,
+                    libraries=self.__libraries__,
+                )
+            else:
+                results = list(map(__complete, items))
+            __record(results)
 
         return None
 
@@ -370,6 +486,8 @@ class FminBound:
         The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`.
     ppt_identifier : str
         The column (or the key in the participant data dictionaries) that contains the participant identifier, returned in the optimization details. Required if `data` is a pd.DataFrame. If `data` is a pd.DataFrameGroupBy grouped by a single column, such as `data.groupby("ppt")`, it defaults to the name of that column. Default is `None`.
+    hessian : {"numdifftools", "finite_differences"}
+        How the Hessian matrix recorded in `fit` is computed. With "numdifftools", it is computed with numdifftools' forward differences at the optimised parameter values plus 1e-3, for every start; at an upper bound, that point is outside the bounds, which can give a Hessian of zeros. With "finite_differences", it is computed at the optimised parameter values with finite differences that stay within the bounds (see :func:`cpm.core.optimisers.finite_difference_hessian`), once per participant, for the best start only, together with `log_likelihood`, `log_prior` and `metrics`. Default is "numdifftools".
     **kwargs : dict
         Additional keyword arguments. See the :func:`scipy.optimize.fmin_l_bfgs_b` documentation for what is supported. The solver's own `disp` and `iprint` options, which `display` also sets, were removed in SciPy 1.18.0 and are ignored there.
 
@@ -408,6 +526,7 @@ class FminBound:
         metrics=None,
         ppt_identifier=None,
         display=False,
+        hessian="numdifftools",
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -422,6 +541,7 @@ class FminBound:
         self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
+        self.hessian = check_hessian(hessian)
 
         self.fit = []
         self.details = []
@@ -483,6 +603,17 @@ class FminBound:
         model = self.model
         prior = self.prior
         options = lbfgsb_options(display=self.display, **self.kwargs)
+        lower, upper = np.asarray(bounds, dtype=float).T
+        ## with `approx_grad`, the gradient is computed here, exactly as SciPy
+        ## would, together with the objective (see `gradient_by_forward_differences`)
+        approx_grad = options.pop("approx_grad", False)
+        if approx_grad:
+            options.pop("fprime", None)
+            epsilon = options.pop("epsilon", 1e-8)
+            evaluations_per_point = len(self.parameter_names) + 1
+            ## SciPy counts the evaluations of the gradient towards `maxfun`, but
+            ## here it only counts the points, so the limit is in points
+            options["maxfun"] = options.get("maxfun", 15000) // evaluations_per_point
 
         def __task(participant, **args):
 
@@ -494,20 +625,39 @@ class FminBound:
 
             model.reset(data=participant_dc)
 
-            result = fmin_l_bfgs_b(
-                objective,
-                x0=self.__current_guess__,
-                bounds=bounds,
-                args=(model, observed, loss, prior),
-                **options,
-            )
-
             def f(x):
                 return objective(x, model, observed, loss, prior)
 
+            if approx_grad:
+
+                def objective_and_gradient(x):
+                    f0 = f(x)
+                    return f0, gradient_by_forward_differences(f, x, f0, lower, upper, epsilon)
+
+                result = fmin_l_bfgs_b(
+                    objective_and_gradient,
+                    x0=self.__current_guess__,
+                    bounds=bounds,
+                    **options,
+                )
+                result[2]["funcalls"] *= evaluations_per_point
+            else:
+                result = fmin_l_bfgs_b(
+                    objective,
+                    x0=self.__current_guess__,
+                    bounds=bounds,
+                    args=(model, observed, loss, prior),
+                    **options,
+                )
+
+            result = (*result[0:2], *tuple(list(result[2].values())))
+            if self.hessian == "finite_differences":
+                ## the Hessian and the extras follow for the best start (see __complete)
+                return (*result, ppt)
+
             hessian = numerical_hessian(func=f, params=result[0] + 1e-3)
 
-            result = (*result[0:2], *tuple(list(result[2].values())), hessian)
+            result = (*result, hessian)
 
             if prior or self.metrics:
                 result = (
@@ -520,12 +670,49 @@ class FminBound:
             result = (*result, ppt)
             return result
 
+        def __complete(item):
+            ## the Hessian and the extras of a participant's best start
+            participant, result = item
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+            model.reset(data=participant_dc)
+
+            def f(x):
+                return objective(x, model, observed, loss, prior)
+
+            result = (*result[:-1], finite_difference_hessian(f, result[0], lower, upper))
+            if prior or self.metrics:
+                result = (
+                    *result,
+                    *evaluate_fit(
+                        result[0], model, observed, loss, prior, self.metrics
+                    ).values(),
+                )
+            return (*result, ppt)
+
         def __extract_nll(result):
             output = np.zeros(len(result))
             for i in range(len(result)):
                 output[i] = result[i][1]
             return output.copy()
 
+        def __record(results):
+            self.details = copy.deepcopy(results)
+            parameters = {}
+            for result in results:
+                for i in range(len(self.parameter_names)):
+                    parameters[self.parameter_names[i]] = copy.deepcopy(
+                        result[0][i]
+                    )
+                self.parameters.append(copy.deepcopy(parameters))
+                self.fit.append(
+                    __unpack(copy.deepcopy(result), id=self.ppt_identifier)
+                )
+
+        starts = []
         for i in range(len(self.initial_guess)):
             if self.display:
                 print(
@@ -545,19 +732,11 @@ class FminBound:
                 results = list(map(__task, self.data))
 
             ## extract the negative log likelihoods for each ppt
-            if i == 0:
+            if self.hessian == "finite_differences":
+                starts.append(results)
+            elif i == 0:
                 old_nll = __extract_nll(results)
-                self.details = copy.deepcopy(results)
-                parameters = {}
-                for result in results:
-                    for i in range(len(self.parameter_names)):
-                        parameters[self.parameter_names[i]] = copy.deepcopy(
-                            result[0][i]
-                        )
-                    self.parameters.append(copy.deepcopy(parameters))
-                    self.fit.append(
-                        __unpack(copy.deepcopy(result), id=self.ppt_identifier)
-                    )
+                __record(results)
             else:
                 nll = __extract_nll(results)
                 # check if ppt fit is better than the previous fit
@@ -571,6 +750,28 @@ class FminBound:
                     self.fit[ppt] = __unpack(
                         copy.deepcopy(results[ppt]), id=self.ppt_identifier
                     )
+
+        if self.hessian == "finite_differences":
+            ## choose each participant's start as above: a later start replaces
+            ## the first where it is better
+            best = list(starts[0])
+            first_nll = __extract_nll(starts[0])
+            for results in starts[1:]:
+                for ppt in np.where(__extract_nll(results) < first_nll)[0]:
+                    best[ppt] = results[ppt]
+            items = list(zip(self.data, best))
+            if self.__parallel__:
+                results = execute_parallel(
+                    job=__complete,
+                    data=items,
+                    method=None,
+                    cl=self.cl,
+                    pandas=False,
+                    libraries=self.__libraries__,
+                )
+            else:
+                results = list(map(__complete, items))
+            __record(results)
 
         return None
 

@@ -4,6 +4,8 @@ from ..core.optimisers import (
     evaluate_fit,
     fit_extras,
     numerical_hessian,
+    finite_difference_hessian,
+    check_hessian,
     group_identifier,
     prepare_data,
 )
@@ -48,6 +50,8 @@ class Minimize:
         The libraries to import for parallel processing for `ipyparallel` with the IPython kernel. Default is `["numpy", "pandas"]`
     ppt_identifier : str
         The column (or the key in the participant data dictionaries) that contains the participant identifier, returned in the optimization details. Required if `data` is a pd.DataFrame. If `data` is a pd.DataFrameGroupBy grouped by a single column, such as `data.groupby("ppt")`, it defaults to the name of that column. Default is `None`.
+    hessian : {"numdifftools", "finite_differences"}
+        How the Hessian matrix recorded in `details` is computed. With "numdifftools", it is computed with numdifftools' forward differences at the optimised parameter values plus 1e-3, for every start. With "finite_differences", it is computed at the optimised parameter values with finite differences that stay within the bounds of the parameters (see :func:`cpm.core.optimisers.finite_difference_hessian`), once per participant, for the best start only, together with `log_likelihood`, `log_prior` and `metrics`. Default is "numdifftools".
     **kwargs : dict
         Additional keyword arguments. See the :func:`scipy.optimize.minimize` documentation for what is supported.
 
@@ -87,6 +91,7 @@ class Minimize:
         number_of_starts=1,
         ppt_identifier=None,
         display=False,
+        hessian="numdifftools",
         **kwargs,
     ):
         self.model = copy.deepcopy(model)
@@ -101,6 +106,7 @@ class Minimize:
         self.metrics = metrics
         self.kwargs = kwargs
         self.display = display
+        self.hessian = check_hessian(hessian)
 
         self.method = method
         if isinstance(model, Wrapper):
@@ -173,6 +179,11 @@ class Minimize:
                 **self.kwargs,
             )
             result = {**result}
+            if self.hessian == "finite_differences":
+                ## the Hessian and the extras follow for the best start (see __complete)
+                if self.ppt_identifier is not None:
+                    result.update({self.ppt_identifier: ppt})
+                return result
 
             def f(x):
                 return objective(x, model, observed, loss, prior)
@@ -193,12 +204,48 @@ class Minimize:
                 result.update({self.ppt_identifier: ppt})
             return result
 
+        def __complete(item):
+            ## the Hessian and the extras of a participant's best start
+            participant, result = item
+            participant_dc, observed, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+            model.reset(data=participant_dc)
+
+            def f(x):
+                return objective(x, model, observed, loss, prior)
+
+            result = {**result, "hessian": finite_difference_hessian(f, result["x"], lower, upper)}
+            if prior or self.metrics:
+                result.update(
+                    evaluate_fit(
+                        result["x"], model, observed, loss, prior, self.metrics
+                    )
+                )
+            return result
+
         def __extract_nll(result):
             output = np.zeros(len(result))
             for i in range(len(result)):
                 output[i] = result[i]["fun"]
             return output.copy()
 
+        def __record(results):
+            self.details = copy.deepcopy(results)
+            parameters = {}
+            for result in results:
+                for i in range(len(self.parameter_names)):
+                    parameters[self.parameter_names[i]] = copy.deepcopy(
+                        result["x"][i]
+                    )
+                self.parameters.append(copy.deepcopy(parameters))
+                self.fit.append(
+                    __unpack(copy.deepcopy(result), id=self.ppt_identifier)
+                )
+
+        lower, upper = (np.asarray(b, dtype=float) for b in self.model.parameters.bounds())
         bounds = self.model.parameters.bounds()
         bounds = np.asarray(bounds).T
         bounds = list(map(tuple, bounds))
@@ -208,6 +255,7 @@ class Minimize:
         model = self.model
         prior = self.prior
 
+        starts = []
         for i in range(len(self.initial_guess)):
             if self.display:
                 print(
@@ -227,19 +275,11 @@ class Minimize:
                 results = list(map(__task, self.data))
 
             ## extract the negative log likelihoods for each ppt
-            if i == 0:
+            if self.hessian == "finite_differences":
+                starts.append(results)
+            elif i == 0:
                 old_nll = __extract_nll(results)
-                self.details = copy.deepcopy(results)
-                parameters = {}
-                for result in results:
-                    for i in range(len(self.parameter_names)):
-                        parameters[self.parameter_names[i]] = copy.deepcopy(
-                            result["x"][i]
-                        )
-                    self.parameters.append(copy.deepcopy(parameters))
-                    self.fit.append(
-                        __unpack(copy.deepcopy(result), id=self.ppt_identifier)
-                    )
+                __record(results)
             else:
                 nll = __extract_nll(results)
                 # check if ppt fit is better than the previous fit
@@ -253,6 +293,28 @@ class Minimize:
                     self.fit[ppt] = __unpack(
                         copy.deepcopy(results[ppt]), id=self.ppt_identifier
                     )
+
+        if self.hessian == "finite_differences":
+            ## choose each participant's start as above: a later start replaces
+            ## the first where it is better
+            best = list(starts[0])
+            first_nll = __extract_nll(starts[0])
+            for results in starts[1:]:
+                for ppt in np.where(__extract_nll(results) < first_nll)[0]:
+                    best[ppt] = results[ppt]
+            items = list(zip(self.data, best))
+            if self.__parallel__:
+                results = execute_parallel(
+                    job=__complete,
+                    data=items,
+                    method=None,
+                    cl=self.cl,
+                    pandas=False,
+                    libraries=self.__libraries__,
+                )
+            else:
+                results = list(map(__complete, items))
+            __record(results)
 
         return None
 

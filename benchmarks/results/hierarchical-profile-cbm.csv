@@ -1,0 +1,8 @@
+item,value
+participants,100
+iterations,9
+lap_calls_per_participant,85.59
+hbi_calls_per_participant_and_iteration,71.74
+seconds_instrumented,7.21
+lap_seconds_instrumented,2.75
+ms_per_participant_and_iteration_instrumented,4.956

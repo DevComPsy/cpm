@@ -22,7 +22,7 @@ class VariationalBayes:
     objective : str
         The objective of the optimisation, either 'maximise' or 'minimise'. Default is 'minimise'. Only affects how we arrive at the participant-level *a posteriori* parameter estimates.
     iteration : int, optional
-        The maximum number of iterations. Default is 1000.
+        The maximum number of iterations. Default is 50.
     tolerance_lme : float, optional
         The tolerance for convergence with respect to the log model evidence. Default is 1e-3.
     tolerance_param : float, optional

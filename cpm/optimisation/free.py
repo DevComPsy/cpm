@@ -282,8 +282,9 @@ class Minimize:
                 __record(results)
             else:
                 nll = __extract_nll(results)
-                # check if ppt fit is better than the previous fit
+                # check if ppt fit is better than the best fit so far
                 indices = np.where(nll < old_nll)[0]
+                old_nll[indices] = nll[indices]
                 for ppt in indices:
                     self.details[ppt] = copy.deepcopy(results[ppt])
                     for i in range(len(self.parameter_names)):
@@ -296,12 +297,14 @@ class Minimize:
 
         if self.hessian == "finite_differences":
             ## choose each participant's start as above: a later start replaces
-            ## the first where it is better
+            ## the best so far where it is better
             best = list(starts[0])
-            first_nll = __extract_nll(starts[0])
+            best_nll = __extract_nll(starts[0])
             for results in starts[1:]:
-                for ppt in np.where(__extract_nll(results) < first_nll)[0]:
+                nll = __extract_nll(results)
+                for ppt in np.where(nll < best_nll)[0]:
                     best[ppt] = results[ppt]
+                    best_nll[ppt] = nll[ppt]
             items = list(zip(self.data, best))
             if self.__parallel__:
                 results = execute_parallel(

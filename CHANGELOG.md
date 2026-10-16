@@ -5,28 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.26.0.dev3] - 2026-10-14
-
-### Added
-
-- Added `benchmarks/hierarchical_profile.py`, which shows where the time of a `VariationalBayes` fit goes and counts the objective evaluations per participant and iteration; against cbm (RLRW, 100 participants, 120 trials), cpm makes about as many evaluations but each one costs more, at 17.3 against 5.0 ms per participant and iteration
-- Added a `hessian` argument to `cpm.optimisation.FminBound`, `Fmin`, `Minimize` and `Bads`; `hessian="finite_differences"` computes the Hessian at the optimum with bounded finite differences (`cpm.core.optimisers.finite_difference_hessian`), cutting Hessian evaluations from 22 to 7 per participant and iteration in the speed comparison. The default, `"numdifftools"`, keeps the previous Hessian
-- Added a `start` argument to `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`; `start="prior_mean"` starts the first optimisation of every participant from the current prior's location, clipped into the bounds, as cbm does, so fits stop sooner. The default, `"random"`, keeps the previous starts
-- Added a `positive_definite` column to the `fit` of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`, recording whether each participant's Hessian was positive definite, and a `not_positive_definite` column to their `hyperparameters` with the count; an estimate on a bound can have a non-positive-definite Hessian and is kept, as the bounds require
-- Added the results of the speed comparison with cbm (100 participants, 120 trials) in `benchmarks/results/hierarchical-comparison-*.csv`: combining `hessian="finite_differences"`, `start="prior_mean"` and `number_of_starts=1` brings `EmpiricalBayes`/`VariationalBayes` from 20.8/20.1 to 6.8/7.0 ms per participant and iteration, against cbm's 4.4 ms, with RMSE against 0.26.0.dev1 staying within bootstrap 95% intervals throughout
-
-### Changed
-
-- `cpm.optimisation.FminBound` with `approx_grad=True` now computes the finite-difference gradient itself, together with the objective, exactly as SciPy does, with identical results; with `LogLikelihood.bernoulli`, this makes the hierarchical fits of the speed comparison 19% faster
-- The defaults of the new arguments, `hessian="numdifftools"` and `start="random"`, give the same results as before for the same seed; the faster options have to be chosen
-
-### Fixed
-
-- Fixed fits with `parallel=True` and `prior=True` going back to the priors the model was created with after the first evaluation in every worker, so that priors updated with `update_prior`, such as the population priors of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`, were ignored; parallel fits now equal serial ones, and parallel results with updated priors change. `cpm.generators` no longer deletes its submodules, which made dill copy its classes into the workers instead of referencing them
-- Fixed `Fmin`, `FminBound`, `Minimize` and `Bads` comparing every later start with the first instead of the best so far, which with three or more starts could replace a participant's best fit with a worse one; results with three or more starts can change
-- Fixed the `cpm.hierarchical.VariationalBayes` docstring giving 1000 as the default of `iteration`, which is 50
-
-## [0.26.0.dev2] - 2026-10-06
+## [0.26.0] - 2026-10-16
 
 ### Added
 
@@ -51,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added test units for `SessionWrapper`, `cpm.models.kernels`, the fast priors, and the built-in applications with and without numba
 - Added a benchmark suite (`benchmarks/run.py` for one evaluation, `benchmarks/hierarchical.py` for the hierarchical tutorials) and `scripts/local_tests.py`, which runs the tests with and without numba
 - Added a GitHub Actions workflow that runs the tests with and without numba, on Python 3.11 to 3.14
+- Added `benchmarks/hierarchical_profile.py`, which shows where the time of a `VariationalBayes` fit goes and counts the objective evaluations per participant and iteration; against cbm (RLRW, 100 participants, 120 trials), cpm makes about as many evaluations but each one costs more, at 17.3 against 5.0 ms per participant and iteration
+- Added a `hessian` argument to `cpm.optimisation.FminBound`, `Fmin`, `Minimize` and `Bads`; `hessian="finite_differences"` computes the Hessian at the optimum with bounded finite differences (`cpm.core.optimisers.finite_difference_hessian`), cutting Hessian evaluations from 22 to 7 per participant and iteration in the speed comparison. The default, `"numdifftools"`, keeps the previous Hessian
+- Added a `start` argument to `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`; `start="prior_mean"` starts the first optimisation of every participant from the current prior's location, clipped into the bounds, as cbm does, so fits stop sooner. The default, `"random"`, keeps the previous starts
+- Added a `positive_definite` column to the `fit` of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`, recording whether each participant's Hessian was positive definite, and a `not_positive_definite` column to their `hyperparameters` with the count; an estimate on a bound can have a non-positive-definite Hessian and is kept, as the bounds require
+- Added the results of the speed comparison with cbm (100 participants, 120 trials) in `benchmarks/results/hierarchical-comparison-*.csv`: combining `hessian="finite_differences"`, `start="prior_mean"` and `number_of_starts=1` brings `EmpiricalBayes`/`VariationalBayes` from 20.8/20.1 to 6.8/7.0 ms per participant and iteration, against cbm's 4.4 ms, with RMSE against 0.26.0.dev1 staying within bootstrap 95% intervals throughout
 
 ### Changed
 
@@ -70,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cpm.models.activation.ProspectUtility.weights` and `.utilities` are float arrays instead of object arrays, and the `simulation` records of `HybridMBMF` hold NumPy scalars instead of Python numbers
 - `PTSM2025` always uses its power utility: replacing `parameters.utility_curvature` on a model no longer changes it
 - Required Python 3.11 or later (previously `>3.11.0`, which excluded 3.11.0), removed the PyPy classifier, and tagged the wheel for Python 3 only
+- `cpm.optimisation.FminBound` with `approx_grad=True` now computes the finite-difference gradient itself, together with the objective, exactly as SciPy does, with identical results; with `LogLikelihood.bernoulli`, this makes the hierarchical fits of the speed comparison 19% faster
+- The defaults of the new arguments, `hessian="numdifftools"` and `start="random"`, give the same results as before for the same seed; the faster options have to be chosen
 
 ### Fixed
 
@@ -101,6 +87,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a clean install raising `ModuleNotFoundError` in `diagnostics()`, by adding `matplotlib` to the dependencies
 - Fixed `cpm.utils.data` and `cpm.utils.metad` not being reachable after `import cpm`
 - Fixed `cpm.core.diagnostics.gelman_rubin` and `cpm.core.diagnostics.psrf` failing on every call, and `gelman_rubin` computing the statistic incorrectly
+- Fixed fits with `parallel=True` and `prior=True` going back to the priors the model was created with after the first evaluation in every worker, so that priors updated with `update_prior`, such as the population priors of `cpm.hierarchical.EmpiricalBayes` and `cpm.hierarchical.VariationalBayes`, were ignored; parallel fits now equal serial ones, and parallel results with updated priors change. `cpm.generators` no longer deletes its submodules, which made dill copy its classes into the workers instead of referencing them
+- Fixed `Fmin`, `FminBound`, `Minimize` and `Bads` comparing every later start with the first instead of the best so far, which with three or more starts could replace a participant's best fit with a worse one; results with three or more starts can change
+- Fixed the `cpm.hierarchical.VariationalBayes` docstring giving 1000 as the default of `iteration`, which is 50
 
 ## [0.25.6] - 2026-04-15
 

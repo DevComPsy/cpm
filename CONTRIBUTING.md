@@ -209,11 +209,18 @@ Best ways to get help:
 
 ## Build and release notes
 
-If you are preparing a release artifact:
+To prepare a release:
 
-```bash
-python setup.py sdist bdist_wheel
-```
+1. Set the version in `cpm/__version__.py` and date its section in `CHANGELOG.md`.
+2. Build and check the source distribution and wheel:
+
+   ```bash
+   pip install build twine
+   python -m build
+   twine check dist/*
+   ```
+
+3. After merging into `main`, tag the release with the bare version (for example `0.26.0`, not `v0.26.0`); the documentation links to the source at this tag.
 
 Publishing to PyPI is maintainer-only and typically done with:
 

@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-  "setuptools>=61.0",
+  "setuptools>=77.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -20,15 +20,22 @@ authors = [
 maintainers = [
     { name = "Lenard Dome", email = "lenarddome@gmail.com" }
 ]
-license = { text = "AGPLv3" }
+license = "AGPL-3.0-only"
+license-files = ["LICENSE", "LICENSES-BUNDLE"]
 requires-python = ">=3.11"
 keywords = ["cpm-toolbox", "cpm", "computational-psychiatry", "computational-psychology", "psychometrics", "psychology"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Intended Audience :: Science/Research",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3"
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering"
 ]
 dependencies = [
     "numpy>=2.0.0",
@@ -78,6 +85,9 @@ notebooks = [
 [project.urls]
 Homepage = "https://cpm-toolbox.net"
 Documentation = "https://devcompsy.github.io/cpm/"
+Repository = "https://github.com/DevComPsy/cpm"
+Issues = "https://github.com/DevComPsy/cpm/issues"
+Changelog = "https://github.com/DevComPsy/cpm/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 include-package-data = true

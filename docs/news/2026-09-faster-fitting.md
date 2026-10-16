@@ -7,7 +7,7 @@ kernelspec:
 
 # Faster fitting in cpm 0.26
 
-*28 September 2026 · cpm 0.26.0, in development*
+*28 September 2026 · cpm 0.26.0*
 
 The built-in models of cpm now compute all trials of a participant in one call instead of one call per trial, and, when [numba](https://numba.pydata.org/) is installed, that loop over trials is compiled.
 Fitting them is 90 to 220 times faster than in cpm 0.25, and more than 1,000 times faster for {py:class}`~cpm.applications.decision_making.PTSM2025`, with the same results.

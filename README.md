@@ -69,7 +69,7 @@ python -m sphinx -b html docs docs/_build/html
 ```
 
 Then open `docs/_build/html/index.html` in a browser.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to write documentation and tutorials, and for a live preview while you write.
+See [CONTRIBUTING.md](https://github.com/DevComPsy/cpm/blob/main/CONTRIBUTING.md) for how to write documentation and tutorials, and for a live preview while you write.
 
 The documentation is published to GitHub Pages by the `docs` GitHub Actions workflow whenever `main` changes.
 

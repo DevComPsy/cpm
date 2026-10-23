@@ -188,7 +188,7 @@ def H2r_given_c (
     """
     n_bin = bin_count_correct + bin_count_incorrect
     p_cbin = n_bin / n_bin.sum()
-    p_corr_given_c = np.where (n_bin > 0, bin_count_correct / n_bin(n_bin > 0, 1), 0.0) #in case of empty bins
+    p_corr_given_c = np.where (n_bin > 0, bin_count_correct / np.where(n_bin > 0, n_bin, 1), 0.0) #in case of empty bins
     return np.sum(p_cbin * h2(p_corr_given_c))
 
 def dprime(

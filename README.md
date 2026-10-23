@@ -1,5 +1,7 @@
 # cpm
 
+This is a developmental branch to implement Dayan's Meta-I.
+
 ![the toolbox logo](https://raw.githubusercontent.com/DevComPsy/cpm/main/docs/_static/logo/cpm-logo-light.png)
 
 ![PyPI - Version](https://img.shields.io/pypi/v/cpm-toolbox)

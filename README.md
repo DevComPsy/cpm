@@ -1,6 +1,6 @@
 # cpm
 
-This is a developmental branch to implement Dayan's Meta-I.
+This is a developmental branch to implement Dayan's Meta-I (2023).
 
 ![the toolbox logo](https://raw.githubusercontent.com/DevComPsy/cpm/main/docs/_static/logo/cpm-logo-light.png)
 

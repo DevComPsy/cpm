@@ -135,7 +135,8 @@ def conf_binned(
 def bin_counts(
     accuracy: np.ndarray, 
     confidence: np.ndarray, 
-    bins: int
+    bins: int,
+    ignore_invalid: bool = False
 ):
     """
     Counts the number of correct and incorrect trials per confidence bin.
@@ -159,7 +160,7 @@ def bin_counts(
         Dictionary containing logs of the binning process:
         
     """
-    levels, info = conf_binned(confidence, bins)
+    levels, info = conf_binned(confidence, bins, ignore_invalid=ignore_invalid)
     n_levels = info["n_levels"]
     accuracy = np.asarray(accuracy).astype(int)
     idx = np.asarray(levels).astype(int) - 1

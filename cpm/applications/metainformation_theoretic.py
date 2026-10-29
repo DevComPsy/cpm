@@ -85,7 +85,8 @@ def fit_metaI (
         confidence: np.ndarray, 
         bins: int, 
         d_prime: float | None = None, 
-        matched_bins: bool=False
+        matched_bins: bool=False,
+        ignore_invalid: bool=False
 ):
     """
     Estimates metacognitive parameters using meta-I as proposed by Dayan (2023).
@@ -123,7 +124,7 @@ def fit_metaI (
     """
     n_correct, n_incorrect = acc_counts(accuracy)
     h2_r = H2r(n_correct, n_incorrect)
-    n_correct_bin, n_incorrect_bin, info = bin_counts(accuracy, confidence, bins)
+    n_correct_bin, n_incorrect_bin, info = bin_counts(accuracy, confidence, bins, ignore_invalid=ignore_invalid)
     h2r_c = H2r_given_c(n_correct_bin, n_incorrect_bin)
     meta_I = float(h2_r - h2r_c)
 

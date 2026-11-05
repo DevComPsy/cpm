@@ -108,6 +108,7 @@ def fit_metaI (
     Returns
     ------
     results :
+        *`'d_prime`: d'
         *`'H2r'`: entropy of the accuracy,
         *`'H2r_given_c'`: entropy of the accuracy after seeing confidence,
         *`'meta_I'`: mutual information between accuracy and confidence in bits.
@@ -133,6 +134,7 @@ def fit_metaI (
         else metaI_d_prime(d_prime, bins=bins if matched_bins else None)
     )
     return {
+        "d_prime": d_prime,
         "H2r": float(h2_r),
         "H2r_given_c": float(h2r_c),
         "meta_I": meta_I,
@@ -199,15 +201,16 @@ class EstimatorMetaI:
         RunTimeWarning
             If a participant's d' <= 0, metaI_d_prime and meta_Ir1 will be Nan.
             The remaining measures for this participant (meta_I, meta_Ir2) are still computed.
-        
+
         RuntimeWarning
-        If an unexpected error occurs during fitting, all metrics will be Nan for that participant.
+            If an unexpected error occurs during fitting, all metrics will be set to Nan for that participant.
 
         """
         self.fit = []
         for ppt, group in self.data.groupby(self.ppt_identifier):
             dp = dprime(group["signal"].values, group["response"].values)
 
+            dp_original = dp
             if dp <= 0:
                 warnings.warn(
                     f"Participant {ppt}: d'= {dp:.3f} <= 0, "
@@ -232,6 +235,7 @@ class EstimatorMetaI:
                     stacklevel = 2
                 )
                 result = {
+                "d_prime": np.nan,
                 "H2r": np.nan,
                 "H2r_given_c": np.nan,
                 "meta_I": np.nan,
@@ -247,6 +251,7 @@ class EstimatorMetaI:
                 }
 
             result["ppt"] = ppt
+            result["d_prime"] = dp_original
             self.fit.append(result)
 
     def export(self):

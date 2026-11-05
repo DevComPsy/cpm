@@ -200,11 +200,9 @@ class EstimatorMetaI:
             If a participant's d' <= 0, metaI_d_prime and meta_Ir1 will be Nan.
             The remaining measures for this participant (meta_I, meta_Ir2) are still computed.
         
-        Raises
-        -----
-        RunTimeError
-            If an unexpected error occurs during fitting on the data for a participant.
-            
+        RuntimeWarning
+        If an unexpected error occurs during fitting, all metrics will be Nan for that participant.
+
         """
         self.fit = []
         for ppt, group in self.data.groupby(self.ppt_identifier):
@@ -228,7 +226,26 @@ class EstimatorMetaI:
                     matched_bins=self.matched_bins,
                 )
             except Exception as e:
-                raise RuntimeError (f"Error for participant {ppt}: {e}")
+                warnings.warn(
+                    f"Participant {ppt}: unexpected error during fitting: {e}. All metrics will be Nan.",
+                    RuntimeWarning,
+                    stacklevel = 2
+                )
+                result = {
+                "H2r": np.nan,
+                "H2r_given_c": np.nan,
+                "meta_I": np.nan,
+                "metaI_d_prime": np.nan,
+                "meta_Ir1": np.nan,
+                "meta_Ir2": np.nan,
+                "n_correct": None,
+                "n_incorrect": None,
+                "n_correct_bin": np.nan,
+                "n_incorrect_bin":np.nan,
+                "thresholds": None,
+                "rebin": None,
+                }
+
             result["ppt"] = ppt
             self.fit.append(result)
 

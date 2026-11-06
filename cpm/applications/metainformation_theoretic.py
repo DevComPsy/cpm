@@ -220,9 +220,9 @@ class EstimatorMetaI:
         """
         self.fit = []
         for ppt, group in self.data.groupby(self.ppt_identifier):
-            dp = dprime(group["signal"].values, group["response"].values)
+            dp = dprime(group["signal"].values, group["response"].values, correction=self.dprime_correction)
 
-            dp_original = dp(correction=self.dprime_correction)
+            dp_original = dp
             if dp <= 0:
                 warnings.warn(
                     f"Participant {ppt}: d'= {dp:.3f} <= 0, "

@@ -164,6 +164,16 @@ class EstimatorMetaI:
         advised if meta-I(d') shoulde be compared to meta_I (as in meta_Ir1). 
     ppt_identifier: str
         column which denotes participants in the data
+    dprime_correction: float
+            *correction of `0.5` (loglinear) 
+            eqivalent of metad.py count_trials default padding padAmount= 1/(2*nRatings), 
+            which adds +0.5 to hit/FA counts and +1 to the total trial counts.
+
+            *correction of `1` (same as in meta-d)
+            equivalent to EstimatorMetaD correction padAmount = 1/nRatings, 
+            which adds +1 to hit/FA counts and +2 to the total trial counts.
+
+            Default is set to `0.5`.
     
     Returns
     An EstimatorMetaI object.
@@ -184,12 +194,14 @@ class EstimatorMetaI:
             data, 
             bins,
             matched_bins =False,
-            ppt_identifier="participant"
+            ppt_identifier="participant",
+            dprime_correction=0.5
     ):
         self.data = data
         self.bins = bins
         self.matched_bins = matched_bins
         self.ppt_identifier = ppt_identifier
+        self.dprime_correction = dprime_correction
         self.fit = []
 
     def estimate(self):
@@ -210,7 +222,7 @@ class EstimatorMetaI:
         for ppt, group in self.data.groupby(self.ppt_identifier):
             dp = dprime(group["signal"].values, group["response"].values)
 
-            dp_original = dp
+            dp_original = dp(correction=self.dprime_correction)
             if dp <= 0:
                 warnings.warn(
                     f"Participant {ppt}: d'= {dp:.3f} <= 0, "

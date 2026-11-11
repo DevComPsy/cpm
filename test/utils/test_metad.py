@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -73,7 +75,9 @@ def test_no_valid_trials_raises():
     data = pd.DataFrame(
         {"Stimuli": [s + 2 for s in STIM], "Accuracy": ACC, "Confidence": CONF}
     )
-    with pytest.raises(ValueError, match="no valid trials"):
+    with pytest.raises(ValueError, match="no valid trials"), pytest.warns(
+        UserWarning, match="outside"
+    ):
         count_trials(data, nRatings=4)
 
 
@@ -123,3 +127,26 @@ def test_inconsistency_on_dropped_trial_ignored():
         }
     )
     assert_expected(count_trials(data, nRatings=4))
+
+
+def test_stimuli_outside_0_1_warn():
+    data = pd.DataFrame(
+        {"Stimuli": [s + 1 for s in STIM], "Accuracy": ACC, "Confidence": CONF}
+    )
+    with pytest.warns(UserWarning, match=r"5 trial\(s\).*outside \{0, 1\}"):
+        count_trials(data, nRatings=4)
+
+
+def test_valid_and_missing_stimuli_do_not_warn():
+    data = pd.DataFrame(
+        {"Stimuli": STIM + [np.nan], "Accuracy": ACC + [1], "Confidence": CONF + [1]}
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert_expected(count_trials(data, nRatings=4))
+
+
+def test_non_integer_confidence_raises():
+    data = pd.DataFrame({"Stimuli": STIM, "Accuracy": ACC, "Confidence": [2.5] * 8})
+    with pytest.raises(ValueError, match="no valid trials"):
+        count_trials(data, nRatings=4)

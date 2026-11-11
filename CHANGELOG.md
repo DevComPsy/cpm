@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `cpm.utils.metad.count_trials` now infers responses from accuracy when only accuracy is given, checks that responses and accuracy agree when both are given, and accepts arrays without a DataFrame; it previously returned all-zero counts when the responses column was missing ([#106](https://github.com/DevComPsy/cpm/issues/106))
+- `cpm.utils.metad.count_trials` now infers responses from accuracy when only accuracy is given, checks that responses and accuracy agree when both are given, and accepts arrays without a DataFrame; it previously returned all-zero counts when the responses column was missing. It now warns when it omits stimuli not coded 0/1, and raises an error instead of returning all-zero counts when no valid trials remain ([#106](https://github.com/DevComPsy/cpm/issues/106))
+- `cpm.applications.signal_detection.EstimatorMetaD` names the participant when counting their trials fails ([#106](https://github.com/DevComPsy/cpm/issues/106))
 
 ## [0.26.0] - 2026-10-16
 

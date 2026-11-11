@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -79,9 +81,11 @@ def count_trials(
     Notes
     -----
     All trials where `stimuli` is not 0 or 1, the response is not 0 or 1, or
-    confidence is not in the range [1, nRatings], are automatically omitted.
-    When `accuracy` is provided, trials where accuracy is not 0 or 1 (including
-    missing values) are omitted as well.
+    confidence is not a whole number in the range [1, nRatings], are
+    automatically omitted. When `accuracy` is provided, trials where accuracy
+    is not 0 or 1 (including missing values) are omitted as well. Stimuli must
+    be coded 0 for S1 and 1 for S2: a `UserWarning` is issued when stimuli
+    other than 0, 1 or missing values are omitted, for example with 1/2 coding.
 
     The inputs can be responses, accuracy or both. If only `accuracy` is
     provided, the responses are inferred from it: a correct response equals the
@@ -163,6 +167,15 @@ def count_trials(
         )
 
     binary_stimuli = np.isin(stimuli, (0, 1))
+    out_of_range = ~binary_stimuli & ~np.isnan(stimuli)
+    if out_of_range.any():
+        warnings.warn(
+            f"{out_of_range.sum()} trial(s) have stimuli outside {{0, 1}} (values "
+            f"{np.unique(stimuli[out_of_range])[:5].tolist()}) and are omitted; "
+            "code stimuli as 0 for S1 and 1 for S2.",
+            UserWarning,
+            stacklevel=2,
+        )
     if accuracy is not None:
         binary_accuracy = np.isin(accuracy, (0, 1))
     if responses is None:
@@ -179,6 +192,7 @@ def count_trials(
         & np.isin(responses, (0, 1))
         & (confidence >= 1)
         & (confidence <= nRatings)
+        & (confidence == np.round(confidence))
     )
     if accuracy is not None:
         valid &= binary_accuracy

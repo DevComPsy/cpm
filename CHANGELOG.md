@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `cpm.utils.metad.count_trials` now infers responses from accuracy when only accuracy is given, checks that responses and accuracy agree when both are given, and accepts arrays without a DataFrame; it previously returned all-zero counts when the responses column was missing ([#106](https://github.com/DevComPsy/cpm/issues/106))
+
 ## [0.26.0] - 2026-10-16
 
 ### Added

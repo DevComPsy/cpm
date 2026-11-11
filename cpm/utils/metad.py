@@ -27,18 +27,24 @@ def count_trials(
     Parameters
     ----------
     data :
-        Dataframe containing stimuli, accuracy and confidence ratings.
+        DataFrame containing the columns below, or `None` to pass the stimuli,
+        responses, accuracy and confidence ratings as arrays. Default is
+        `None`.
     stimuli :
         Stimuli ID (0 or 1). If a dataframe is provided, should be the name of
         the column containing the stimuli ID. Default is `'Stimuli'`.
     responses :
-        Response (0 or 1). If a dataframe is provided, should be the
-        name of the column containing the response accuracy. Default is
-        `'Responses'`.
+        Response (0 or 1). Optional, but at least one of `responses` and
+        `accuracy` is required. If a dataframe is provided, should be the name
+        of the column containing the responses; a name that is not a column of
+        `data` counts as not provided. With arrays, `None` or a string counts
+        as not provided. Default is `'Responses'`.
     accuracy :
-        Response accuracy (0 or 1). If a dataframe is provided, should be the
-        name of the column containing the response accuracy. Default is
-        `'Accuracy'`.
+        Response accuracy (0 or 1). Optional, but at least one of `responses`
+        and `accuracy` is required. If a dataframe is provided, should be the
+        name of the column containing the response accuracy; a name that is
+        not a column of `data` counts as not provided. With arrays, `None` or
+        a string counts as not provided. Default is `'Accuracy'`.
     confidence :
         Confidence ratings. If a dataframe is provided, should be the name of
         the column containing the confidence ratings. Default is
@@ -51,10 +57,9 @@ def count_trials(
         If `True`, each response count in the output has the value of padAmount
         added to it. Padding cells is desirable if trial counts of 0 interfere
         with model fitting. If False, trial counts are not manipulated and 0s
-        may be present in the response count output. Default value for padding
-        is 0.
+        may be present in the response count output. Default is `False`.
     padAmount :
-        The value to add to each response count if padding is set to 1.
+        The value to add to each response count if padding is `True`.
         Default value is 1/(2*nRatings)
 
     Returns
@@ -63,14 +68,26 @@ def count_trials(
         Vectors containing the total number of responses in each accuracy
         category, conditional on presentation of S1 and S2.
 
+    Raises
+    ------
+    ValueError
+        If `data` is neither `None` nor a DataFrame; if neither `responses`
+        nor `accuracy` is provided; if the inputs have different lengths; if
+        `responses` and `accuracy` disagree on a valid trial; or if no valid
+        trials remain.
+
     Notes
     -----
-    All trials where `stimuli` is not 0 or 1, accuracy is not 0 or 1, or confidence is
-    not in the range [1, nRatings], are automatically omitted.
+    All trials where `stimuli` is not 0 or 1, the response is not 0 or 1, or
+    confidence is not in the range [1, nRatings], are automatically omitted.
+    When `accuracy` is provided, trials where accuracy is not 0 or 1 (including
+    missing values) are omitted as well.
 
-    The inputs can be responses, accuracy or both. If both `responses` and
-    `accuracy` are provided, will check for consstency. If only `accuracy` is
-    provided, the responses vector will be automatically infered.
+    The inputs can be responses, accuracy or both. If only `accuracy` is
+    provided, the responses are inferred from it: a correct response equals the
+    stimulus, an incorrect one is the other stimulus. If both `responses` and
+    `accuracy` are provided, they are checked for consistency, and a
+    `ValueError` is raised on any trial where they disagree.
 
     If nR_S1 = [100 50 20 10 5 1], then when stimulus S1 was presented, the subject had
     the following accuracy counts::
@@ -95,13 +112,11 @@ def count_trials(
 
     Examples
     --------
-    >>> stimID = [0, 1, 0, 0, 1, 1, 1, 1]
-    >>> accuracy = [0, 1, 1, 1, 0, 0, 1, 1]
-    >>> confidence = [1, 2, 3, 4, 4, 3, 2, 1]
-    >>> nRatings = 4
-
-    >>> nR_S1, nR_S2 = count_trials(data, nRatings=4)
-    >>> print(nR_S1, nR_S2)
+    >>> from cpm.utils.metad import count_trials
+    >>> count_trials(stimuli=[0, 1, 0, 0, 1, 1, 1, 1],
+    ...              accuracy=[0, 1, 1, 1, 0, 0, 1, 1],
+    ...              confidence=[1, 2, 3, 4, 4, 3, 2, 1], nRatings=4)
+    (array([1, 1, 0, 0, 1, 0, 0, 0]), array([1, 1, 0, 0, 1, 2, 0, 0]))
 
     References
     ----------
@@ -167,6 +182,15 @@ def count_trials(
     )
     if accuracy is not None:
         valid &= binary_accuracy
+        mismatch = valid & ((responses == stimuli) != (accuracy == 1))
+        if mismatch.any():
+            positions = np.flatnonzero(mismatch)
+            raise ValueError(
+                f"`responses` and `accuracy` are inconsistent on {len(positions)} "
+                f"trial(s), at positions {positions[:5].tolist()}"
+                f"{' and more' if len(positions) > 5 else ''}: a response is "
+                "correct when it equals the stimulus."
+            )
     if not valid.any():
         raise ValueError(
             "count_trials found no valid trials: `stimuli` and responses must be 0 "

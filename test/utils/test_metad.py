@@ -92,3 +92,34 @@ def test_padding_default_amount():
 def test_non_dataframe_data_raises():
     with pytest.raises(ValueError, match="DataFrame"):
         count_trials(data=[1, 2, 3])
+
+
+def test_consistent_responses_and_accuracy_match_responses_only():
+    data = pd.DataFrame(
+        {"Stimuli": STIM, "Responses": RESP, "Accuracy": ACC, "Confidence": CONF}
+    )
+    assert_expected(count_trials(data, nRatings=4))
+
+
+def test_inconsistent_responses_and_accuracy_raises():
+    accuracy = ACC.copy()
+    accuracy[2] = 0
+    data = pd.DataFrame(
+        {"Stimuli": STIM, "Responses": RESP, "Accuracy": accuracy, "Confidence": CONF}
+    )
+    with pytest.raises(ValueError, match="inconsistent") as error:
+        count_trials(data, nRatings=4)
+    assert "1 trial" in str(error.value)
+    assert "[2]" in str(error.value)
+
+
+def test_inconsistency_on_dropped_trial_ignored():
+    data = pd.DataFrame(
+        {
+            "Stimuli": STIM + [1],
+            "Responses": RESP + [1],
+            "Accuracy": ACC + [0],
+            "Confidence": CONF + [9],
+        }
+    )
+    assert_expected(count_trials(data, nRatings=4))

@@ -35,7 +35,7 @@ def synthetic_data():
         "signal": [0, 1, 0, 1],
         "response": [0, 1, 0, 1],
         "confidence": [1, 2, 2, 1],
-        "accuracy": [1, 0, 1, 1],
+        "accuracy": [1, 1, 1, 1],
         "observed": [1, 0, 1, 0],
     })
 

@@ -207,8 +207,9 @@ def count_trials(
             )
     if not valid.any():
         raise ValueError(
-            "count_trials found no valid trials: `stimuli` and responses must be 0 "
-            f"or 1, and `confidence` must be in [1, {nRatings}]."
+            "count_trials found no valid trials: `stimuli`, responses and "
+            "`accuracy` (if given) must be 0 or 1, and `confidence` must be a "
+            f"whole number in [1, {nRatings}]."
         )
     stimuli = stimuli[valid]
     responses = responses[valid]
@@ -265,7 +266,7 @@ def bin_ratings(
     nbins : int
         The number of discrete ratings to resample. Default set to `4`.
     verbose : boolean
-        If `True`, warnings will be returned.
+        If `True`, a message is printed when the ratings are resampled.
     ignore_invalid : bool
         If `False` (default), an error will be raised in case of impossible
         discretisation of the confidence ratings. This is mostly due to identical
@@ -279,13 +280,14 @@ def bin_ratings(
     out : dict
         Dictionary containing logs of the discretisation process:
 
-            * `'confbins'`: list or 1d array-like - If the ratings were
-                reampled, a list containing the new ratings and the new low or
-                hg threshold, appened before or after the rating, respectively.
-                Else, only returns the ratings.
-            * `'rebin'`: boolean - If True, the ratings were resampled due to
-                larger numbers of highs or low ratings.
-            * `'binCount'` : int - Number of bins
+            * `'confBins'`: np.ndarray | list - The quantile bin edges. If the
+              ratings were resampled, a list of the excluded low rating and
+              the new bin edges, or of the new bin edges and the excluded high
+              rating.
+            * `'rebin'`: list - `[1]` if the ratings were resampled because of
+              too many identical low or high ratings, `[0]` otherwise.
+            * `'binCount'`: list - A one-element list holding the number of
+              trials in the highest bin.
 
     .. warning:: This function will automatically control for bias in high or
         low confidence ratings. If the first two or the last two quantiles
@@ -309,12 +311,16 @@ def bin_ratings(
     ...     52,  0,  0,  0, 25,  1, 16, 37, 59, 20, 25, 23, 45, 22,
     ...     28, 62, 61, 69, 20, 75, 10, 18, 61, 27, 63, 22, 54, 30,
     ...     36, 66, 14,  2, 53, 58, 88, 23, 77, 54])
-    >>> bin_ratings(ratings)
-    (array([4, 4, 4, 4, 2, 3, 4, 1, 4, 4, 4, 4, 3, 1, 4, 1, 1, 1, 3, 2, 1, 3,
-        4, 2, 2, 3, 2, 2, 2, 2, 3, 1, 3, 1, 3, 4, 3, 1, 3, 1, 2, 3, 3, 1,
-        1, 1, 2, 1, 1, 3, 3, 2, 2, 2, 3, 2, 2, 4, 4, 4, 2, 4, 1, 1, 4, 2,
-        4, 2, 3, 2, 3, 4, 1, 1, 3, 3, 4, 2, 4, 3]),
-    {'confBins': array([ 0., 20., 35., 60., 98.]), 'rebin': 0, 'binCount': 21})
+    >>> discrete, out = bin_ratings(ratings)
+    >>> discrete
+    array([4, 4, 4, 4, 2, 3, 4, 1, 4, 4, 4, 4, 3, 1, 4, 1, 1, 1, 3, 2, 1, 3,
+           4, 2, 2, 3, 2, 2, 2, 2, 3, 1, 3, 1, 3, 4, 3, 1, 3, 1, 2, 3, 3, 1,
+           1, 1, 2, 1, 1, 3, 3, 2, 2, 2, 3, 2, 2, 4, 4, 4, 2, 4, 1, 1, 4, 2,
+           4, 2, 3, 2, 3, 4, 1, 1, 3, 3, 4, 2, 4, 3])
+    >>> out["confBins"]
+    array([ 0., 20., 35., 60., 98.])
+    >>> out["rebin"], out["binCount"]
+    ([0], [np.int64(21)])
 
     """
     out, temp = {}, []

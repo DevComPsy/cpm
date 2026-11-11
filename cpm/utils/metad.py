@@ -1,8 +1,14 @@
 import numpy as np
 import pandas as pd
 
+
+def _is_column(data: pd.DataFrame, name) -> bool:
+    """Whether `name` is given and names a column of `data`."""
+    return name is not None and name in data.columns
+
+
 def count_trials(
-    data=pd.DataFrame,
+    data: pd.DataFrame | None = None,
     stimuli: str = "Stimuli",
     responses: str = "Responses",
     accuracy: str = "Accuracy",
@@ -110,25 +116,65 @@ def count_trials(
 
     """
     if isinstance(data, pd.DataFrame):
-        stimuli = data[stimuli].to_numpy()
-        confidence = data[confidence].to_numpy()
-        if accuracy in data:
-            accuracy = data[accuracy].to_numpy()
-        if responses in data:
-            responses = data[responses].to_numpy()
+        stimuli = data[stimuli]
+        confidence = data[confidence]
+        responses = data[responses] if _is_column(data, responses) else None
+        accuracy = data[accuracy] if _is_column(data, accuracy) else None
     elif data is not None:
         raise ValueError("`Data` should be a DataFrame")
+    else:
+        # In array mode, a string is the column-name default left in place.
+        responses = None if isinstance(responses, str) else responses
+        accuracy = None if isinstance(accuracy, str) else accuracy
 
-    # Check data consistency
-    tempstim, tempresp, tempratg = [], [], []
-    for s, rp, rt in zip(stimuli, responses, confidence):
-        if (s == 0 or s == 1) and (rp == 0 or rp == 1) and (rt >= 1 and rt <= nRatings):
-            tempstim.append(s)
-            tempresp.append(rp)
-            tempratg.append(rt)
-    stimuli = tempstim
-    responses = tempresp
-    confidence = tempratg
+    if responses is None and accuracy is None:
+        raise ValueError(
+            "count_trials needs `responses`, `accuracy`, or both; neither was provided."
+        )
+
+    stimuli = np.asarray(stimuli, dtype=float)
+    confidence = np.asarray(confidence, dtype=float)
+    inputs = [stimuli, confidence]
+    if responses is not None:
+        responses = np.asarray(responses, dtype=float)
+        inputs.append(responses)
+    if accuracy is not None:
+        accuracy = np.asarray(accuracy, dtype=float)
+        inputs.append(accuracy)
+    if len({len(x) for x in inputs}) > 1:
+        raise ValueError(
+            "`stimuli`, `responses`, `accuracy` and `confidence` must have the same "
+            f"length; got lengths {[len(x) for x in inputs]}."
+        )
+
+    binary_stimuli = np.isin(stimuli, (0, 1))
+    if accuracy is not None:
+        binary_accuracy = np.isin(accuracy, (0, 1))
+    if responses is None:
+        # A correct response matches the stimulus; an incorrect one does not.
+        # Trials with invalid stimuli or accuracy get NaN and are dropped below.
+        responses = np.where(
+            binary_stimuli & binary_accuracy,
+            np.where(accuracy == 1, stimuli, 1 - stimuli),
+            np.nan,
+        )
+
+    valid = (
+        binary_stimuli
+        & np.isin(responses, (0, 1))
+        & (confidence >= 1)
+        & (confidence <= nRatings)
+    )
+    if accuracy is not None:
+        valid &= binary_accuracy
+    if not valid.any():
+        raise ValueError(
+            "count_trials found no valid trials: `stimuli` and responses must be 0 "
+            f"or 1, and `confidence` must be in [1, {nRatings}]."
+        )
+    stimuli = stimuli[valid]
+    responses = responses[valid]
+    confidence = confidence[valid]
 
     if padAmount is None:
         padAmount = 1 / (2 * nRatings)

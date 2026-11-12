@@ -150,3 +150,13 @@ def test_non_integer_confidence_raises():
     data = pd.DataFrame({"Stimuli": STIM, "Accuracy": ACC, "Confidence": [2.5] * 8})
     with pytest.raises(ValueError, match="no valid trials"):
         count_trials(data, nRatings=4)
+
+
+def test_no_valid_trials_message_names_every_rule():
+    # The message should list every rule the Notes section documents (#107).
+    data = pd.DataFrame({"Stimuli": STIM, "Accuracy": [2] * 8, "Confidence": CONF})
+    with pytest.raises(ValueError) as excinfo:
+        count_trials(data, nRatings=4)
+    message = str(excinfo.value)
+    assert "`accuracy`" in message
+    assert "whole number in [1, 4]" in message

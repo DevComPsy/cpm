@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `cpm.utils.metad.count_trials` names every validity rule (accuracy coding, whole-number confidence) in its error when no valid trials remain ([#107](https://github.com/DevComPsy/cpm/issues/107))
+- `cpm.utils.metad.bin_ratings` documents its return values correctly: `rebin` and `binCount` are one-element lists, and `binCount` is the number of trials in the highest bin, not the number of bins; its example runs again
+
 ## [0.26.1] - 2026-11-11
 
 ### Fixed

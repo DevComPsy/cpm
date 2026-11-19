@@ -13,8 +13,8 @@ import pytest
 import warnings
 
 from scipy.stats import norm
-from metai import h2
-from metainformation_theoretic2 import metaI_d_prime, fit_metaI, EstimatorMetaI
+from cpm.utils.metai import h2
+from cpm.applications.metainformation_theoretic import metaI_d_prime, fit_metaI, EstimatorMetaI
 
 import sys
 import os

@@ -2,7 +2,7 @@
 test units for metainformation_theoretic.py
 
 tests cover:
-- metaI_d_prime: theoretic ideal Bayes observer
+- metaI_d_prime: theoretic ideal Bayesian observer
 - fit_metaI: meta-I parameter estimation
 - EstimatorMetaI: participant level estimations
 
@@ -13,8 +13,8 @@ import pytest
 import warnings
 
 from scipy.stats import norm
-from cpm.utils.metai import h2
-from cpm.applications.metainformation_theoretic import metaI_d_prime, fit_metaI, EstimatorMetaI
+from metai import h2
+from metainformation_theoretic2 import metaI_d_prime, fit_metaI, EstimatorMetaI
 
 import sys
 import os
@@ -39,19 +39,36 @@ def synthetic_data():
     })
 
 @pytest.fixture
+def synthetic_incomplete_data():
+    # Creates a DataFrame with 2 participants with 8 trials each with the required columns
+    return pd.DataFrame({
+        "participant": [1, 1, 1, 1, 1, 1, 1, 1, 
+                        2, 2, 2, 2, 2, 2, 2, 2],
+        "response": [0, 0, 0, 1, 1, 1, 1, 0,
+                     0, 0, 0, 1, 0, 1, 0, 1],
+        "confidence": [0.9, 0.8, 0.85, 0.2, 0.9, 0.75, 0.8, 0.15,
+                       0.7, 0.4, 0.6,  0.3, 0.8, 0.2,  0.5, 0.1],
+        "accuracy": [1, 1, 1, 0, 1, 1, 1, 0,
+                     1, 1, 1, 0, 0, 1, 0, 1],
+    })
+
+@pytest.fixture
 def balanced_data():
         #accuracy at chance level, with random confidence
         rng = np.random.default_rng(7)
+        response = rng.choice([0, 1], 200)
         accuracy = np.array([1] * 100 + [0] * 100)
         confidence = rng.uniform(0, 1, 200)
-        return accuracy, confidence
+        signal = rng.choice([0, 1], 200)
+        return response, accuracy, confidence, signal
 
 @pytest.fixture
 def perfect_acc_data():
       rng = np.random.default_rng(3)
       accuracy = np.ones(100, dtype = int)
       confidence = rng.uniform(0, 1, 100)
-      return accuracy, confidence
+      signal = rng.choice([0, 1], 100)
+      return accuracy, confidence, signal
 
 @pytest.fixture
 def ideal_data():
@@ -61,12 +78,29 @@ def ideal_data():
       sd = 2 / d_prime
       n = 2000
 
-      signal = rng.choice([-1, 1], n)
-      evidence = rng.normal(loc=signal, scale=sd)
-      choice = np.sign(evidence)
+      signal = rng.choice([0, 1], n)
+      evidence = rng.normal(loc=2*signal - 1, scale=sd)
+      choice = (evidence > 0).astype(int)
       accuracy = (choice == signal).astype(int)
       confidence = 1/ (1 + np.exp(-(d_prime ** 2) * np.abs(evidence) / 2))
-      return accuracy, confidence, d_prime
+      return accuracy, confidence, signal, d_prime
+
+@pytest.fixture
+def invalid_trials_data():
+      signal = np.array([1, 0, 1, 0, 1, np.nan, 2, 0])
+      accuracy = np.array([1, 1, 0, 0, 1, 0, 1, 2])
+      confidence = np.random.default_rng(32).uniform(0, 1, 8)
+      return accuracy, confidence, signal
+
+@pytest.fixture
+def inconsistent_data():
+    return pd.DataFrame({
+        "participant": [1, 1, 1, 1],
+        "signal":      [0, 1, 0, 1],
+        "response":    [0, 1, 0, 1],
+        "accuracy":    [1, 0, 1, 0],  
+        "confidence":  [0.9, 0.8, 0.7, 0.6],
+    })
 
 #tests metaI_d_prime
 
@@ -124,107 +158,190 @@ class TestMetaIDPrime:
 #tests fit_metaI
 class TestFitMetaI:
 
+    #test data consistency
+    def test_no_accuracy_nor_response_raises(self):
+                with pytest.raises(ValueError, match="fit_metaI needs `response`, `accuracy`, or both; neither was provided."):
+                      rng = np.random.default_rng(21)
+                      signal = rng.choice([0, 1], 100)
+                      confidence = rng.uniform(0, 1, 100)
+                      fit_metaI(confidence = confidence, signal = signal, bins = 2)
+      
+    def test_response_accuracy_inferred_(self, balanced_data):
+           _, accuracy, confidence, signal = balanced_data
+           response = np.where(accuracy == 1, signal, 1 - signal)
+
+           result_accuracy_only = fit_metaI(signal=signal, accuracy=accuracy, confidence=confidence, bins=4)
+           result_response_only = fit_metaI(signal=signal, response=response, confidence=confidence, bins=4)
+
+           assert result_accuracy_only["n_correct"] == result_response_only["n_correct"]
+           assert result_accuracy_only["n_incorrect"] == result_response_only["n_incorrect"]
+
+    def test_mismatched_lengths_raises(self):
+                with pytest.raises(ValueError, match="`signal`, `response`, `accuracy` and `confidence` must have the same "
+                                  f"length;"):
+                      rng = np.random.default_rng(34)
+                      signal = rng.choice([0, 1], 105)
+                      response = rng.choice([0, 1], 102)
+                      accuracy = rng.choice([0, 1], 100)
+                      confidence = rng.uniform([0, 1], 110)
+    
+                      fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, response = response, bins=4)
+    
+    def test_inconsistent_response_and_accuracy_raises(self, inconsistent_data):
+                with pytest.raises(ValueError, match=f"`response` and `accuracy` are inconsistent"):
+                      fit_metaI(
+                            signal=inconsistent_data["signal"].values,
+                              response=inconsistent_data["response"].values,
+                              accuracy=inconsistent_data["accuracy"].values,
+                              confidence=inconsistent_data["confidence"].values,
+                              bins=4
+                        )
+
+    def test_out_of_range_signal_values_raises(self, invalid_trials_data):
+          with pytest.warns(UserWarning, match="signal values outside"):
+                accuracy, confidence, signal = invalid_trials_data
+                fit_metaI(accuracy = accuracy, confidence = confidence, signal = signal, bins = 2)
+                
+    def test_invalid_trials_dropped(self, invalid_trials_data):
+            with pytest.warns(UserWarning, match="outside"):
+                  accuracy, confidence, signal = invalid_trials_data
+                  result = fit_metaI(accuracy = accuracy, confidence = confidence, signal = signal, bins = 2)
+                  assert result["n_correct"] + result["n_incorrect"] == 5
+    
+    def test_no_valid_trials_raises(self):
+                rng = np.random.default_rng(14)
+                signal = rng.choice([2, 3], 100)
+                accuracy = rng.choice([0, 1], 100)
+                confidence = rng.uniform(0, 1, 100)
+                
+                with pytest.raises(ValueError, match="fit_metaI found no valid trials."), pytest.warns(UserWarning, match="signal values outside"):
+                      result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
+
+    def test_inconsistency_on_dropped_trial_ignored(self, synthetic_data):
+          invalid_row = pd.DataFrame([{"participant": 1, "signal": 1, "response": 1,
+                                       "accuracy": 0, "confidence": np.nan}])
+          
+          df = pd.concat([synthetic_data, invalid_row], ignore_index = True)
+          result = fit_metaI(
+                      signal = df["signal"].values,
+                      response = df["response"].values,
+                      accuracy= df["accuracy"].values,
+                      confidence= df["confidence"].values,
+                      bins=2
+                )
+          assert result["n_correct"] + result["n_incorrect"] == len(synthetic_data)
+          
+    def test_valid_and_missing_stimuli_do_not_warn(self):
+          rng = np.random.default_rng(4)
+          signal = np.array([0, 1, 0, 1, np.nan])
+          accuracy = np.array([1, 1, 0, 0, 1])
+          confidence = rng.uniform(0, 1, 5)
+
+          with warnings.catch_warnings():
+                warnings.simplefilter("error")
+                fit_metaI(signal=signal, accuracy=accuracy, confidence=confidence, bins=2)
+
+# test output structure
     EXPECTED_KEYS = {
-        "H2r", "H2r_given_c", "meta_I",
+        "d_prime", "H2r", "H2r_given_c", "meta_I",
         "metaI_d_prime", "meta_Ir1", "meta_Ir2",
         "n_correct", "n_incorrect",
         "n_correct_bin", "n_incorrect_bin",
         "thresholds", "rebin",
     }
 
-    # test output structure
     def test_all_keys_present(self, balanced_data):
-        accuracy, confidence = balanced_data
-        result = fit_metaI(accuracy, confidence, bins=4)
+        _, accuracy, confidence, signal = balanced_data
+        result = fit_metaI(signal = signal ,accuracy = accuracy, confidence = confidence, bins=4)
         assert self.EXPECTED_KEYS == set(result.keys())
 
     #H2r
     def test_H2r_is_one_balanced_data(self, balanced_data):
-        accuracy, confidence = balanced_data
-        result = fit_metaI(accuracy, confidence, bins=4)
+        _, accuracy, confidence, signal = balanced_data
+        result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
         assert result["H2r"] == pytest.approx(1.0, abs=0.01)
 
     def test_H2r_is_zero_perfect_accuracy(self, perfect_acc_data):
-          accuracy, confidence = perfect_acc_data
-          result = fit_metaI(accuracy, confidence, bins=4)
+          accuracy, confidence, signal = perfect_acc_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
           assert result["H2r"] == pytest.approx(0.0, abs=1e-8)
       
     #meta-I
     def test_metaI_nonnegative(self, balanced_data):
-        accuracy, confidence = balanced_data
-        result = fit_metaI(accuracy, confidence, bins=4)
+        _, accuracy, confidence, signal = balanced_data
+        result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
         assert result["meta_I"] >= -1e-10
 
     def test_metaI_bounded_by_h2r(self, balanced_data):
-          accuracy, confidence = balanced_data
-          result = fit_metaI(accuracy, confidence, bins=4)
+          _, accuracy, confidence, signal = balanced_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
           assert result["meta_I"] <= result["H2r"] + 1e-8
 
     def test_metaI_positive_informative_confidence(self, ideal_data):
-          accuracy, confidence, _ = ideal_data
-          result = fit_metaI(accuracy, confidence, bins=4)
+          accuracy, confidence, signal, _ = ideal_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
           assert result["meta_I"] > 0
 
 
 #tests metaI_d_prime
     def test_metaIdp_nan_without_dprime(self, balanced_data):
-          accuracy, confidence = balanced_data
-          result = fit_metaI(accuracy, confidence, bins=4, d_prime=None)
+          _, accuracy, confidence, signal = balanced_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=None)
           assert np.isnan(result["metaI_d_prime"])
 
     def test_metaIdp_finite_with_dprim(self, balanced_data):
-          accuracy, confidence = balanced_data
-          result = fit_metaI(accuracy, confidence, bins=4, d_prime=1.0)
+          _, accuracy, confidence, signal = balanced_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=1.0)
           assert np.isfinite(result["metaI_d_prime"])
           assert result["metaI_d_prime"] > 0
 
 #tests efficiency measures metaI1r and metaIr2
     def test_meta_I1r_nan_without_dprime(self, balanced_data):
-          accuracy, confidence = balanced_data
-          result = fit_metaI(accuracy, confidence, bins=4, d_prime=None)
+          _, accuracy, confidence, signal = balanced_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=None)
           assert np.isnan(result["meta_Ir1"])
 
     def test_meta_Ir1_one_ideal_observer(self, ideal_data):
-          accuracy, confidence, d_prime = ideal_data
-          result = fit_metaI(accuracy, confidence, bins=4, d_prime=d_prime)
-          assert 0.5 < result["meta_Ir1"] < 1.5
+         accuracy, confidence, signal, d_prime = ideal_data
+         result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=d_prime)
+         assert 0.5 < result["meta_Ir1"] < 1.5
 
     def test_meta_Ir2_bounded(self, balanced_data):
-          accuracy, confidence = balanced_data
-          result = fit_metaI(accuracy, confidence, bins=4, d_prime=1.0)
+          _, accuracy, confidence, signal = balanced_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=1.0)
           assert 0 < result["meta_Ir2"] < 1.0 + 1e-8
 
 #tests matched_bins
     def test_matched_bins_finite_metaIr1(self, ideal_data):
-          accuracy, confidence, d_prime = ideal_data
-          result = fit_metaI(accuracy, confidence, bins=4, d_prime=d_prime, matched_bins=True)
+          accuracy, confidence, signal, d_prime = ideal_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=d_prime, matched_bins=True)
           assert np.isfinite(result["meta_Ir1"])
 
     #matched_bins=True uses MC, False uses numerical integration. In both cases meta_d_prime must be finite.
     def test_matched_unmatched_bins_finite_metadp(self, ideal_data):
-            accuracy, confidence, d_prime = ideal_data
-            r_matched = fit_metaI(accuracy, confidence, bins=4, d_prime=d_prime, matched_bins=True)
-            r_unmatched = fit_metaI(accuracy, confidence, bins=4, d_prime=d_prime, matched_bins=False)
+            accuracy, confidence, signal, d_prime = ideal_data
+            r_matched = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=d_prime, matched_bins=True)
+            r_unmatched = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, d_prime=d_prime, matched_bins=False)
 
             assert np.isfinite(r_matched["meta_Ir1"])
             assert np.isfinite(r_unmatched["meta_Ir1"])
 
 #tests if counts add up
     def test_n_correct_incorrect_sum_to_n(self, balanced_data):
-            accuracy, confidence = balanced_data
-            result = fit_metaI(accuracy, confidence, bins=4)
+            _, accuracy, confidence, signal = balanced_data
+            result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
             assert result["n_correct"] + result["n_incorrect"] == len(accuracy)
 
     def test_bincounts_sums_to_n(self, balanced_data):
-          accuracy, confidence = balanced_data
-          result = fit_metaI(accuracy, confidence, bins=4)
+          _, accuracy, confidence, signal = balanced_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
           assert sum(result["n_correct_bin"]) == result["n_correct"]
           assert sum(result["n_incorrect_bin"] ) == result["n_incorrect"]
 
 #edge caseses
     def test_metaI_zero_perfect_accuracy(self, perfect_acc_data):
-           accuracy, confidence = perfect_acc_data
-           result = fit_metaI(accuracy, confidence, bins=4, ignore_invalid = True)
+           accuracy, confidence, signal = perfect_acc_data
+           result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, ignore_invalid = True)
            assert result["H2r"] == pytest.approx(0.0, abs=1e-8)
            assert result["meta_I"] == pytest.approx(0.0, abs=1e-8)
 
@@ -232,21 +349,22 @@ class TestFitMetaI:
           rng = np.random.default_rng(5)
           accuracy = np.zeros(100, dtype = int)
           confidence = rng.uniform(0, 1, 100)
-          result = fit_metaI(accuracy, confidence, bins=4)
+          signal = rng.choice([0, 1], 100)
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
           assert result["H2r"] == pytest.approx(0.0, abs=1e-8)
           assert result["meta_I"] == pytest.approx(0.0, abs=1e-8)
 
     def test_meta_Ir2_nan_perfect_accuracy(self, perfect_acc_data):
-          accuracy, confidence = perfect_acc_data
-          result = fit_metaI(accuracy, confidence, bins=4, ignore_invalid = True)
+          accuracy, confidence, signal = perfect_acc_data
+          result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4, ignore_invalid = True)
           assert np.isnan(result["meta_Ir2"])
 
     def test_identical_confidence_raises_or_rebins(self, balanced_data):
-          _, accuracy = balanced_data
-          confidence = np.full(100, 0.5)
+          _, accuracy, _, signal = balanced_data
+          confidence = np.full(200, 0.5)
             
           try:
-                result = fit_metaI(accuracy, confidence, bins=4)
+                result = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=4)
 
                 assert result["rebin"] ==1, (
                       "identical confidence values shouzld set rebin=1"
@@ -282,17 +400,18 @@ def meta_I_reference(accuracy, confidence, bins):
             p_correct_given  = accuracy[in_bin].mean()
             H2r_given_c     += (n_bin / n) * h2_scalar(p_correct_given)
 
-            return H2r - H2r_given_c
+      return H2r - H2r_given_c
 
       rng = np.random.default_rng(11)
       for _ in range(50):
             n          = rng.integers(100, 400)
             p_acc      = rng.uniform(0.55, 0.85)   # avoid 0/1 extremes
+            signal     = rng.choice([0, 1], n)
             accuracy   = rng.choice([0, 1], size=n, p=[1 - p_acc, p_acc])
             confidence = rng.uniform(0, 1, n)
             bins       = int(rng.choice([2, 3, 4, 6]))
 
-            result    = fit_metaI(accuracy, confidence, bins=bins)
+            result    = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=bins)
             reference = meta_I_reference(accuracy, confidence, bins)
 
             assert result["meta_I"] == pytest.approx(reference, abs=1e-6), (
@@ -300,13 +419,52 @@ def meta_I_reference(accuracy, confidence, bins):
                 f"fit_metaI={result['meta_I']:.8f}, reference={reference:.8f}"
             )
 
+
 class TestEstimatorMetaI:
+
+      def test_no_Dataframe_raises(self):
+            with pytest.raises(ValueError, match="`Data` should be a DataFrame."):
+                  EstimatorMetaI(data="not a Datafrmae", bins=4)
+
+      def test_required_column_missing_raises(self, synthetic_incomplete_data):
+            with pytest.raises(ValueError, match="Required column"):
+                  EstimatorMetaI(data=synthetic_incomplete_data, bins=4)
+
+      def test_no_response_nor_accuracy_column_raises(self, synthetic_data):
+                  with pytest.raises(ValueError, match="DataFrame must contain either `response` or `accuracy`."):
+                        df_neither = synthetic_data[["participant", "signal", "confidence"]]
+                        EstimatorMetaI(data=df_neither, bins=4)
+
+      def test_response_only_df_runs(self, synthetic_data):
+            df_response_only = synthetic_data.drop(columns=["accuracy"])
+            est = EstimatorMetaI(df_response_only, bins=2)
+            est.estimate()
+            assert len(est.fit) == synthetic_data["participant"].nunique()
+            assert all(np.isfinite(r["meta_I"]) for r in est.fit)
+
+      def test_accuracy_only_df_warns_and_runs(self, synthetic_data):
+            df_accuracy_only = synthetic_data.drop(columns=["response"])
+            est = EstimatorMetaI(df_accuracy_only, bins=2)
+            with pytest.warns(UserWarning, match="response.*not provided"):
+                  est.estimate()
+            assert len(est.fit) == synthetic_data["participant"].nunique()
+            assert all(np.isfinite(r["meta_I"]) for r in est.fit)
+
+      def test_inconsistent_response_accuracy_warns_and_sets_nan(self, inconsistent_data):
+            est = EstimatorMetaI(inconsistent_data, bins=2)
+            with pytest.warns(RuntimeWarning, match="inconsistent"):
+                  est.estimate()
+            assert all(np.isnan(r["meta_I"]) for r in est.fit)
+
+      def test_missing_ppt_identifier_raises(self, synthetic_data):
+            with pytest.raises(ValueError, match="Required column"):
+                  EstimatorMetaI(data=synthetic_data, bins=2, ppt_identifier="subject")
 
       def test_custom_ppt_identifier(self, synthetic_data):
             df = synthetic_data.rename(columns={"participant": "subject"})
             est = EstimatorMetaI(df, bins=2, ppt_identifier="subject")
             est.estimate()
-            assert len(est.fit) == 2 #is this the best way to test the function?
+            assert len(est.fit) == 2
 
       def test_estimate_one_result_per_ppt(self, synthetic_data):
             est = EstimatorMetaI(synthetic_data, bins=2)
@@ -358,8 +516,9 @@ class TestEstimatorMetaI:
             
             est = EstimatorMetaI(df, bins=4)
             with pytest.warns(RuntimeWarning):
-                  with pytest.raises(RuntimeError):
                         est.estimate()
+
+            assert all(np.isnan(r["meta_I"]) for r in est.fit)
 
       # tests export structure
       def test_export_returns_df(self, synthetic_data):
@@ -368,20 +527,20 @@ class TestEstimatorMetaI:
             assert isinstance(est.export(), pd.DataFrame)
 
       def test_export_before_estimate_empty(self, synthetic_data):
-            est = EstimatorMetaI(synthetic_data, bins=2)
+            est = EstimatorMetaI(synthetic_data, bins=2) 
             assert len(est.export()) == 0
 
       # tests if matched_bin propagated further down call line
       def test_matched_bin_propagted(self, ideal_data):
-            accuracy, confidence, d_prime = ideal_data
+            accuracy, confidence, signal, d_prime = ideal_data
             df = pd.DataFrame({
             "participant": np.ones(len(accuracy), dtype=int),
-            "signal":      (accuracy == 1).astype(int),
-            "response":    (accuracy == 1).astype(int),
+            "signal":      signal,
             "accuracy":    accuracy,
             "confidence":  confidence,
             })
             est = EstimatorMetaI(df, bins=4, matched_bins=True)
-            est.estimate()
+            with pytest.warns(UserWarning):
+                  est.estimate()
             assert np.isfinite(est.fit[0]["metaI_d_prime"])
       

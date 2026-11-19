@@ -6,6 +6,8 @@ from cpm.utils.metai import h2, acc_counts, H2r, conf_binned, bin_counts, H2r_gi
 from scipy.stats import norm
 from scipy.integrate import quad
 
+def _is_column(data, col):
+    return isinstance(col, str) and col in data.columns
 
 def metaI_d_prime(
         d_prime: float, 
@@ -81,9 +83,11 @@ def metaI_d_prime(
     return H2r(*acc_counts(accuracy)) - H2r_given_c(n_correct_prime, n_incorrect_prime)
 
 def fit_metaI (
-        accuracy: np.ndarray, 
+        signal: np.ndarray, 
         confidence: np.ndarray, 
-        bins: int, 
+        bins: int,
+        response: np.ndarray | None = None,
+        accuracy: np.ndarray | None = None, 
         d_prime: float | None = None, 
         matched_bins: bool=False,
         ignore_invalid: bool=False
@@ -122,7 +126,105 @@ def fit_metaI (
         *`'thresholds'`: cuttings points used to create the bins,
         *`'rebin'`: 1 if `bin_ratings` had to be re-binned,
     
+    Raises
+    ------
+    ValueError
+        If neither `response` nor `accuracy` are provided; if the input `signal`, `response`, `accuracy` and `confidence` are of different lengths;
+        if `response` and `accuracy` are inconsistent on a valid trial; if there is no valid trial at all.
+
+    Notes
+    -----
+    Trials where `signal`, `response` or `accuracy` are not 0 or 1, or confidence is not finite,
+    are automatically omitted.
+
+    If only `accuracy` is provided, responses are inferred from it.
+    If only `response` is provided, accuracy is inferred from it.
+    If both `response` and `accuracy` are provided, they are checked for consistency, and a
+    `ValueError` is raised on any trial where they disagree.
+
     """
+    if response is None and accuracy is None:
+        raise ValueError(
+            "fit_metaI needs `response`, `accuracy`, or both; neither was provided."
+        )
+
+    signal = np.asarray(signal, dtype=float)
+    confidence = np.asarray(confidence, dtype=float)
+
+    inputs = [signal, confidence]
+
+    if response is not None:
+        response = np.asarray(response, dtype=float)
+        inputs.append(response)
+    if accuracy is not None:
+        accuracy = np.asarray(accuracy, dtype=float)
+        inputs.append(accuracy)
+    if len({len(x) for x in inputs}) > 1:
+        raise ValueError(
+            "`signal`, `response`, `accuracy` and `confidence` must have the same "
+            f"length; got lengths {[len(x) for x in inputs]}."
+        )
+    
+    bin_signal = np.isin(signal, (0,1))
+    out_of_range = ~bin_signal & ~np.isnan(signal)
+    if out_of_range.any():
+        warnings.warn(
+            f"{out_of_range.sum()} trial(s) have signal values outside {{0, 1}} (values "
+            f"{np.unique(signal[out_of_range])[:5].tolist()}) and are omitted; "
+            "code signal as 0 for S1 and 1 for S2.",
+            UserWarning,
+            stacklevel=2,
+        )
+    
+    _response_provided = response is not None
+    _accuracy_provided = accuracy is not None
+    
+    bin_response = np.isin(response, (0,1)) if response is not None else None
+    bin_accuracy = np.isin(accuracy, (0,1)) if accuracy is not None else None
+
+    if accuracy is None:
+        accuracy = np.where(
+            bin_signal & bin_response,
+            (signal == response).astype(int),
+            np.nan,
+        )
+
+    if response is None:
+        response = np.where(
+            bin_signal & bin_accuracy,
+            np.where(accuracy == 1, signal, 1 - signal),
+            np.nan,
+        )
+
+    valid = (
+        bin_signal
+        & np.isin(response, (0, 1))
+        & np.isin(accuracy, (0, 1))
+        & np.isfinite (confidence)
+    )
+
+    if _response_provided and _accuracy_provided:
+        mismatch = valid & ((response == signal) != (accuracy == 1))
+        if mismatch.any():
+            positions = np.flatnonzero(mismatch)
+            raise ValueError(
+                f"`response` and `accuracy` are inconsistent on {len(positions)} "
+                f"trial(s), at positions {positions[:5].tolist()}"
+                f"{' and more' if len(positions) > 5 else ''}: a response is "
+                "correct when it equals the stimulus."
+                        )
+
+    if not valid.any():
+        raise ValueError(
+            "fit_metaI found no valid trials: `signal`, `response` and "
+            "`accuracy` (if given) must be 0 or 1, and `confidence` must be finite. "
+            )
+    
+    signal = signal[valid]
+    response = response[valid]
+    accuracy = accuracy[valid]
+    confidence = confidence[valid]
+    
     n_correct, n_incorrect = acc_counts(accuracy)
     h2_r = H2r(n_correct, n_incorrect)
     n_correct_bin, n_incorrect_bin, info = bin_counts(accuracy, confidence, bins, ignore_invalid=ignore_invalid)
@@ -176,9 +278,18 @@ class EstimatorMetaI:
             Default is set to `0.5`.
     
     Returns
-    An EstimatorMetaI object.
     ------
+    An EstimatorMetaI object.
 
+    Raises
+    ------
+    ValueError
+        If `data` is not a DataFrame; if `signal`, `confidence` or a ppt_identifier are not provided
+        as columns in the DataFrame. 
+    
+    ValueError
+        If DataFrame doesn't contain either `response` or `accuracy`.
+    
     Notes
     -----
     The data DataFrame should contain following columns:
@@ -204,23 +315,59 @@ class EstimatorMetaI:
         self.dprime_correction = dprime_correction
         self.fit = []
 
+        if isinstance(data, pd.DataFrame):
+            for col in ["signal", "confidence", ppt_identifier]:
+                if col not in data.columns:
+                    raise ValueError(f"Required column '{col}' not found in DataFrame")
+                
+            self.signal = data["signal"].values
+            self.confidence = data["confidence"].values
+            self.response = data["response"].values if _is_column(data, "response") else None
+            self.accuracy = data["accuracy"].values if _is_column(data, "accuracy") else None
+
+            if self.response is None and self.accuracy is None:
+                raise ValueError(
+                    "DataFrame must contain either `response` or `accuracy`."
+                )
+
+        else:
+            raise ValueError("`Data` should be a DataFrame.")
+            
     def estimate(self):
         """
         Estimates metacognitive parameters for each particiupants using the meta-I model.
 
         Warns
         -----
-        RunTimeWarning
+        RuntimeWarning
             If a participant's d' <= 0, metaI_d_prime and meta_Ir1 will be Nan.
             The remaining measures for this participant (meta_I, meta_Ir2) are still computed.
+        
+        UserWarning
+            If `response` was not provided, d' computed from responses inferred from `accuracy`.
 
         RuntimeWarning
             If an unexpected error occurs during fitting, all metrics will be set to Nan for that participant.
 
         """
         self.fit = []
+
+        if self.response is None:
+            warnings.warn(
+                "`response` was not provided, d' computed from responses inferred from `accuracy` for all participants.",
+                UserWarning,
+                stacklevel = 2,
+            )
+
         for ppt, group in self.data.groupby(self.ppt_identifier):
-            dp = dprime(group["signal"].values, group["response"].values, correction=self.dprime_correction)
+            if self.response is not None:
+                dp = dprime(group["signal"].values, group["response"].values, correction=self.dprime_correction)
+            else:
+                # infer responses from accuracy if missing, for d'
+                sig = group["signal"].values.astype(float)
+                acc = group["accuracy"].values.astype(float)
+                inf_response = np.where(acc == 1, sig, 1 - sig)
+                dp = dprime(group["signal"].values, inf_response, correction = self.dprime_correction)
 
             dp_original = dp
             if dp <= 0:
@@ -234,8 +381,10 @@ class EstimatorMetaI:
 
             try:
                 result = fit_metaI(
-                    accuracy=group["accuracy"].values,
+                    signal=group["signal"].values,
                     confidence=group["confidence"].values,
+                    accuracy=group["accuracy"].values if self.accuracy is not None else None,
+                    response=group["response"].values if self.response is not None else None,
                     bins=self.bins,
                     d_prime=dp,
                     matched_bins=self.matched_bins,

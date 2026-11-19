@@ -35,7 +35,7 @@ def synthetic_data():
         "signal": [0, 1, 0, 1],
         "response": [0, 1, 0, 1],
         "confidence": [1, 2, 2, 1],
-        "accuracy": [1, 0, 1, 1],
+        "accuracy": [1, 1, 1, 1],
         "observed": [1, 0, 1, 0],
     })
 
@@ -117,3 +117,17 @@ def test_metad_nll_equals_the_scipy_computation():
             args = (nR_S1, nR_S2, n_ratings, rng.uniform(0.2, 2), rng.normal(0, 0.5), 1)
             assert signal_detection.metad_nll(guess, *args) == pytest.approx(
                 _metad_nll_with_scipy(guess, *args), rel=1e-14)
+
+
+def test_estimatormetad_names_participant_on_count_error(synthetic_data):
+    data = synthetic_data.copy()
+    data.loc[3, "accuracy"] = 0  # participant 2: signal 1, response 1, incorrect
+    est = signal_detection.EstimatorMetaD(
+        data=data.groupby("participant"),
+        bins=2,
+        parallel=False,
+        display=0,
+        ppt_identifier="participant",
+    )
+    with pytest.raises(ValueError, match="participant 2.*inconsistent"):
+        est.optimise()

@@ -556,16 +556,21 @@ class EstimatorMetaD:
             nRatings = self.bins
             nCriteria = int(2 * nRatings - 1)  # number criteria to be fitted
             
-            nR_S1, nR_S2 = count_trials(
-                data=subject,
-                stimuli="signal",
-                responses="response",
-                accuracy="accuracy",
-                confidence="discrete",
-                nRatings=nRatings,
-                padding=True,
-                padAmount=1/nRatings,
-            )
+            try:
+                nR_S1, nR_S2 = count_trials(
+                    data=subject,
+                    stimuli="signal",
+                    responses="response",
+                    accuracy="accuracy",
+                    confidence="discrete",
+                    nRatings=nRatings,
+                    padding=True,
+                    padAmount=1/nRatings,
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f"Error counting trials for participant {ppt}: {e}"
+                ) from e
             
             results_dict = fit_metad(
                 nR_S1=nR_S1,

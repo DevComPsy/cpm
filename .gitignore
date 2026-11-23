@@ -168,3 +168,4 @@ docs/_build/
 docs/api/generated/
 docs/jupyter_execute/
 docs/_static/thumbnails/
+tmp/

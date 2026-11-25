@@ -164,7 +164,7 @@ def fit_metaI (
         inputs.append(accuracy)
     if len({len(x) for x in inputs}) > 1:
         raise ValueError(
-            "`stimuli`, `response`, `accuracy` and `confidence` must have the same "
+            "`signal`, `response`, `accuracy` and `confidence` must have the same "
             f"length; got lengths {[len(x) for x in inputs]}."
         )
     

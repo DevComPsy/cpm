@@ -2,7 +2,10 @@ import os
 import pytest
 import pandas as pd
 from unittest.mock import patch, mock_open
-from cpm.datasets import load_csv, load_bandit_data, load_risky_choices, load_two_step_data, load_blocking_data
+from cpm.datasets import (
+    load_csv, load_bandit_data, load_risky_choices, load_two_step_data, load_blocking_data,
+    load_information_sampling_data,
+)
 
 
 @pytest.fixture
@@ -118,3 +121,28 @@ def test_load_blocking_data_means():
     means = data.groupby(["ppt", "cue"]).rating.mean().unstack().mean()
     reported = {"A": 9.84, "B": 1.47, "C": 0.35, "D": 0.81, "X": 4.97, "Y": 8.42}
     assert means.round(2).to_dict() == reported
+
+
+@patch("cpm.datasets.base.load_csv")
+def test_load_information_sampling_data(mock_load_csv):
+    mock_load_csv.return_value = pd.DataFrame({"col1": [1, 3], "col2": [2, 4]})
+    result = load_information_sampling_data()
+    mock_load_csv.assert_called_once_with("information_sampling.csv")
+    assert result.equals(pd.DataFrame({"col1": [1, 3], "col2": [2, 4]}))
+
+
+def test_load_information_sampling_data_games():
+    # The packaged file holds the games of the two example participants of the
+    # Bayesian Information Gathering toolbox, one row per card opened
+    data = load_information_sampling_data()
+    expected = ["ppt", "game", "condition", "n_seen", "n_yellow", "action", "outcome", "confidence"]
+    assert list(data.columns) == expected
+    assert data.groupby("ppt").game.nunique().to_dict() == {1: 15, 2: 15}
+    assert (data.condition == 0).all()
+    for _, game in data.groupby(["ppt", "game"]):
+        assert (game.n_seen.to_numpy() == range(1, len(game) + 1)).all()
+        assert set(game.n_yellow.diff().fillna(game.n_yellow).unique()) <= {0, 1}
+        assert (game.action.to_numpy()[:-1] == 2).all() and game.action.iloc[-1] == 0
+    ## the number of cards opened, as in the data of the toolbox
+    draws = data.groupby(["ppt", "game"]).n_seen.max().groupby("ppt").sum().to_dict()
+    assert draws == {1: 274, 2: 80}

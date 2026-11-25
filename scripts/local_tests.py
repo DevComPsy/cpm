@@ -32,7 +32,11 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-FAST = ["test/models/test_kernels.py", "test/applications/test_backends.py"]
+FAST = [
+    "test/models/test_kernels.py",
+    "test/applications/test_backends.py",
+    "test/applications/test_bayesian_information_gathering.py",
+]
 
 
 def run(python, environment, tests, label):

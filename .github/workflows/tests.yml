@@ -53,7 +53,7 @@ jobs:
         if: matrix.numba
         env:
           NUMBA_DISABLE_JIT: "1"
-        run: python -m pytest -q test/models/test_kernels.py test/applications/test_backends.py
+        run: python -m pytest -q test/models/test_kernels.py test/applications/test_backends.py test/applications/test_bayesian_information_gathering.py
 
   lowest:
     name: lowest supported versions, Python 3.11

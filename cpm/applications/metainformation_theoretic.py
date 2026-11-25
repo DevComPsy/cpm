@@ -2,9 +2,12 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from cpm.utils.metai import h2, acc_counts, H2r, conf_binned, bin_counts, H2r_given_c, dprime
 from scipy.stats import norm
 from scipy.integrate import quad
+
+from cpm.utils.metai import h2, acc_counts, H2r, conf_binned, bin_counts, H2r_given_c, dprime
+from cpm.core.data import detailed_pandas_compiler, decompose
+from cpm.core.parallel import detect_cores, execute_parallel
 
 def _is_column(data, col):
     return isinstance(col, str) and col in data.columns
@@ -161,7 +164,7 @@ def fit_metaI (
         inputs.append(accuracy)
     if len({len(x) for x in inputs}) > 1:
         raise ValueError(
-            "`signal`, `response`, `accuracy` and `confidence` must have the same "
+            "`stimuli`, `response`, `accuracy` and `confidence` must have the same "
             f"length; got lengths {[len(x) for x in inputs]}."
         )
     
@@ -213,18 +216,18 @@ def fit_metaI (
                 f"{' and more' if len(positions) > 5 else ''}: a response is "
                 "correct when it equals the stimulus."
                         )
-
     if not valid.any():
         raise ValueError(
             "fit_metaI found no valid trials: `signal`, `response` and "
             "`accuracy` (if given) must be 0 or 1, and `confidence` must be finite. "
-            )
+        )
     
     signal = signal[valid]
     response = response[valid]
     accuracy = accuracy[valid]
     confidence = confidence[valid]
-    
+
+
     n_correct, n_incorrect = acc_counts(accuracy)
     h2_r = H2r(n_correct, n_incorrect)
     n_correct_bin, n_incorrect_bin, info = bin_counts(accuracy, confidence, bins, ignore_invalid=ignore_invalid)
@@ -276,6 +279,10 @@ class EstimatorMetaI:
             which adds +1 to hit/FA counts and +2 to the total trial counts.
 
             Default is set to `0.5`.
+    cl : int, optional
+            Number of cores to use for parallel processing. If None, all available cores will be used.
+    parallel : bool, default False
+            If True, parallel processing will be used.
     
     Returns
     ------
@@ -306,7 +313,9 @@ class EstimatorMetaI:
             bins,
             matched_bins =False,
             ppt_identifier="participant",
-            dprime_correction=0.5
+            dprime_correction=0.5,
+            cl=None,
+            parallel=False,
     ):
         self.data = data
         self.bins = bins
@@ -314,6 +323,14 @@ class EstimatorMetaI:
         self.ppt_identifier = ppt_identifier
         self.dprime_correction = dprime_correction
         self.fit = []
+
+        self.__pandas__ = True
+        self.__parallel__ = parallel
+
+        if cl is not None:
+            self.cl = cl
+        if cl is None and parallel:
+            self.cl = detect_cores()
 
         if isinstance(data, pd.DataFrame):
             for col in ["signal", "confidence", ppt_identifier]:
@@ -331,7 +348,7 @@ class EstimatorMetaI:
                 )
 
         else:
-            raise ValueError("`Data` should be a DataFrame.")
+            raise ValueError("`data` should be a DataFrame.")
             
     def estimate(self):
         """
@@ -359,15 +376,21 @@ class EstimatorMetaI:
                 stacklevel = 2,
             )
 
-        for ppt, group in self.data.groupby(self.ppt_identifier):
+        def __task(participant, **args):
+            subject, _, ppt = decompose(
+                participant=participant,
+                pandas=self.__pandas__,
+                identifier=self.ppt_identifier,
+            )
+
             if self.response is not None:
-                dp = dprime(group["signal"].values, group["response"].values, correction=self.dprime_correction)
+                dp = dprime(subject["signal"].values, subject["response"].values, correction=self.dprime_correction)
             else:
                 # infer responses from accuracy if missing, for d'
-                sig = group["signal"].values.astype(float)
-                acc = group["accuracy"].values.astype(float)
+                sig = subject["signal"].values.astype(float)
+                acc = subject["accuracy"].values.astype(float)
                 inf_response = np.where(acc == 1, sig, 1 - sig)
-                dp = dprime(group["signal"].values, inf_response, correction = self.dprime_correction)
+                dp = dprime(subject["signal"].values, inf_response, correction = self.dprime_correction)
 
             dp_original = dp
             if dp <= 0:
@@ -381,10 +404,10 @@ class EstimatorMetaI:
 
             try:
                 result = fit_metaI(
-                    signal=group["signal"].values,
-                    confidence=group["confidence"].values,
-                    accuracy=group["accuracy"].values if self.accuracy is not None else None,
-                    response=group["response"].values if self.response is not None else None,
+                    signal=subject["signal"].values,
+                    confidence=subject["confidence"].values,
+                    accuracy=subject["accuracy"].values if self.accuracy is not None else None,
+                    response=subject["response"].values if self.response is not None else None,
                     bins=self.bins,
                     d_prime=dp,
                     matched_bins=self.matched_bins,
@@ -413,7 +436,18 @@ class EstimatorMetaI:
 
             result["ppt"] = ppt
             result["d_prime"] = dp_original
-            self.fit.append(result)
+            return result
+
+        if self.__parallel__:
+            self.fit = execute_parallel(
+                job=__task,
+                data=self.data,
+                cl=self.cl,
+                method=None,
+                pandas=self.__pandas__,
+            )
+        else:
+            self.fit = list(map(__task, self.data.groupby(self.ppt_identifier)))
 
     def export(self):
         """

@@ -334,3 +334,62 @@ def load_blocking_data():
     Spicer, S. G., Wills, A. J., Jones, P. M., Mitchell, C. J., & Dome, L. (2021). Representing uncertainty in the Rescorla-Wagner model: Blocking, the redundancy effect, and outcome base rate. Open Journal of Experimental Psychology and Neuroscience, 1, 14-21.
     """
     return load_csv("blocking_ratings.csv")
+
+
+def load_information_sampling_data():
+    """
+    Load example data of the information sampling task, from the Bayesian Information Gathering toolbox.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas DataFrame with one row per card opened, for each game and participant.
+
+    Examples
+    --------
+    >>> data = load_information_sampling_data()
+    >>> data.groupby(["ppt", "game"]).n_seen.max().groupby("ppt").mean()
+
+    Notes
+    -----
+    In the information sampling task (Clark et al., 2006; Hauser et al., 2017a, 2017b),
+    25 cards are face down on the screen, and the participant has to decide
+    whether the majority of them are yellow or blue. In each game, they open as
+    many cards as they like, one at a time, and then decide; they have to open at
+    least one card. In the fixed condition, a right answer wins and a wrong answer
+    loses 100 points.
+
+    The data are the two example participants of the Bayesian Information
+    Gathering toolbox of the authors of the model, who played 15 games each, all
+    in the fixed condition. They were originally published in the
+    `BayesianInformationGathering <https://github.com/DevComPsy/BayesianInformationGathering>`__
+    repository on GitHub, as the evidence for the colour that the participant
+    chose in the end after each card opened. The colours are therefore recoded:
+    `yellow` is the colour the participant chose, and `action` on the last row of
+    each game is always 0. Since the model treats both colours alike, this does
+    not change its predictions.
+
+    The dataset includes the following columns:
+
+    - ``ppt``: the participant number.
+    - ``game``: the game number, from 1 to 15.
+    - ``condition``: the condition of the game, 0 for fixed (all games).
+    - ``n_seen``: the number of cards opened so far.
+    - ``n_yellow``: the number of cards of the colour chosen in the end among them.
+    - ``action``: what the participant did next: 2 for opening another card, and 0 for deciding.
+    - ``outcome``: the points won in the game, 100 or -100.
+    - ``confidence``: the confidence of the participant in their decision, from 0 to 100.
+
+    See Also
+    --------
+    cpm.applications.information_gathering.BayesianInformationGathering : the Bayesian model of information gathering of Hauser et al. (2017a, 2017b).
+
+    References
+    ----------
+    Clark, L., Robbins, T. W., Ersche, K. D., & Sahakian, B. J. (2006). Reflection impulsivity in current and former substance users. Biological Psychiatry, 60(5), 515–522.
+
+    Hauser, T. U., Moutoussis, M., Iannaccone, R., Brem, S., Walitza, S., Drechsler, R., Dayan, P., & Dolan, R. J. (2017a). Increased decision thresholds enhance information gathering performance in juvenile Obsessive-Compulsive Disorder (OCD). PLoS Computational Biology, 13(4), e1005440. https://doi.org/10.1371/journal.pcbi.1005440
+
+    Hauser, T. U., Moutoussis, M., NSPN Consortium, Dayan, P., & Dolan, R. J. (2017b). Increased decision thresholds trigger extended information gathering across the compulsivity spectrum. Translational Psychiatry, 7(12), 1296. https://doi.org/10.1038/s41398-017-0040-3
+    """
+    return load_csv("information_sampling.csv")

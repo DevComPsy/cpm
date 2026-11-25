@@ -5,3 +5,4 @@ from .base import load_model_based_model_free
 from .base import load_metacognition_data
 from .base import load_two_step_data
 from .base import load_blocking_data
+from .base import load_information_sampling_data

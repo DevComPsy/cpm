@@ -6,8 +6,8 @@ from scipy.stats import norm
 from scipy.integrate import quad
 
 from cpm.utils.metai import h2, acc_counts, H2r, conf_binned, bin_counts, H2r_given_c, dprime
-from cpm.core.data import detailed_pandas_compiler, decompose
-from cpm.core.parallel import detect_cores, execute_parallel
+from cpm.core.parallel import detect_cores
+from joblib import Parallel, delayed
 
 def _is_column(data, col):
     return isinstance(col, str) and col in data.columns
@@ -376,12 +376,8 @@ class EstimatorMetaI:
                 stacklevel = 2,
             )
 
-        def __task(participant, **args):
-            subject, _, ppt = decompose(
-                participant=participant,
-                pandas=self.__pandas__,
-                identifier=self.ppt_identifier,
-            )
+        def __task(ppt_group, **args):
+            ppt, subject = ppt_group
 
             if self.response is not None:
                 dp = dprime(subject["signal"].values, subject["response"].values, correction=self.dprime_correction)
@@ -439,13 +435,11 @@ class EstimatorMetaI:
             return result
 
         if self.__parallel__:
-            self.fit = execute_parallel(
-                job=__task,
-                data=self.data,
-                cl=self.cl,
-                method=None,
-                pandas=self.__pandas__,
+            self.fit = Parallel(n_jobs=self.cl)(
+            delayed(__task)(ppt_group)
+            for ppt_group in self.data.groupby(self.ppt_identifier)
             )
+
         else:
             self.fit = list(map(__task, self.data.groupby(self.ppt_identifier)))
 

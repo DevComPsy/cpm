@@ -29,6 +29,15 @@ Decision making
    decision_making.PTSM1992
    decision_making.PTSM2025
 
+Information gathering
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+
+   information_gathering.BayesianInformationGathering
+
 Metacognition
 -------------
 

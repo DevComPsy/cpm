@@ -22,6 +22,11 @@ import cpm
 from cpm.generators import Wrapper
 from cpm.datasets import load_bandit_data, load_risky_choices
 
+try:
+    from cpm.datasets import load_information_sampling_data
+except ImportError:  # cpm versions before BayesianInformationGathering
+    load_information_sampling_data = None
+
 
 def bandit():
     data = load_bandit_data()
@@ -52,6 +57,13 @@ def risky():
     data = load_risky_choices()
     data = data[data.ppt == 1].reset_index(drop=True)
     data["observed"] = data["choice"].astype(int)
+    return data
+
+
+def information_sampling():
+    data = load_information_sampling_data()
+    data = data[data.ppt == 1].reset_index(drop=True)
+    data["observed"] = 1
     return data
 
 
@@ -108,6 +120,12 @@ def build(case, backend="trial"):
         cls = _application("decision_making", case)
         data = risky()
         kwargs = dict(parameters_settings=PT_SETTINGS)
+    elif case == "BayesianInformationGathering":
+        if load_information_sampling_data is None:
+            return None
+        cls = _application("information_gathering", case)
+        data = information_sampling()
+        kwargs = dict(parameters_settings={})
     else:
         raise ValueError(case)
     if backend == "numba" and not _jit_enabled():
@@ -128,5 +146,5 @@ def _jit_enabled():
     return _jit.JIT_ENABLED
 
 
-CASES = ["RLRW", "HybridMBMF", "PTSM", "PTSM1992", "PTSM2025"]
+CASES = ["RLRW", "HybridMBMF", "PTSM", "PTSM1992", "PTSM2025", "BayesianInformationGathering"]
 BACKENDS = ["trial", "python", "numba"]

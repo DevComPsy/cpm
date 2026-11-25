@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `cpm.applications.information_gathering.BayesianInformationGathering`, the Bayesian model of information gathering in the information sampling task of Hauser et al. (2017), with a sigmoid urgency cost, computed by backward induction and compiled with numba; with the generative belief, it reproduces the log likelihood of the authors' MATLAB toolbox
+- Added `cpm.datasets.load_information_sampling_data`, the example participants of the authors' Bayesian Information Gathering toolbox
+- Added test units for `BayesianInformationGathering`, and a benchmark case
+
 ### Fixed
 
 - `cpm.utils.metad.count_trials` names every validity rule (accuracy coding, whole-number confidence) in its error when no valid trials remain ([#107](https://github.com/DevComPsy/cpm/issues/107))

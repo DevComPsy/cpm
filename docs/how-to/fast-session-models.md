@@ -23,10 +23,11 @@ One evaluation of the objective function, with the parameters' priors, for one p
 | `PTSM` | 40 | 0.26 ms | 0.07 ms | 2.1 ms |
 | `PTSM1992` | 40 | 0.31 ms | 0.08 ms | 2.1 ms |
 | `PTSM2025` | 40 | 0.31 ms | 0.07 ms | 1.8 ms |
+| `BayesianInformationGathering` | 274 | 1.5 ms | 0.09 ms | 15 ms |
 
-With numba, the model itself takes 0.02 to 0.05 ms of this, and the loss function about 0.02 ms. The last column is the same model computed one trial at a time, see [below](#extend-an-application-trial-by-trial).
+With numba, the model itself takes 0.02 to 0.05 ms of this, and the loss function about 0.02 ms. `BayesianInformationGathering` computes its policy for every state of the game by backward induction on each run, which takes about 0.01 ms per condition. The last column is the same model computed one trial at a time, see [below](#extend-an-application-trial-by-trial).
 
-The first time an application runs with numba, numba compiles it, which takes a few seconds: about 3 to 5 s for the reinforcement-learning models, and up to about 15 s for the prospect-theory models. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead; if it cannot write there either, as on some clusters, it compiles the models again in every new Python session.
+The first time an application runs with numba, numba compiles it, which takes a few seconds: about 3 to 5 s for the reinforcement-learning models and `BayesianInformationGathering`, and up to about 15 s for the prospect-theory models. The machine code is cached on disk, next to cpm's own files, so later runs, new Python sessions and the worker processes of a parallel fit (see {doc}`parallelise-fitting`) load it in a fraction of a second. If cpm is installed in a directory you cannot write to, numba caches in your user directory instead; if it cannot write there either, as on some clusters, it compiles the models again in every new Python session.
 
 To run without numba although it is installed, for example to compare, set the environment variable `CPM_DISABLE_JIT=1` before starting Python.
 

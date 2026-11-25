@@ -15,5 +15,6 @@ and examples.
    load_model_based_model_free
    load_blocking_data
    load_risky_choices
+   load_information_sampling_data
    load_metacognition_data
    load_csv

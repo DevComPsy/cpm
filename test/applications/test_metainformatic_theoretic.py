@@ -423,7 +423,7 @@ def meta_I_reference(accuracy, confidence, bins):
 class TestEstimatorMetaI:
 
       def test_no_Dataframe_raises(self):
-            with pytest.raises(ValueError, match="`Data` should be a DataFrame."):
+            with pytest.raises(ValueError, match="`data` should be a DataFrame."):
                   EstimatorMetaI(data="not a Datafrmae", bins=4)
 
       def test_required_column_missing_raises(self, synthetic_incomplete_data):

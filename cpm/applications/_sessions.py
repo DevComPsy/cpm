@@ -2,8 +2,9 @@
 The models of the built-in applications.
 
 Each function computes all trials of one participant for one of the
-applications (`RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992` and `PTSM2025`), from
-plain floats and numpy arrays, using the kernels of `cpm.models.kernels`. They
+applications (`RLRW`, `HybridMBMF`, `PTSM`, `PTSM1992`, `PTSM2025` and
+`BayesianInformationGathering`), from plain floats and numpy arrays, using the
+kernels of `cpm.models.kernels`. They
 are the only implementation of these models: the per-trial `model` function of
 an application runs the same loop on a single trial. With numba installed, they
 are compiled as a whole; `cpm.core._jit.kernels` loads this module either
@@ -15,6 +16,8 @@ the loop, one per trial, which `kernels.choose` turns into the choice that
 with `numpy.random.seed`, identical across backends, and identical to the
 former per-trial implementations of the applications.
 """
+
+import math
 
 import numpy as np
 
@@ -315,3 +318,190 @@ def ptsm2025(eta, phi_gain, phi_loss, temperature, alpha, safe, risky, probabili
         out_u_safe[t] = u_safe
         out_u_risk[t] = u_risk
     return out_policy, out_choice, out_u_safe, out_u_risk
+
+
+@njit
+def information_gathering_policy(belief, transitions, cost_scale, cost_slope, impatience,
+                                 temperature, lapse_rate, r_correct, r_incorrect, r_none,
+                                 policy, q_open, cost):
+    """
+    The policy of `BayesianInformationGathering` in one condition, by backward induction.
+
+    Fills `policy[N, n_y]` (deciding yellow, deciding blue, opening another card),
+    `q_open[N, n_y]` (the value of opening another card) and `cost[N]` (its
+    cost) for every state of the game, from the last card back to the first, as
+    the code of the authors computes them.
+
+    Parameters
+    ----------
+    belief : numpy.ndarray
+        The probability that yellow is the right answer in each state, shape
+        (cards + 1, cards + 1), indexed by the cards seen and the yellow ones among them.
+    transitions : numpy.ndarray
+        The probability that the next card is blue (0) or yellow (1) in each
+        state, shape (cards + 1, cards + 1, 2).
+    cost_scale, cost_slope, impatience, temperature, lapse_rate : float
+    r_correct, r_incorrect, r_none : float
+        The value of a right and of a wrong answer, and of not answering after the last card.
+    policy, q_open, cost : numpy.ndarray
+        Filled in place; shapes (cards + 1, cards + 1, 3), (cards + 1, cards + 1)
+        and (cards + 1,). Row 0, before the first card, is left as it is.
+    """
+    cards = belief.shape[0] - 1
+    value = np.empty(cards + 1)
+    following = np.empty(cards + 1)
+    inverse = 1.0 / temperature
+    noise = lapse_rate / 3.0
+    for n in range(cards, 0, -1):
+        ## the sigmoid cost of opening another card after n cards
+        c_s = cost_scale / (1.0 + math.exp(-cost_slope * (n - impatience)))
+        cost[n] = c_s
+        for k in range(n + 1):
+            p = belief[n, k]
+            q_yellow = r_correct * p + r_incorrect * (1.0 - p)
+            q_blue = r_correct * (1.0 - p) + r_incorrect * p
+            if n == cards:
+                ## no card is left to open
+                q_more = -c_s + r_none
+            else:
+                q_more = -c_s + (transitions[n, k, 0] * following[k]
+                                 + transitions[n, k, 1] * following[k + 1])
+            ## the softmax with a lapse rate, written out for three actions so
+            ## that it allocates nothing; the largest value is subtracted first,
+            ## as in the code of the authors, so that no value overflows, and
+            ## its exponential is 1
+            if q_yellow >= q_blue and q_yellow >= q_more:
+                e_yellow = 1.0
+                e_blue = math.exp((q_blue - q_yellow) * inverse)
+                e_more = math.exp((q_more - q_yellow) * inverse)
+            elif q_blue >= q_more:
+                e_yellow = math.exp((q_yellow - q_blue) * inverse)
+                e_blue = 1.0
+                e_more = math.exp((q_more - q_blue) * inverse)
+            else:
+                e_yellow = math.exp((q_yellow - q_more) * inverse)
+                e_blue = math.exp((q_blue - q_more) * inverse)
+                e_more = 1.0
+            scale = (1.0 - lapse_rate) / (e_yellow + e_blue + e_more)
+            pi_yellow = e_yellow * scale + noise
+            pi_blue = e_blue * scale + noise
+            pi_more = e_more * scale + noise
+            policy[n, k, 0] = pi_yellow
+            policy[n, k, 1] = pi_blue
+            policy[n, k, 2] = pi_more
+            q_open[n, k] = q_more
+            value[k] = q_yellow * pi_yellow + q_blue * pi_blue + q_more * pi_more
+        value, following = following, value
+
+
+@njit
+def information_gathering(cost_scale, cost_slope, impatience_fixed, impatience_decreasing,
+                          temperature, lapse_rate, belief, transitions, r_correct,
+                          r_incorrect, r_none, n_yellow, n_seen, condition, action,
+                          generate, uniforms):
+    """
+    All trials of `BayesianInformationGathering`, one per state of a game.
+
+    Parameters
+    ----------
+    cost_scale, cost_slope, impatience_fixed, impatience_decreasing, temperature, lapse_rate : float
+    belief, transitions, r_correct, r_incorrect, r_none
+        See `information_gathering_policy`.
+    n_yellow, n_seen, condition, action : numpy.ndarray
+        One value per trial; `action` is ignored if `generate`.
+    generate : bool
+        Whether to play the games instead; the trials must then hold every card
+        of each game, see `BayesianInformationGathering`.
+    uniforms : numpy.ndarray
+        One uniform random number per trial if `generate`.
+
+    Returns
+    -------
+    policy, action, belief, q_values, cost, dependent : numpy.ndarray
+        `action` is the observed action, or the sampled one if `generate`, and -1
+        on the cards of a game after the agent decided; `dependent` is the
+        probability of `action`, and NaN where it is -1.
+    """
+    n = n_seen.shape[0]
+    cards = belief.shape[0] - 1
+    ## numba does not check indices, so the data are checked here, see rlrw
+    used = np.zeros(2, dtype=np.bool_)
+    for t in range(n):
+        if not 1 <= n_seen[t] <= cards:
+            raise IndexError(
+                "BayesianInformationGathering: n_seen must be from 1 to the number of cards (25)."
+            )
+        if not 0 <= n_yellow[t] <= n_seen[t]:
+            raise IndexError("BayesianInformationGathering: n_yellow must be from 0 to n_seen.")
+        if not 0 <= condition[t] <= 1:
+            raise IndexError(
+                "BayesianInformationGathering: condition must be 0 (fixed) or 1 (decreasing)."
+            )
+        if not generate and not 0 <= action[t] <= 2:
+            raise IndexError(
+                "BayesianInformationGathering: action must be 0 (yellow), 1 (blue) or 2 (open another card)."
+            )
+        used[condition[t]] = True
+    if generate:
+        for t in range(n):
+            if n_seen[t] != 1 and (
+                t == 0
+                or n_seen[t] != n_seen[t - 1] + 1
+                or not 0 <= n_yellow[t] - n_yellow[t - 1] <= 1
+                or condition[t] != condition[t - 1]
+            ):
+                raise ValueError(
+                    "BayesianInformationGathering: to generate, each game must start at n_seen 1 "
+                    "and reveal one card per trial, in one condition."
+                )
+            if (t == n - 1 or n_seen[t + 1] == 1) and n_seen[t] != cards:
+                raise ValueError(
+                    "BayesianInformationGathering: to generate, each game must hold all 25 cards."
+                )
+    ## the policy of a condition is computed only if the data have trials in it
+    policy_table = np.zeros((2, cards + 1, cards + 1, 3))
+    q_open_table = np.zeros((2, cards + 1, cards + 1))
+    cost_table = np.zeros((2, cards + 1))
+    for c in range(2):
+        if used[c]:
+            information_gathering_policy(
+                belief, transitions, cost_scale, cost_slope,
+                impatience_fixed if c == 0 else impatience_decreasing, temperature,
+                lapse_rate, r_correct, r_incorrect, r_none, policy_table[c], q_open_table[c],
+                cost_table[c],
+            )
+    out_policy = np.empty((n, 3))
+    out_action = np.empty(n, dtype=np.int64)
+    out_belief = np.empty(n)
+    out_q = np.empty((n, 3))
+    out_cost = np.empty(n)
+    out_dependent = np.empty(n)
+    playing = False
+    for t in range(n):
+        c, seen, k = condition[t], n_seen[t], n_yellow[t]
+        policy = policy_table[c, seen, k]
+        p = belief[seen, k]
+        out_policy[t] = policy
+        out_belief[t] = p
+        out_q[t, 0] = r_correct * p + r_incorrect * (1.0 - p)
+        out_q[t, 1] = r_correct * (1.0 - p) + r_incorrect * p
+        out_q[t, 2] = q_open_table[c, seen, k]
+        out_cost[t] = cost_table[c, seen]
+        if generate:
+            if seen == 1:
+                playing = True
+            if not playing:
+                out_action[t] = -1
+                out_dependent[t] = np.nan
+                continue
+            ## after the last card, the agent has to decide
+            if seen == cards:
+                chosen = choose(policy[:2], uniforms[t])
+            else:
+                chosen = choose(policy, uniforms[t])
+            playing = chosen == 2
+        else:
+            chosen = action[t]
+        out_action[t] = chosen
+        out_dependent[t] = policy[chosen]
+    return out_policy, out_action, out_belief, out_q, out_cost, out_dependent

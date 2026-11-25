@@ -402,6 +402,7 @@ def meta_I_reference(accuracy, confidence, bins):
 
       return H2r - H2r_given_c
 
+def test_meta_I_matches_reference():
       rng = np.random.default_rng(11)
       for _ in range(50):
             n          = rng.integers(100, 400)

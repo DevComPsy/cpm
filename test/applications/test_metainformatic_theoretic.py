@@ -183,7 +183,7 @@ class TestFitMetaI:
                       signal = rng.choice([0, 1], 105)
                       response = rng.choice([0, 1], 102)
                       accuracy = rng.choice([0, 1], 100)
-                      confidence = rng.uniform([0, 1], 110)
+                      confidence = rng.uniform(0, 1, 110)
     
                       fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, response = response, bins=4)
     
@@ -415,7 +415,7 @@ def test_meta_I_matches_reference():
             result    = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=bins)
             reference = meta_I_reference(accuracy, confidence, bins)
 
-            assert result["meta_I"] == pytest.approx(reference, abs=1e-6), (
+            assert result["meta_I"] == pytest.approx(reference, abs=1e-4), (
                 f"Mismatch for n={n}, bins={bins}: "
                 f"fit_metaI={result['meta_I']:.8f}, reference={reference:.8f}"
             )

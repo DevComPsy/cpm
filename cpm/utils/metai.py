@@ -74,7 +74,8 @@ def H2r(
 
 def conf_binned(
     confidence: np.ndarray,
-    bins: int,  
+    bins: int, 
+    verbose: bool = True,
     ignore_invalid: bool = False 
 ):
     """
@@ -87,6 +88,8 @@ def conf_binned(
         Continous confidence rating per trial.
     bins : int
         Number of discrete bins. Must be an integer >= 2.
+    verbose : boolean
+        If `True`, a message is printed when the ratings are resampled.
     ignore_invalid : bool
         If `False` (default), raises an error if the discretisation process is not possible.
         Passed directly on to `bin_ratings`.
@@ -120,7 +123,7 @@ def conf_binned(
     levels, out = bin_ratings(
                 ratings=confidence,
                 nbins=int(bins),
-                verbose=False,
+                verbose=verbose,
                 ignore_invalid=ignore_invalid,
             )
     edges = out.get("confBins")

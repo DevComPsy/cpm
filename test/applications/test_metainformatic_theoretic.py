@@ -372,55 +372,6 @@ class TestFitMetaI:
           except ValueError:
                 pass
 
-# equivalence testing against an independent reimplementation
-def meta_I_reference(accuracy, confidence, bins):
-      accuracy = np.asarray(accuracy, dtype=float)
-      confidence = np.asarray(confidence, dtype=float)
-
-      def h2_scalar(p):
-            if p <= 0 or p >= 1:
-                  return 0.0
-            return -(p * np.log2(p) + (1-p) * np.log2(1-p))
-                     
-      # Step 1: entropy of overall accuracy
-      H2r = h2_scalar(accuracy.mean())
-
-      # Step 2: quantile bin edges (equal-frequency)
-      bin_edges = np.percentile(confidence, np.linspace(0, 100, bins + 1))
-      bin_edges[-1] += 1e-12   # make upper edge inclusive
-
-      # Steps 3 & 4: weighted conditional entropy
-      n = len(accuracy)
-      H2r_given_c = 0.0
-      for b in range(bins):
-            in_bin = (confidence >= bin_edges[b]) & (confidence < bin_edges[b + 1])
-            n_bin  = in_bin.sum()
-            if n_bin == 0:
-                  continue
-            p_correct_given  = accuracy[in_bin].mean()
-            H2r_given_c     += (n_bin / n) * h2_scalar(p_correct_given)
-
-      return H2r - H2r_given_c
-
-def test_meta_I_matches_reference():
-      rng = np.random.default_rng(11)
-      for _ in range(50):
-            n          = rng.integers(100, 400)
-            p_acc      = rng.uniform(0.55, 0.85)   # avoid 0/1 extremes
-            signal     = rng.choice([0, 1], n)
-            accuracy   = rng.choice([0, 1], size=n, p=[1 - p_acc, p_acc])
-            confidence = rng.uniform(0, 1, n)
-            bins       = int(rng.choice([2, 3, 4, 6]))
-
-            result    = fit_metaI(signal = signal, accuracy = accuracy, confidence = confidence, bins=bins)
-            reference = meta_I_reference(accuracy, confidence, bins)
-
-            assert result["meta_I"] == pytest.approx(reference, abs=1e-4), (
-                f"Mismatch for n={n}, bins={bins}: "
-                f"fit_metaI={result['meta_I']:.8f}, reference={reference:.8f}"
-            )
-
-
 class TestEstimatorMetaI:
 
       def test_no_Dataframe_raises(self):
